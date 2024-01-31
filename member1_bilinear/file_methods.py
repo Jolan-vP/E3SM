@@ -10,12 +10,12 @@ import xarray as xr
 import json
 import pickle
 import tensorflow as tf
-import custom_metrics
+# import custom_metrics
 
 __author__ = "Jolan von Plutzner adapted from code wrtiten by Elizabeth A Barnes and Noah Diffenbaugh"
 __version__ = "25 January 2024"
 
-def open_netcdf(directory, member): #add Settings to this function as they develop!
+def open_netcdf(directory, settings, member): #add Settings to this function as they develop!
     if member == "0101":
         return xr.open_dataset(directory + "v2.LR.historical_0101.eam.h1.1850-2014.nc")
     if member == "0151":
@@ -27,7 +27,7 @@ def open_netcdf(directory, member): #add Settings to this function as they devel
     
 
 
-    # I don't have settings yet..
+    
     # Should I develop a less extensive version of the code that just does what I need at the moment, and add functionality as I go?
     # what is the index = 10_000 referring to?
     # what is the [var][:index] help to do at the end of each of these lines?
