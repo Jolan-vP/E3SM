@@ -29,7 +29,4 @@ def open_netcdf(directory, settings, member): #add Settings to this function as 
 
     
     # Should I develop a less extensive version of the code that just does what I need at the moment, and add functionality as I go?
-    # what is the index = 10_000 referring to?
-    # what is the [var][:index] help to do at the end of each of these lines?
-    # what does var refer to in general?
     # how often do we want to reduce data? is this used?

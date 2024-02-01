@@ -8,7 +8,7 @@ import pickle
 import numpy as np
 import xarray as xr
 import importlib as imp
-import file_methods as file_methods
+import setup.file_methods as file_methods
 import gzip
 
 
