@@ -31,6 +31,12 @@ def maskout_landocean(da, mask_type, directory):
 
 #--------------------------------------------------------------------------------------------
 
+# decompose operation into:
+# IO (load files)
+# Extract (subdivide data into regions of interest)
+# Save regions of interest elsewhere in convenient format
+# Process regions of interest individually
+# -- 
 ## Open and store .nc files based on which member is of interest and the associated settings
 def load_inputs(directory, settings):
     x_train, x_val = None, None #?? what do these refer to initially?
@@ -40,8 +46,8 @@ def load_inputs(directory, settings):
         assert len(settings["input_region"]) == len(settings["input_variables"])
 
         # training data
-        x_t = fileops.open_netcdf(settings, directory, settings["training_ens"], variable)
-        x_t = maskout_landocean(x_t, settings["input_mask"][index_variable], directory)
+        x_t = fileops.open_netcdf(settings, directory, settings["training_ens"], variable) # probably a pretty IO intensive operation--separate and cache
+        x_t = maskout_landocean(x_t, settings["input_mask"][index_variable], directory) # probably pretty fast?  Time it
         x_t, __, __ = extract_region(x_t, settings["input_region"][index_variable])
         x_t = x_t.expand_dims(dim="channel", axis=1)
         x_t = rolling_ave(settings, x_t)
@@ -49,7 +55,7 @@ def load_inputs(directory, settings):
         # validation data
         # x_v = fileops.open_netcdf(settings, directory, settings["validation_ens"], variable)
         # x_v = maskout_landocean(x_t, settings["input_mask"][index_variable], directory)
-        # x_v, __, __ = extract_region(x_t, settings["input_mask"][index_variable], directory)
+        # x_v, __, __ = extract_region(x_t, settings["input_region"][index_variable], directory)
         # x_v = x_t.expand_dims(dim="channel", axis=1)
         # x_v = rolling_ave(settings, x_t)
 
@@ -101,6 +107,7 @@ def trend_remove_seasonalcycle(x):
             x_out[:, :, start:end] = stacked.groupby("time.dayofyear").map(subtract_trend).unstack()
     return x_out.dropna("time")
 
+# vectorized version in tensorflow?
 
 def subtract_trend(x):
     detrendOrder = 3 

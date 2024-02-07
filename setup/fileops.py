@@ -36,3 +36,5 @@ def open_netcdf(settings, directory, member, var):
             return xr.open_dataset(directory + "ens3/bilinear/v2.LR.historical_" + member + ".eam.h1.1850-2014.nc")[var]
         else:
             raise NotImplementedError()
+
+
