@@ -10,7 +10,7 @@ import xarray as xr
 import importlib as imp
 import gzip
 
-import setup.fileops as fileops
+import fileops as fileops
 
 
 

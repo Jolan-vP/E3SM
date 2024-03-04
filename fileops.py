@@ -13,7 +13,7 @@ import tensorflow as tf
 # import custom_metrics
 
 __author__ = "Jolan von Plutzner adapted from code wrtiten by Elizabeth A Barnes and Noah Diffenbaugh"
-__version__ = "25 January 2024"
+__version__ = "7 February 2024"
 
 def open_netcdf(settings, directory, member, var):
 
