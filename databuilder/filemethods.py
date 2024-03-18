@@ -11,5 +11,4 @@ import xarray as xr
 
 def get_netcdf_da(filename):
     da = xr.open_dataset(filename)
-    print(da.variables)
     return da
