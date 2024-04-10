@@ -26,22 +26,24 @@ from databuilder.sampleclass import SampleDict
 class ClimateData:
     " Custom dataset for climate data and processing "
 
-    def __init__(self, config, expname, seed, data_dir, figure_dir, fetch =True, verbose=False):
-        
+    def __init__(self, config, expname, process_keys, seed, data_dir, figure_dir, fetch =True, verbose=False, ):
+        print("initzializing climatedata class")
         self.config = config
         self.expname = expname
         self.seed = seed
         self.data_dir = data_dir
         self.figure_dir = figure_dir
         self.verbose = verbose
-        self.process_keys = ("x", "y")
-
+        self.process_keys = process_keys
+        print("finished inizializing climatedata class")
         if fetch:
             self.fetch_data()
 
     def fetch_data(self, verbose=None):
         if verbose is not None: 
             self.verbose = verbose
+
+        print("begin fetch func")
 
         self.d_train = SampleDict()
         self.d_val = SampleDict()
@@ -57,17 +59,20 @@ class ClimateData:
         #TODO: Why is there no return method here for d_train, d_val and d_test?
 
     def _create_data(self):  
-
+        print("starting create data")
         for iens, ens in enumerate(self.config["ensembles"]):
             if self.verbose:
                 print(ens)
-            if ens == "ens1":                   
+            if ens == "ens1":   
+                print("ens1 for training")
                 train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1.1850-1852.nc")
                 #train_da = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
             if ens == "ens2":
+                print("ens2 for val")
                 validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1.1850-1852.nc")
                 #validate_da = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
             elif ens == "ens3":
+                print("ens3 for testing")
                 test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1.1850-1852.nc")
                 #test_da = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
 
@@ -88,43 +93,65 @@ class ClimateData:
         # self.lon = train_da.lon.values
 
     def _process_data(self, ds):
-        # CREATE FILE DATA DICTIONARY --------
-        f_dict = SampleDict() 
-        
-        # We're filling f_dict using information from da by passing da (train_da, validate_da, test_da) directly to f_dict which becomes f_dict_train, f_dict_val, f_dict_test
+        '''
+        Motivation: create file data dictionary to contain samples for use in ML model
 
-        # (1) isolate the individual dataset values of ds : PRECT, TS, etc. 
+        Input: 
+        - Xarray DataSet
+            Input dataset contains all input variables in one file
+
+        Output: 
+        - Dictionary containing Xarray DataArrays
+            Output f_dict contains 'da'. 
+            'da' contains multiple dimensions of masked, de-trended, de-seasonalized anomalies for all input variables. 
+            
+            f_dict contains 'da' using preprocessing keys as pointers
+        
+            * more detail here about structure of 'da' * 
+        '''
+
+
+        f_dict = SampleDict() 
+
+        # (1) Isolate the individual dataset values of ds : PRECT, TS, etc. 
         for ivar, var in enumerate(self.config["input_vars"]):
             if ivar == 0:
                 da = ds[var]
-                da = da.expand_dims(dim={"channel": 1}, axis = -1)   # (2) create a channel dimension in da
+                da = da.expand_dims(dim={"channel": 1}, axis = -1)   # (2) Create a channel dimension in da
             else: 
-                da = xr.concat([da, ds[var]], dim = "channel")  # (3) fill channel dim with var arrays
+                da = xr.concat([da, ds[var]], dim = "channel")  # (3) Fill channel dim with var arrays
 
-        #Preliminary f_dict data input (just to have data)
-        f_dict["x"] = da
-        # in reality, f_dict["x"] should contain two dimensions of masked, de-trended, de-seasonalized anomalies for PRECT and TS (two streams of input samples)
+        da = da.rename('SAMPLES')
+        da.attrs['long_name'] = None
+        da.attrs['units'] = None
+        da.attrs['cell_methods'] = None
 
-        ## EXTRACT REGION
-        f_dict = self._extractregion(f_dict, da)
-        print(f"f_dict is: \n {f_dict}")
+        # For each input variable or data entity you would like to process: 
+        for ikey, key in enumerate(f_dict):
+            if key in self.process_keys: 
+                assert key in f_dict.keys()
+                # LOAD f_dict dictionary with unprocessed channels of 'da'
+                print(f"ikey: {ikey}, key: {key}")
+                f_dict[key] = da.sel(channel = ikey)
+    
+                ## EXTRACT REGION
+                f_dict[key] = self._extractregion(f_dict[key])
+                print(f"f_dict[key].shape out of extractregion: {f_dict[key].shape}")
 
-        ## MASK LAND/OCEAN
-        #f_dict = self._masklandocean(f_dict, da) 
+                ## MASK LAND/OCEAN #TODO: FIX Mask function
+                # f_dict[key] = self._masklandocean(f_dict[key])
 
-        ## REMOVE SEASONAL CYCLE
-        for key in f_dict:
-            if key in self.process_keys:
+                ## REMOVE SEASONAL CYCLE
                 f_dict[key] = self.trend_remove_seasonal_cycle(f_dict[key])
 
-        ## ROLLING AVERAGE 
-        f_dict = self.rolling_ave(f_dict)
+                ## ROLLING AVERAGE 
+                f_dict[key] = self.rolling_ave(f_dict[key])
 
         return f_dict
     
-    def _extractregion(self, f_dict, da): 
-        # add for loop for each variable here too? so that unique input regions can be assigned?
-        if self.config["input_region"] is None: # TODO: concerned the mask isn't working - how to index into this dict more deeply so that it sees the lat lons?
+    def _extractregion(self, da): 
+        if self.config["input_region"] is None: 
+            # TODO: concerned the mask isn't working - how to index into this dict more deeply so that it sees the lat lons?
             min_lon, max_lon = [0, 360]
             min_lat, max_lat = [-90, 90]
             print("input region is none")
@@ -135,80 +162,121 @@ class ClimateData:
         if isinstance(da, xr.DataArray):
             mask_lon = (da.lon >= min_lon) & (da.lon <= max_lon)
             mask_lat = (da.lat >= min_lat) & (da.lat <= max_lat)
-            f_dict["x"] = da.where(mask_lon & mask_lat, drop=True)
-
-        return f_dict
+            data_masked = da.where(mask_lon & mask_lat, drop=True)
+            return (
+                data_masked #,
+                #data_masked["lat"].to_numpy().astype(np.float32),
+                #data_masked["lon"].to_numpy().astype(np.float32),
+            )
+        else:
+            raise NotImplementedError("data must be xarray")
+        
     
-    def _masklandocean(self, f_dict, da):
+    def _masklandocean(self, da):
         if self.config["input_mask"][0] == None:
             return da
         
         mask = xr.open_dataset(self.data_dir + "/landfrac.bilin.nc")["LANDFRAC"][0, :, :]
 
         if self.config["input_mask"] == "land":
-            da_mask = da * xr.where(mask > 0.5, 1.0, 0.0)
+            da_masked = da * xr.where(mask > 0.5, 1.0, 0.0)
         elif self.config["input_mask"] == "ocean":
-            da_mask = da * xr.where(mask > 0.5, 0.0, 1.0)
+            da_masked = da * xr.where(mask > 0.5, 0.0, 1.0)
         else: 
             raise NotImplementedError('oops NONE error - line 147 of _masklandocean')
-            ##TODO: What to do about "NONE" given that it's the first of the config specs? Should I specify [0]? Why do we specify both NONE and "ocean" and how does that contribute to our preferred output? 
+            ##TODO: What to do about "NONE" given that it's the first of the config specs? Should I specify [0]? Why do we specify both NONE and "ocean" and how does that contribute to our preferred output? - make it so it makes sense to you!
             # Also I put "None" in quotes in the config file - is this OK?
         
-        f_dict["x"] = da_mask 
-        return f_dict
+        return da_masked
 
-    def subtract_trend(self, f_dict): #TODO: Polynomial only wants a 1 or 2D array.. we have time, lat, lon, and channel in f_dict["x"].. should I loop through lat and lon as well?
+    def subtract_trend(self, x): 
+        print(f" Subtract trend input is X = {x}")
+
         detrendOrder = 3
-        for i_inputvar in np.arange(0, np.size(self.config["input_vars"])):
-            curve = np.polynomial.polynomial.polyfit(np.arange(0, f_dict["x"].shape[0]), f_dict["x"][:, :, :, i_inputvar], detrendOrder)
-            trend = np.polynomial.polynomial.polyval(np.arange(0, f_dict["x"][:, :, :, i_inputvar], curve, tensor = True))
 
-            #curve = np.polynomial.polynomial.polyfit(np.arange(0, f_dict["x"].shape[0]), f_dict["x"], detrendOrder)
-            #trend = np.polynomial.polynomial.polyval(np.arange(0, f_dict["x"], curve, tensor = True))
+        print(f" poly x is: \n{len(np.arange(0, x.shape[1]))}\n") # 1350
+        print(f" poly y is \n{x.shape}\n") # (3, 1350)
 
-            try: 
-                detrend = f_dict["x"][:, :, :, i_inputvar] - np.swapaxes(trend, 0, 1)
-            except:
-                detrend = f_dict["x"][:, :, :, i_inputvar] - trend
+        # TODO: Error is being thrown in line 201 due to mismatched X and Y lengths
+        curve = np.polynomial.polynomial.polyfit(np.arange(0, x.shape[0]), x, detrendOrder)
+        trend = np.polynomial.polynomial.polyval(np.arange(0, x.shape[0]), curve) 
 
+        # THERE ARE MORE THAN 500 OUTPUTS OF PLOTS: 
+        # plt.figure()
+        # plt.plot(np.arange(0,  x.shape[1]), x[1])
+        # plt.plot(np.arange(0,  x.shape[1]), trend)
+
+        # raise ValueError
+    
+        try: 
+            detrend = x - np.swapaxes(trend, 0, 1)
+        except:
+            detrend = x - trend
         return detrend 
     
     def trend_remove_seasonal_cycle(self, da):
-        if len(f_dict["x"].shape) == 1:
-            return f_dict["x"].groupby("time.dayofyear").map(self.subtract_trend).dropna("time")
+        print("we are here at trendremoveseasonalcycle")
+        if len(np.array(da.shape)) == 1: 
+            print("shape of data = 1")
+            return da.groupby("time.dayofyear").map(self.subtract_trend).dropna("time")
         
         else: 
-            f_dict_copy = f_dict.copy()
-            inc = 45 # What does this increment refer to? 
-            for iloop in np.arange(0, f_dict_copy["x"].shape[2] // inc + 1):
+            print("shape of da is not equal to 1")
+            da_copy = da.copy()
+
+            inc = 45 # 45 degree partitions in longitude to split up the data
+        
+            for iloop in np.arange(0, da_copy.shape[2] // inc + 1):
                 start = inc * iloop
-                end = np.min([inc * (iloop + 1), f_dict_copy["x"].shape[2]])
+                end = np.min([inc * (iloop + 1), da_copy.shape[2]])
                 if start == end:
                     break
-        
-                stacked = f_dict["x"][:, :, start:end, :].stack(z=("lat", "lon", "channel")) 
 
-                f_dict_copy[:, :, start:end, :] = stacked.groupby("time.dayofyear").map(self.subtract_trend(f_dict)).unstack()
+          
+                # Shape of stacked is ( len(time), len(lat)*len(longitude slice) ) = (1095, 1350)
+                # 1350 is the number of (lat,lon) locations that exist within each longitude partition
+                # stacked is a dataArray. 
+                # Stacked.z contains all 1350 lat,long coordinates
+                # Stacked.time contains time 1095
+                stacked = da[:, :, start:end].stack(z=("lat", "lon"))
 
-        return f_dict_copy.dropna("time")
+                #print(f"stacked stuff: {stacked.groupby('time.dayofyear')}") 
+                #print(f"type(stacked) : {type(stacked)}")
+                
+                print(f"stacked Z: \n{stacked.coords}\n")
+               
+                print(f"first step: \n{stacked.groupby('time.dayofyear')}\n")
 
+                da_copy[:, :, start:end] = stacked.groupby("time.dayofyear").map(self.subtract_trend).unstack()
 
-    # this func really has the same structure as trend_remove_seasonal_cycle.. ?
-    def rolling_ave(self, f_dict):
+                print(f"first step: \n{da_copy[:, :, start:end]}\n")
+
+                # da_copy[:, :, start:end] = da_copy[:, :, start:end].map(self.mean())
+                # print(f"subtract trend: \n{da_copy[:, :, start:end]}\n")
+
+                # da_copy[:, :, start:end] = da_copy[:, :, start:end].unstack()
+                # print(f"unstack: \n{da_copy[:, :, start:end]}\n")
+
+                #da_copy[:, :, start:end] = stacked.groupby("time.dayofyear").map(self.subtract_trend).unstack()
+
+        return da_copy.dropna("time")
+
+    def rolling_ave(self, da):
         if self.config["averaging_length"] == 0:
-            return f_dict
+            return da
         else: 
-            if len(f_dict["x"].shape) == 1: 
-                return f_dict["x"].rolling(time = self.config["averaging_length"]).mean()
+            if len(da.shape) == 1: 
+                return da.rolling(time = self.config["averaging_length"]).mean()
             else: 
-                f_dict_copy = f_dict["x"].copy()
+                da_copy = da.copy()
                 inc = 45
-                for iloop, in np.arange(0, f_dict["x"].shape[2] // inc + 1): 
+                for iloop in np.arange(0, da.shape[2] // inc + 1): 
                     start = inc * iloop
-                    end = np.min([inc *(iloop + 1), f_dict_copy.shape[2]])
+                    end = np.min([inc *(iloop + 1), da_copy.shape[2]])
                     if start == end: 
                         break
-                    f_dict_copy[:, :, start:end, :] = f_dict["x"][:, :, start:end, :].rolling(time = self.config["averaging_length"]).mean()
 
-                return f_dict_copy
+                    da_copy[:, :, start:end] = da[:, :, start:end].rolling(time = self.config["averaging_length"]).mean()
+
+                return da_copy
             

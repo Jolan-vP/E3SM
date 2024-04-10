@@ -9,12 +9,15 @@ import copy
 class SampleDict(dict):
     def __init__(self, *arg, **kw):
         super(SampleDict, self).__init__(*arg, **kw)
-
-        self.__setitem__("x", [])
+        print("SampleDict class")
+        #TODO: Can we grab the inputs from the climate class initialization here? 
+        self.__setitem__("x", []) 
         self.__setitem__("y", [])
-      
+
 
     def concat(self, f_dict):
+        print(self.keys())
+        print(f_dict.keys())
         for key in self:
             if len(self[key]) == 0:
                 self[key] = f_dict[key]
@@ -22,3 +25,5 @@ class SampleDict(dict):
                 pass
             else:
                 self[key] = np.concatenate((self[key], f_dict[key]), axis = 0)
+
+            print(type(self[key]))
