@@ -2,7 +2,7 @@
     "device": "gpu",
     "seed_list": [7],
 
-    "data_dir": "/Users/C830793391/BIG DATA/E3SM Data/",
+    "data_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/",
     "figure_dir": "/Users/C830793391/Documents/Research/E3SM/saved/figures",
     "model_dir": "/Users/C830793391/Documents/Research/E3SM/saved/models",
     "output_dir": "/Users/C830793391/Documents/Research/E3SM/saved/outputs",
@@ -15,6 +15,7 @@
                          [-15.0, 15.0, 40.0, 300.0]],
         "input_mask": ["None", "ocean"],
         "ensembles": ["ens1", "ens2", "ens3"],
+        "ensemble_codes": ["0101", "0151", "0201"],
         "target_var": "PRECT",
         "target_region": [47.6, 122.0],
         "target_months": [4, 5, 6, 7, 8, 9],

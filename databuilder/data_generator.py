@@ -53,6 +53,8 @@ class ClimateData:
         #     self.d_val.summary()
         #     self.d_test.summary()
 
+        return self.d_train, self.d_val, self.d_test
+
     def _create_data(self):  
       
         for iens, ens in enumerate(self.config["ensembles"]):
@@ -115,27 +117,67 @@ class ClimateData:
         da.attrs['units'] = None
         da.attrs['cell_methods'] = None
 
+        print(da.sel(channel = 1))
+        print(f"inital dims before processing: {da.dims}")
+
         # For each input variable or data entity you would like to process: 
         for ikey, key in enumerate(f_dict):
+            if len(self.config["input_vars"]) == 1:
+                f_dict[key] = da
+                
+                ## EXTRACT REGION
+                f_dict[key] = self._extractregion(f_dict[key])
+
+                ## MASK LAND/OCEAN 
+                f_dict[key] = self._masklandocean(f_dict[key])
             
-            # LOAD f_dict dictionary with unprocessed channels of 'da'
-            f_dict[key] = da.sel(channel = ikey)
-            plt.figure()
-            plt.plot(f_dict[key].sel(lat = 10, lon = 10, method = 'nearest'), color = 'green')
-            ## EXTRACT REGION
-            f_dict[key] = self._extractregion(f_dict[key])
+                ## REMOVE SEASONAL CYCLE
+                f_dict[key] = self.trend_remove_seasonal_cycle(f_dict[key])
+                # plt.figure()
+                # plt.plot(f_dict[key].sel(lat = 10, lon = 10, method = 'nearest'))
 
-            ## MASK LAND/OCEAN 
-            f_dict[key] = self._masklandocean(f_dict[key])
+                ## ROLLING AVERAGE 
+                f_dict[key] = self.rolling_ave(f_dict[key])
+
+                plt.figure()
+                plt.plot(f_dict[key].sel(lat = 10, lon = 10, method = 'nearest'))
+
+            else:
+                # LOAD f_dict dictionary with unprocessed channels of 'da'
+                
+                f_dict[key] = da.sel(channel = ikey)
+                # TODO: ^^^^ THIS IS NOT RIGHT!!!!
+
+                print(f"f_dict[key] dims at beginning of loop: {f_dict[key].dims}")
+                print(f"da dims when selecting channel: {da.dims}")
+                # plt.figure()
+                # plt.plot(f_dict[key].sel(lat = 30, lon = 10, method = 'nearest'), color = 'green')
+                # plt.ylabel(f'Var: '+str(self.config["input_vars"][ikey]) + '\n raw input data (lat:30, lon:10)')
+                # plt.xlabel("Time")
+
+                ## EXTRACT REGION
+                f_dict[key] = self._extractregion(f_dict[key])
+
+                ## MASK LAND/OCEAN 
+                f_dict[key] = self._masklandocean(f_dict[key])
             
-            ## REMOVE SEASONAL CYCLE
-            f_dict[key] = self.trend_remove_seasonal_cycle(f_dict[key])
-            plt.figure()
-            plt.plot(f_dict[key].sel(lat = 10, lon = 10, method = 'nearest'))
+                ## REMOVE SEASONAL CYCLE
+                f_dict[key] = self.trend_remove_seasonal_cycle(f_dict[key])
+                # plt.figure()
+                # plt.plot(f_dict[key].sel(lat = 10, lon = 10, method = 'nearest'))
 
-            ## ROLLING AVERAGE 
-            f_dict[key] = self.rolling_ave(f_dict[key])
+                ## ROLLING AVERAGE 
+                f_dict[key] = self.rolling_ave(f_dict[key])
 
+                # plt.figure()
+                # plt.plot(f_dict[key].sel(lat = 30, lon = 10, method = 'nearest'))
+                # plt.ylabel(f'Var: '+str(self.config["input_vars"][ikey]) + '\ndetrended deseasonalized anomalies (lat:30, lon:10)')
+                # plt.xlabel("Time")
+                # Confirmed smoothed, detrended, deseasonalized anomalies of PRECT and TS
+                print(f"f_dict[key] dims at end of loop: {f_dict[key].dims}")
+
+        print(f" da dims after processing data: {da.dims}")
+        print(f"f_dict[x] dims: {f_dict['x'].dims}")
         return f_dict
     
     def _extractregion(self, da): 
@@ -177,7 +219,7 @@ class ClimateData:
         return da_masked
 
     def subtract_trend(self, x): 
-        print(x.shape)
+        # print(x.shape)
         detrendOrder = 3
 
         curve = np.polynomial.polynomial.polyfit(np.arange(0, x.shape[0]), x[:,0], detrendOrder)
