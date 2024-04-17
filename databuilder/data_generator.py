@@ -111,20 +111,18 @@ class ClimateData:
                 da = da.expand_dims(dim={"channel": 1}, axis = -1)   # (2) Create a channel dimension in da
             else: 
                 da = xr.concat([da, ds[var]], dim = "channel")  # (3) Fill channel dim with var arrays
-
+        
         da = da.rename('SAMPLES')
         da.attrs['long_name'] = None
         da.attrs['units'] = None
         da.attrs['cell_methods'] = None
 
-        print(da.sel(channel = 1))
-        print(f"inital dims before processing: {da.dims}")
-
+        
         # For each input variable or data entity you would like to process: 
         for ikey, key in enumerate(f_dict):
             if len(self.config["input_vars"]) == 1:
                 f_dict[key] = da
-                
+               
                 ## EXTRACT REGION
                 f_dict[key] = self._extractregion(f_dict[key])
 
@@ -133,8 +131,6 @@ class ClimateData:
             
                 ## REMOVE SEASONAL CYCLE
                 f_dict[key] = self.trend_remove_seasonal_cycle(f_dict[key])
-                # plt.figure()
-                # plt.plot(f_dict[key].sel(lat = 10, lon = 10, method = 'nearest'))
 
                 ## ROLLING AVERAGE 
                 f_dict[key] = self.rolling_ave(f_dict[key])
@@ -144,12 +140,8 @@ class ClimateData:
 
             else:
                 # LOAD f_dict dictionary with unprocessed channels of 'da'
-                
                 f_dict[key] = da.sel(channel = ikey)
-                # TODO: ^^^^ THIS IS NOT RIGHT!!!!
-
-                print(f"f_dict[key] dims at beginning of loop: {f_dict[key].dims}")
-                print(f"da dims when selecting channel: {da.dims}")
+               #TODO: Something is still wrong here
                 # plt.figure()
                 # plt.plot(f_dict[key].sel(lat = 30, lon = 10, method = 'nearest'), color = 'green')
                 # plt.ylabel(f'Var: '+str(self.config["input_vars"][ikey]) + '\n raw input data (lat:30, lon:10)')
@@ -162,22 +154,23 @@ class ClimateData:
                 f_dict[key] = self._masklandocean(f_dict[key])
             
                 ## REMOVE SEASONAL CYCLE
+                #for ichannel in range(f_dict[key].shape[-1]):
+                #     f_dict[key][..., ichannel] = self.trend_remove_seasonal_cycle(f_dict[key][...,ichannel])
                 f_dict[key] = self.trend_remove_seasonal_cycle(f_dict[key])
-                # plt.figure()
-                # plt.plot(f_dict[key].sel(lat = 10, lon = 10, method = 'nearest'))
 
                 ## ROLLING AVERAGE 
                 f_dict[key] = self.rolling_ave(f_dict[key])
-
-                # plt.figure()
-                # plt.plot(f_dict[key].sel(lat = 30, lon = 10, method = 'nearest'))
-                # plt.ylabel(f'Var: '+str(self.config["input_vars"][ikey]) + '\ndetrended deseasonalized anomalies (lat:30, lon:10)')
-                # plt.xlabel("Time")
+                
+                # for ichannel in range(f_dict[key].shape[-1]):
+                #     plt.figure()
+                #     plt.plot(f_dict[key][..., ichannel].sel(lat = 30, lon = 10, method = 'nearest'))
+                #     plt.ylabel(f'Var: '+str(self.config["input_vars"][ikey]) + '\ndetrended deseasonalized anomalies (lat:30, lon:10)')
+                #     plt.xlabel("Time")
                 # Confirmed smoothed, detrended, deseasonalized anomalies of PRECT and TS
-                print(f"f_dict[key] dims at end of loop: {f_dict[key].dims}")
 
-        print(f" da dims after processing data: {da.dims}")
-        print(f"f_dict[x] dims: {f_dict['x'].dims}")
+        print(f"channel 1: \n{f_dict['x'][...,0]}")
+        print(f"channel 2: \n{f_dict['x'][...,1]}")   
+        # print(f_dict["x"])
         return f_dict
     
     def _extractregion(self, da): 
