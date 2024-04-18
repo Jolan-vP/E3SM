@@ -140,7 +140,7 @@ class ClimateData:
 
             else:
                 # LOAD f_dict dictionary with unprocessed channels of 'da'
-                f_dict[key] = da.sel(channel = ikey)
+                f_dict[key] = da #.sel(channel = ikey)
                #TODO: Something is still wrong here
                 # plt.figure()
                 # plt.plot(f_dict[key].sel(lat = 30, lon = 10, method = 'nearest'), color = 'green')
@@ -153,23 +153,28 @@ class ClimateData:
                 ## MASK LAND/OCEAN 
                 f_dict[key] = self._masklandocean(f_dict[key])
             
-                ## REMOVE SEASONAL CYCLE
-                #for ichannel in range(f_dict[key].shape[-1]):
-                #     f_dict[key][..., ichannel] = self.trend_remove_seasonal_cycle(f_dict[key][...,ichannel])
-                f_dict[key] = self.trend_remove_seasonal_cycle(f_dict[key])
+                print(f"channel 1: \n{f_dict[key][...,0]}")
+                print(f"channel 2: \n{f_dict[key][...,1]}")
+
+                # REMOVE SEASONAL CYCLE
+                for ichannel in range(f_dict[key].shape[-1]):
+                    f_dict[key][..., ichannel] = self.trend_remove_seasonal_cycle(f_dict[key][...,ichannel])
+                #f_dict[key] = self.trend_remove_seasonal_cycle(f_dict[key])
+
 
                 ## ROLLING AVERAGE 
                 f_dict[key] = self.rolling_ave(f_dict[key])
-                
-                # for ichannel in range(f_dict[key].shape[-1]):
-                #     plt.figure()
-                #     plt.plot(f_dict[key][..., ichannel].sel(lat = 30, lon = 10, method = 'nearest'))
-                #     plt.ylabel(f'Var: '+str(self.config["input_vars"][ikey]) + '\ndetrended deseasonalized anomalies (lat:30, lon:10)')
-                #     plt.xlabel("Time")
+            
                 # Confirmed smoothed, detrended, deseasonalized anomalies of PRECT and TS
+                 
 
-        print(f"channel 1: \n{f_dict['x'][...,0]}")
-        print(f"channel 2: \n{f_dict['x'][...,1]}")   
+        for ichannel in range(f_dict[key].shape[-1]):
+                plt.figure()
+                plt.plot(f_dict["x"][...,ichannel].sel(lat = 30, lon = 10, method = 'nearest'))
+                plt.ylabel(f'Var: '+str(self.config["input_vars"][ichannel]) + '\ndetrended deseasonalized anomalies (lat:30, lon:10)')
+                plt.xlabel("Time")
+        print(f"channel 1: \n{f_dict[key][...,0]}")
+        print(f"channel 2: \n{f_dict[key][...,1]}")
         # print(f_dict["x"])
         return f_dict
     
