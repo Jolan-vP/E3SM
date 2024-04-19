@@ -140,42 +140,39 @@ class ClimateData:
 
             else:
                 # LOAD f_dict dictionary with unprocessed channels of 'da'
-                f_dict[key] = da #.sel(channel = ikey)
-               #TODO: Something is still wrong here
-                # plt.figure()
-                # plt.plot(f_dict[key].sel(lat = 30, lon = 10, method = 'nearest'), color = 'green')
-                # plt.ylabel(f'Var: '+str(self.config["input_vars"][ikey]) + '\n raw input data (lat:30, lon:10)')
-                # plt.xlabel("Time")
-
+                f_dict[key] = da 
+        
                 ## EXTRACT REGION
                 f_dict[key] = self._extractregion(f_dict[key])
 
                 ## MASK LAND/OCEAN 
                 f_dict[key] = self._masklandocean(f_dict[key])
             
-                print(f"channel 1: \n{f_dict[key][...,0]}")
-                print(f"channel 2: \n{f_dict[key][...,1]}")
+                # print(f"channel 1: \n{f_dict[key][...,0]}")
+                # print(f"channel 2: \n{f_dict[key][...,1]}")
 
                 # REMOVE SEASONAL CYCLE
                 for ichannel in range(f_dict[key].shape[-1]):
                     f_dict[key][..., ichannel] = self.trend_remove_seasonal_cycle(f_dict[key][...,ichannel])
-                #f_dict[key] = self.trend_remove_seasonal_cycle(f_dict[key])
-
-
+                
+                checkplot = f_dict[key].sel(time = '1855-01-01')
+                checkplot[...,1].plot()
                 ## ROLLING AVERAGE 
                 f_dict[key] = self.rolling_ave(f_dict[key])
             
                 # Confirmed smoothed, detrended, deseasonalized anomalies of PRECT and TS
                  
+        # CHECK FINAL OUTPUT FOR CHANNEL DEPTH AND VALUE ACCURACY: 
+        # for ichannel in range(f_dict[key].shape[-1]):
+        #         plt.figure()
+        #         plt.plot(f_dict["x"][...,ichannel].sel(lat = 30, lon = 10, method = 'nearest'))
+        #         plt.ylabel(f'Var: '+str(self.config["input_vars"][ichannel]) + '\ndetrended deseasonalized anomalies (lat:30, lon:10)')
+        #         plt.xlabel("Time")
+        # print(f"channel 1: \n{f_dict[key][...,0]}")
+        # print(f"channel 2: \n{f_dict[key][...,1]}")
 
-        for ichannel in range(f_dict[key].shape[-1]):
-                plt.figure()
-                plt.plot(f_dict["x"][...,ichannel].sel(lat = 30, lon = 10, method = 'nearest'))
-                plt.ylabel(f'Var: '+str(self.config["input_vars"][ichannel]) + '\ndetrended deseasonalized anomalies (lat:30, lon:10)')
-                plt.xlabel("Time")
-        print(f"channel 1: \n{f_dict[key][...,0]}")
-        print(f"channel 2: \n{f_dict[key][...,1]}")
-        # print(f_dict["x"])
+
+       
         return f_dict
     
     def _extractregion(self, da): 
@@ -217,17 +214,31 @@ class ClimateData:
         return da_masked
 
     def subtract_trend(self, x): 
-        # print(x.shape)
+        
         detrendOrder = 3
 
-        curve = np.polynomial.polynomial.polyfit(np.arange(0, x.shape[0]), x[:,0], detrendOrder)
+
+        curve = np.polynomial.polynomial.polyfit(np.arange(0, x.shape[0]), x, detrendOrder)
         trend = np.polynomial.polynomial.polyval(np.arange(0, x.shape[0]), curve) 
     
         try: 
-            detrend = x[:,0] - np.swapaxes(trend, 0, 1)
+            detrend = x - np.swapaxes(trend, 0, 1)
+            print(detrend)
         except:
-            detrend = x[:,0] - trend
+            detrend = x - trend
+            print(detrend)
         return detrend 
+        
+        # curve = np.polynomial.polynomial.polyfit(np.arange(0, x.shape[0]), x[:,0], detrendOrder)
+        # trend = np.polynomial.polynomial.polyval(np.arange(0, x.shape[0]), curve) 
+    
+        # try: 
+        #     detrend = x[:,0] - np.swapaxes(trend, 0, 1)
+        #     print(detrend)
+        # except:
+        #     detrend = x[:,0] - trend
+        #     print(detrend)
+        # return detrend 
     
     def trend_remove_seasonal_cycle(self, da):
 
