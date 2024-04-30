@@ -26,52 +26,68 @@ def compositeindices(config, daprocessed):
     # Open MJO RMM1 + RMM2 files: 
     # TODO: make flexible for different chunks
     for iens, ens in enumerate(config['databuilder']['ensembles']):
-        with open(config['data_dir'] + ens + '/MJO_historical_' + config['databuilder']['ensemble_codes'][iens] + '_1850-2014.pkl', 'rb') as MJO_file:
+
+        MJOfilename = ens + '/MJO_historical_' + config['databuilder']['ensemble_codes'][iens] + '_1850-2014.pkl'
+
+        with open(config['data_dir'] + MJOfilename, 'rb') as MJO_file:
             frontnans = np.nan * np.ones([120, 7])
             # First 120 days of the dataset are nans - they were eliminated as part of the RMM Calculation Process (Wheeler & Henden 2004)
             # Therefore I have added 120 nans as placeholders at the beginning of the array to represent the lost values
 
+            print(MJOfilename)
+            shortdatarange = config["databuilder"]["data_range"]
+            #print(shortdatarange)
+            beginningindex = (shortdatarange[0] - 1850) * 365
+            endingindex = (shortdatarange[1] - 1850) * 365
+            #print(beginningindex)
+            #print(endingindex)
+
             if ens == "ens1":
                 MJOens1 = np.load(MJO_file, allow_pickle=True)
+                #print(f"ens1: {MJOens1}")
                 MJOens1 = np.asarray(MJOens1)
                 MJOens1 = np.append(frontnans, MJOens1, axis = 0)
                 #SHORTEN
-                MJOens1 = MJOens1[:4015, :]
-            if ens == "ens2":
+                
+                MJOens1 = MJOens1[beginningindex : endingindex, :]
+    
+            elif ens == "ens2":
                 MJOens2 = np.load(MJO_file, allow_pickle=True)
+                #print(f"mjoEns2 shape: {MJOens2.shape}")
                 MJOens2 = np.asarray(MJOens2)
                 MJOens2 = np.append(frontnans, MJOens2, axis = 0)
                 #SHORTEN
-                MJOens2 = MJOens2[:4015, :]
-            if ens == "ens3":
+                #print(MJOens2[endingindex, 4:7])
+                MJOens2 = MJOens2[beginningindex : endingindex, :]
+            elif ens == "ens3":
                 MJOens3 = np.load(MJO_file, allow_pickle=True)
+                #print(f"ens3: {MJOens3}")
                 MJOens3 = np.asarray(MJOens3)
                 MJOens3 = np.append(frontnans, MJOens3, axis = 0)
                 #SHORTEN
-                MJOens3 = MJOens3[:4015, :]
+                MJOens3 = MJOens3[beginningindex : endingindex, :]
            
     # Combine indices for easier looping: 
     MJOindices = np.array([MJOens1, MJOens2, MJOens3])
 
     # Desired phase number output array: 
     phases = np.zeros([len(MJOindices[1]), np.size(config["databuilder"]["ensembles"])])
-    print(f"shape phases array: {phases.shape}")
+    #print(f"shape phases array: {phases.shape}")
 
     phaseqty = 9
 
     phaseindex = np.nan * np.ones([phases.shape[0], phaseqty, np.size(config["databuilder"]["ensembles"])])
-    print(f"shape phaseindex: {phaseindex.shape}")
+    #print(f"shape phaseindex: {phaseindex.shape}")
 
     # FIRST: Identify which phase of MJO each datapoint is in: 
     for iens, ens in enumerate(config["databuilder"]["ensembles"]):
         for ichannel in range(daprocessed.shape[-1]):
 
-            fig, ax = plt.subplots(9, 1, figsize=(10, 16), subplot_kw={'projection': ccrs.PlateCarree()})
+            fig, ax = plt.subplots(9, 1, figsize=(10, 20), subplot_kw={'projection': ccrs.PlateCarree()})
             extent = [ 40, 180, -14.5, 14.5]
-            vmin = 10e-11
-            vmax = 10e-6
+            fonty = 20
 
-            for samplecoord in range(120, len(MJOindices[0,:,0])-120):
+            for samplecoord in range(0, len(MJOindices[iens,:,2])):
                 
                 # calculate coordinate angle: 
                 RMM1 = MJOindices[iens, samplecoord, 2]
@@ -111,33 +127,53 @@ def compositeindices(config, daprocessed):
                 else: 
                     print(f"angle: {angle_deg}, amplitude: {amplitude}")
                     raise ValueError("Sample does not fit into a phase (?)")
-        
-        
-        # Use indices to identify phases of the processed data
-            for phase, axes in enumerate(range(0, phaseqty)):
+
+            
+            correctorder = [0, 8, 1, 2, 3, 4, 5, 6, 7]
+            # Use indices to identify phases of the processed data
+            for phase in range(0, phaseqty):
+                
                 collectedphaseindices = np.where(phases[:,iens]==phase)[0]
-
+                #print(f"phase indices per phase: {phase}, {collectedphaseindices}")
                 phaseindex[0:len(collectedphaseindices), phase, iens] = collectedphaseindices
-
+                if ens == "ens1": 
+                    print(f" collected phase indices ENS1: {collectedphaseindices}")
+                if ens == "ens2": 
+                    print(f" collected phase indices ENS2: {collectedphaseindices}")
                 # Select non-nan values for each phase: 
                 _phasecontainer = phaseindex[:,phase, iens]
                 non_nans = _phasecontainer[~np.isnan(_phasecontainer)]
                 non_nans_int = non_nans.astype(int)
-
+                print(non_nans_int)
                 averagedphase = daprocessed[non_nans_int].mean(axis = 0)
                 
     # PLOTS ----------------------------------------------
-            # for phase, axes in enumerate(ax):
-                img = averagedphase[..., ichannel].plot(ax=ax[phase], cmap='BrBG', transform=ccrs.PlateCarree())
-                ax[phase].set_extent(extent, crs=ccrs.PlateCarree())
-                ax[phase].coastlines()
-                ax[phase].set_title(f'Phase {phase}')
+                if ichannel == 0:
+                    img = averagedphase[..., ichannel].plot(ax=ax[correctorder[phase]], cmap='BrBG', transform=ccrs.PlateCarree(), add_colorbar = False)
+                    ax[correctorder[phase]].set_extent(extent, crs=ccrs.PlateCarree())
+                    ax[correctorder[phase]].coastlines()
+                elif ichannel == 1:
+                    img = averagedphase[..., ichannel].plot(ax=ax[correctorder[phase]], cmap='coolwarm', transform=ccrs.PlateCarree(), add_colorbar = False)
+                    ax[correctorder[phase]].set_extent(extent, crs=ccrs.PlateCarree())
+                    ax[correctorder[phase]].coastlines()
+                if phase == 0:
+                    ax[correctorder[phase]].set_title(f'Neutral', x = -0.08,  y = 0.425, pad = 14, size = fonty)
+                else:
+                    ax[correctorder[phase]].set_title(f'Phase {phase}', x = -0.08, y = 0.425, pad = 14,  size = fonty)
+
             
-            plt.suptitle(f"Ensemble " + str(iens+1)+ " - Input Variable: " + str(config["databuilder"]["input_vars"][ichannel]+"\n"))
+            plt.suptitle(f"Ensemble " + str(iens+1)+ " - Input Variable: " + str(config["databuilder"]["input_vars"][ichannel]+"\n"), fontsize = fonty)
             plt.tight_layout()
+           
+            cbar_ax = fig.add_axes([1.01, 0.28, 0.02, 0.4])
+            cbar_ax.tick_params(labelsize=fonty)
+            fig.colorbar(img, cax=cbar_ax)
+
+            plt.savefig('/Users/C830793391/Documents/Research/E3SM/visuals/' + str(ens) + '/' + str(ens) + str(config["databuilder"]["input_vars"][ichannel])+ '1900-1950.png', format='png', bbox_inches ='tight', dpi = config["fig_dpi"], transparent =True)
             plt.show() 
 
 
-    return MJOens1, MJOens2, MJOens3, phaseindex
+            
+    return MJOindices, MJOens1, MJOens2, MJOens3, phaseindex
 
 

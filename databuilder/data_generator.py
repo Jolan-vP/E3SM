@@ -61,13 +61,13 @@ class ClimateData:
             if self.verbose:
                 print(ens)
             if ens == "ens1":   
-                train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1.1850-1860.nc")
+                train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1.1900-1950.nc")
                 #train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
             if ens == "ens2":
-                validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1.1850-1860.nc")
+                validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1.1900-1950.nc")
                 #validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
             elif ens == "ens3":
-                test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1.1850-1860.nc")
+                test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1.1900-1950.nc")
                 #test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
 
                 
@@ -155,7 +155,7 @@ class ClimateData:
                 for ichannel in range(f_dict[key].shape[-1]):
                     f_dict[key][..., ichannel] = self.trend_remove_seasonal_cycle(f_dict[key][...,ichannel])
                 
-                checkplot = f_dict[key].sel(time = '1855-01-01')
+                checkplot = f_dict[key].sel(time = '1905-01-01')
                 checkplot[...,1].plot()
                 ## ROLLING AVERAGE 
                 f_dict[key] = self.rolling_ave(f_dict[key])
@@ -171,8 +171,6 @@ class ClimateData:
         # print(f"channel 1: \n{f_dict[key][...,0]}")
         # print(f"channel 2: \n{f_dict[key][...,1]}")
 
-
-       
         return f_dict
     
     def _extractregion(self, da): 
@@ -223,22 +221,10 @@ class ClimateData:
     
         try: 
             detrend = x - np.swapaxes(trend, 0, 1)
-            print(detrend)
         except:
             detrend = x - trend
-            print(detrend)
         return detrend 
-        
-        # curve = np.polynomial.polynomial.polyfit(np.arange(0, x.shape[0]), x[:,0], detrendOrder)
-        # trend = np.polynomial.polynomial.polyval(np.arange(0, x.shape[0]), curve) 
     
-        # try: 
-        #     detrend = x[:,0] - np.swapaxes(trend, 0, 1)
-        #     print(detrend)
-        # except:
-        #     detrend = x[:,0] - trend
-        #     print(detrend)
-        # return detrend 
     
     def trend_remove_seasonal_cycle(self, da):
 
