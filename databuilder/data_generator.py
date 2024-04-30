@@ -120,45 +120,51 @@ class ClimateData:
         
         # For each input variable or data entity you would like to process: 
         for ikey, key in enumerate(f_dict):
-            if len(self.config["input_vars"]) == 1:
-                f_dict[key] = da
-               
-                ## EXTRACT REGION
-                f_dict[key] = self._extractregion(f_dict[key])
+            if key == "y": # TODO: f_dict[key] = "target_var" value at "target_region" SMOOTHED time series (forward rolling average)
+                f_dict[key] = np.nan 
 
-                ## MASK LAND/OCEAN 
-                f_dict[key] = self._masklandocean(f_dict[key])
-            
-                ## REMOVE SEASONAL CYCLE
-                f_dict[key] = self.trend_remove_seasonal_cycle(f_dict[key])
-
-                ## ROLLING AVERAGE 
-                f_dict[key] = self.rolling_ave(f_dict[key])
-
-                plt.figure()
-                plt.plot(f_dict[key].sel(lat = 10, lon = 10, method = 'nearest'))
-
-            else:
-                # LOAD f_dict dictionary with unprocessed channels of 'da'
-                f_dict[key] = da 
-        
-                ## EXTRACT REGION
-                f_dict[key] = self._extractregion(f_dict[key])
-
-                ## MASK LAND/OCEAN 
-                f_dict[key] = self._masklandocean(f_dict[key])
-            
-                # print(f"channel 1: \n{f_dict[key][...,0]}")
-                # print(f"channel 2: \n{f_dict[key][...,1]}")
-
-                # REMOVE SEASONAL CYCLE
-                for ichannel in range(f_dict[key].shape[-1]):
-                    f_dict[key][..., ichannel] = self.trend_remove_seasonal_cycle(f_dict[key][...,ichannel])
+                #TODO: Lead/Lag code for y - shift forward 10-14 days (process = smooth average FIRST before lagging)
+                # will need to cut off beginning and ends of data arrays to account for averaging
+            else: 
+                if len(self.config["input_vars"]) == 1:
+                    f_dict[key] = da
                 
-                checkplot = f_dict[key].sel(time = '1905-01-01')
-                checkplot[...,1].plot()
-                ## ROLLING AVERAGE 
-                f_dict[key] = self.rolling_ave(f_dict[key])
+                    ## EXTRACT REGION
+                    f_dict[key] = self._extractregion(f_dict[key])
+
+                    ## MASK LAND/OCEAN 
+                    f_dict[key] = self._masklandocean(f_dict[key])
+                
+                    ## REMOVE SEASONAL CYCLE
+                    f_dict[key] = self.trend_remove_seasonal_cycle(f_dict[key])
+
+                    ## ROLLING AVERAGE 
+                    f_dict[key] = self.rolling_ave(f_dict[key])
+
+                    plt.figure()
+                    plt.plot(f_dict[key].sel(lat = 10, lon = 10, method = 'nearest'))
+
+                else:
+                    # LOAD f_dict dictionary with unprocessed channels of 'da'
+                    f_dict[key] = da 
+            
+                    ## EXTRACT REGION
+                    f_dict[key] = self._extractregion(f_dict[key])
+
+                    ## MASK LAND/OCEAN 
+                    f_dict[key] = self._masklandocean(f_dict[key])
+                
+                    # print(f"channel 1: \n{f_dict[key][...,0]}")
+                    # print(f"channel 2: \n{f_dict[key][...,1]}")
+
+                    # REMOVE SEASONAL CYCLE
+                    for ichannel in range(f_dict[key].shape[-1]):
+                        f_dict[key][..., ichannel] = self.trend_remove_seasonal_cycle(f_dict[key][...,ichannel])
+                    
+                    checkplot = f_dict[key].sel(time = '1905-01-01')
+                    checkplot[...,1].plot()
+                    ## ROLLING AVERAGE 
+                    f_dict[key] = self.rolling_ave(f_dict[key])
             
                 # Confirmed smoothed, detrended, deseasonalized anomalies of PRECT and TS
                  

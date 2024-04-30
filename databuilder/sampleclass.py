@@ -10,7 +10,6 @@ class SampleDict(dict):
     def __init__(self, *arg, **kw):
         super(SampleDict, self).__init__(*arg, **kw)
     
-        #TODO: Can we grab the inputs from the climate class initialization here? 
         self.__setitem__("x", []) 
         self.__setitem__("y", [])
 

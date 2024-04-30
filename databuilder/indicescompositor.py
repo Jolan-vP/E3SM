@@ -39,8 +39,7 @@ def compositeindices(config, daprocessed):
             #print(shortdatarange)
             beginningindex = (shortdatarange[0] - 1850) * 365
             endingindex = (shortdatarange[1] - 1850) * 365
-            #print(beginningindex)
-            #print(endingindex)
+            #print(beginningindex, endingindex)
 
             if ens == "ens1":
                 MJOens1 = np.load(MJO_file, allow_pickle=True)
@@ -72,20 +71,15 @@ def compositeindices(config, daprocessed):
 
     # Desired phase number output array: 
     phases = np.zeros([len(MJOindices[1]), np.size(config["databuilder"]["ensembles"])])
-    #print(f"shape phases array: {phases.shape}")
-
     phaseqty = 9
-
-    phaseindex = np.nan * np.ones([phases.shape[0], phaseqty, np.size(config["databuilder"]["ensembles"])])
-    #print(f"shape phaseindex: {phaseindex.shape}")
-
+    
     # FIRST: Identify which phase of MJO each datapoint is in: 
     for iens, ens in enumerate(config["databuilder"]["ensembles"]):
         for ichannel in range(daprocessed.shape[-1]):
 
-            fig, ax = plt.subplots(9, 1, figsize=(10, 20), subplot_kw={'projection': ccrs.PlateCarree()})
-            extent = [ 40, 180, -14.5, 14.5]
-            fonty = 20
+            fig, ax = plt.subplots(9, 1, figsize=(10, 12), subplot_kw={'projection': ccrs.PlateCarree(central_longitude= 180)})
+            extent = [ 40, -80, -14.5, 14.5]
+            fonty = 18
 
             for samplecoord in range(0, len(MJOindices[iens,:,2])):
                 
@@ -132,37 +126,27 @@ def compositeindices(config, daprocessed):
             correctorder = [0, 8, 1, 2, 3, 4, 5, 6, 7]
             # Use indices to identify phases of the processed data
             for phase in range(0, phaseqty):
-                
+                print(ens)
                 collectedphaseindices = np.where(phases[:,iens]==phase)[0]
-                #print(f"phase indices per phase: {phase}, {collectedphaseindices}")
-                phaseindex[0:len(collectedphaseindices), phase, iens] = collectedphaseindices
-                if ens == "ens1": 
-                    print(f" collected phase indices ENS1: {collectedphaseindices}")
-                if ens == "ens2": 
-                    print(f" collected phase indices ENS2: {collectedphaseindices}")
-                # Select non-nan values for each phase: 
-                _phasecontainer = phaseindex[:,phase, iens]
-                non_nans = _phasecontainer[~np.isnan(_phasecontainer)]
-                non_nans_int = non_nans.astype(int)
-                print(non_nans_int)
-                averagedphase = daprocessed[non_nans_int].mean(axis = 0)
+                averagedphase = daprocessed[collectedphaseindices].mean(axis = 0)
+                # ! does averagedphase need to be collected into three buckets then plotted? Is it ok that is (hypothetically) being written over with each iteration of ensemble member? 
                 
-    # PLOTS ----------------------------------------------
+                # PLOTS ----------------------------------------------
                 if ichannel == 0:
                     img = averagedphase[..., ichannel].plot(ax=ax[correctorder[phase]], cmap='BrBG', transform=ccrs.PlateCarree(), add_colorbar = False)
-                    ax[correctorder[phase]].set_extent(extent, crs=ccrs.PlateCarree())
+                    #ax[correctorder[phase]].set_extent(extent, crs=ccrs.PlateCarree(central_longitude= 180))
                     ax[correctorder[phase]].coastlines()
                 elif ichannel == 1:
                     img = averagedphase[..., ichannel].plot(ax=ax[correctorder[phase]], cmap='coolwarm', transform=ccrs.PlateCarree(), add_colorbar = False)
-                    ax[correctorder[phase]].set_extent(extent, crs=ccrs.PlateCarree())
+                    #ax[correctorder[phase]].set_extent(extent, crs=ccrs.PlateCarree(central_longitude= 180))
                     ax[correctorder[phase]].coastlines()
                 if phase == 0:
-                    ax[correctorder[phase]].set_title(f'Neutral', x = -0.08,  y = 0.425, pad = 14, size = fonty)
+                    ax[correctorder[phase]].set_title(f'Neutral', x = -0.08,  y = 0.3, pad = 14, size = fonty)
                 else:
-                    ax[correctorder[phase]].set_title(f'Phase {phase}', x = -0.08, y = 0.425, pad = 14,  size = fonty)
+                    ax[correctorder[phase]].set_title(f'Phase {phase}', x = -0.08, y = 0.3, pad = 14,  size = fonty)
 
             
-            plt.suptitle(f"Ensemble " + str(iens+1)+ " - Input Variable: " + str(config["databuilder"]["input_vars"][ichannel]+"\n"), fontsize = fonty)
+            plt.suptitle(f"Ensemble " + str(iens+1)+ "\nInput Variable: " + str(config["databuilder"]["input_vars"][ichannel]+"\n"), fontsize = fonty)
             plt.tight_layout()
            
             cbar_ax = fig.add_axes([1.01, 0.28, 0.02, 0.4])
@@ -172,8 +156,22 @@ def compositeindices(config, daprocessed):
             plt.savefig('/Users/C830793391/Documents/Research/E3SM/visuals/' + str(ens) + '/' + str(ens) + str(config["databuilder"]["input_vars"][ichannel])+ '1900-1950.png', format='png', bbox_inches ='tight', dpi = config["fig_dpi"], transparent =True)
             plt.show() 
 
-
-            
-    return MJOindices, MJOens1, MJOens2, MJOens3, phaseindex
+    return MJOindices, MJOens1, MJOens2, MJOens3
 
 
+
+
+
+
+
+
+
+
+
+# line 138: 
+                # phaseindex[0:len(collectedphaseindices), phase, iens] = collectedphaseindices
+                # # Select non-nan values for each phase: 
+                # _phasecontainer = phaseindex[:,phase, iens]
+                # non_nans = _phasecontainer[~np.isnan(_phasecontainer)]
+                # non_nans_int = non_nans.astype(int)
+                #print(non_nans_int)
