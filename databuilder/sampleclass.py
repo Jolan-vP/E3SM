@@ -15,8 +15,6 @@ class SampleDict(dict):
 
 
     def concat(self, f_dict):
-        print(self.keys())
-        print(f_dict.keys())
         for key in self:
             if len(self[key]) == 0:
                 self[key] = f_dict[key]
@@ -24,5 +22,3 @@ class SampleDict(dict):
                 pass
             else:
                 self[key] = np.concatenate((self[key], f_dict[key]), axis = 0)
-
-            print(type(self[key]))

@@ -120,11 +120,32 @@ class ClimateData:
         
         # For each input variable or data entity you would like to process: 
         for ikey, key in enumerate(f_dict):
-            if key == "y": # TODO: f_dict[key] = "target_var" value at "target_region" SMOOTHED time series (forward rolling average)
-                f_dict[key] = np.nan 
+            if key == "y":
+                f_dict[key] = ds[self.config["target_var"]]
+                
+                # EXTRACT TARGET LOCATION
+                targetlat = self.config["target_region"][0]
+                targetlon = self.config["target_region"][1]
+                f_dict[key] = f_dict[key].sel(lat = targetlat, lon = targetlon, method = 'nearest')
 
-                #TODO: Lead/Lag code for y - shift forward 10-14 days (process = smooth average FIRST before lagging)
-                # will need to cut off beginning and ends of data arrays to account for averaging
+                # REMOVE SEASONAL CYCLE
+                f_dict[key] = self.trend_remove_seasonal_cycle(f_dict[key])
+
+                # ROLLING AVERAGE
+                f_dict[key] = self.rolling_ave(f_dict[key]) # first six values are now nans
+                # TODO: Chop first six values (nans) from beginning of target timeseries?
+                f_dict[key] = f_dict[key][ self.config["averaging_length"]: ]
+
+                plt.figure()
+                plt.plot(f_dict[key])
+                plt.xlabel("Time (day index)")
+                plt.ylabel("Precip Anomaly")
+
+                # LEAD / LAG ADJUSTMENT OF TARGET DATASET
+                if self.config["lagtime"] != 0: 
+                    f_dict[key] = f_dict[key][ self.config["lagtime"]: ]
+                #TODO: Lead/Lag code for y - shift forward 10-14 days = input 10x nans at the beginning of the dataset?
+
             else: 
                 if len(self.config["input_vars"]) == 1:
                     f_dict[key] = da
@@ -140,9 +161,12 @@ class ClimateData:
 
                     ## ROLLING AVERAGE 
                     f_dict[key] = self.rolling_ave(f_dict[key])
+                    # TODO: Chop first six values (nans) from beginning of X dataset?
+                    f_dict[key] = f_dict[key][ self.config["averaging_length"]: ]
 
-                    plt.figure()
-                    plt.plot(f_dict[key].sel(lat = 10, lon = 10, method = 'nearest'))
+
+                    # plt.figure()
+                    # plt.plot(f_dict[key].sel(lat = 10, lon = 10, method = 'nearest'))
 
                 else:
                     # LOAD f_dict dictionary with unprocessed channels of 'da'
@@ -153,30 +177,22 @@ class ClimateData:
 
                     ## MASK LAND/OCEAN 
                     f_dict[key] = self._masklandocean(f_dict[key])
-                
-                    # print(f"channel 1: \n{f_dict[key][...,0]}")
-                    # print(f"channel 2: \n{f_dict[key][...,1]}")
 
                     # REMOVE SEASONAL CYCLE
                     for ichannel in range(f_dict[key].shape[-1]):
                         f_dict[key][..., ichannel] = self.trend_remove_seasonal_cycle(f_dict[key][...,ichannel])
                     
-                    checkplot = f_dict[key].sel(time = '1905-01-01')
-                    checkplot[...,1].plot()
+                    # checkplot = f_dict[key].sel(time = '1905-01-01')
+                    # checkplot[...,1].plot()
+
                     ## ROLLING AVERAGE 
                     f_dict[key] = self.rolling_ave(f_dict[key])
-            
+                    # TODO: Chop first six values (nans) from beginning of dataset?
+                    f_dict[key] = f_dict[key][ self.config["averaging_length"]: ]
+
+                    print(f_dict[key].values[:10])
                 # Confirmed smoothed, detrended, deseasonalized anomalies of PRECT and TS
                  
-        # CHECK FINAL OUTPUT FOR CHANNEL DEPTH AND VALUE ACCURACY: 
-        # for ichannel in range(f_dict[key].shape[-1]):
-        #         plt.figure()
-        #         plt.plot(f_dict["x"][...,ichannel].sel(lat = 30, lon = 10, method = 'nearest'))
-        #         plt.ylabel(f'Var: '+str(self.config["input_vars"][ichannel]) + '\ndetrended deseasonalized anomalies (lat:30, lon:10)')
-        #         plt.xlabel("Time")
-        # print(f"channel 1: \n{f_dict[key][...,0]}")
-        # print(f"channel 2: \n{f_dict[key][...,1]}")
-
         return f_dict
     
     def _extractregion(self, da): 
@@ -221,7 +237,6 @@ class ClimateData:
         
         detrendOrder = 3
 
-
         curve = np.polynomial.polynomial.polyfit(np.arange(0, x.shape[0]), x, detrendOrder)
         trend = np.polynomial.polynomial.polyval(np.arange(0, x.shape[0]), curve) 
     
@@ -235,7 +250,6 @@ class ClimateData:
     def trend_remove_seasonal_cycle(self, da):
 
         if len(np.array(da.shape)) == 1: 
-            print("shape of data = 1")
             return da.groupby("time.dayofyear").map(self.subtract_trend).dropna("time")
         
         else: 
