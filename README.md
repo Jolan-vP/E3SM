@@ -58,13 +58,13 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 Jolan von Plutzner - j.vonplutzner@colostate.edu
 
-Project Link: [https://github.com/Jolan-vP/E3SM](https://github.com/Jolan-vP/E3SM))
+Project Link: [https://github.com/Jolan-vP/E3SM](https://github.com/Jolan-vP/E3SM)
 
 
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
 
-* []() Dr. Elizabeth Barnes - Colorado State Universtiy Department of Atmospheric Science
+* []() Dr. Elizabeth Barnes - Colorado State University Department of Atmospheric Science
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
