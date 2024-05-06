@@ -34,7 +34,7 @@ import random as random
 def NinoIndices(member, averaginglength):
     ddir = "/pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_" + str(member) +"/archive/atm/hist"
     edir = "/pscratch/sd/p/plma/shared/for_jolan"
-    # ddir = "/Users/C830793391/BIG_DATA/E3SM_Data/ens1/bilinear OA HW1/"
+    #ddir = "/Users/C830793391/BIG_DATA/E3SM_Data/ens1/bilinear OA HW1/"
 
     # (1) Define Lat Lon Boxes
     nino_boxbounds = np.array([[-5, 5, 190, 240],  # NINO 3+4
@@ -52,24 +52,27 @@ def NinoIndices(member, averaginglength):
     TS3 = _extractregion(ds["TS"], nino_boxbounds[2,:])
     TS4 = _extractregion(ds["TS"], nino_boxbounds[3,:])
 
-    temp_dict = {0: TS3_4, 
-                 1: TS1_2, 
-                 2: TS3, 
-                 3: TS4}
+    temp_dict = {"Nino34": TS3_4, 
+                 "Nino12": TS1_2, 
+                 "Nino2": TS3, 
+                 "Nino3": TS4}
     
-    for index in range(4):
-        weights = np.cos(np.deg2rad(temp_dict[index].lat))
-        temp_dict[index] = temp_dict[index].weighted(weights)
-        temp_dict[index] = temp_dict[index].mean(("lat", "lon"))
+    for key in temp_dict:
+        weights = np.cos(np.deg2rad(temp_dict[key].lat))
+        temp_dict[key] = temp_dict[key].weighted(weights)
+        temp_dict[key] = temp_dict[key].mean(("lat", "lon"))
         
         # (3) Subtract Climatology (remove seasonal cycle)
-        temp_dict[index] = trend_remove_seasonal_cycle(temp_dict[index])
+        temp_dict[key] = trend_remove_seasonal_cycle(temp_dict[key])
 
         # (4) 5 Month Running Mean of TS 
-        temp_dict[index] = rolling_ave(temp_dict[index], averaginglength)
+        temp_dict[key] = rolling_ave(temp_dict[key], averaginglength)
 
         # (5) Divide by standard deviation 
-        temp_dict[index] = temp_dict[index] / xr.DataArray.std(temp_dict[index])
+        temp_dict[key] = temp_dict[key] / xr.DataArray.std(temp_dict[key])
+        
+        # Save .nc file output
+        temp_dict[key].to_netcdf(ddir + "/nino.member" + str(member) + "." + key + ".nc")
 
     return temp_dict
 
