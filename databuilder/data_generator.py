@@ -61,13 +61,13 @@ class ClimateData:
             if self.verbose:
                 print(ens)
             if ens == "ens1":   
-                train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1.1900-1950.nc")
+                train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
                 #train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
             if ens == "ens2":
-                validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1.1900-1950.nc")
+                validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
                 #validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
             elif ens == "ens3":
-                test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1.1900-1950.nc")
+                test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
                 #test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
 
                 
@@ -133,17 +133,15 @@ class ClimateData:
 
                 # ROLLING AVERAGE
                 f_dict[key] = self.rolling_ave(f_dict[key]) # first six values are now nans
-                # TODO: Chop first six values (nans) from beginning of target timeseries?
-                f_dict[key] = f_dict[key][ self.config["averaging_length"]: ]
-
+                
                 plt.figure()
                 plt.plot(f_dict[key])
                 plt.xlabel("Time (day index)")
                 plt.ylabel("Precip Anomaly")
 
                 # LEAD / LAG ADJUSTMENT OF TARGET DATASET
-                if self.config["lagtime"] != 0: 
-                    f_dict[key] = f_dict[key][ self.config["lagtime"]: ]
+                # if self.config["lagtime"] != 0: 
+                #     f_dict[key] = f_dict[key][ self.config["lagtime"]: ]
                 #TODO: Lead/Lag code for y - shift forward 10-14 days = input 10x nans at the beginning of the dataset?
 
             else: 
@@ -161,9 +159,6 @@ class ClimateData:
 
                     ## ROLLING AVERAGE 
                     f_dict[key] = self.rolling_ave(f_dict[key])
-                    # TODO: Chop first six values (nans) from beginning of X dataset?
-                    f_dict[key] = f_dict[key][ self.config["averaging_length"]: ]
-
 
                     # plt.figure()
                     # plt.plot(f_dict[key].sel(lat = 10, lon = 10, method = 'nearest'))
@@ -187,17 +182,17 @@ class ClimateData:
 
                     ## ROLLING AVERAGE 
                     f_dict[key] = self.rolling_ave(f_dict[key])
-                    # TODO: Chop first six values (nans) from beginning of dataset?
-                    f_dict[key] = f_dict[key][ self.config["averaging_length"]: ]
-
-                    print(f_dict[key].values[:10])
+                
                 # Confirmed smoothed, detrended, deseasonalized anomalies of PRECT and TS
                  
         return f_dict
     
     def _extractregion(self, da): 
-        if self.config["input_region"] is None: 
-
+        if self.config["input_region"] == "None": 
+            
+            # "input_region": [[-15.0, 15.0, 40.0, 300.0],
+            #              [-15.0, 15.0, 40.0, 300.0]],
+            
             min_lon, max_lon = [0, 360]
             min_lat, max_lat = [-90, 90]
             print("input region is none")

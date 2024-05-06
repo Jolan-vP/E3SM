@@ -11,9 +11,8 @@
     "databuilder": {
         
         "input_vars": ["PRECT", "TS"],
-        "data_range": [1900, 1950],
-        "input_region": [[-15.0, 15.0, 40.0, 300.0],
-                         [-15.0, 15.0, 40.0, 300.0]],
+        "data_range": [1850, 1860],
+        "input_region": "None",
         "input_mask": ["None", "ocean"],
         "ensembles": ["ens1", "ens2", "ens3"],
         "ensemble_codes": ["0101", "0151", "0201"],
