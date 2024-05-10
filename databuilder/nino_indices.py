@@ -32,7 +32,7 @@ from random import choices
 import random as random
 
 def NinoIndices(member, averaginglength):
-    ddir = "/pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_" + str(member) +"/archive/atm/hist"
+    ddir = "/pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_" + str(member) +"/archive/atm/hist/"
     edir = "/pscratch/sd/p/plma/shared/for_jolan"
     #ddir = "/Users/C830793391/BIG_DATA/E3SM_Data/ens1/bilinear OA HW1/"
 
