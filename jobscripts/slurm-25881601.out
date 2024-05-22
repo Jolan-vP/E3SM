@@ -1,0 +1,692 @@
+/var/spool/slurmd/job25881601/slurm_script: line 11: source: filename argument required
+source: usage: source filename [arguments]
+/var/spool/slurmd/job25881601/slurm_script: line 12: /global/common/software/e3sm/anaconda_envs/load_latest_e3sm_unified_pm-cpu.csh: Permission denied
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+srun: error: nid004683: tasks 0-127: Exited with exit code 2
+srun: Terminating StepId=25881601.0
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+srun: error: nid006686: tasks 128-255: Exited with exit code 2
+Invalid null command.
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.2012-12.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.2012-12.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1986-09.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1986-09.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1906-10.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1906-10.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1940-12.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1940-12.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1953-03.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1953-03.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.2009-04.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.2009-04.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1954-05.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1954-05.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1956-12.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1956-12.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.2003-09.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.2003-09.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1974-10.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1974-10.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1865-07.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1865-07.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1909-10.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1909-10.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1906-03.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1906-03.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.2012-06.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.2012-06.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1963-11.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1963-11.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1947-12.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1947-12.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1937-03.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1937-03.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1922-04.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1922-04.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1952-10.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1952-10.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1879-11.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1879-11.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1904-06.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1904-06.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1917-02.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1917-02.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1982-11.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1982-11.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1935-10.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1935-10.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1987-03.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1987-03.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1873-09.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1873-09.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1931-06.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1931-06.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1980-10.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1980-10.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.2010-04.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.2010-04.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1883-05.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1883-05.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1986-12.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1986-12.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1992-02.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1992-02.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1860-02.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1860-02.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1944-05.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1944-05.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1919-10.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1919-10.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1890-10.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1890-10.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1869-03.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1869-03.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1941-06.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1941-06.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1991-04.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1991-04.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1871-06.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1871-06.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1999-01.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1999-01.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1911-07.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1911-07.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1861-01.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1861-01.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1858-11.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1858-11.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1885-01.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1885-01.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1861-07.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1861-07.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1959-02.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1959-02.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1871-03.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1871-03.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1938-03.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1938-03.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1955-07.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1955-07.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.2009-05.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.2009-05.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1869-08.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1869-08.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1994-12.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1994-12.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1889-04.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1889-04.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1850-08.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1850-08.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1954-08.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1954-08.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1878-12.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1878-12.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1885-02.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1885-02.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1905-01.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1905-01.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1884-10.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1884-10.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1975-02.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1975-02.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1997-12.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1997-12.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1886-04.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1886-04.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.2010-06.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.2010-06.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.2014-02.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.2014-02.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1983-03.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1983-03.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1930-09.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1930-09.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1980-06.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1980-06.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1965-10.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1965-10.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1929-02.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1929-02.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.2014-12.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.2014-12.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1862-02.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1862-02.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1935-12.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1935-12.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1961-10.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1961-10.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.2009-01.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.2009-01.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1973-10.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1973-10.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1939-05.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1939-05.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1895-06.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1895-06.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1901-08.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1901-08.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1982-07.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1982-07.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1931-05.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1931-05.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1917-06.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1917-06.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1893-08.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1893-08.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1853-08.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1853-08.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.2004-03.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.2004-03.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1905-12.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1905-12.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1998-09.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1998-09.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.2002-04.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.2002-04.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1882-04.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1882-04.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1960-11.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1960-11.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1887-07.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1887-07.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1989-09.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1989-09.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1892-11.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1892-11.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1858-12.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1858-12.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.2005-08.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.2005-08.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1888-02.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1888-02.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.2007-10.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.2007-10.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.2004-05.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.2004-05.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1850-07.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1850-07.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1919-11.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1919-11.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1885-08.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1885-08.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1944-03.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1944-03.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1974-01.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1974-01.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1922-03.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1922-03.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1926-02.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1926-02.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1916-10.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1916-10.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear/v2.LR.historical_0201.eam.h0.1923-04.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist/v2.LR.historical_0201.eam.h0.1923-04.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+slurmstepd: error: *** JOB 25881601 ON nid004683 CANCELLED AT 2024-05-21T20:10:58 ***

@@ -20,6 +20,7 @@ from scipy import integrate
 import scipy as scipy
 from sklearn import preprocessing
 import numpy.ma as ma
+import matplotlib.pyplot as plt
 
 import gzip
 from netCDF4 import Dataset,num2date
@@ -32,7 +33,7 @@ from random import choices
 import random as random
 
 def NinoIndices(member, averaginglength):
-    ddir = "/pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_" + str(member) +"/archive/atm/hist/"
+    ddir = "/pscratch/sd/p/plutzer/E3SM/E3SMv2data/" + str(member) +"/monthly_bilinear/"
     edir = "/pscratch/sd/p/plma/shared/for_jolan"
     #ddir = "/Users/C830793391/BIG_DATA/E3SM_Data/ens1/bilinear OA HW1/"
 
@@ -43,24 +44,31 @@ def NinoIndices(member, averaginglength):
                         [-5, 5, 160, 210]])  # NINO 4
 
     # Open files: Files are separated by month - must gather all files and concatenate 
-    ds = xr.open_mfdataset(ddir + 'v2.LR.historical_'+ str(member) + '.eam.h0.*.nc', parallel = True)
+    ds = xr.open_mfdataset(ddir + 'v2.LR.historical_'+ str(member) + '.eam.h0.1867*.nc')
+    #ds = xr.open_mfdataset(ddir + 'v2.LR.historical_'+ str(member) + '.eam.h0.*.nc')
     #ds = xr.open_mfdataset(ddir + 'v2.LR.historical_0101.eam.h1.*.nc')
+    da = ds["TS"]
 
     # (2) Take Area Weighted Average of TS over the lat lon box regions for EACH Index:
-    TS3_4 = _extractregion(ds["TS"], nino_boxbounds[0,:])
-    TS1_2 = _extractregion(ds["TS"], nino_boxbounds[1,:])
-    TS3 = _extractregion(ds["TS"], nino_boxbounds[2,:])
-    TS4 = _extractregion(ds["TS"], nino_boxbounds[3,:])
+    TS3_4 = _extractregion(ds, da, nino_boxbounds[0,:])
+    TS1_2 = _extractregion(ds, da, nino_boxbounds[1,:])
+    TS3 = _extractregion(ds, da, nino_boxbounds[2,:])
+    TS4 = _extractregion(ds, da, nino_boxbounds[3,:])
 
     temp_dict = {"Nino34": TS3_4, 
                  "Nino12": TS1_2, 
-                 "Nino2": TS3, 
-                 "Nino3": TS4}
+                 "Nino3": TS3, 
+                 "Nino4": TS4}
+    
+    print(temp_dict["Nino34"].shape)
     
     for key in temp_dict:
-        weights = np.cos(np.deg2rad(temp_dict[key].lat))
+        print(ds.lat["ncol"])
+        weights = np.cos(np.deg2rad(ds.lat))
+        print(temp_dict[key])
         temp_dict[key] = temp_dict[key].weighted(weights)
-        temp_dict[key] = temp_dict[key].mean(("lat", "lon"))
+        #print(temp_dict[key])
+        temp_dict[key] = temp_dict[key].mean("ncol")
         
         # (3) Subtract Climatology (remove seasonal cycle)
         temp_dict[key] = trend_remove_seasonal_cycle(temp_dict[key])
@@ -133,14 +141,14 @@ def rolling_ave(da, averaginglength):
     return da_copy
     
 
-def _extractregion(da, boxbounds): 
+def _extractregion(ds, da, boxbounds): 
     min_lat, max_lat = (boxbounds[0], boxbounds[1])
     min_lon, max_lon = (boxbounds[2], boxbounds[3])
 
     if isinstance(da, xr.DataArray):
-        mask_lon = (da.lon >= min_lon) & (da.lon <= max_lon)
-        mask_lat = (da.lat >= min_lat) & (da.lat <= max_lat)
-        data_masked = da.where(mask_lon & mask_lat, drop=True)
+        mask_lon = (ds["lon"] >= min_lon) & (ds["lon"] <= max_lon)
+        mask_lat = (ds["lat"] >= min_lat) & (ds["lat"] <= max_lat)
+        data_masked = da.where((mask_lon & mask_lat).compute(), drop=True)
     return (
         data_masked #,
         #data_masked["lat"].to_numpy().astype(np.float32),

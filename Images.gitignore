@@ -61,3 +61,10 @@
 # 3D Images
 *.3dm
 *.max
+
+#Keynote
+*.key
+*.keynote
+
+# NETCDF Files!!
+*.nc
