@@ -42,8 +42,8 @@ class ClimateData:
         if verbose is not None: 
             self.verbose = verbose
 
-        self.d_train = SampleDict()
-        self.d_val = SampleDict()
+        # self.d_train = SampleDict()
+        # self.d_val = SampleDict()
         self.d_test = SampleDict()
 
         self._create_data() 
@@ -53,22 +53,24 @@ class ClimateData:
         #     self.d_val.summary()
         #     self.d_test.summary()
 
-        return self.d_train, self.d_val, self.d_test
+        return self.d_train, self.d_val, self.d_test 
 
     def _create_data(self):  
-      
+
+        print(self.data_dir)
+
         for iens, ens in enumerate(self.config["ensembles"]):
             if self.verbose:
                 print(ens)
             if ens == "ens1":   
-                train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
-                #train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+                #train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
+                train_ds = filemethods.get_netcdf_da(self.data_dir +  "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
             if ens == "ens2":
-                validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
-                #validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
+                #validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
+                validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
             elif ens == "ens3":
-                test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
-                #test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
+                #test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
+                test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
 
                 
         # Get opened X and Y data
@@ -120,7 +122,9 @@ class ClimateData:
         
         # For each input variable or data entity you would like to process: 
         for ikey, key in enumerate(f_dict):
+            print("Looping through processing steps")
             if key == "y":
+                print("Processing target output")
                 f_dict[key] = ds[self.config["target_var"]]
                 
                 # EXTRACT TARGET LOCATION
@@ -134,10 +138,10 @@ class ClimateData:
                 # ROLLING AVERAGE
                 f_dict[key] = self.rolling_ave(f_dict[key]) # first six values are now nans
                 
-                plt.figure()
-                plt.plot(f_dict[key])
-                plt.xlabel("Time (day index)")
-                plt.ylabel("Precip Anomaly")
+                # plt.figure()
+                # plt.plot(f_dict[key])
+                # plt.xlabel("Time (day index)")
+                # plt.ylabel("Precip Anomaly")
 
                 # LEAD / LAG ADJUSTMENT OF TARGET DATASET
                 # if self.config["lagtime"] != 0: 
@@ -145,6 +149,7 @@ class ClimateData:
                 #TODO: Lead/Lag code for y - shift forward 10-14 days = input 10x nans at the beginning of the dataset?
 
             else: 
+                print("Processing inputs")
                 if len(self.config["input_vars"]) == 1:
                     f_dict[key] = da
                 
@@ -160,8 +165,6 @@ class ClimateData:
                     ## ROLLING AVERAGE 
                     f_dict[key] = self.rolling_ave(f_dict[key])
 
-                    # plt.figure()
-                    # plt.plot(f_dict[key].sel(lat = 10, lon = 10, method = 'nearest'))
 
                 else:
                     # LOAD f_dict dictionary with unprocessed channels of 'da'

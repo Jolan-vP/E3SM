@@ -1,0 +1,40 @@
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+srun: error: nid005613: tasks 5,13,15,25,28,31,33,35,39,42,45,50-51,55,57,61,63,70-71,77,83,93,95,98-99,107,122,126: Exited with exit code 2
+srun: Terminating StepId=25950822.0
+slurmstepd: error: *** STEP 25950822.0 ON nid005613 CANCELLED AT 2024-05-23T15:38:05 ***
+srun: error: nid005613: tasks 0-4,6-12,14,16-24,26-27,29-30,32,34,36-38,40-41,43-44,46-49,52-54,56,58-60,62,64-69,72-76,78-82,84-92,94,96-97,100-106,108-121,123-125,127: Terminated
+srun: Force Terminated StepId=25950822.0
+Traceback (most recent call last):
+  File "/pscratch/sd/p/plutzner/E3SM/databuilder/nino_indices.py", line 82, in <module>
+    
+  File "/pscratch/sd/p/plutzner/E3SM/databuilder/nino_indices.py", line 51, in NinoIndices
+    TS3_4 = _extractregion(da, nino_boxbounds[0,:])
+NameError: name '_extractregion' is not defined
+“PROGRAM COMPLETE”

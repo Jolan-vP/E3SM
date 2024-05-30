@@ -1,0 +1,124 @@
+/var/spool/slurmd/job25832685/slurm_script: line 11: source: filename argument required
+source: usage: source filename [arguments]
+/var/spool/slurmd/job25832685/slurm_script: line 12: /global/common/software/e3sm/anaconda-envs/load_latest_e3sm_unified_pm-cpu.csh: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+srun: error: nid004214: task 0: Exited with exit code 2
+srun: Terminating StepId=25832685.0
+Invalid null command.
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1994-11.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1994-11.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1877-09.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1877-09.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1952-11.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1952-11.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1941-01.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1941-01.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1938-06.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1938-06.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.2009-01.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.2009-01.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1925-01.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1925-01.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1954-01.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1954-01.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1924-12.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1924-12.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1901-07.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1901-07.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1893-06.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1893-06.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1954-04.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1954-04.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1993-08.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1993-08.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1925-09.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1925-09.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.2002-05.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.2002-05.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1860-09.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1860-09.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1856-05.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1856-05.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1898-08.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1898-08.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1876-07.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1876-07.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1865-01.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1865-01.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1910-11.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1910-11.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1979-03.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1979-03.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1990-06.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1990-06.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.2010-12.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.2010-12.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1869-07.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1869-07.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1869-10.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1869-10.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.2013-07.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.2013-07.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1850-11.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1850-11.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1990-01.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1990-01.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+slurmstepd: error: *** JOB 25832685 ON nid004214 CANCELLED AT 2024-05-20T21:25:28 DUE TO TIME LIMIT ***
