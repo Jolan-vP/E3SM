@@ -29,23 +29,24 @@ def compositeindices(config, daprocessed, iens=None):
     # TODO: make flexible for different chunks
     expconfig = config["databuilder"]
 
-    MJOfilename = expconfig["ensembles"][iens] + '/MJO_historical_' + expconfig['ensemble_codes'][iens] + '_1850-2014.pkl'
+    MJOfilename = '/MJO_historical_' + expconfig['ensemble_codes'][iens] + '_1850-2014.pkl'
 
     with open(config['data_dir'] + MJOfilename, 'rb') as MJO_file:
         frontnans = np.nan * np.ones([120, 7])
         # First 120 days of the dataset are nans - they were eliminated as part of the RMM Calculation Process (Wheeler & Henden 2004)
         # Therefore I have added 120 nans as placeholders at the beginning of the array to represent the lost values
 
-        shortdatarange = expconfig["data_range"]
-        beginningindex = (shortdatarange[0] - 1850) * 365
-        endingindex = (shortdatarange[1] - 1850) * 365
+        # shortdatarange = expconfig["data_range"]
+        # beginningindex = (shortdatarange[0] - 1850) * 365
+        # endingindex = (shortdatarange[1] - 1850) * 365
 
         # Load MJO Data Array (MJOda), append frontnans, shorten to desired timerange
         MJOda = np.load(MJO_file, allow_pickle=True)
         MJOda = np.asarray(MJOda)
         MJOda = np.append(frontnans, MJOda, axis = 0)
         #SHORTEN
-        MJOda = MJOda[ beginningindex : endingindex, :]
+        # MJOda = MJOda[ beginningindex : endingindex, :]
+        print(MJOda.shape)
       
     # Create phase number output array: 
     phases = np.zeros(len(MJOda))
@@ -112,7 +113,6 @@ def compositeindices(config, daprocessed, iens=None):
         for phase in range(0, phaseqty):
             collectedphaseindices = np.where(phases == phase)[0]
             averagedphase = daprocessed[collectedphaseindices].mean(axis = 0)
-            # ! does averagedphase need to be collected into three buckets then plotted? Is it ok that is (hypothetically) being written over with each iteration of ensemble member? 
             
             plot_ax = plotorder[phase, 0],plotorder[phase, 1]
 
@@ -120,10 +120,12 @@ def compositeindices(config, daprocessed, iens=None):
             if ichannel == 0:
                 img = averagedphase[..., ichannel].plot(ax=ax[plot_ax], cmap='BrBG', transform=ccrs.PlateCarree(), add_colorbar = False)
                 ax[plot_ax].coastlines()
+                #ax.set_extent([-100, 30, 0, 80], crs=ccrs.PlateCarree())
 
             elif ichannel == 1:
                 img = averagedphase[..., ichannel].plot(ax=ax[plot_ax], cmap='coolwarm', transform=ccrs.PlateCarree(), add_colorbar = False)
                 ax[plot_ax].coastlines()
+                #ax.set_extent([-100, 30, 0, 80], crs=ccrs.PlateCarree())
 
             if phase == 0:
                 ax[plot_ax].set_title(f'Neutral', size = fonty)
@@ -155,25 +157,15 @@ def compositeindices(config, daprocessed, iens=None):
         fig.colorbar(img, cax=cbar_ax)
         plt.tight_layout()
 
-        plt.savefig('/Users/C830793391/Documents/Research/E3SM/visuals/' + str(expconfig["ensembles"][iens]) + '/' + 'Global_' + str(expconfig["ensembles"][iens]) + str(expconfig["input_vars"][ichannel]) + str(expconfig["data_range"][0]) + '-' + str(expconfig["data_range"][1]) + '.png', format='png', bbox_inches ='tight', dpi = config["fig_dpi"], transparent =True)
+        plt.savefig('/pscratch/sd/p/plutzner/E3SM/visuals/' + str(expconfig["ensembles"][iens]) + '/' + 'Global_' + str(expconfig["ensembles"][iens]) + str(expconfig["input_vars"][ichannel]) + str(expconfig["data_range"][0]) + '-' + str(expconfig["data_range"][1]) + '.png', format='png', bbox_inches ='tight', dpi = config["fig_dpi"], transparent =True)
         plt.show() 
 
+    return MJOda
 
 
 
 
+def phasecompare():
+    # compare last 30 years to first 30 years - difference plot of each phase globally for precip
 
-
-
-
-
-
-
-
-# line 138: 
-                # phaseindex[0:len(collectedphaseindices), phase, iens] = collectedphaseindices
-                # # Select non-nan values for each phase: 
-                # _phasecontainer = phaseindex[:,phase, iens]
-                # non_nans = _phasecontainer[~np.isnan(_phasecontainer)]
-                # non_nans_int = non_nans.astype(int)
-                #print(non_nans_int)
+    pass

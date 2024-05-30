@@ -1,0 +1,165 @@
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+srun: error: nid006145: tasks 23,77: Exited with exit code 2
+srun: Terminating StepId=25949982.0
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: *** STEP 25949982.0 ON nid006145 CANCELLED AT 2024-05-23T15:07:04 ***
+srun: error: nid006145: tasks 0-22,24-76,78-127: Exited with exit code 2
+/pscratch/sd/p/plutzner/E3SM/databuilder/nino_indices.py: line 10: 
+Compute E3SMv2 Nino1+2, 3, 4, 3.4 Indices: 
+(1) Define the lat/lon box
+(2) Take area weighted average
+(3) Subtract the climatology (NCL)
+(4) Do 5-month running mean  (NCL)
+(6) Divide by standard deviation  (NCL)
+ Contact: Po-Lun.Ma@pnnl.gov
+
+: No such file or directory
+import: unable to open X server `' @ error/import.c/ImportImageCommand/348.
+import: unable to open X server `' @ error/import.c/ImportImageCommand/348.
+import: unable to open X server `' @ error/import.c/ImportImageCommand/348.
+import: unable to open X server `' @ error/import.c/ImportImageCommand/348.
+import: unable to open X server `' @ error/import.c/ImportImageCommand/348.
+import: unable to open X server `' @ error/import.c/ImportImageCommand/348.
+/pscratch/sd/p/plutzner/E3SM/databuilder/nino_indices.py: line 18: from: command not found
+/pscratch/sd/p/plutzner/E3SM/databuilder/nino_indices.py: line 19: from: command not found
+import: unable to open X server `' @ error/import.c/ImportImageCommand/348.
+/pscratch/sd/p/plutzner/E3SM/databuilder/nino_indices.py: line 21: from: command not found
+import: unable to open X server `' @ error/import.c/ImportImageCommand/348.
+import: unable to open X server `' @ error/import.c/ImportImageCommand/348.
+import: unable to open X server `' @ error/import.c/ImportImageCommand/348.
+/pscratch/sd/p/plutzner/E3SM/databuilder/nino_indices.py: line 26: from: command not found
+import: unable to open X server `' @ error/import.c/ImportImageCommand/348.
+import: unable to open X server `' @ error/import.c/ImportImageCommand/348.
+/pscratch/sd/p/plutzner/E3SM/databuilder/nino_indices.py: line 30: from: command not found
+import: unable to open X server `' @ error/import.c/ImportImageCommand/348.
+/pscratch/sd/p/plutzner/E3SM/databuilder/nino_indices.py: line 32: from: command not found
+import: unable to open X server `' @ error/import.c/ImportImageCommand/348.
+/pscratch/sd/p/plutzner/E3SM/databuilder/nino_indices.py: line 35: syntax error near unexpected token `('
+/pscratch/sd/p/plutzner/E3SM/databuilder/nino_indices.py: line 35: `def NinoIndices(member, averaginglength):'
+“PROGRAM COMPLETE”

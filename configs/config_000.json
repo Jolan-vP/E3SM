@@ -11,7 +11,33 @@
     "databuilder": {
         
         "input_vars": ["PRECT", "TS"],
-        "data_range": [1850, 1860],
+        "data_range": [1850, 2014],
+        "input_region": "None",
+        "input_mask": ["None", "ocean"],
+        "ensembles": ["ens1", "ens2", "ens3"],
+        "ensemble_codes": ["0101", "0151", "0201"],
+        "target_var": "PRECT",
+        "target_region": [47.6, 122.0],
+        "target_months": [4, 5, 6, 7, 8, 9],
+        "averaging_length": 7,
+        "lagtime": 10
+        
+    },
+
+"expname": "exp001",
+    "device": "gpu",
+    "seed_list": [7],
+
+    "data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/",
+    "figure_dir": "/pscratch/sd/p/plutzner/E3SM/visuals",
+    "model_dir": "/pscratch/sd/p/plutzner/E3SM/model",
+    "output_dir": "/pscratch/sd/p/plutzner/E3SM/saved/output",
+    "fig_dpi": 200,
+
+    "databuilder": {
+        
+        "input_vars": ["PRECT", "TS"],
+        "data_range": [1850, 2014],
         "input_region": "None",
         "input_mask": ["None", "ocean"],
         "ensembles": ["ens1", "ens2", "ens3"],
@@ -24,3 +50,5 @@
         
     }
 }
+
+

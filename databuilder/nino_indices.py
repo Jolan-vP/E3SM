@@ -1,12 +1,13 @@
+#!/global/common/software/m4620/conda/envs/env-torch/bin/python
+
 """
 Compute E3SMv2 Nino1+2, 3, 4, 3.4 Indices: 
 (1) Define the lat/lon box
 (2) Take area weighted average
 (3) Subtract the climatology (NCL)
 (4) Do 5-month running mean  (NCL)
-(6) Divide by standard deviation  (NCL)
+(6) Divide by standard deviation  (NCL)cd
  Contact: Po-Lun.Ma@pnnl.gov
-
 """
 
 import xarray as xr
@@ -16,10 +17,10 @@ import numpy as np
 import nc_time_axis
 import cftime
 from scipy import stats
-from scipy import integrate
-import scipy as scipy
+# from scipy import integrate
+# import scipy as scipy
 from sklearn import preprocessing
-import numpy.ma as ma
+# import numpy.ma as ma
 import matplotlib.pyplot as plt
 
 import gzip
@@ -28,63 +29,10 @@ import time
 
 import importlib as imp
 from glob import glob
-import numpy.random
+# import numpy.random
 from random import choices
-import random as random
+# import random as random
 
-def NinoIndices(member, averaginglength):
-    ddir = "/pscratch/sd/p/plutzer/E3SM/E3SMv2data/" + str(member) +"/monthly_bilinear/"
-    edir = "/pscratch/sd/p/plma/shared/for_jolan"
-    #ddir = "/Users/C830793391/BIG_DATA/E3SM_Data/ens1/bilinear OA HW1/"
-
-    # (1) Define Lat Lon Boxes
-    nino_boxbounds = np.array([[-5, 5, 190, 240],  # NINO 3+4
-                        [-10, 0, 270, 280], # NINO 1+2
-                        [-5, 5, 210, 270],  # NINO 3
-                        [-5, 5, 160, 210]])  # NINO 4
-
-    # Open files: Files are separated by month - must gather all files and concatenate 
-    ds = xr.open_mfdataset(ddir + 'v2.LR.historical_'+ str(member) + '.eam.h0.1867*.nc')
-    #ds = xr.open_mfdataset(ddir + 'v2.LR.historical_'+ str(member) + '.eam.h0.*.nc')
-    #ds = xr.open_mfdataset(ddir + 'v2.LR.historical_0101.eam.h1.*.nc')
-    da = ds["TS"]
-
-    # (2) Take Area Weighted Average of TS over the lat lon box regions for EACH Index:
-    TS3_4 = _extractregion(ds, da, nino_boxbounds[0,:])
-    TS1_2 = _extractregion(ds, da, nino_boxbounds[1,:])
-    TS3 = _extractregion(ds, da, nino_boxbounds[2,:])
-    TS4 = _extractregion(ds, da, nino_boxbounds[3,:])
-
-    temp_dict = {"Nino34": TS3_4, 
-                 "Nino12": TS1_2, 
-                 "Nino3": TS3, 
-                 "Nino4": TS4}
-    
-    print(temp_dict["Nino34"].shape)
-    
-    for key in temp_dict:
-        print(ds.lat["ncol"])
-        weights = np.cos(np.deg2rad(ds.lat))
-        print(temp_dict[key])
-        temp_dict[key] = temp_dict[key].weighted(weights)
-        #print(temp_dict[key])
-        temp_dict[key] = temp_dict[key].mean("ncol")
-        
-        # (3) Subtract Climatology (remove seasonal cycle)
-        temp_dict[key] = trend_remove_seasonal_cycle(temp_dict[key])
-
-        # (4) 5 Month Running Mean of TS 
-        temp_dict[key] = rolling_ave(temp_dict[key], averaginglength)
-
-        # (5) Divide by standard deviation 
-        temp_dict[key] = temp_dict[key] / xr.DataArray.std(temp_dict[key])
-        
-        # Save .nc file output
-        temp_dict[key].to_netcdf(ddir + "/nino.member" + str(member) + "." + key + ".nc")
-
-    return temp_dict
-
-# -------------------------------------------------------------------------------------------
 def subtract_trend(x): 
         
     detrendOrder = 3
@@ -101,7 +49,7 @@ def subtract_trend(x):
 
     
 def trend_remove_seasonal_cycle(da):
-
+ 
     if len(np.array(da.shape)) == 1: 
         print("Shape is 1")
         return da.groupby("time.dayofyear").map(subtract_trend).dropna("time")
@@ -110,17 +58,17 @@ def trend_remove_seasonal_cycle(da):
         da_copy = da.copy()
 
         inc = 45 # 45 degree partitions in longitude to split up the data
-    
+
         for iloop in np.arange(0, da_copy.shape[2] // inc + 1):
             start = inc * iloop
             end = np.min([inc * (iloop + 1), da_copy.shape[2]])
             if start == end:
                 break
 
-            stacked = da[:, :, start:end].stack(z=("lat", "lon"))
+            stacked = da.stack(z=('lat', 'lon'))
 
-            da_copy[:, :, start:end] = stacked.groupby("time.dayofyear").map(subtract_trend).unstack()
-    
+            da_copy = stacked.groupby("time.dayofyear").map(subtract_trend).unstack()
+
     return da_copy.dropna("time")
 
 
@@ -141,16 +89,81 @@ def rolling_ave(da, averaginglength):
     return da_copy
     
 
-def _extractregion(ds, da, boxbounds): 
+def _extractregion(da, boxbounds): 
     min_lat, max_lat = (boxbounds[0], boxbounds[1])
     min_lon, max_lon = (boxbounds[2], boxbounds[3])
 
     if isinstance(da, xr.DataArray):
-        mask_lon = (ds["lon"] >= min_lon) & (ds["lon"] <= max_lon)
-        mask_lat = (ds["lat"] >= min_lat) & (ds["lat"] <= max_lat)
+        mask_lon = (da["lon"] >= min_lon) & (da["lon"] <= max_lon)
+        mask_lat = (da["lat"] >= min_lat) & (da["lat"] <= max_lat)
         data_masked = da.where((mask_lon & mask_lat).compute(), drop=True)
     return (
         data_masked #,
         #data_masked["lat"].to_numpy().astype(np.float32),
         #data_masked["lon"].to_numpy().astype(np.float32),
     )
+
+# -----------------------------------------------------------------------------------
+
+def NinoIndices(member, averaginglength):
+    ddir = "/pscratch/sd/p/plutzner/E3SM/E3SMv2data/member" + str(member)
+
+    # (1) Define Lat Lon Boxes
+    nino_boxbounds = np.array([[-5, 5, 190, 240],  # NINO 3+4
+                        [-10, 0, 270, 280], # NINO 1+2
+                        [-5, 5, 210, 270],  # NINO 3
+                        [-5, 5, 160, 210]])  # NINO 4
+
+    # Open files: Files are separated by month - must gather all files and concatenate 
+    file_pattern = ddir + "/monthly_bilinear/v2.LR.historical_" + str(member) + ".eam.h0.*.bil.nc"
+    ds = xr.open_mfdataset(file_pattern) #decode_times = False, preprocess = lambda ds:ds)
+    da = ds["TS"]
+
+    print("Opened Files")
+
+    # (2) Take Area Weighted Average of TS over the lat lon box regions for EACH Index:
+    TS3_4 = _extractregion(da, nino_boxbounds[0,:])
+    TS1_2 = _extractregion(da, nino_boxbounds[1,:])
+    TS3 = _extractregion(da, nino_boxbounds[2,:])
+    TS4 = _extractregion(da, nino_boxbounds[3,:])
+
+    print("Region Extracted")
+
+    temp_dict = {"Nino34": TS3_4, 
+                 "Nino12": TS1_2, 
+                 "Nino3": TS3, 
+                 "Nino4": TS4}
+    
+    for key in temp_dict:
+        if key == "Nino34":
+            weights = np.cos(np.deg2rad(da.lat))
+            temp_dict[key] = temp_dict[key].weighted(weights)
+            temp_dict[key] = temp_dict[key].mean('lat').mean('lon')
+        
+            print("Weighted mean calculated")
+
+            # (3) Subtract Climatology (remove seasonal cycle)
+            temp_dict[key] = trend_remove_seasonal_cycle(temp_dict[key])
+            print("Seasonal Cycle Removed")
+
+            # (4) 5 Month Running Mean of TS 
+            temp_dict[key] = rolling_ave(temp_dict[key], averaginglength)
+            print("Rolling Average calculated")
+            
+            # (5) Divide by standard deviation 
+            temp_dict[key] = temp_dict[key] / xr.DataArray.std(temp_dict[key])
+            
+            # Save .nc file output
+            print(f'File will be saved to: {ddir + "/member" + str(member) + "." + key + ".AL1.nc"}')
+            temp_dict[key].to_netcdf(ddir + "/member" + str(member) + "." + key + ".AL1.nc")
+        else:
+            pass
+    return temp_dict
+
+# -------------------------------------------------------------------------------------------
+
+ninox0101 = NinoIndices('0101', averaginglength = 1)
+# ninox0151 = NinoIndices('0151', averaginglength = 5)
+# ninox0201 = NinoIndices('0201', averaginglength = 5)
+
+# -------------------------------------------------------------------------------------------

@@ -2,7 +2,7 @@
 
 # Define directories: 
 set input_dir = "/pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0201/archive/atm/hist"
-set output_dir = "/pscratch/sd/p/plutzner/E3SM/E3SMv2data/member3/monthly_bilinear"
+set output_dir = "/pscratch/sd/p/plutzner/E3SM/E3SMv2data/member0201/monthly_bilinear"
 set mapping_file = "/pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc"
 
 
@@ -15,7 +15,8 @@ if (! -d "$output_dir") then
 endif
 
 #echo "Listing all .nc files in $input_dir:"
-set input_files = `find "$input_dir" -name "v2.LR.historical_0201.eam.h0.*.nc" -type f`
+set input_files = `find "$input_dir" -name "v2.LR.historical_0201.eam.h0.1923-04.nc" -type f`
+# set input_files = `find "$input_dir" -name "v2.LR.historical_0201.eam.h0.*.nc" -type f`
 
 # Check if there are any .nc files to process
 if ( $#input_files == 0 ) then
