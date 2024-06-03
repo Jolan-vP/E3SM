@@ -106,6 +106,11 @@ def _extractregion(da, boxbounds):
 # -----------------------------------------------------------------------------------
 
 def NinoIndices(member, averaginglength):
+    """
+    Inputs: Ensemble members, length of preferred rolling average
+    Output: Time series of deseasonalized, detrended, temperature averaged over four lat lon boxes (Nino12, 3, 4, 34)
+
+    """
     ddir = "/pscratch/sd/p/plutzner/E3SM/E3SMv2data/member" + str(member)
 
     # (1) Define Lat Lon Boxes
@@ -167,3 +172,4 @@ ninox0101 = NinoIndices('0101', averaginglength = 1)
 # ninox0201 = NinoIndices('0201', averaginglength = 5)
 
 # -------------------------------------------------------------------------------------------
+
