@@ -157,6 +157,8 @@ def compositeindices(config, daprocessed, iens=None):
         fig.colorbar(img, cax=cbar_ax)
         plt.tight_layout()
 
+        # cbar = plt.colorbar(img)
+
         plt.savefig('/pscratch/sd/p/plutzner/E3SM/visuals/' + str(expconfig["ensembles"][iens]) + '/' + 'Global_' + str(expconfig["ensembles"][iens]) + str(expconfig["input_vars"][ichannel]) + str(expconfig["data_range"][0]) + '-' + str(expconfig["data_range"][1]) + '.png', format='png', bbox_inches ='tight', dpi = config["fig_dpi"], transparent =True)
         plt.show() 
 

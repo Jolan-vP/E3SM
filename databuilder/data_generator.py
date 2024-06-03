@@ -2,7 +2,16 @@
 Data Building Modules
 
 Functions: ---------------- 
+Extract Region
+Rolling Average
+Create Data
+Fetch Data
+Process Data
+Subtract Trend
+Trend Remove Seasonal Cycle
+Mask LandOcean
 
+exp002generator
 
 Classes: ------------------
 Climate Data()
@@ -14,11 +23,12 @@ from scipy.optimize import curve_fit
 import copy
 import numpy as np
 import xarray as xr
+import pickle
+import gzip
 
 # import utils
-import databuilder.filemethods as filemethods
+import utils.filemethods as filemethods
 #import visuals.plots as plots
-import databuilder.filemethods as filemethods
 from databuilder.sampleclass import SampleDict
 
 # -----------------------------------------------------
@@ -26,7 +36,7 @@ from databuilder.sampleclass import SampleDict
 class ClimateData:
     " Custom dataset for climate data and processing "
 
-    def __init__(self, config, expname, seed, data_dir, figure_dir, fetch =True, verbose=False, ):
+    def __init__(self, config, expname, seed, data_dir, figure_dir, fetch =True, verbose=False):
    
         self.config = config
         self.expname = expname
@@ -42,8 +52,8 @@ class ClimateData:
         if verbose is not None: 
             self.verbose = verbose
 
-        # self.d_train = SampleDict()
-        # self.d_val = SampleDict()
+        self.d_train = SampleDict()
+        self.d_val = SampleDict()
         self.d_test = SampleDict()
 
         self._create_data() 
@@ -56,23 +66,21 @@ class ClimateData:
         return self.d_train, self.d_val, self.d_test 
 
     def _create_data(self):  
-
-        print(self.data_dir)
-
         for iens, ens in enumerate(self.config["ensembles"]):
             if self.verbose:
                 print(ens)
             if ens == "ens1":   
                 #train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
                 train_ds = filemethods.get_netcdf_da(self.data_dir +  "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+            
             if ens == "ens2":
                 #validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
                 validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
+                
             elif ens == "ens3":
                 #test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
                 test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
-
-                
+        
         # Get opened X and Y data
         # Process Data (compute anomalies)
         f_dict_train = self._process_data(train_ds)
@@ -107,6 +115,7 @@ class ClimateData:
         f_dict = SampleDict() 
 
         # (1) Isolate the individual dataset values of ds : PRECT, TS, etc. 
+        # if type(ds) == xarray.Dataset: 
         for ivar, var in enumerate(self.config["input_vars"]):
             if ivar == 0:
                 da = ds[var]
@@ -114,6 +123,8 @@ class ClimateData:
             else: 
                 da = xr.concat([da, ds[var]], dim = "channel")  # (3) Fill channel dim with var arrays
         
+        # elsif type(ds) == array: 
+
         da = da.rename('SAMPLES')
         da.attrs['long_name'] = None
         da.attrs['units'] = None
@@ -286,3 +297,72 @@ class ClimateData:
 
                 return da_copy
             
+
+
+def multi_input_data_organizer(config):
+    """
+        train {x: RMM1, RMM2, Nino34}, 
+              {y: target}
+
+        val   {x: RMM1, RMM2, Nino34},
+              {y: target}
+
+        test  {x: RMM1, RMM2, Nino34}, 
+              {y: target}
+    """
+
+    # MJO Principle Components --------------------------------------------
+    MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/MJOarray.leadnans.1850-2014.pkl'
+    with gzip.open(MJOsavename, "rb") as obj:
+        MJOarray = pickle.load(obj)
+    obj.close()
+
+    # ENSO Indices / Temperature Time Series of Nino3.4 -------------------
+    ninox_array = np.zeros([60225, 3])
+    for iens, ens in enumerate(config["databuilder"]["ensemble_codes"]):
+        ninox = filemethods.get_netcdf_da(config["data_dir"] +  "/E3SMv2data/member" + str(ens) + "/monthly_ne30pg2/nino.member" + str(ens) + ".nc")
+        ninox_array[:,iens] = ninox["nino34"].values
+        #TODO: Nans at the beginning - 2x each at front and back of series
+
+    # Target : Lagged Precip at Target Location : --------------------------
+    MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_train.pkl'
+    with gzip.open(MJOsavename, "rb") as obj:
+        exp001_d_train = pickle.load(obj)
+    obj.close()
+
+    MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_val.pkl'
+    with gzip.open(MJOsavename, "rb") as obj:
+        exp001_d_val = pickle.load(obj)
+    obj.close()
+
+    MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_test.pkl'
+    with gzip.open(MJOsavename, "rb") as obj:
+        exp001_d_test = pickle.load(obj)
+    obj.close()
+
+    # Create Input and Target Arrays ----------------------------------------
+    inputda = np.zeros([60225, 3, 3])
+    target = np.zeros([60225, 3])
+
+    data_dict = {0: exp001_d_train, 1: exp001_d_val, 2:exp001_d_test}
+
+    for key, dict in enumerate(data_dict):
+        inputda[:,0,key] = MJOarray[:,2,key]  #RMM1
+        inputda[:,1,key] = MJOarray[:,3,key]  #RMM2
+        inputda[:,2,key] = ninox_array[:,key] #ENSO
+        target[:,key] = dict["y"] #Target
+
+    # INPUT DICT - Save to Pickle
+    s_dict_train = SampleDict()
+    s_dict_train["x"] = inputda[:,:,0]
+    s_dict_train["y"] = target[:,0]
+
+    s_dict_val  = SampleDict()
+    s_dict_val["x"] = inputda[:,:,1]
+    s_dict_val["y"] = target[:,1]
+
+    s_dict_test = SampleDict()
+    s_dict_test["x"] = inputda[:,:,2]
+    s_dict_test["y"] = target[:,2]
+
+    return s_dict_train, s_dict_val, s_dict_test
