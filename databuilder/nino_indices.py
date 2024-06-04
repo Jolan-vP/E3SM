@@ -74,7 +74,7 @@ def trend_remove_seasonal_cycle(da):
 
 def rolling_ave(da, averaginglength):
     if len(da.shape) == 1: 
-        return da.rolling(time = averaginglength).mean()
+        return da.rolling(time = averaginglength).mean() # Whether or not to center the rolling mean??? 
     else: 
         da_copy = da.copy()
         inc = 45
@@ -143,7 +143,7 @@ def NinoIndices(member, averaginglength):
         if key == "Nino34":
             weights = np.cos(np.deg2rad(da.lat))
             temp_dict[key] = temp_dict[key].weighted(weights)
-            temp_dict[key] = temp_dict[key].mean('lat').mean('lon')
+            temp_dict[key] = temp_dict[key].mean(['lat', 'lon']) # mean("lat").mean("lon")
         
             print("Weighted mean calculated")
 
@@ -159,15 +159,15 @@ def NinoIndices(member, averaginglength):
             temp_dict[key] = temp_dict[key] / xr.DataArray.std(temp_dict[key])
             
             # Save .nc file output
-            print(f'File will be saved to: {ddir + "/member" + str(member) + "." + key + ".AL1.nc"}')
-            temp_dict[key].to_netcdf(ddir + "/member" + str(member) + "." + key + ".AL1.nc")
+            print(f'File will be saved to: {ddir + "/member" + str(member) + "." + key + ".AL5.v2.nc"}')
+            temp_dict[key].to_netcdf(ddir + "/member" + str(member) + "." + key + ".AL5.v2.nc")
         else:
             pass
     return temp_dict
 
 # -------------------------------------------------------------------------------------------
 
-ninox0101 = NinoIndices('0101', averaginglength = 1)
+ninox0101 = NinoIndices('0101', averaginglength = 5)
 # ninox0151 = NinoIndices('0151', averaginglength = 5)
 # ninox0201 = NinoIndices('0201', averaginglength = 5)
 
