@@ -10,5 +10,5 @@ save_pred_obs(pred_vector, filename)
 import xarray as xr
 
 def get_netcdf_da(filename):
-    da = xr.open_dataset(filename)
-    return da
+    ds = xr.open_dataset(filename)
+    return ds

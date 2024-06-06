@@ -111,7 +111,7 @@ def NinoIndices(member, averaginglength):
     Output: Time series of deseasonalized, detrended, temperature averaged over four lat lon boxes (Nino12, 3, 4, 34)
 
     """
-    ddir = "/pscratch/sd/p/plutzner/E3SM/E3SMv2data/member" + str(member)
+    ddir = "/pscratch/sd/p/plutzner/E3SM/bigdata/E3SMv2data/member" + str(member)
 
     # (1) Define Lat Lon Boxes
     nino_boxbounds = np.array([[-5, 5, 190, 240],  # NINO 3+4
@@ -120,7 +120,9 @@ def NinoIndices(member, averaginglength):
                         [-5, 5, 160, 210]])  # NINO 4
 
     # Open files: Files are separated by month - must gather all files and concatenate 
+    print(str(member))
     file_pattern = ddir + "/monthly_bilinear/v2.LR.historical_" + str(member) + ".eam.h0.*.bil.nc"
+    print(file_pattern)
     ds = xr.open_mfdataset(file_pattern) #decode_times = False, preprocess = lambda ds:ds)
     da = ds["TS"]
 
@@ -159,15 +161,16 @@ def NinoIndices(member, averaginglength):
             temp_dict[key] = temp_dict[key] / xr.DataArray.std(temp_dict[key])
             
             # Save .nc file output
-            print(f'File will be saved to: {ddir + "/member" + str(member) + "." + key + ".AL5.v2.nc"}')
-            temp_dict[key].to_netcdf(ddir + "/member" + str(member) + "." + key + ".AL5.v2.nc")
+            print(f'File will be saved to: {ddir + "/member" + str(member) + "." + key + ".nc"}')
+            temp_dict[key].to_netcdf(ddir + "/member" + str(member) + "." + key + ".nc")
         else:
             pass
     return temp_dict
 
 # -------------------------------------------------------------------------------------------
-
+print("Run Function NinoIndices:")
 ninox0101 = NinoIndices('0101', averaginglength = 5)
+print("Member 1 complete")
 # ninox0151 = NinoIndices('0151', averaginglength = 5)
 # ninox0201 = NinoIndices('0201', averaginglength = 5)
 

@@ -312,19 +312,27 @@ def multi_input_data_organizer(config):
     """
 
     # MJO Principle Components --------------------------------------------
+    print("Opening MJO PCs")
     MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/MJOarray.leadnans.1850-2014.pkl'
     with gzip.open(MJOsavename, "rb") as obj:
         MJOarray = pickle.load(obj)
     obj.close()
 
     # ENSO Indices / Temperature Time Series of Nino3.4 -------------------
+    print("Opening Nino34 Data")
     ninox_array = np.zeros([60225, 3])
     for iens, ens in enumerate(config["databuilder"]["ensemble_codes"]):
-        ninox = filemethods.get_netcdf_da(config["data_dir"] +  "/E3SMv2data/member" + str(ens) + "/monthly_ne30pg2/nino.member" + str(ens) + ".nc")
-        ninox_array[:,iens] = ninox["nino34"].values
-        #TODO: Nans at the beginning - 2x each at front and back of series
-
+        if ens == "0101":
+            fpath = config["data_dir"] +  "E3SMv2data/member" + str(ens) + "/member" + str(ens) + ".Nino34.daily.int.nc"
+            print(fpath)
+            ninox = filemethods.get_netcdf_da(fpath)
+            ninox_array[30:,iens] = ninox["TS"]
+            # 104 front nans, 30 values missing (first month) from 60225 total samples due to backward rolling average and monthly time step configuration
+        else:
+            pass
+    
     # Target : Lagged Precip at Target Location : --------------------------
+    print("Opening Target data")
     MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_train.pkl'
     with gzip.open(MJOsavename, "rb") as obj:
         exp001_d_train = pickle.load(obj)
@@ -341,16 +349,19 @@ def multi_input_data_organizer(config):
     obj.close()
 
     # Create Input and Target Arrays ----------------------------------------
+    print("Combining Input and target data")
     inputda = np.zeros([60225, 3, 3])
     target = np.zeros([60225, 3])
 
     data_dict = {0: exp001_d_train, 1: exp001_d_val, 2:exp001_d_test}
 
-    for key, dict in enumerate(data_dict):
+    for key, value in data_dict.items():
         inputda[:,0,key] = MJOarray[:,2,key]  #RMM1
         inputda[:,1,key] = MJOarray[:,3,key]  #RMM2
         inputda[:,2,key] = ninox_array[:,key] #ENSO
-        target[:,key] = dict["y"] #Target
+        print(value["y"][:5])
+        print(value["y"][5:])
+        target[:,key] = value["y"] #Target
 
     # INPUT DICT - Save to Pickle
     s_dict_train = SampleDict()
