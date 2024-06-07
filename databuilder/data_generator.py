@@ -2,19 +2,19 @@
 Data Building Modules
 
 Functions: ---------------- 
-Extract Region
-Rolling Average
-Create Data
-Fetch Data
-Process Data
-Subtract Trend
-Trend Remove Seasonal Cycle
-Mask LandOcean
+    Extract Region
+    Rolling Average
+    Create Data
+    Fetch Data
+    Process Data
+    Subtract Trend
+    Trend Remove Seasonal Cycle
+    Mask LandOcean
 
-exp002generator
+    multi_input_data_organizer
 
 Classes: ------------------
-Climate Data()
+    Climate Data()
 
 """
 
@@ -91,9 +91,6 @@ class ClimateData:
         self.d_val.concat(f_dict_val) 
         self.d_test.concat(f_dict_test) 
 
-        # add latitude and longitude
-        # self.lat = train_da.lat.values
-        # self.lon = train_da.lon.values
 
     def _process_data(self, ds):
         '''
@@ -115,28 +112,34 @@ class ClimateData:
         f_dict = SampleDict() 
 
         # (1) Isolate the individual dataset values of ds : PRECT, TS, etc. 
-        # if type(ds) == xarray.Dataset: 
         for ivar, var in enumerate(self.config["input_vars"]):
             if ivar == 0:
                 da = ds[var]
+                if var == "PRECT": ## CONVERTING PRECIP TO MM/DAY!
+                    da = da * 10e-3 * 86400 
+                else:
+                    pass
                 da = da.expand_dims(dim={"channel": 1}, axis = -1)   # (2) Create a channel dimension in da
             else: 
-                da = xr.concat([da, ds[var]], dim = "channel")  # (3) Fill channel dim with var arrays
-        
-        # elsif type(ds) == array: 
-
+                da = xr.concat([da, ds[var]], dim = "channel")  # (3) Fill channel dim with var array
+                
         da = da.rename('SAMPLES')
         da.attrs['long_name'] = None
         da.attrs['units'] = None
         da.attrs['cell_methods'] = None
 
-        
+
         # For each input variable or data entity you would like to process: 
         for ikey, key in enumerate(f_dict):
             print("Looping through processing steps")
             if key == "y":
                 print("Processing target output")
+                print(f"Length of target = {print(f_dict[key].shape)}")
+
                 f_dict[key] = ds[self.config["target_var"]]
+
+                if self.config["target_var"] == "PRECT": # CONVERTING PRECIP TO MM/DAY!
+                    f_dict[key] = f_dict[key] * 10e-3 * 86400 
                 
                 # EXTRACT TARGET LOCATION
                 targetlat = self.config["target_region"][0]
@@ -147,17 +150,13 @@ class ClimateData:
                 f_dict[key] = self.trend_remove_seasonal_cycle(f_dict[key])
 
                 # ROLLING AVERAGE
-                f_dict[key] = self.rolling_ave(f_dict[key]) # first six values are now nans
-                
-                # plt.figure()
-                # plt.plot(f_dict[key])
-                # plt.xlabel("Time (day index)")
-                # plt.ylabel("Precip Anomaly")
+                f_dict[key] = self.rolling_ave(f_dict[key]) # first six values are now nans due to 7-day rolling mean
 
-                # LEAD / LAG ADJUSTMENT OF TARGET DATASET
-                # if self.config["lagtime"] != 0: 
-                #     f_dict[key] = f_dict[key][ self.config["lagtime"]: ]
-                #TODO: Lead/Lag code for y - shift forward 10-14 days = input 10x nans at the beginning of the dataset?
+                # LAG ADJUSTMENT OF TARGET DATASET : Lagging by self.config["lagtime"] number of days allows the input and target samples to align
+                #  such that each input is paired with a target that is X days in the future
+                if self.config["lagtime"] != 0: 
+                    f_dict[key] = f_dict[key][ self.config["lagtime"]: ]
+                 #TODO: Confirm addition of nans?? "Lead/Lag code for y - shift forward 10 days = input 10x nans at the beginning of the dataset"
 
             else: 
                 print("Processing inputs")
@@ -176,6 +175,8 @@ class ClimateData:
                     ## ROLLING AVERAGE 
                     f_dict[key] = self.rolling_ave(f_dict[key])
 
+                    ## LAG ADJUSTMENT OF INPUT: 
+                    f_dict[key] = f_dict[key][0 : -self.config["lagtime"], ...]
 
                 else:
                     # LOAD f_dict dictionary with unprocessed channels of 'da'
@@ -196,8 +197,11 @@ class ClimateData:
 
                     ## ROLLING AVERAGE 
                     f_dict[key] = self.rolling_ave(f_dict[key])
+
+                    ## LAG ADJUSTMENT OF INPUT: 
+                    f_dict[key] = f_dict[key][0 : -self.config["lagtime"], ...]
                 
-                # Confirmed smoothed, detrended, deseasonalized anomalies of PRECT and TS
+                # Confirmed smoothed, detrended, deseasonalized, lag-adjusted anomalies of PRECT and TS
                  
         return f_dict
     
@@ -338,42 +342,43 @@ def multi_input_data_organizer(config):
         exp001_d_train = pickle.load(obj)
     obj.close()
 
-    MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_val.pkl'
-    with gzip.open(MJOsavename, "rb") as obj:
-        exp001_d_val = pickle.load(obj)
-    obj.close()
+    return exp001_d_train
+    # MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_val.pkl'
+    # with gzip.open(MJOsavename, "rb") as obj:
+    #     exp001_d_val = pickle.load(obj)
+    # obj.close()
 
-    MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_test.pkl'
-    with gzip.open(MJOsavename, "rb") as obj:
-        exp001_d_test = pickle.load(obj)
-    obj.close()
+    # MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_test.pkl'
+    # with gzip.open(MJOsavename, "rb") as obj:
+    #     exp001_d_test = pickle.load(obj)
+    # obj.close()
 
-    # Create Input and Target Arrays ----------------------------------------
-    print("Combining Input and target data")
-    inputda = np.zeros([60225, 3, 3])
-    target = np.zeros([60225, 3])
+    # # Create Input and Target Arrays ----------------------------------------
+    # print("Combining Input and target data")
+    # inputda = np.zeros([60225 - config["databuilder"]["lagtime"], 3, 3])
+    # target = np.zeros([60225 - config["databuilder"]["lagtime"], 3])
 
-    data_dict = {0: exp001_d_train, 1: exp001_d_val, 2:exp001_d_test}
+    # data_dict = {0: exp001_d_train, 1: exp001_d_val, 2:exp001_d_test}
 
-    for key, value in data_dict.items():
-        inputda[:,0,key] = MJOarray[:,2,key]  #RMM1
-        inputda[:,1,key] = MJOarray[:,3,key]  #RMM2
-        inputda[:,2,key] = ninox_array[:,key] #ENSO
-        print(value["y"][:5])
-        print(value["y"][5:])
-        target[:,key] = value["y"] #Target
+    # for key, value in data_dict.items():
+    #     inputda[:,0,key] = MJOarray[:,2,key]  #RMM1
+    #     inputda[:,1,key] = MJOarray[:,3,key]  #RMM2
+    #     inputda[:,2,key] = ninox_array[:,key] #ENSO
+    #     print(value["y"][:5])
+    #     print(value["y"][5:])
+    #     target[:,key] = value["y"] #Target
 
-    # INPUT DICT - Save to Pickle
-    s_dict_train = SampleDict()
-    s_dict_train["x"] = inputda[:,:,0]
-    s_dict_train["y"] = target[:,0]
+    # # INPUT DICT - Save to Pickle
+    # s_dict_train = SampleDict()
+    # s_dict_train["x"] = inputda[:,:,0]
+    # s_dict_train["y"] = target[:,0]
 
-    s_dict_val  = SampleDict()
-    s_dict_val["x"] = inputda[:,:,1]
-    s_dict_val["y"] = target[:,1]
+    # s_dict_val  = SampleDict()
+    # s_dict_val["x"] = inputda[:,:,1]
+    # s_dict_val["y"] = target[:,1]
 
-    s_dict_test = SampleDict()
-    s_dict_test["x"] = inputda[:,:,2]
-    s_dict_test["y"] = target[:,2]
+    # s_dict_test = SampleDict()
+    # s_dict_test["x"] = inputda[:,:,2]
+    # s_dict_test["y"] = target[:,2]
 
-    return s_dict_train, s_dict_val, s_dict_test
+    # return s_dict_train, s_dict_val, s_dict_test

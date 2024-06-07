@@ -13,7 +13,7 @@ TorchModel(base.base_model.BaseModel)
 import torch
 import numpy as np
 from base.base_model import BaseModel
-
+import torch.nn.functional as F
 
 
 def dense_lazy_couplet(out_features, act_fun, *args, **kwargs):
@@ -83,8 +83,8 @@ class TorchModel(BaseModel):
         else:
             self.target_std = torch.tensor(target_std)
 
-        # # Longitude padding
-        self.pad_lons = torch.nn.CircularPad2d(config["circular_padding"])
+        # # # Longitude padding
+        # self.pad_lons = torch.nn.CircularPad2d(config["circular_padding"])
 
         # Simple network block?
         self.L1 = torch.nn.Linear(in_features=config["hiddens_block_in"], 
@@ -162,11 +162,14 @@ class TorchModel(BaseModel):
 
     def forward(self, x, x_unit):
 
-        x = self.pad_lons(x)
+        # x = self.pad_lons(x)
 
+        # basic hidden layers
         x = self.L1(x)
+        x = F.relu(x)
         x = self.L2(x)
-        
+        x = F.relu(x)
+
         x = self.flat(x)
 
         # build mu_layers
