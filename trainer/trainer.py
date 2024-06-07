@@ -9,7 +9,7 @@ Trainer(base.base_trainer.BaseTrainer)
 import numpy as np
 import torch
 from base.base_trainer import BaseTrainer
-# from utils import MetricTracker
+from utils import MetricTracker
 
 
 class Trainer(BaseTrainer):

@@ -13,7 +13,7 @@ from numpy import inf
 import time
 import copy
 import numpy as np
-# from utils import MetricTracker
+from utils import MetricTracker
 
 
 class BaseTrainer:

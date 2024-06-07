@@ -45,7 +45,7 @@
         "hiddens_block": [3, 3],
         "hiddens_block_in": [3, 3],
         "hiddens_block_act": ["ReLU", "ReLU"],
-        "hiddens_final": 3,
+        "hiddens_final": 4,
         "hiddens_final_in": 3,
         "hiddens_final_act": "ReLU"
     }, 

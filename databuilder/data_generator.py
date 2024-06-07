@@ -67,24 +67,31 @@ class ClimateData:
 
     def _create_data(self):  
         for iens, ens in enumerate(self.config["ensembles"]):
+            print("Opening .nc files")
             if self.verbose:
                 print(ens)
             if ens == "ens1":   
-                #train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
-                train_ds = filemethods.get_netcdf_da(self.data_dir +  "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+                #train_ds = filemethods.get_netcdf_da(self.data_dir["local"] + ens + "/input_vars.v2.LR.historical_0101.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
+                #train_ds = filemethods.get_netcdf_da(self.data_dir +  "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+                train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1.1850-1900.nc")
             
             if ens == "ens2":
-                #validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
-                validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
-                
+                #validate_ds = filemethods.get_netcdf_da(self.data_dir["local"] + ens + "/input_vars.v2.LR.historical_0151.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
+                #validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
+                validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1.1850-1900.nc")
+
             elif ens == "ens3":
-                #test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
-                test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
+                #test_ds = filemethods.get_netcdf_da(self.data_dir["local"] + ens + "/input_vars.v2.LR.historical_0201.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
+                #test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
+                test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1.1850-1900.nc")
         
         # Get opened X and Y data
         # Process Data (compute anomalies)
+        print("Processing training")
         f_dict_train = self._process_data(train_ds)
+        print("Processing validation")
         f_dict_val = self._process_data(validate_ds)
+        print("Processing testing")
         f_dict_test = self._process_data(test_ds)
 
         self.d_train.concat(f_dict_train) 
@@ -115,14 +122,16 @@ class ClimateData:
         for ivar, var in enumerate(self.config["input_vars"]):
             if ivar == 0:
                 da = ds[var]
+                print("isolating variables from ds")
                 if var == "PRECT": ## CONVERTING PRECIP TO MM/DAY!
-                    da = da * 10e-3 * 86400 
+                    da = da * 10e3 * 86400 
                 else:
                     pass
                 da = da.expand_dims(dim={"channel": 1}, axis = -1)   # (2) Create a channel dimension in da
             else: 
                 da = xr.concat([da, ds[var]], dim = "channel")  # (3) Fill channel dim with var array
-                
+        
+        print("renaming dataset")
         da = da.rename('SAMPLES')
         da.attrs['long_name'] = None
         da.attrs['units'] = None
@@ -134,12 +143,12 @@ class ClimateData:
             print("Looping through processing steps")
             if key == "y":
                 print("Processing target output")
-                print(f"Length of target = {print(f_dict[key].shape)}")
+                print(f"Length of target = {print(len(f_dict[key]))}")
 
                 f_dict[key] = ds[self.config["target_var"]]
 
                 if self.config["target_var"] == "PRECT": # CONVERTING PRECIP TO MM/DAY!
-                    f_dict[key] = f_dict[key] * 10e-3 * 86400 
+                    f_dict[key] = f_dict[key] * 10e3 * 86400 
                 
                 # EXTRACT TARGET LOCATION
                 targetlat = self.config["target_region"][0]
@@ -215,8 +224,8 @@ class ClimateData:
             min_lat, max_lat = [-90, 90]
             print("input region is none")
         else:
-            min_lat, max_lat = self.config["input_region"][0][:2]
-            min_lon, max_lon = self.config["input_region"][0][2:]
+            min_lat, max_lat = self.config["input_region"][:2]
+            min_lon, max_lon = self.config["input_region"][2:]
 
         if isinstance(da, xr.DataArray):
             mask_lon = (da.lon >= min_lon) & (da.lon <= max_lon)
@@ -342,43 +351,42 @@ def multi_input_data_organizer(config):
         exp001_d_train = pickle.load(obj)
     obj.close()
 
-    return exp001_d_train
-    # MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_val.pkl'
-    # with gzip.open(MJOsavename, "rb") as obj:
-    #     exp001_d_val = pickle.load(obj)
-    # obj.close()
+    MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_val.pkl'
+    with gzip.open(MJOsavename, "rb") as obj:
+        exp001_d_val = pickle.load(obj)
+    obj.close()
 
-    # MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_test.pkl'
-    # with gzip.open(MJOsavename, "rb") as obj:
-    #     exp001_d_test = pickle.load(obj)
-    # obj.close()
+    MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_test.pkl'
+    with gzip.open(MJOsavename, "rb") as obj:
+        exp001_d_test = pickle.load(obj)
+    obj.close()
 
-    # # Create Input and Target Arrays ----------------------------------------
-    # print("Combining Input and target data")
-    # inputda = np.zeros([60225 - config["databuilder"]["lagtime"], 3, 3])
-    # target = np.zeros([60225 - config["databuilder"]["lagtime"], 3])
+    # Create Input and Target Arrays ----------------------------------------
+    print("Combining Input and target data")
+    inputda = np.zeros([60225 - config["databuilder"]["lagtime"], 3, 3])
+    target = np.zeros([60225 - config["databuilder"]["lagtime"], 3])
 
-    # data_dict = {0: exp001_d_train, 1: exp001_d_val, 2:exp001_d_test}
+    data_dict = {0: exp001_d_train, 1: exp001_d_val, 2:exp001_d_test}
 
-    # for key, value in data_dict.items():
-    #     inputda[:,0,key] = MJOarray[:,2,key]  #RMM1
-    #     inputda[:,1,key] = MJOarray[:,3,key]  #RMM2
-    #     inputda[:,2,key] = ninox_array[:,key] #ENSO
-    #     print(value["y"][:5])
-    #     print(value["y"][5:])
-    #     target[:,key] = value["y"] #Target
+    for key, value in data_dict.items():
+        inputda[:,0,key] = MJOarray[:,2,key]  #RMM1
+        inputda[:,1,key] = MJOarray[:,3,key]  #RMM2
+        inputda[:,2,key] = ninox_array[:,key] #ENSO
+        # TODO: Target is 1 value longer than input? 
+        target[:,key] = value["y"] #Target
 
-    # # INPUT DICT - Save to Pickle
-    # s_dict_train = SampleDict()
-    # s_dict_train["x"] = inputda[:,:,0]
-    # s_dict_train["y"] = target[:,0]
+    # INPUT DICT - Save to Pickle
+    s_dict_train = SampleDict()
+    s_dict_train["x"] = inputda[:,:,0]
+    s_dict_train["y"] = target[:,0]
 
-    # s_dict_val  = SampleDict()
-    # s_dict_val["x"] = inputda[:,:,1]
-    # s_dict_val["y"] = target[:,1]
+    s_dict_val  = SampleDict()
+    s_dict_val["x"] = inputda[:,:,1]
+    s_dict_val["y"] = target[:,1]
 
-    # s_dict_test = SampleDict()
-    # s_dict_test["x"] = inputda[:,:,2]
-    # s_dict_test["y"] = target[:,2]
+    s_dict_test = SampleDict()
+    s_dict_test["x"] = inputda[:,:,2]
+    s_dict_test["y"] = target[:,2]
 
-    # return s_dict_train, s_dict_val, s_dict_test
+    return s_dict_train, s_dict_val, s_dict_test
+

@@ -2,17 +2,19 @@
     "device": "gpu",
     "seed_list": [7],
 
-    "data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/",
-    "figure_dir": "/pscratch/sd/p/plutzner/E3SM/visuals",
-    "model_dir": "/pscratch/sd/p/plutzner/E3SM/model",
-    "output_dir": "/pscratch/sd/p/plutzner/E3SM/saved/output",
-    "fig_dpi": 200,
-
+    "local": {
+        "data_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/",
+        "figure_dir": "/Users/C830793391/Documents/Research/E3SM/visuals",
+        "model_dir": "/Users/C830793391/Documents/Research/E3SM/model",
+        "output_dir": "/Users/C830793391/Documents/Research/E3SM/saved/output", 
+        "fig_dpi": 200
+    },
+    
     "databuilder": {
         
         "input_vars": ["PRECT", "TS"],
         "data_range": [1850, 2014],
-        "input_region": "None",
+        "input_region": "None",           
         "input_mask": ["None", "ocean"],
         "ensembles": ["ens1", "ens2", "ens3"],
         "ensemble_codes": ["0101", "0151", "0201"],
@@ -22,5 +24,12 @@
         "averaging_length": 7,
         "lagtime": 14
         
+    }, 
+    "perlmutter": {
+        "data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/",
+        "figure_dir": "/pscratch/sd/p/plutzner/E3SM/visuals",
+        "model_dir": "/pscratch/sd/p/plutzner/E3SM/model",
+        "output_dir": "/pscratch/sd/p/plutzner/E3SM/saved/output",
+        "fig_dpi": 200
     }
 }

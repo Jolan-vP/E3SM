@@ -22,7 +22,6 @@ def dense_lazy_couplet(out_features, act_fun, *args, **kwargs):
         getattr(torch.nn, act_fun)(),
     )
 
-
 def dense_couplet(in_features, out_features, act_fun, *args, **kwargs):
     return torch.nn.Sequential(
         torch.nn.Linear(in_features=in_features, out_features=out_features, bias=True),
@@ -86,13 +85,13 @@ class TorchModel(BaseModel):
         # # # Longitude padding
         # self.pad_lons = torch.nn.CircularPad2d(config["circular_padding"])
 
-        # Simple network block?
-        self.L1 = torch.nn.Linear(in_features=config["hiddens_block_in"], 
-                                  out_features=config["hiddens_block"],
-                                  bias=True)
-        self.L2 = torch.nn.Linear(in_features=config["hiddens_block_in"], 
-                                  out_features=config["hiddens_block"],
-                                  bias=True)
+        # # Simple network block?
+        # self.L1 = torch.nn.Linear(in_features=config["hiddens_block_in"], 
+        #                           out_features=config["hiddens_block"],
+        #                           bias=True)
+        # self.L2 = torch.nn.Linear(in_features=config["hiddens_block_in"], 
+        #                           out_features=config["hiddens_block"],
+        #                           bias=True)
 
         # Flat layer
         self.flat = torch.nn.Flatten(start_dim=1)
@@ -164,11 +163,11 @@ class TorchModel(BaseModel):
 
         # x = self.pad_lons(x)
 
-        # basic hidden layers
-        x = self.L1(x)
-        x = F.relu(x)
-        x = self.L2(x)
-        x = F.relu(x)
+        # # basic hidden layers
+        # x = self.L1(x)
+        # x = F.relu(x)
+        # x = self.L2(x)
+        # x = F.relu(x)
 
         x = self.flat(x)
 
