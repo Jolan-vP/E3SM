@@ -159,9 +159,11 @@ class TorchModel(BaseModel):
             in_features=config["hiddens_final"], out_features=1, bias=True
         )
 
-    def forward(self, x, x_unit):
-
+    def forward(self, x1, x2, x3):
         # x = self.pad_lons(x)
+
+        # concatenate three inputs RMM1, RMM2, N34 as x input
+        x = torch.stack((x1, x2, x3), dim = 1)
 
         # basic hidden layers
         x = self.L1(x)
@@ -172,30 +174,22 @@ class TorchModel(BaseModel):
         x = self.flat(x)
 
         # build mu_layers
-        x_mu = torch.cat((x, x_unit[:, None]), dim=-1)
-        x_mu = self.denseblock_mu(x_mu)
-        x_mu = torch.cat((x_mu, x_unit[:, None]), dim=-1)
+        x_mu = self.denseblock_mu(x)
         x_mu = self.finaldense_mu(x_mu)
         mu_out = self.output_mu(x_mu)
 
         # build sigma_layers
-        x_sigma = torch.cat((x, x_unit[:, None]), dim=-1)
-        x_sigma = self.denseblock_sigma(x_sigma)
-        x_sigma = torch.cat((x_sigma, x_unit[:, None]), dim=-1)
+        x_sigma = self.denseblock_sigma(x)
         x_sigma = self.finaldense_sigma(x_sigma)
         sigma_out = self.output_sigma(x_sigma)
 
         # build gamma_layers
-        x_gamma = torch.cat((x, x_unit[:, None]), dim=-1)
-        x_gamma = self.denseblock_gamma(x_gamma)
-        x_gamma = torch.cat((x_gamma, x_unit[:, None]), dim=-1)
+        x_gamma = self.denseblock_gamma(x)
         x_gamma = self.finaldense_gamma(x_gamma)
         gamma_out = self.output_gamma(x_gamma)
 
         # build tau_layers
-        x_tau = torch.cat((x, x_unit[:, None]), dim=-1)
-        x_tau = self.denseblock_tau(x_tau)
-        x_tau = torch.cat((x_tau, x_unit[:, None]), dim=-1)
+        x_tau = self.denseblock_tau(x)
         x_tau = self.finaldense_tau(x_tau)
         tau_out = self.output_tau(x_tau)
 
@@ -232,18 +226,19 @@ class TorchModel(BaseModel):
 
             output = None
             for batch_idx, (data, target) in enumerate(dataloader):
-                input, input_unit, target = (
+                x1, x2, x3, target = (
                     data[0].to(device), # RMM1
                     data[1].to(device), # RMM2
                     data[2].to(device), # Nino34
                     target.to(device),  # Lagged Seattle Precip Anom
                 )
 
-                out = self(input, input_unit).to("cpu").numpy()
+                out = self(x1, x2, x3).to("cpu").numpy()
                 if output is None:
                     output = out
                 else:
                     output = np.concatenate((output, out), axis=0)
-
+                    
+        print(self.L1.weight.grad)
         return output
     

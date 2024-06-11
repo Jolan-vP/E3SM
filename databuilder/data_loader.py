@@ -22,33 +22,33 @@ class CustomData(torch.utils.data.Dataset):
         with gzip.open(data_file, "rb") as handle:
             dict_data = pickle.load(handle)
 
-        self.input = dict_data["x"]
-        self.target = dict_data["y"]
-
-        if "input_unit" in dict_data:
-            self.input_unit = dict_data["input_unit"]
-        else:
-            # Handle the case where input_unit is not available
-            self.input_unit = np.zeros_like(self.target)  # or another appropriate default
+        cut_val = 121 # remove front nans
         
+        self.x1 = dict_data["x"][cut_val:,0]
+        self.x2 = dict_data["x"][cut_val:,1]
+        self.x3 = dict_data["x"][cut_val:,2]
+        self.target = dict_data["y"][cut_val:-1]
+
         # Print shapes for debugging
-        print(f"Input shape: {self.input.shape}")
-        print(f"Input unit shape: {self.input_unit.shape}")
+        print(f"X1 shape: {self.x1.shape}")
+        print(f"Input unit shape: {self.target.shape}")
 
     def __len__(self):
         return len(self.target)
 
     def __getitem__(self, idx):
 
-        input = self.input[idx, ...]
-        input_unit = self.input_unit[idx]
+        x1 = self.x1[idx, ...]
+        x2 = self.x2[idx,...]
+        x3 = self.x3[idx,...]
 
         target = self.target[idx]
 
         return (
             [
-                torch.tensor(input, dtype=torch.float32),
-                torch.tensor(input_unit, dtype=torch.float32),
+                torch.tensor(x1, dtype=torch.float32),
+                torch.tensor(x2, dtype=torch.float32),
+                torch.tensor(x3, dtype=torch.float32)
             ],
             torch.tensor(target, dtype=torch.float32),
         )
