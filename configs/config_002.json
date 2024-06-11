@@ -9,7 +9,7 @@
     "fig_dpi": 200,
 
     "metrics": [
-        "custom", "custom", "custom"
+        "custom_mae", "iqr_capture", "sign_test"
     ],
 
     "criterion": "ShashNLL",
@@ -29,7 +29,7 @@
         
     }, 
 
-    "dataloader": {
+    "data_loader": {
 
         "data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/", 
         "batch_size": 32
@@ -45,15 +45,19 @@
         "hiddens_block": [3, 3],
         "hiddens_block_in": [3, 3],
         "hiddens_block_act": ["ReLU", "ReLU"],
-        "hiddens_final": 4,
+        "hiddens_final": 3,
         "hiddens_final_in": 3,
         "hiddens_final_act": "ReLU"
     }, 
 
     "optimizer": {
         "type": "Adam",
-        "args": "nan"
-    }, 
+        "args": {
+            "lr": 0.00001,
+            "weight_decay": 0,
+            "amsgrad": false
+        }
+    },
 
     "trainer": {
         "max_epochs": 30,

@@ -85,13 +85,13 @@ class TorchModel(BaseModel):
         # # # Longitude padding
         # self.pad_lons = torch.nn.CircularPad2d(config["circular_padding"])
 
-        # # Simple network block?
-        # self.L1 = torch.nn.Linear(in_features=config["hiddens_block_in"], 
-        #                           out_features=config["hiddens_block"],
-        #                           bias=True)
-        # self.L2 = torch.nn.Linear(in_features=config["hiddens_block_in"], 
-        #                           out_features=config["hiddens_block"],
-        #                           bias=True)
+        # Simple network block?
+        self.L1 = torch.nn.Linear(in_features=config["hiddens_block_in"][0], 
+                                  out_features=config["hiddens_block"][0],
+                                  bias=True)
+        self.L2 = torch.nn.Linear(in_features=config["hiddens_block_in"][1], 
+                                  out_features=config["hiddens_block"][1],
+                                  bias=True)
 
         # Flat layer
         self.flat = torch.nn.Flatten(start_dim=1)
@@ -163,11 +163,11 @@ class TorchModel(BaseModel):
 
         # x = self.pad_lons(x)
 
-        # # basic hidden layers
-        # x = self.L1(x)
-        # x = F.relu(x)
-        # x = self.L2(x)
-        # x = F.relu(x)
+        # basic hidden layers
+        x = self.L1(x)
+        x = F.relu(x)
+        x = self.L2(x)
+        x = F.relu(x)
 
         x = self.flat(x)
 
@@ -233,9 +233,10 @@ class TorchModel(BaseModel):
             output = None
             for batch_idx, (data, target) in enumerate(dataloader):
                 input, input_unit, target = (
-                    data[0].to(device),
-                    data[1].to(device),
-                    target.to(device),
+                    data[0].to(device), # RMM1
+                    data[1].to(device), # RMM2
+                    data[2].to(device), # Nino34
+                    target.to(device),  # Lagged Seattle Precip Anom
                 )
 
                 out = self(input, input_unit).to("cpu").numpy()

@@ -9,6 +9,7 @@ get_config(exp_name)
 """
 import json
 import pandas as pd
+import torch
 import numpy as np
 
 def get_config(exp_name):
@@ -21,9 +22,8 @@ def get_config(exp_name):
     assert config["expname"] == basename + exp_name[len(basename) :], "Exp_Name must be equal to config[exp_name]"
 
     # add additional attributes for easier use later
-    config["fig_dpi"] = config["local"]["fig_dpi"]
-    config["data_dir"] = config["local"]["data_dir"]
-    config["figure_dir"] = config["local"]["figure_dir"]
+    config["fig_dpi"] = config["fig_dpi"]
+    config["data_dir"] = config["data_dir"]
 
     return config
 

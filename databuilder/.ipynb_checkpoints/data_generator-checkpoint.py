@@ -2,10 +2,19 @@
 Data Building Modules
 
 Functions: ---------------- 
+    Extract Region
+    Rolling Average
+    Create Data
+    Fetch Data
+    Process Data
+    Subtract Trend
+    Trend Remove Seasonal Cycle
+    Mask LandOcean
 
+    multi_input_data_organizer
 
 Classes: ------------------
-Climate Data()
+    Climate Data()
 
 """
 
@@ -14,11 +23,12 @@ from scipy.optimize import curve_fit
 import copy
 import numpy as np
 import xarray as xr
+import pickle
+import gzip
 
 # import utils
-import databuilder.filemethods as filemethods
+import utils.filemethods as filemethods
 #import visuals.plots as plots
-import databuilder.filemethods as filemethods
 from databuilder.sampleclass import SampleDict
 
 # -----------------------------------------------------
@@ -26,7 +36,7 @@ from databuilder.sampleclass import SampleDict
 class ClimateData:
     " Custom dataset for climate data and processing "
 
-    def __init__(self, config, expname, seed, data_dir, figure_dir, fetch =True, verbose=False, ):
+    def __init__(self, config, expname, seed, data_dir, figure_dir, fetch =True, verbose=False):
    
         self.config = config
         self.expname = expname
@@ -42,8 +52,8 @@ class ClimateData:
         if verbose is not None: 
             self.verbose = verbose
 
-        # self.d_train = SampleDict()
-        # self.d_val = SampleDict()
+        self.d_train = SampleDict()
+        self.d_val = SampleDict()
         self.d_test = SampleDict()
 
         self._create_data() 
@@ -56,36 +66,35 @@ class ClimateData:
         return self.d_train, self.d_val, self.d_test 
 
     def _create_data(self):  
-
-        print(self.data_dir)
-
         for iens, ens in enumerate(self.config["ensembles"]):
+            print("Opening .nc files")
             if self.verbose:
                 print(ens)
             if ens == "ens1":   
-                #train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
+                #train_ds = filemethods.get_netcdf_da(self.data_dir["local"] + ens + "/input_vars.v2.LR.historical_0101.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
                 train_ds = filemethods.get_netcdf_da(self.data_dir +  "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+            
             if ens == "ens2":
-                #validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
+                #validate_ds = filemethods.get_netcdf_da(self.data_dir["local"] + ens + "/input_vars.v2.LR.historical_0151.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
                 validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
-            elif ens == "ens3":
-                #test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
-                test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
 
-                
+            elif ens == "ens3":
+                #test_ds = filemethods.get_netcdf_da(self.data_dir["local"] + ens + "/input_vars.v2.LR.historical_0201.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
+                test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
+        
         # Get opened X and Y data
         # Process Data (compute anomalies)
+        print("Processing training")
         f_dict_train = self._process_data(train_ds)
+        print("Processing validation")
         f_dict_val = self._process_data(validate_ds)
+        print("Processing testing")
         f_dict_test = self._process_data(test_ds)
 
         self.d_train.concat(f_dict_train) 
         self.d_val.concat(f_dict_val) 
         self.d_test.concat(f_dict_test) 
 
-        # add latitude and longitude
-        # self.lat = train_da.lat.values
-        # self.lon = train_da.lon.values
 
     def _process_data(self, ds):
         '''
@@ -110,22 +119,31 @@ class ClimateData:
         for ivar, var in enumerate(self.config["input_vars"]):
             if ivar == 0:
                 da = ds[var]
+                print("isolating variables from ds")
+                if var == "PRECT": ## CONVERTING PRECIP TO MM/DAY!
+                    da = da * 10e3 * 86400 
+                else:
+                    pass
                 da = da.expand_dims(dim={"channel": 1}, axis = -1)   # (2) Create a channel dimension in da
             else: 
-                da = xr.concat([da, ds[var]], dim = "channel")  # (3) Fill channel dim with var arrays
-        
+                da = xr.concat([da, ds[var]], dim = "channel")  # (3) Fill channel dim with var array
+      
         da = da.rename('SAMPLES')
         da.attrs['long_name'] = None
         da.attrs['units'] = None
         da.attrs['cell_methods'] = None
 
-        
+
         # For each input variable or data entity you would like to process: 
         for ikey, key in enumerate(f_dict):
-            print("Looping through processing steps")
             if key == "y":
                 print("Processing target output")
+                print(f"Length of target = {(len(f_dict[key]))}")
+
                 f_dict[key] = ds[self.config["target_var"]]
+
+                if self.config["target_var"] == "PRECT": # CONVERTING PRECIP TO MM/DAY!
+                    f_dict[key] = f_dict[key] * 10e3 * 86400 
                 
                 # EXTRACT TARGET LOCATION
                 targetlat = self.config["target_region"][0]
@@ -136,58 +154,60 @@ class ClimateData:
                 f_dict[key] = self.trend_remove_seasonal_cycle(f_dict[key])
 
                 # ROLLING AVERAGE
-                f_dict[key] = self.rolling_ave(f_dict[key]) # first six values are now nans
-                
-                # plt.figure()
-                # plt.plot(f_dict[key])
-                # plt.xlabel("Time (day index)")
-                # plt.ylabel("Precip Anomaly")
+                f_dict[key] = self.rolling_ave(f_dict[key]) # first six values are now nans due to 7-day rolling mean
 
-                # LEAD / LAG ADJUSTMENT OF TARGET DATASET
-                # if self.config["lagtime"] != 0: 
-                #     f_dict[key] = f_dict[key][ self.config["lagtime"]: ]
-                #TODO: Lead/Lag code for y - shift forward 10-14 days = input 10x nans at the beginning of the dataset?
+                # LAG ADJUSTMENT OF TARGET DATASET : Lagging by self.config["lagtime"] number of days allows the input and target samples to align
+                #  such that each input is paired with a target that is X days in the future
+                if self.config["lagtime"] != 0: 
+                    f_dict[key] = f_dict[key][ self.config["lagtime"]: ]
+                 #TODO: Confirm addition of nans?? "Lead/Lag code for y - shift forward 10 days = input 10x nans at the beginning of the dataset"
 
             else: 
-                print("Processing inputs")
-                if len(self.config["input_vars"]) == 1:
-                    f_dict[key] = da
+#                 print("Processing inputs")
+#                 if len(self.config["input_vars"]) == 1:
+#                     f_dict[key] = da
                 
-                    ## EXTRACT REGION
-                    f_dict[key] = self._extractregion(f_dict[key])
+#                     ## EXTRACT REGION
+#                     f_dict[key] = self._extractregion(f_dict[key])
 
-                    ## MASK LAND/OCEAN 
-                    f_dict[key] = self._masklandocean(f_dict[key])
+#                     ## MASK LAND/OCEAN 
+#                     f_dict[key] = self._masklandocean(f_dict[key])
                 
-                    ## REMOVE SEASONAL CYCLE
-                    f_dict[key] = self.trend_remove_seasonal_cycle(f_dict[key])
+#                     ## REMOVE SEASONAL CYCLE
+#                     f_dict[key] = self.trend_remove_seasonal_cycle(f_dict[key])
 
-                    ## ROLLING AVERAGE 
-                    f_dict[key] = self.rolling_ave(f_dict[key])
+#                     ## ROLLING AVERAGE 
+#                     f_dict[key] = self.rolling_ave(f_dict[key])
 
+#                     ## LAG ADJUSTMENT OF INPUT: 
+#                     f_dict[key] = f_dict[key][0 : -self.config["lagtime"], ...]
 
-                else:
-                    # LOAD f_dict dictionary with unprocessed channels of 'da'
-                    f_dict[key] = da 
+#                 else:
+#                     # LOAD f_dict dictionary with unprocessed channels of 'da'
+#                     f_dict[key] = da 
             
-                    ## EXTRACT REGION
-                    f_dict[key] = self._extractregion(f_dict[key])
+#                     ## EXTRACT REGION
+#                     f_dict[key] = self._extractregion(f_dict[key])
 
-                    ## MASK LAND/OCEAN 
-                    f_dict[key] = self._masklandocean(f_dict[key])
+#                     ## MASK LAND/OCEAN 
+#                     f_dict[key] = self._masklandocean(f_dict[key])
 
-                    # REMOVE SEASONAL CYCLE
-                    for ichannel in range(f_dict[key].shape[-1]):
-                        f_dict[key][..., ichannel] = self.trend_remove_seasonal_cycle(f_dict[key][...,ichannel])
+#                     # REMOVE SEASONAL CYCLE
+#                     for ichannel in range(f_dict[key].shape[-1]):
+#                         f_dict[key][..., ichannel] = self.trend_remove_seasonal_cycle(f_dict[key][...,ichannel])
                     
-                    # checkplot = f_dict[key].sel(time = '1905-01-01')
-                    # checkplot[...,1].plot()
+#                     # checkplot = f_dict[key].sel(time = '1905-01-01')
+#                     # checkplot[...,1].plot()
 
-                    ## ROLLING AVERAGE 
-                    f_dict[key] = self.rolling_ave(f_dict[key])
+#                     ## ROLLING AVERAGE 
+#                     f_dict[key] = self.rolling_ave(f_dict[key])
+
+#                     ## LAG ADJUSTMENT OF INPUT: 
+#                     f_dict[key] = f_dict[key][0 : -self.config["lagtime"], ...]
                 
-                # Confirmed smoothed, detrended, deseasonalized anomalies of PRECT and TS
+#                 # Confirmed smoothed, detrended, deseasonalized, lag-adjusted anomalies of PRECT and TS
                  
+                pass
         return f_dict
     
     def _extractregion(self, da): 
@@ -200,8 +220,8 @@ class ClimateData:
             min_lat, max_lat = [-90, 90]
             print("input region is none")
         else:
-            min_lat, max_lat = self.config["input_region"][0][:2]
-            min_lon, max_lon = self.config["input_region"][0][2:]
+            min_lat, max_lat = self.config["input_region"][:2]
+            min_lon, max_lon = self.config["input_region"][2:]
 
         if isinstance(da, xr.DataArray):
             mask_lon = (da.lon >= min_lon) & (da.lon <= max_lon)
@@ -286,3 +306,87 @@ class ClimateData:
 
                 return da_copy
             
+
+
+def multi_input_data_organizer(config):
+    """
+        train {x: RMM1, RMM2, Nino34}, 
+              {y: target}
+
+        val   {x: RMM1, RMM2, Nino34},
+              {y: target}
+
+        test  {x: RMM1, RMM2, Nino34}, 
+              {y: target}
+    """
+
+    # MJO Principle Components --------------------------------------------
+    print("Opening MJO PCs")
+    MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/MJOarray.leadnans.1850-2014.pkl'
+    with gzip.open(MJOsavename, "rb") as obj:
+        MJOarray = pickle.load(obj)
+    obj.close()
+
+    # ENSO Indices / Temperature Time Series of Nino3.4 -------------------
+    print("Opening Nino34 Data")
+    ninox_array = np.zeros([60225, 3])
+    for iens, ens in enumerate(config["databuilder"]["ensemble_codes"]):
+        if ens == "0101":
+            fpath = config["data_dir"] +  "E3SMv2data/member" + str(ens) + "/member" + str(ens) + ".Nino34.daily.int.nc"
+            print(fpath)
+            ninox = filemethods.get_netcdf_da(fpath)
+            ninox_array[30:,iens] = ninox["TS"]
+            # 104 front nans, 30 values missing (first month) from 60225 total samples due to backward rolling average and monthly time step configuration
+            # By starting at index 30, the ninox array should begin on 0 days since 1850-01-01 rather than 31 days since 1850-01-01
+        else:
+            pass
+    
+    # Target : Lagged Precip at Target Location : --------------------------
+    print("Opening exp001 to extract target data for TRAINING")
+    MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_train_TARGET.pkl'
+    with gzip.open(MJOsavename, "rb") as obj:
+        exp001_d_train_target = pickle.load(obj)
+    obj.close()
+
+    print("Opening exp001 to extract target data for VALIDATION")
+    MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_val_TARGET.pkl'
+    with gzip.open(MJOsavename, "rb") as obj:
+        exp001_d_val_target = pickle.load(obj)
+    obj.close()
+
+    print("Opening exp001 to extract target data for TESTING")
+    MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_test_TARGET.pkl'
+    with gzip.open(MJOsavename, "rb") as obj:
+        exp001_d_test_target = pickle.load(obj)
+    obj.close()
+
+    # Create Input and Target Arrays ----------------------------------------
+    print("Combining Input and target data")
+    inputda = np.zeros([60225, 3, 3])
+    print(inputda.shape)
+    target = np.zeros([60226 - config["databuilder"]["lagtime"], 3], dtype=float)  # TODO: Target is 1 value longer than input? 
+    
+    data_dict = {0: exp001_d_train_target, 1: exp001_d_val_target, 2:exp001_d_test_target}
+
+    for key, value in data_dict.items():
+        inputda[:,0,key] = MJOarray[:,2,key]  #RMM1
+        inputda[:,1,key] = MJOarray[:,3,key]  #RMM2
+        inputda[:,2,key] = ninox_array[:,key] #ENSO
+        inputda[:30,2,key] = np.nan # Fill beginning 30 zeros with Nans
+        target[:,key] = value["y"] #Target
+
+    # INPUT DICT - Save to Pickle
+    s_dict_train = SampleDict()
+    s_dict_train["x"] = inputda[:,:,0]
+    s_dict_train["y"] = target[:,0]
+
+    s_dict_val  = SampleDict()
+    s_dict_val["x"] = inputda[:,:,1]
+    s_dict_val["y"] = target[:,1]
+
+    s_dict_test = SampleDict()
+    s_dict_test["x"] = inputda[:,:,2]
+    s_dict_test["y"] = target[:,2]
+
+    return s_dict_train, s_dict_val, s_dict_test
+

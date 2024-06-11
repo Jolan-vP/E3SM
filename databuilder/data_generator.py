@@ -72,18 +72,15 @@ class ClimateData:
                 print(ens)
             if ens == "ens1":   
                 #train_ds = filemethods.get_netcdf_da(self.data_dir["local"] + ens + "/input_vars.v2.LR.historical_0101.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
-                #train_ds = filemethods.get_netcdf_da(self.data_dir +  "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-                train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1.1850-1900.nc")
+                train_ds = filemethods.get_netcdf_da(self.data_dir +  "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
             
             if ens == "ens2":
                 #validate_ds = filemethods.get_netcdf_da(self.data_dir["local"] + ens + "/input_vars.v2.LR.historical_0151.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
-                #validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
-                validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1.1850-1900.nc")
+                validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
 
             elif ens == "ens3":
                 #test_ds = filemethods.get_netcdf_da(self.data_dir["local"] + ens + "/input_vars.v2.LR.historical_0201.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
-                #test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
-                test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1.1850-1900.nc")
+                test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
         
         # Get opened X and Y data
         # Process Data (compute anomalies)
@@ -130,8 +127,7 @@ class ClimateData:
                 da = da.expand_dims(dim={"channel": 1}, axis = -1)   # (2) Create a channel dimension in da
             else: 
                 da = xr.concat([da, ds[var]], dim = "channel")  # (3) Fill channel dim with var array
-        
-        print("renaming dataset")
+      
         da = da.rename('SAMPLES')
         da.attrs['long_name'] = None
         da.attrs['units'] = None
@@ -140,10 +136,9 @@ class ClimateData:
 
         # For each input variable or data entity you would like to process: 
         for ikey, key in enumerate(f_dict):
-            print("Looping through processing steps")
             if key == "y":
                 print("Processing target output")
-                print(f"Length of target = {print(len(f_dict[key]))}")
+                print(f"Length of target = {(len(f_dict[key]))}")
 
                 f_dict[key] = ds[self.config["target_var"]]
 
@@ -211,7 +206,7 @@ class ClimateData:
                     f_dict[key] = f_dict[key][0 : -self.config["lagtime"], ...]
                 
                 # Confirmed smoothed, detrended, deseasonalized, lag-adjusted anomalies of PRECT and TS
-                 
+        
         return f_dict
     
     def _extractregion(self, da): 
@@ -341,38 +336,42 @@ def multi_input_data_organizer(config):
             ninox = filemethods.get_netcdf_da(fpath)
             ninox_array[30:,iens] = ninox["TS"]
             # 104 front nans, 30 values missing (first month) from 60225 total samples due to backward rolling average and monthly time step configuration
+            # By starting at index 30, the ninox array should begin on 0 days since 1850-01-01 rather than 31 days since 1850-01-01
         else:
             pass
     
     # Target : Lagged Precip at Target Location : --------------------------
-    print("Opening Target data")
-    MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_train.pkl'
+    print("Opening exp001 to extract target data for TRAINING")
+    MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_train_TARGET.pkl'
     with gzip.open(MJOsavename, "rb") as obj:
-        exp001_d_train = pickle.load(obj)
+        exp001_d_train_target = pickle.load(obj)
     obj.close()
 
-    MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_val.pkl'
+    print("Opening exp001 to extract target data for VALIDATION")
+    MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_val_TARGET.pkl'
     with gzip.open(MJOsavename, "rb") as obj:
-        exp001_d_val = pickle.load(obj)
+        exp001_d_val_target = pickle.load(obj)
     obj.close()
 
-    MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_test.pkl'
+    print("Opening exp001 to extract target data for TESTING")
+    MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_test_TARGET.pkl'
     with gzip.open(MJOsavename, "rb") as obj:
-        exp001_d_test = pickle.load(obj)
+        exp001_d_test_target = pickle.load(obj)
     obj.close()
 
     # Create Input and Target Arrays ----------------------------------------
     print("Combining Input and target data")
     inputda = np.zeros([60225 - config["databuilder"]["lagtime"], 3, 3])
-    target = np.zeros([60225 - config["databuilder"]["lagtime"], 3])
-
-    data_dict = {0: exp001_d_train, 1: exp001_d_val, 2:exp001_d_test}
+    print(inputda.shape)
+    target = np.zeros([60226 - config["databuilder"]["lagtime"], 3], dtype=float)  # TODO: Target is 1 value longer than input? 
+    
+    data_dict = {0: exp001_d_train_target, 1: exp001_d_val_target, 2:exp001_d_test_target}
 
     for key, value in data_dict.items():
-        inputda[:,0,key] = MJOarray[:,2,key]  #RMM1
-        inputda[:,1,key] = MJOarray[:,3,key]  #RMM2
-        inputda[:,2,key] = ninox_array[:,key] #ENSO
-        # TODO: Target is 1 value longer than input? 
+        inputda[:,0,key] = MJOarray[ :-config["databuilder"]["lagtime"], 2,key]  #RMM1
+        inputda[:,1,key] = MJOarray[ :-config["databuilder"]["lagtime"], 3,key]  #RMM2
+        inputda[:,2,key] = ninox_array[ :-config["databuilder"]["lagtime"], key] #ENSO
+        inputda[:30,2,key] = np.nan # Fill beginning 30 zeros with Nans
         target[:,key] = value["y"] #Target
 
     # INPUT DICT - Save to Pickle

@@ -10,6 +10,7 @@ from torch.utils.data import Dataset
 import torch
 import numpy as np
 import pickle
+import gzip
 
 
 class CustomData(torch.utils.data.Dataset):
@@ -18,11 +19,21 @@ class CustomData(torch.utils.data.Dataset):
     """
 
     def __init__(self, data_file):
-        with open(data_file, "rb") as handle:
+        with gzip.open(data_file, "rb") as handle:
             dict_data = pickle.load(handle)
 
-        self.input = np.moveaxis(dict_data["x"], -1, 1)
+        self.input = dict_data["x"]
         self.target = dict_data["y"]
+
+        if "input_unit" in dict_data:
+            self.input_unit = dict_data["input_unit"]
+        else:
+            # Handle the case where input_unit is not available
+            self.input_unit = np.zeros_like(self.target)  # or another appropriate default
+        
+        # Print shapes for debugging
+        print(f"Input shape: {self.input.shape}")
+        print(f"Input unit shape: {self.input_unit.shape}")
 
     def __len__(self):
         return len(self.target)
