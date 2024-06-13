@@ -372,6 +372,7 @@ def multi_input_data_organizer(config):
         inputda[:,1,key] = MJOarray[ :-config["databuilder"]["lagtime"], 3,key]  #RMM2
         inputda[:,2,key] = ninox_array[ :-config["databuilder"]["lagtime"], key] #ENSO
         inputda[:30,2,key] = np.nan # Fill beginning 30 zeros with Nans
+        # TODO: Refactor so that target is lagged at the same time as other inputs!! Config 1 vs 2!!!
         target[:,key] = value["y"] #Target
 
     # INPUT DICT - Save to Pickle

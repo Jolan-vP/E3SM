@@ -10,6 +10,7 @@ import numpy as np
 import torch
 from base.base_trainer import BaseTrainer
 from utils import MetricTracker
+from model.build_model import TorchModel
 
 
 class Trainer(BaseTrainer):
@@ -56,6 +57,9 @@ class Trainer(BaseTrainer):
         self.model.train()
         self.batch_log.reset()
 
+        counter = 0
+        transition_detected = False
+
         for batch_idx, (data, target) in enumerate(self.data_loader):
             x1, x2, x3, target = (
                 data[0].to(self.device),
@@ -69,12 +73,30 @@ class Trainer(BaseTrainer):
 
             # Make predictions for this batch
             output = self.model(x1, x2, x3)
-            # output = self.model(input)
 
             # Compute the loss and its gradients
             loss = self.criterion(output, target)
             loss.backward()
-            
+
+
+            # l1_weight_grad = self.model.L1.weight.grad
+            # if l1_weight_grad is not None:
+            #     print(f"Iteration {counter}: Gradient for L1.weight: {l1_weight_grad}")
+            #     if not transition_detected:
+            #         if torch.isnan(l1_weight_grad).any():
+            #             print(f"Transition to NaN detected at iteration {counter}")
+            #             transition_detected = True
+            # counter += 1
+
+            # # Print gradients
+            # for name, param in self.model.named_parameters():
+            #     # if name == "L1.weight":
+            #     if param.grad is not None:
+            #         print(f"Gradient for {name}: {param.grad}")
+                    
+            # # Clip gradients to reduce size?
+            # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1)
+
             # Adjust learning weights
             self.optimizer.step()
 

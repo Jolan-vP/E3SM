@@ -40,7 +40,6 @@
         "circular_padding": [5, 5, 0, 0],
         "n_inputchannel": 1,
         "filters": [32, 32],
-        "kernel_size": [5, 3],
         "basic_act": ["ReLU", "ReLU"],
         "hiddens_block": [3, 3],
         "hiddens_block_in": [3, 3],
@@ -53,7 +52,7 @@
     "optimizer": {
         "type": "Adam",
         "args": {
-            "lr": 0.00001,
+            "lr": 0.0000001,
             "weight_decay": 0,
             "amsgrad": false
         }

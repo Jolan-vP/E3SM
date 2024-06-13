@@ -76,9 +76,22 @@ class MetricTracker:
         for key in self.history:
             self.history[key] = np.nanmean(self.history[key])
 
+    # def print(self, idx=None):
+    #     for key in self.history.keys():
+    #         if idx is None:
+    #             print(f"  {key} = {self.history[key]:.5f}")
+    #         else:
+    #             print(f"  {key} = {self.history[key][idx]:.5f}")
+    
     def print(self, idx=None):
         for key in self.history.keys():
             if idx is None:
-                print(f"  {key} = {self.history[key]:.5f}")
+                if isinstance(self.history[key], list):
+                    print(f"  {key} = " + " | ".join([f"{v:.5f}" for v in self.history[key]]))
+                else:
+                    print(f"  {key} = {self.history[key]:.5f}")
             else:
-                print(f"  {key} = {self.history[key][idx]:.5f}")
+                if isinstance(self.history[key], list):
+                    print(f"  {key}[{idx}] = " + " | ".join([f"{v:.5f}" for v in self.history[key][idx]]))
+                else:
+                    print(f"  {key}[{idx}] = {self.history[key][idx]:.5f}")

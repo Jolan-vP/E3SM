@@ -65,7 +65,6 @@ class TorchModel(BaseModel):
 
         assert (
             len(self.config["basic_act"])
-            == len(self.config["kernel_size"])
             == len(self.config["filters"])
         )
         assert len(self.config["hiddens_block"]) == len(
@@ -91,6 +90,9 @@ class TorchModel(BaseModel):
                                   bias=True)
         self.L2 = torch.nn.Linear(in_features=config["hiddens_block_in"][1], 
                                   out_features=config["hiddens_block"][1],
+                                  bias=True)
+        self.final = torch.nn.Linear(in_features=config["hiddens_block"][1], 
+                                  out_features=4,
                                   bias=True)
 
         # Flat layer
@@ -159,45 +161,46 @@ class TorchModel(BaseModel):
             in_features=config["hiddens_final"], out_features=1, bias=True
         )
 
-    def forward(self, x1, x2, x3):
+    def forward(self, input):
         # x = self.pad_lons(x)
 
         # concatenate three inputs RMM1, RMM2, N34 as x input
-        x = torch.stack((x1, x2, x3), dim = 1)
+        # x = torch.stack((x1, x2, x3), dim = 1)
 
         # basic hidden layers
-        x = self.L1(x)
+        x = self.L1(input)
         x = F.relu(x)
         x = self.L2(x)
         x = F.relu(x)
+        x = self.final(x)
 
-        x = self.flat(x)
+        # x = self.flat(x)
 
-        # build mu_layers
-        x_mu = self.denseblock_mu(x)
-        x_mu = self.finaldense_mu(x_mu)
-        mu_out = self.output_mu(x_mu)
+        # # build mu_layers
+        # x_mu = self.denseblock_mu(x)
+        # x_mu = self.finaldense_mu(x_mu)
+        # mu_out = self.output_mu(x_mu)
 
-        # build sigma_layers
-        x_sigma = self.denseblock_sigma(x)
-        x_sigma = self.finaldense_sigma(x_sigma)
-        sigma_out = self.output_sigma(x_sigma)
+        # # build sigma_layers
+        # x_sigma = self.denseblock_sigma(x)
+        # x_sigma = self.finaldense_sigma(x_sigma)
+        # sigma_out = self.output_sigma(x_sigma)
 
-        # build gamma_layers
-        x_gamma = self.denseblock_gamma(x)
-        x_gamma = self.finaldense_gamma(x_gamma)
-        gamma_out = self.output_gamma(x_gamma)
+        # # build gamma_layers
+        # x_gamma = self.denseblock_gamma(x)
+        # x_gamma = self.finaldense_gamma(x_gamma)
+        # gamma_out = self.output_gamma(x_gamma)
 
-        # build tau_layers
-        x_tau = self.denseblock_tau(x)
-        x_tau = self.finaldense_tau(x_tau)
-        tau_out = self.output_tau(x_tau)
+        # # build tau_layers
+        # x_tau = self.denseblock_tau(x)
+        # x_tau = self.finaldense_tau(x_tau)
+        # tau_out = self.output_tau(x_tau)
 
         # rescaling layers
-        mu_out = self.rescale_mu(mu_out)
-        sigma_out = self.rescale_sigma(sigma_out)
-        sigma_out = torch.exp(sigma_out)
-        tau_out = self.rescale_tau(tau_out)
+        mu_out = self.rescale_mu(x[:,0])
+        sigma_out = self.rescale_sigma(x[:,1])
+        sigma_out = torch.exp(x[:,2])
+        tau_out = self.rescale_tau(x[:,3])
 
         # final output, concatenate parameters together
         x = torch.cat((mu_out, sigma_out, gamma_out, tau_out), dim=-1)
@@ -222,6 +225,7 @@ class TorchModel(BaseModel):
 
         self.to(device)
         self.eval()
+        
         with torch.inference_mode():
 
             output = None
@@ -238,7 +242,6 @@ class TorchModel(BaseModel):
                     output = out
                 else:
                     output = np.concatenate((output, out), axis=0)
-                    
-        print(self.L1.weight.grad)
+
         return output
     
