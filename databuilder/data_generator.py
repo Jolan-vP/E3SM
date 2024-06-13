@@ -18,6 +18,7 @@ Classes: ------------------
 
 """
 
+import os
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 import copy
@@ -25,10 +26,8 @@ import numpy as np
 import xarray as xr
 import pickle
 import gzip
-
-# import utils
+import utils
 import utils.filemethods as filemethods
-#import visuals.plots as plots
 from databuilder.sampleclass import SampleDict
 
 # -----------------------------------------------------
@@ -36,7 +35,7 @@ from databuilder.sampleclass import SampleDict
 class ClimateData:
     " Custom dataset for climate data and processing "
 
-    def __init__(self, config, expname, seed, data_dir, figure_dir, fetch =True, verbose=False):
+    def __init__(self, config, expname, seed, data_dir, figure_dir, target_only=False, fetch=True, verbose=False):
    
         self.config = config
         self.expname = expname
@@ -44,6 +43,7 @@ class ClimateData:
         self.data_dir = data_dir
         self.figure_dir = figure_dir
         self.verbose = verbose
+        self.target_only = target_only
     
         if fetch:
             self.fetch_data()
@@ -73,7 +73,7 @@ class ClimateData:
             if ens == "ens1":   
                 #train_ds = filemethods.get_netcdf_da(self.data_dir["local"] + ens + "/input_vars.v2.LR.historical_0101.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
                 train_ds = filemethods.get_netcdf_da(self.data_dir +  "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-            
+
             if ens == "ens2":
                 #validate_ds = filemethods.get_netcdf_da(self.data_dir["local"] + ens + "/input_vars.v2.LR.historical_0151.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
                 validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
@@ -163,50 +163,53 @@ class ClimateData:
                  #TODO: Confirm addition of nans?? "Lead/Lag code for y - shift forward 10 days = input 10x nans at the beginning of the dataset"
 
             else: 
-                print("Processing inputs")
-                if len(self.config["input_vars"]) == 1:
-                    f_dict[key] = da
-                
-                    ## EXTRACT REGION
-                    f_dict[key] = self._extractregion(f_dict[key])
-
-                    ## MASK LAND/OCEAN 
-                    f_dict[key] = self._masklandocean(f_dict[key])
-                
-                    ## REMOVE SEASONAL CYCLE
-                    f_dict[key] = self.trend_remove_seasonal_cycle(f_dict[key])
-
-                    ## ROLLING AVERAGE 
-                    f_dict[key] = self.rolling_ave(f_dict[key])
-
-                    ## LAG ADJUSTMENT OF INPUT: 
-                    f_dict[key] = f_dict[key][0 : -self.config["lagtime"], ...]
-
+                if self.target_only == True:
+                    pass
                 else:
-                    # LOAD f_dict dictionary with unprocessed channels of 'da'
-                    f_dict[key] = da 
-            
-                    ## EXTRACT REGION
-                    f_dict[key] = self._extractregion(f_dict[key])
-
-                    ## MASK LAND/OCEAN 
-                    f_dict[key] = self._masklandocean(f_dict[key])
-
-                    # REMOVE SEASONAL CYCLE
-                    for ichannel in range(f_dict[key].shape[-1]):
-                        f_dict[key][..., ichannel] = self.trend_remove_seasonal_cycle(f_dict[key][...,ichannel])
+                    print("Processing inputs")
+                    if len(self.config["input_vars"]) == 1:
+                        f_dict[key] = da
                     
-                    # checkplot = f_dict[key].sel(time = '1905-01-01')
-                    # checkplot[...,1].plot()
+                        ## EXTRACT REGION
+                        f_dict[key] = self._extractregion(f_dict[key])
 
-                    ## ROLLING AVERAGE 
-                    f_dict[key] = self.rolling_ave(f_dict[key])
+                        ## MASK LAND/OCEAN 
+                        f_dict[key] = self._masklandocean(f_dict[key])
+                    
+                        ## REMOVE SEASONAL CYCLE
+                        f_dict[key] = self.trend_remove_seasonal_cycle(f_dict[key])
 
-                    ## LAG ADJUSTMENT OF INPUT: 
-                    f_dict[key] = f_dict[key][0 : -self.config["lagtime"], ...]
+                        ## ROLLING AVERAGE 
+                        f_dict[key] = self.rolling_ave(f_dict[key])
+
+                        ## LAG ADJUSTMENT OF INPUT: 
+                        f_dict[key] = f_dict[key][0 : -self.config["lagtime"], ...]
+
+                    else:
+                        # LOAD f_dict dictionary with unprocessed channels of 'da'
+                        f_dict[key] = da 
                 
-                # Confirmed smoothed, detrended, deseasonalized, lag-adjusted anomalies of PRECT and TS
-        
+                        ## EXTRACT REGION
+                        f_dict[key] = self._extractregion(f_dict[key])
+
+                        ## MASK LAND/OCEAN 
+                        f_dict[key] = self._masklandocean(f_dict[key])
+
+                        # REMOVE SEASONAL CYCLE
+                        for ichannel in range(f_dict[key].shape[-1]):
+                            f_dict[key][..., ichannel] = self.trend_remove_seasonal_cycle(f_dict[key][...,ichannel])
+                        
+                        # checkplot = f_dict[key].sel(time = '1905-01-01')
+                        # checkplot[...,1].plot()
+
+                        ## ROLLING AVERAGE 
+                        f_dict[key] = self.rolling_ave(f_dict[key])
+
+                        ## LAG ADJUSTMENT OF INPUT: 
+                        f_dict[key] = f_dict[key][0 : -self.config["lagtime"], ...]
+                    
+                    # Confirmed smoothed, detrended, deseasonalized, lag-adjusted anomalies of PRECT and TS
+            
         return f_dict
     
     def _extractregion(self, da): 
@@ -307,6 +310,25 @@ class ClimateData:
             
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def multi_input_data_organizer(config):
     """
         train {x: RMM1, RMM2, Nino34}, 
@@ -327,52 +349,85 @@ def multi_input_data_organizer(config):
     obj.close()
 
     # ENSO Indices / Temperature Time Series of Nino3.4 -------------------
-    print("Opening Nino34 Data")
+    print("Opening high-res Nino34 Data")
     ninox_array = np.zeros([60225, 3])
     for iens, ens in enumerate(config["databuilder"]["ensemble_codes"]):
-        if ens == "0101":
-            fpath = config["data_dir"] +  "E3SMv2data/member" + str(ens) + "/member" + str(ens) + ".Nino34.daily.int.nc"
-            print(fpath)
-            ninox = filemethods.get_netcdf_da(fpath)
-            ninox_array[30:,iens] = ninox["TS"]
-            # 104 front nans, 30 values missing (first month) from 60225 total samples due to backward rolling average and monthly time step configuration
-            # By starting at index 30, the ninox array should begin on 0 days since 1850-01-01 rather than 31 days since 1850-01-01
-        else:
-            pass
+        fpath = config["data_dir"] +  "E3SMv2data/member" + str(ens) + "/monthly_ne30pg2/nino.member" + str(ens) + ".daily.nc"
+        print(fpath)
+        ninox = filemethods.get_netcdf_da(fpath)
+        ninox_array[30:,iens] = ninox.nino34
+        # 104 front nans, 30 values missing (first month) from 60225 total samples due to backward rolling average and monthly time step configuration
+        # By starting at index 31, the ninox array should begin on 0 days since 1850-01-01 rather than 31 days since 1850-01-01
+       
     
     # Target : Lagged Precip at Target Location : --------------------------
-    print("Opening exp001 to extract target data for TRAINING")
-    MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_train_TARGET.pkl'
-    with gzip.open(MJOsavename, "rb") as obj:
-        exp001_d_train_target = pickle.load(obj)
-    obj.close()
+    # config = utils.get_config("exp002")
+    # seed = config["seed_list"][0]
 
-    print("Opening exp001 to extract target data for VALIDATION")
-    MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_val_TARGET.pkl'
-    with gzip.open(MJOsavename, "rb") as obj:
-        exp001_d_val_target = pickle.load(obj)
-    obj.close()
+    # data = ClimateData(
+    #     config["databuilder"], 
+    #     expname = config["expname"],
+    #     seed=seed,
+    #     data_dir = config["data_dir"], 
+    #     figure_dir=config["figure_dir"],
+    #     target_only=True,
+    #     fetch=False,
+    #     verbose=False
+    # )
+    
+    # d_train, d_val, d_test = data.fetch_data()
 
-    print("Opening exp001 to extract target data for TESTING")
-    MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_test_TARGET.pkl'
-    with gzip.open(MJOsavename, "rb") as obj:
-        exp001_d_test_target = pickle.load(obj)
-    obj.close()
+    # data_savename1 = "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp002_d_train_TARGET.pkl"
+    # data_savename2 = "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp002_d_val_TARGET.pkl"
+    # data_savename3 = "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp002_d_test_TARGET.pkl"
 
-    # Create Input and Target Arrays ----------------------------------------
+    # if not os.path.exists(data_savename1) or not os.path.exists(data_savename2) or not os.path.exists(data_savename3):
+
+    #     #data_savename1 = "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/exp001_d_train.pkl"
+    #     with gzip.open(data_savename1, "wb") as fp:
+    #         pickle.dump(d_train, fp)
+
+    #     #data_savename2 = "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/exp001_d_val.pkl"
+    #     with gzip.open(data_savename2, "wb") as fp:
+    #         pickle.dump(d_val, fp)
+
+    #     #data_savename3 = "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/exp001_d_test.pkl"
+    #     with gzip.open(data_savename3, "wb") as fp:
+    #         pickle.dump(d_test, fp)
+
+    #     print(f"Exp002 Target files have been created and data has been pickled.")
+
+   
+    print("Opening exp002 target data for TRAINING")
+    ENSOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp002_d_train_TARGET.pkl'
+    with gzip.open(ENSOsavename, "rb") as obj:
+        exp002_d_train_target = pickle.load(obj)
+
+    print("Opening exp002 target data for VALIDATION")
+    ENSOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp002_d_val_TARGET.pkl'
+    with gzip.open(ENSOsavename, "rb") as obj:
+        exp002_d_val_target = pickle.load(obj)
+
+    print("Opening exp002 target data for TESTING")
+    ENSOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp002_d_test_TARGET.pkl'
+    with gzip.open(ENSOsavename, "rb") as obj:
+        exp002_d_test_target = pickle.load(obj)
+    
+ 
+    # Create Input and Target Arrays ------------------------------------------------------------
+
     print("Combining Input and target data")
     inputda = np.zeros([60225 - config["databuilder"]["lagtime"], 3, 3])
     print(inputda.shape)
     target = np.zeros([60226 - config["databuilder"]["lagtime"], 3], dtype=float)  # TODO: Target is 1 value longer than input? 
     
-    data_dict = {0: exp001_d_train_target, 1: exp001_d_val_target, 2:exp001_d_test_target}
+    data_dict = {0: exp002_d_train_target, 1: exp002_d_val_target, 2:exp002_d_test_target}
 
     for key, value in data_dict.items():
         inputda[:,0,key] = MJOarray[ :-config["databuilder"]["lagtime"], 2,key]  #RMM1
         inputda[:,1,key] = MJOarray[ :-config["databuilder"]["lagtime"], 3,key]  #RMM2
         inputda[:,2,key] = ninox_array[ :-config["databuilder"]["lagtime"], key] #ENSO
         inputda[:30,2,key] = np.nan # Fill beginning 30 zeros with Nans
-        # TODO: Refactor so that target is lagged at the same time as other inputs!! Config 1 vs 2!!!
         target[:,key] = value["y"] #Target
 
     # INPUT DICT - Save to Pickle
@@ -390,3 +445,27 @@ def multi_input_data_organizer(config):
 
     return s_dict_train, s_dict_val, s_dict_test
 
+
+
+
+
+# ----------------------------------------------------
+
+    
+    # print("Opening exp001 to extract target data for TRAINING")
+    # MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_train_TARGET.pkl'
+    # with gzip.open(MJOsavename, "rb") as obj:
+    #     exp001_d_train_target = pickle.load(obj)
+    # obj.close()
+
+    # print("Opening exp001 to extract target data for VALIDATION")
+    # MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_val_TARGET.pkl'
+    # with gzip.open(MJOsavename, "rb") as obj:
+    #     exp001_d_val_target = pickle.load(obj)
+    # obj.close()
+
+    # print("Opening exp001 to extract target data for TESTING")
+    # MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_test_TARGET.pkl'
+    # with gzip.open(MJOsavename, "rb") as obj:
+    #     exp001_d_test_target = pickle.load(obj)
+    # obj.close()

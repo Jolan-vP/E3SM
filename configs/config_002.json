@@ -16,7 +16,8 @@
 
     "databuilder": {
         
-        "input_vars": ["RMM1", "RMM2", "NINO34"],
+        "input_vars": ["PRECT"],
+        "network_inputs": ["RMM1", "RMM2", "Nino34"],
         "input_region": "None",
         "input_mask": ["None"],
         "ensembles": ["ens1", "ens2", "ens3"],
