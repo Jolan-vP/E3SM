@@ -33,7 +33,7 @@ class TorchModel(BaseModel):
 
         self.config = config
 
-        assert len(self.config["hiddens_block_out"]) == len(
+        assert len(self.config["hiddens_block_in"]) == len(
             self.config["hiddens_block_act"]
         )
 
@@ -50,11 +50,11 @@ class TorchModel(BaseModel):
 
         # Simple Network Layers
         self.L1 = torch.nn.Linear(in_features=config["hiddens_block_in"][0], 
-                                  out_features=config["hiddens_block_out"][0],
+                                  out_features=config["hiddens_block_out"],
                                   bias=True)
-        self.L2 = torch.nn.Linear(in_features=config["hiddens_block_out"][0], 
-                                  out_features=config["hiddens_block_out"][1],
-                                  bias=True)
+        # self.L2 = torch.nn.Linear(in_features=config["hiddens_block_out"][0], 
+        #                           out_features=config["hiddens_block_out"][1],
+        #                           bias=True)
         self.final = torch.nn.Linear(in_features=config["hiddens_final_in"], 
                                   out_features=config["hiddens_final_out"],
                                   bias=True)
@@ -86,8 +86,8 @@ class TorchModel(BaseModel):
         # basic hidden layers
         x = self.L1(input)
         x = F.relu(x)
-        x = self.L2(x)
-        x = F.relu(x)
+        # x = self.L2(x)
+        # x = F.relu(x)
         x = self.final(x)
 
         # x = self.flat(x)
