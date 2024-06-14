@@ -61,10 +61,8 @@ class Trainer(BaseTrainer):
         transition_detected = False
 
         for batch_idx, (data, target) in enumerate(self.data_loader):
-            x1, x2, x3, target = (
+            input, target = (
                 data[0].to(self.device),
-                data[1].to(self.device),
-                data[2].to(self.device),
                 target.to(self.device)
             )
 
@@ -72,12 +70,11 @@ class Trainer(BaseTrainer):
             self.optimizer.zero_grad()
 
             # Make predictions for this batch
-            output = self.model(x1, x2, x3)
+            output = self.model(input)
 
             # Compute the loss and its gradients
             loss = self.criterion(output, target)
             loss.backward()
-
 
             # l1_weight_grad = self.model.L1.weight.grad
             # if l1_weight_grad is not None:
@@ -94,8 +91,8 @@ class Trainer(BaseTrainer):
             #     if param.grad is not None:
             #         print(f"Gradient for {name}: {param.grad}")
                     
-            # # Clip gradients to reduce size?
-            # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1)
+            # Clip gradients to reduce size?
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1)
 
             # Adjust learning weights
             self.optimizer.step()
@@ -121,14 +118,12 @@ class Trainer(BaseTrainer):
         with torch.no_grad():
 
             for batch_idx, (data, target) in enumerate(self.validation_data_loader):
-                x1, x2, x3, target = (
+                input, target = (
                     data[0].to(self.device),
-                    data[1].to(self.device),
-                    data[2].to(self.device),
                     target.to(self.device)
                 ) 
 
-                output = self.model(x1, x2, x3)
+                output = self.model(input)
                 loss = self.criterion(output, target)
 
                 # Log the results

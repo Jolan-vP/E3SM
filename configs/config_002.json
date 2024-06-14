@@ -2,10 +2,10 @@
     "device": "gpu",
     "seed_list": [7],
 
-    "data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/",
-    "figure_dir": "/pscratch/sd/p/plutzner/E3SM/visuals",
-    "model_dir": "/pscratch/sd/p/plutzner/E3SM/model",
-    "output_dir": "/pscratch/sd/p/plutzner/E3SM/saved/output",
+    "data_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/",
+    "figure_dir": "/Users/C830793391/Documents/Research/E3SM/visuals/",
+    "model_dir": "/Users/C830793391/Documents/Research/E3SM/saved/models",
+    "output_dir": "/Users/C830793391/Documents/Research/E3SM/saved/output",
     "fig_dpi": 200,
 
     "metrics": [
@@ -32,36 +32,37 @@
 
     "data_loader": {
 
-        "data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/", 
-        "batch_size": 32
+        "data_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/", 
+        "batch_size": 64
     }, 
 
     "arch": {
         "type": "basicnn",
-        "circular_padding": [5, 5, 0, 0],
         "n_inputchannel": 1,
-        "filters": [32, 32],
+
         "basic_act": ["ReLU", "ReLU"],
-        "hiddens_block": [3, 3],
+
         "hiddens_block_in": [3, 3],
+        "hiddens_block_out": [3, 3],
         "hiddens_block_act": ["ReLU", "ReLU"],
-        "hiddens_final": 3,
+
         "hiddens_final_in": 3,
+        "hiddens_final_out": 4,
         "hiddens_final_act": "ReLU"
     }, 
 
     "optimizer": {
         "type": "Adam",
         "args": {
-            "lr": 0.0000001,
-            "weight_decay": 0,
+            "lr": 0.001,
+            "weight_decay": 0.05,
             "amsgrad": false
         }
     },
 
     "trainer": {
         "max_epochs": 30,
-        "save_dir": "/pscratch/sd/p/plutzner/E3SM/saved/saved_models/",
+        "save_dir": "/Users/C830793391/Documents/Research/E3SM/saved/",
         "early_stopping":{
             "args":{
                 "patience": 5,
