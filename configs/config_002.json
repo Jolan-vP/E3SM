@@ -43,10 +43,10 @@
         "basic_act": ["ReLU", "ReLU"],
 
         "hiddens_block_in": [3, 3],
-        "hiddens_block_out": [3, 3],
+        "hiddens_block_out": [2, 2],
         "hiddens_block_act": ["ReLU", "ReLU"],
 
-        "hiddens_final_in": 3,
+        "hiddens_final_in": 2,
         "hiddens_final_out": 4,
         "hiddens_final_act": "ReLU"
     }, 
@@ -54,7 +54,7 @@
     "optimizer": {
         "type": "Adam",
         "args": {
-            "lr": 0.0013,
+            "lr": 0.001,
             "weight_decay": 0.08,
             "amsgrad": false
         }

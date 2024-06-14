@@ -76,4 +76,5 @@ __pycache__/
 .pytest_cache/
 
 # Jupyter Notebook
-.ipynb_checkpointss
+.ipynb_checkpoints
+.pyc
