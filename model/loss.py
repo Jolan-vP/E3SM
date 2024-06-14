@@ -26,10 +26,10 @@ class ShashNLL(torch.nn.Module):
     def forward(self, output, target):
 
         dist = Shash(output)
-        #loss = -dist.log_prob(target)
+        loss = -dist.log_prob(target)
 
         #to prevent huge initial losses and improve stability
-        loss = -torch.log(dist.prob(target + self.epsilon))
+        #loss = -torch.log(dist.prob(target + self.epsilon))
 
         return loss.mean()
 

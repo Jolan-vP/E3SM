@@ -92,6 +92,9 @@ class MetricTracker:
                     print(f"  {key} = {self.history[key]:.5f}")
             else:
                 if isinstance(self.history[key], list):
-                    print(f"  {key}[{idx}] = " + " | ".join([f"{v:.5f}" for v in self.history[key][idx]]))
+                    if isinstance(self.history[key][idx], (int, float)):
+                        print(f"  {key}[{idx}] = {self.history[key][idx]:.5f}")
+                    else:
+                        print(f"  {key}[{idx}] = " + " | ".join([f"{v:.5f}" for v in self.history[key][idx]]))
                 else:
                     print(f"  {key}[{idx}] = {self.history[key][idx]:.5f}")
