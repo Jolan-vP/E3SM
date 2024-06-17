@@ -65,7 +65,7 @@ class BaseTrainer:
 
             start_time = time.time()
 
-            self._train_epoch(epoch)
+            outputs = self._train_epoch(epoch)
 
             # log the results of the epoch
             self.batch_log.result()
@@ -74,7 +74,7 @@ class BaseTrainer:
                 self.log.update(key, self.batch_log.history[key])
 
             # early stopping
-            if self.early_stopper.check_early_stop(epoch, self.log.history["val_loss"][epoch], self.model):
+            if self.early_stopper.check_early_stop(epoch, self.log.history["val_loss"][epoch], self.model, outputs):
                 print(
                     f"Restoring model weights from the end of the best epoch {self.early_stopper.best_epoch}: "
                     f"val_loss = {self.early_stopper.min_validation_loss:.5f}"
@@ -84,6 +84,7 @@ class BaseTrainer:
                 self.model.load_state_dict(self.early_stopper.best_model_state)
                 self.model.eval()
 
+                #print(f"Best outputs from epoch {self.early_stopper.best_epoch}: {self.early_stopper.best_outputs}")
                 break
 
             # Print out progress during training
@@ -129,13 +130,14 @@ class EarlyStopping:
         self.best_model_state = None
         self.best_epoch = None
 
-    def check_early_stop(self, epoch, validation_loss, model):
+    def check_early_stop(self, epoch, validation_loss, model, outputs):
         if validation_loss < (self.min_validation_loss - self.min_delta):
             self.min_validation_loss = validation_loss
             self.counter = 0
 
             self.best_model_state = copy.deepcopy(model.state_dict())
             self.best_epoch = epoch
+            self.best_outputs = outputs
         else:
             self.counter += 1
             if self.counter >= self.patience:

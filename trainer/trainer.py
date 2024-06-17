@@ -57,8 +57,10 @@ class Trainer(BaseTrainer):
         self.model.train()
         self.batch_log.reset()
 
-        counter = 0
-        transition_detected = False
+        # counter = 0
+        # transition_detected = False
+
+        outputs = []
 
         for batch_idx, (data, target) in enumerate(self.data_loader):
             input, target = (
@@ -103,9 +105,17 @@ class Trainer(BaseTrainer):
             for met in self.metric_funcs:
                 self.batch_log.update(met.__name__, met(output, target))
 
+            outputs.append(output.detach().cpu().numpy())
+
+
+        
         # Run validation
         if self.do_validation:
             self._validation_epoch(epoch)
+
+        # Aggregate outputs as needed
+        #aggregated_outputs = np.concatenate(outputs, axis=0)
+        return outputs
 
     def _validation_epoch(self, epoch):
         """
@@ -115,6 +125,7 @@ class Trainer(BaseTrainer):
         :return: A log that contains information about validation
         """
         self.model.eval()
+        outputs = []
         with torch.no_grad():
 
             for batch_idx, (data, target) in enumerate(self.validation_data_loader):
@@ -125,8 +136,11 @@ class Trainer(BaseTrainer):
 
                 output = self.model(input)
                 loss = self.criterion(output, target)
-
+                
                 # Log the results
                 self.batch_log.update("val_loss", loss.item())
                 for met in self.metric_funcs:
                     self.batch_log.update("val_" + met.__name__, met(output, target))
+
+        #aggregated_outputs = np.concatenate(outputs, axis=0)
+        return outputs

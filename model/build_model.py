@@ -90,6 +90,7 @@ class TorchModel(BaseModel):
         # x = F.relu(x)
         x = self.final(x)
 
+
         # x = self.flat(x)
 
         # Ensure x has at least 4 columns
@@ -108,7 +109,7 @@ class TorchModel(BaseModel):
         # final output, concatenate parameters together
         x = torch.stack((mu_out, sigma_out, gamma_out, tau_out), dim=-1)
 
-        # print(f"x shape: {x.shape}")
+
         return x
 
     def predict(self, dataset=None, dataloader=None, batch_size=128, device="cpu"):
