@@ -142,9 +142,9 @@ class ClimateData:
         for ikey, key in enumerate(f_dict):
             if key == "y":
                 print("Processing target output")
-                print(f"Length of target = {(len(f_dict[key]))}")
 
                 f_dict[key] = ds[self.config["target_var"]]
+                print(f"Length of target = {(len(f_dict[key]))}")
 
                 if self.config["target_var"] == "PRECT": # CONVERTING PRECIP TO MM/DAY!
                     f_dict[key] = f_dict[key] * 10e3 * 86400 
@@ -423,7 +423,7 @@ def multi_input_data_organizer(config):
     print("Combining Input and target data")
     inputda = np.zeros([60225 - config["databuilder"]["lagtime"], 3, 3])
     print(inputda.shape)
-    target = np.zeros([60226 - config["databuilder"]["lagtime"], 3], dtype=float)  # TODO: Target is 1 value longer than input? 
+    target = np.zeros([60225 - config["databuilder"]["lagtime"], 3], dtype=float) 
     
     data_dict = {0: exp002_d_train_target, 1: exp002_d_val_target, 2:exp002_d_test_target}
 
@@ -432,7 +432,7 @@ def multi_input_data_organizer(config):
         inputda[:,1,key] = MJOarray[ :-config["databuilder"]["lagtime"], 3,key]  #RMM2
         inputda[:,2,key] = ninox_array[ :-config["databuilder"]["lagtime"], key] #ENSO
         inputda[:30,2,key] = np.nan # Fill beginning 30 zeros with Nans
-        target[:,key] = value["y"] #Target
+        target[:,key] = value["y"] # Target : TARGET HAS ALREADY BEEN LAGGED IN PRE-PROCESSING (CLIMATE DATA CLASS)
 
     # INPUT DICT - Save to Pickle
     s_dict_train = SampleDict()

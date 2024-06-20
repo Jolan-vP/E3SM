@@ -2,10 +2,10 @@
     "device": "gpu",
     "seed_list": [7],
     "data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/",
-        "figure_dir": "/pscratch/sd/p/plutzner/E3SM/visuals",
-        "model_dir": "/pscratch/sd/p/plutzner/E3SM/model",
-        "output_dir": "/pscratch/sd/p/plutzner/E3SM/saved/output",
-        "fig_dpi": 200, 
+    "figure_dir": "/pscratch/sd/p/plutzner/E3SM/visuals",
+    "model_dir": "/pscratch/sd/p/plutzner/E3SM/model",
+    "output_dir": "/pscratch/sd/p/plutzner/E3SM/saved/output",
+    "fig_dpi": 200, 
  
     "databuilder": {
         
