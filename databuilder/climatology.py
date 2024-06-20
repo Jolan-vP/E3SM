@@ -4,6 +4,10 @@ Climatology Calculation for Comparison
 Functions
 ---------
 deriveclimatology()
+standardize_data()
+make_hist()
+calc_cdf()
+
 
 Classes
 ---------
@@ -28,6 +32,8 @@ from shash.shash_torch import Shash
 import pickle 
 import gzip
 
+
+
 def deriveclimatology(output, climate_data, samples):
     """
     Input: Filename for climate data, SHASH parameters for sample
@@ -38,14 +44,13 @@ def deriveclimatology(output, climate_data, samples):
     with gzip.open(climate_data, "rb") as obj1:
         data = pickle.load(obj1)
     climatology = data["y"]
-
    
-    bins_inc = 0.025
-    bins = np.arange(-10, 10, bins_inc)
+    # bins_inc = 0.025
+    # bins = np.arange(-10, 10, bins_inc)
 
     plt.figure(figsize=(8, 4), dpi=200)
 
-    x = np.arange(-3.5, 5, 0.01)
+    x = np.arange(-4, 5, 0.025)
     dist = Shash(output)
     p = dist.prob(x).numpy()
     
