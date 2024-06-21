@@ -374,6 +374,21 @@ def multi_input_data_organizer(config, MJO=False, ENSO = False, PRECT_VC = False
     if PRECT_VC == True: 
         print("Opening Vancouver PRECT time series")
 
+        print("Opening exp004 PRECIP input data for TRAINING")
+        target_savename = config['data_dir'] + 'presaved/exp001_4_train_VANCOUVER_1850-2014.pkl'
+        with gzip.open(target_savename, "rb") as obj:
+            exp004_d_train_VC = pickle.load(obj)
+
+        print("Opening exp004 PRECIP input data for VALIDATION")
+        target_savename = config['data_dir'] + 'presaved/exp004_d_val_VANCOUVER_1850-2014.pkl'
+        with gzip.open(target_savename, "rb") as obj:
+            exp004_d_val_VC = pickle.load(obj)
+
+        print("Opening exp004 PRECIP input data for TESTING")
+        target_savename = config['data_dir'] + 'presaved/exp0014d_test_VANCOUVER_1850-2014.pkl'
+        with gzip.open(target_savename, "rb") as obj:
+            exp004_d_test_VC = pickle.load(obj)
+    
 
     else:
         pass
@@ -440,12 +455,18 @@ def multi_input_data_organizer(config, MJO=False, ENSO = False, PRECT_VC = False
     target = np.zeros([60225 - config["databuilder"]["lagtime"], 3], dtype=float) 
     
     data_dict = {0: exp002_d_train_target, 1: exp002_d_val_target, 2:exp002_d_test_target}
+    vc_prect_dict = {0: exp004_d_train_VC, 1: exp004_d_val_VC, 2:exp004_d_test_VC}
 
     for key, value in data_dict.items():
-        inputda[:,0,key] = MJOarray[ :-config["databuilder"]["lagtime"], 2,key]  #RMM1
-        inputda[:,1,key] = MJOarray[ :-config["databuilder"]["lagtime"], 3,key]  #RMM2
-        inputda[:,2,key] = ninox_array[ :-config["databuilder"]["lagtime"], key] #ENSO
-        inputda[:30,2,key] = np.nan # Fill beginning 30 zeros with Nans
+        if ENSO==True:
+            inputda[:,0,key] = ninox_array[ :-config["databuilder"]["lagtime"], key] #ENSO
+            inputda[:30,0,key] = np.nan # Fill beginning 30 zeros with Nans
+        if MJO==True:
+            inputda[:,0,key] = MJOarray[ :-config["databuilder"]["lagtime"], 2,key]  #RMM1
+            inputda[:,1,key] = MJOarray[ :-config["databuilder"]["lagtime"], 3,key]  #RMM2
+        elif PRECT_VC==True:
+            inputda[:,1,key] = vc_prect_dict[key]  # VANCOUVER PRECIP (PRE-PROCESSED/PRE-LAGGED)
+        
         target[:,key] = value["y"] # Target : TARGET HAS ALREADY BEEN LAGGED IN PRE-PROCESSING (CLIMATE DATA CLASS - config_001/analysis_001)
 
     # INPUT DICT - Save to Pickle
