@@ -333,7 +333,7 @@ class ClimateData:
 
 
 
-def multi_input_data_organizer(config):
+def multi_input_data_organizer(config, MJO=False, ENSO = False, PRECT_VC = False):
     """
         train {x: RMM1, RMM2, Nino34}, 
               {y: target}
@@ -346,25 +346,39 @@ def multi_input_data_organizer(config):
     """
 
     # MJO Principle Components --------------------------------------------
-    print("Opening MJO PCs")
-    MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/MJOarray.leadnans.1850-2014.pkl'
-    with gzip.open(MJOsavename, "rb") as obj:
-        MJOarray = pickle.load(obj)
-    obj.close()
+    if MJO == True: 
+        print("Opening MJO PCs")
+        # MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/MJOarray.leadnans.1850-2014.pkl'
+        MJOsavename = '/Users/C830793391/BIG_DATA/E3SM_Data/presaved/MJOarray.leadnans.1850-2014.pkl'
+        with gzip.open(MJOsavename, "rb") as obj:
+            MJOarray = pickle.load(obj)
+        obj.close()
+    else:
+        pass
 
     # ENSO Indices / Temperature Time Series of Nino3.4 -------------------
-    print("Opening high-res Nino34 Data")
-    ninox_array = np.zeros([60225, 3])
-    for iens, ens in enumerate(config["databuilder"]["ensemble_codes"]):
-        fpath = config["data_dir"] +  "E3SMv2data/member" + str(ens) + "/monthly_ne30pg2/nino.member" + str(ens) + ".daily.nc"
-        print(fpath)
-        ninox = filemethods.get_netcdf_da(fpath)
-        ninox_array[30:,iens] = ninox.nino34
-        # 104 front nans, 30 values missing (first month) from 60225 total samples due to backward rolling average and monthly time step configuration
-        # By starting at index 31, the ninox array should begin on 0 days since 1850-01-01 rather than 31 days since 1850-01-01
-       
-    
+    if ENSO == True: 
+        print("Opening high-res Nino34 Data")
+        ninox_array = np.zeros([60225, 3])
+        for iens, ens in enumerate(config["databuilder"]["ensemble_codes"]):
+            fpath = config["data_dir"] + "presaved/ENSO_ne30pg2_HighRes/nino.member" + str(ens) + ".daily.nc"
+            print(fpath)
+            ninox = filemethods.get_netcdf_da(fpath)
+            ninox_array[30:,iens] = ninox.nino34
+            # 104 front nans, 30 values missing (first month) from 60225 total samples due to backward rolling average and monthly time step configuration
+            # By starting at index 31, the ninox array should begin on 0 days since 1850-01-01 rather than 31 days since 1850-01-01
+    else:
+        pass
+
+    # PRECIP IN LOCAL REGION - VANCOUVER, BC -------------------------------
+    if PRECT_VC == True: 
+        print("Opening Vancouver PRECT time series")
+
+
+    else:
+        pass
     # Target : Lagged Precip at Target Location : --------------------------
+    
     # config = utils.get_config("exp002")
     # seed = config["seed_list"][0]
 
@@ -403,18 +417,18 @@ def multi_input_data_organizer(config):
 
    
     print("Opening exp002 target data for TRAINING")
-    ENSOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp002_d_train_TARGET.pkl'
-    with gzip.open(ENSOsavename, "rb") as obj:
+    target_savename = config['data_dir'] + 'presaved/exp001_d_train_TARGET_1850-2014.pkl'
+    with gzip.open(target_savename, "rb") as obj:
         exp002_d_train_target = pickle.load(obj)
 
     print("Opening exp002 target data for VALIDATION")
-    ENSOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp002_d_val_TARGET.pkl'
-    with gzip.open(ENSOsavename, "rb") as obj:
+    target_savename = config['data_dir'] + 'presaved/exp001_d_val_TARGET_1850-2014.pkl'
+    with gzip.open(target_savename, "rb") as obj:
         exp002_d_val_target = pickle.load(obj)
 
     print("Opening exp002 target data for TESTING")
-    ENSOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp002_d_test_TARGET.pkl'
-    with gzip.open(ENSOsavename, "rb") as obj:
+    target_savename = config['data_dir'] + 'presaved/exp001_d_test_TARGET_1850-2014.pkl'
+    with gzip.open(target_savename, "rb") as obj:
         exp002_d_test_target = pickle.load(obj)
     
  
@@ -432,7 +446,7 @@ def multi_input_data_organizer(config):
         inputda[:,1,key] = MJOarray[ :-config["databuilder"]["lagtime"], 3,key]  #RMM2
         inputda[:,2,key] = ninox_array[ :-config["databuilder"]["lagtime"], key] #ENSO
         inputda[:30,2,key] = np.nan # Fill beginning 30 zeros with Nans
-        target[:,key] = value["y"] # Target : TARGET HAS ALREADY BEEN LAGGED IN PRE-PROCESSING (CLIMATE DATA CLASS)
+        target[:,key] = value["y"] # Target : TARGET HAS ALREADY BEEN LAGGED IN PRE-PROCESSING (CLIMATE DATA CLASS - config_001/analysis_001)
 
     # INPUT DICT - Save to Pickle
     s_dict_train = SampleDict()

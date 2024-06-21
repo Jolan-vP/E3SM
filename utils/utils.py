@@ -28,17 +28,21 @@ def get_config(exp_name):
     return config
 
 
-def prepare_device(device="gpu"):
+def prepare_device(device="mps"):
     """
     setup GPU device if available. get gpu device indices which are used for DataParallel
     """
-    if device == "gpu":
+    if device == "mps":
         if torch.backends.mps.is_available():
+            print("torch.backends.mps is available")
+            x = torch.ones(1, device=device)
+            print (x)
             device = torch.device("mps")
         else:
             print("Warning: MPS device not found." "Training will be performed on CPU.")
             device = torch.device("cpu")
     elif device == "cpu":
+        print("somwhere device = cpu")
         device = torch.device("cpu")
     else:
         raise NotImplementedError

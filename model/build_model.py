@@ -49,10 +49,10 @@ class TorchModel(BaseModel):
 
 
         # Simple Network Layers
-        self.L1 = torch.nn.Linear(in_features=config["hiddens_block_in"][0], 
+        self.layer1 = torch.nn.Linear(in_features=config["hiddens_block_in"][0], 
                                   out_features=config["hiddens_block_out"],
                                   bias=True)
-        # self.L2 = torch.nn.Linear(in_features=config["hiddens_block_out"][0], 
+        # self.layer2 = torch.nn.Linear(in_features=config["hiddens_block_out"][0], 
         #                           out_features=config["hiddens_block_out"][1],
         #                           bias=True)
         self.final = torch.nn.Linear(in_features=config["hiddens_final_in"], 
@@ -83,13 +83,14 @@ class TorchModel(BaseModel):
 
     def forward(self, input):
 
+        x = F.normalize(input)
+
         # basic hidden layers
-        x = self.L1(input)
-        # x = F.relu(x)
-        # x = self.L2(x)
+        x = self.layer1(x)
+        x = F.relu(x)
+        # x = self.layer2(x)
         # x = F.relu(x)
         x = self.final(x)
-
 
         # x = self.flat(x)
 
@@ -101,10 +102,10 @@ class TorchModel(BaseModel):
         mu_out = self.rescale_mu(x[:,0])
         sigma_out = self.rescale_sigma(x[:,1])
         sigma_out = torch.exp(sigma_out)
-        tau_out = self.rescale_tau(x[:,2])
+        tau_out = self.rescale_tau(x[:,3])
         
         # gamma_out
-        gamma_out = x[:,3]
+        gamma_out = x[:,2]
 
         # final output, concatenate parameters together
         x = torch.stack((mu_out, sigma_out, gamma_out, tau_out), dim=-1)
@@ -112,7 +113,7 @@ class TorchModel(BaseModel):
 
         return x
 
-    def predict(self, dataset=None, dataloader=None, batch_size=128, device="cpu"):
+    def predict(self, dataset=None, dataloader=None, batch_size=128, device="gpu"):
 
         if (dataset is None) & (dataloader is None):
             raise ValueError("both dataset and dataloader cannot be done.")

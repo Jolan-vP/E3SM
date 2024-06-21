@@ -40,7 +40,7 @@ class Trainer(BaseTrainer):
         )
         self.config = config
         self.device = device
-
+        self.model = model.to(device)
         self.data_loader = data_loader
         self.validation_data_loader = validation_data_loader
 
@@ -94,7 +94,7 @@ class Trainer(BaseTrainer):
             #         print(f"Gradient for {name}: {param.grad}")
                     
             # Clip gradients to reduce size?
-            torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1)
+            #torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1)
 
             # Adjust learning weights
             self.optimizer.step()
@@ -105,7 +105,7 @@ class Trainer(BaseTrainer):
             for met in self.metric_funcs:
                 self.batch_log.update(met.__name__, met(output, target))
 
-            outputs.append(output.detach().cpu().numpy())
+            outputs.append(output.detach().cpu().numpy()) #.cpu()
 
 
         
@@ -113,8 +113,6 @@ class Trainer(BaseTrainer):
         if self.do_validation:
             self._validation_epoch(epoch)
 
-        # Aggregate outputs as needed
-        #aggregated_outputs = np.concatenate(outputs, axis=0)
         return outputs
 
     def _validation_epoch(self, epoch):
@@ -142,5 +140,4 @@ class Trainer(BaseTrainer):
                 for met in self.metric_funcs:
                     self.batch_log.update("val_" + met.__name__, met(output, target))
 
-        #aggregated_outputs = np.concatenate(outputs, axis=0)
         return outputs

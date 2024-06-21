@@ -26,7 +26,7 @@ class CustomData(torch.utils.data.Dataset):
         back_cutoff = 32    # remove back nans
 
         self.input = dict_data["x"][front_cutoff:-back_cutoff,:]
-        self.target = dict_data["y"][front_cutoff:-back_cutoff-1]
+        self.target = dict_data["y"][front_cutoff:-back_cutoff]
 
         assert not np.any(np.isnan(self.input))
         assert not np.any(np.isnan(self.target))

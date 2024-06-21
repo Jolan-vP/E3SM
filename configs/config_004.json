@@ -1,0 +1,72 @@
+{"expname": "exp003",
+    "device": "mps",
+    "seed_list": [7],
+
+    "data_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/",
+    "figure_dir": "/Users/C830793391/Documents/Research/E3SM/visuals/",
+    "model_dir": "/Users/C830793391/Documents/Research/E3SM/saved/models",
+    "output_dir": "/Users/C830793391/Documents/Research/E3SM/saved/output",
+    "fig_dpi": 200,
+
+    "metrics": [
+        "custom_mae", "iqr_capture", "sign_test"
+    ],
+
+    "criterion": "ShashNLL",
+
+    "databuilder": {
+        
+        "input_vars": ["PRECT"],
+        "network_inputs": ["PRECT_VC", "Nino34"],
+        "input_region": "None",
+        "input_mask": ["None"],
+        "ensembles": ["ens1", "ens2", "ens3"],
+        "ensemble_codes": ["0101", "0151", "0201"],
+        "target_var": "PRECT",
+        "target_region": [49.28, 123.12],
+        "target_months": [4, 5, 6, 7, 8, 9],
+        "averaging_length": 7,
+        "lagtime": 14
+        
+    }, 
+
+    "data_loader": {
+
+        "data_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/", 
+        "batch_size": 64
+    }, 
+
+    "arch": {
+        "type": "basicnn",
+        "n_inputchannel": 1,
+
+        "basic_act": ["ReLU", "ReLU"],
+
+        "hiddens_block_in": [3, 3],
+        "hiddens_block_out": 5,
+        "hiddens_block_act": ["ReLU", "ReLU"],
+
+        "hiddens_final_in": 5,
+        "hiddens_final_out": 4,
+        "hiddens_final_act": "ReLU"
+    }, 
+
+    "optimizer": {
+        "type": "Adam",
+        "args": {
+            "lr": 0.0001,
+            "weight_decay": 0.0
+        }
+    },
+
+    "trainer": {
+        "max_epochs": 150,
+        "save_dir": "/Users/C830793391/Documents/Research/E3SM/saved/",
+        "early_stopping":{
+            "args":{
+                "patience": 5,
+                "min_delta": 0.0
+            }
+        }
+    }
+}

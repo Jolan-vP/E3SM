@@ -74,10 +74,11 @@ class BaseTrainer:
                 self.log.update(key, self.batch_log.history[key])
 
             # early stopping
-            if self.early_stopper.check_early_stop(epoch, self.log.history["val_loss"][epoch], self.model, outputs):
+            if self.early_stopper.check_early_stop(epoch, self.log.history["loss"][epoch], self.model, outputs):
                 print(
                     f"Restoring model weights from the end of the best epoch {self.early_stopper.best_epoch}: "
-                    f"val_loss = {self.early_stopper.min_validation_loss:.5f}"
+                    #f"val_loss = {self.early_stopper.min_validation_loss:.5f}"
+                    f"loss = {self.early_stopper.min_loss:.5f}"
                 )
                 self.log.print(idx=self.early_stopper.best_epoch)
 
@@ -93,7 +94,7 @@ class BaseTrainer:
             print(
                 f"Epoch {epoch:3d}/{self.max_epochs:2d}\n"
                 f"  {elapsed_time:.1f}s"
-                f" - train_loss: {self.log.history['loss'][epoch]:.5f}"
+                f" - loss: {self.log.history['loss'][epoch]:.5f}"
                 f" - val_loss: {self.log.history['val_loss'][epoch]:.5f}"
             )
 
@@ -126,13 +127,16 @@ class EarlyStopping:
         self.patience = patience
         self.min_delta = min_delta
         self.counter = 0
-        self.min_validation_loss = float("inf")
+        self.min_loss = float("inf")
+        # self.min_validation_loss = float("inf")
         self.best_model_state = None
         self.best_epoch = None
 
-    def check_early_stop(self, epoch, validation_loss, model, outputs):
-        if validation_loss < (self.min_validation_loss - self.min_delta):
-            self.min_validation_loss = validation_loss
+    def check_early_stop(self, epoch, loss, model, outputs):
+        if loss < (self.min_loss - self.min_delta):
+        # if validation_loss < (self.min_validation_loss - self.min_delta):
+            self.min_validation_loss = loss
+            # self.min_validation_loss = validation_loss
             self.counter = 0
 
             self.best_model_state = copy.deepcopy(model.state_dict())
