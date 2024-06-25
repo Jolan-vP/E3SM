@@ -52,9 +52,9 @@ class TorchModel(BaseModel):
         self.layer1 = torch.nn.Linear(in_features=config["hiddens_block_in"][0], 
                                   out_features=config["hiddens_block_out"],
                                   bias=True)
-        # self.layer2 = torch.nn.Linear(in_features=config["hiddens_block_out"][0], 
-        #                           out_features=config["hiddens_block_out"][1],
-        #                           bias=True)
+        self.layer2 = torch.nn.Linear(in_features=config["hiddens_block_out"], 
+                                   out_features=config["hiddens_block_out"],
+                                   bias=True)
         self.final = torch.nn.Linear(in_features=config["hiddens_final_in"], 
                                   out_features=config["hiddens_final_out"],
                                   bias=True)
@@ -83,7 +83,7 @@ class TorchModel(BaseModel):
 
     def forward(self, input):
 
-        x = F.normalize(input)
+        x = F.normalize(input, p = 1, dim = 1)
 
         # basic hidden layers
         x = self.layer1(x)

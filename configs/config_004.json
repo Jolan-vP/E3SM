@@ -2,7 +2,7 @@
     "device": "mps",
     "seed_list": [7],
 
-    "data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/",
+    "data_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/",
     "figure_dir": "/Users/C830793391/Documents/Research/E3SM/visuals/",
     "model_dir": "/Users/C830793391/Documents/Research/E3SM/saved/models",
     "output_dir": "/Users/C830793391/Documents/Research/E3SM/saved/output",
@@ -26,8 +26,9 @@
         "target_region": [49.28, 123.12],
         "target_months": [4, 5, 6, 7, 8, 9],
         "averaging_length": 7,
-        "lagtime": 14
-        
+        "lagtime": 14,
+        "front_cutoff": 74, 
+        "back_cutoff": 32
     }, 
 
     "data_loader": {
@@ -42,11 +43,11 @@
 
         "basic_act": ["ReLU", "ReLU"],
 
-        "hiddens_block_in": [3, 3],
-        "hiddens_block_out": 5,
+        "hiddens_block_in": [2, 2],
+        "hiddens_block_out": 6,
         "hiddens_block_act": ["ReLU", "ReLU"],
 
-        "hiddens_final_in": 5,
+        "hiddens_final_in": 6,
         "hiddens_final_out": 4,
         "hiddens_final_act": "ReLU"
     }, 
@@ -54,13 +55,13 @@
     "optimizer": {
         "type": "Adam",
         "args": {
-            "lr": 0.0001,
+            "lr": 0.00001,
             "weight_decay": 0.0
         }
     },
 
     "trainer": {
-        "max_epochs": 150,
+        "max_epochs": 3000,
         "save_dir": "/Users/C830793391/Documents/Research/E3SM/saved/",
         "early_stopping":{
             "args":{

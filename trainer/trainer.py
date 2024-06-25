@@ -60,7 +60,6 @@ class Trainer(BaseTrainer):
         # counter = 0
         # transition_detected = False
 
-        outputs = []
 
         for batch_idx, (data, target) in enumerate(self.data_loader):
             input, target = (
@@ -68,13 +67,18 @@ class Trainer(BaseTrainer):
                 target.to(self.device)
             )
 
+            # print(f"Inputs: {input}")
+            # print(f"Targets: {target}")
+
             # Zero your gradients for every batch!
             self.optimizer.zero_grad()
 
             # Make predictions for this batch
             output = self.model(input)
 
+            # print(f"Outputs: {output}")
             # Compute the loss and its gradients
+
             loss = self.criterion(output, target)
             loss.backward()
 
@@ -94,7 +98,7 @@ class Trainer(BaseTrainer):
             #         print(f"Gradient for {name}: {param.grad}")
                     
             # Clip gradients to reduce size?
-            #torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1)
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1)
 
             # Adjust learning weights
             self.optimizer.step()
@@ -105,7 +109,7 @@ class Trainer(BaseTrainer):
             for met in self.metric_funcs:
                 self.batch_log.update(met.__name__, met(output, target))
 
-            outputs.append(output.detach().cpu().numpy()) #.cpu()
+            
 
 
         
@@ -113,7 +117,7 @@ class Trainer(BaseTrainer):
         if self.do_validation:
             self._validation_epoch(epoch)
 
-        return outputs
+        return 
 
     def _validation_epoch(self, epoch):
         """
@@ -132,6 +136,7 @@ class Trainer(BaseTrainer):
                     target.to(self.device)
                 ) 
 
+
                 output = self.model(input)
                 loss = self.criterion(output, target)
                 
@@ -140,4 +145,4 @@ class Trainer(BaseTrainer):
                 for met in self.metric_funcs:
                     self.batch_log.update("val_" + met.__name__, met(output, target))
 
-        return outputs
+        return 

@@ -150,11 +150,27 @@ class ClimateData:
                     f_dict[key] = f_dict[key] * 10e3 * 86400 
                 
                 # EXTRACT TARGET LOCATION
-                targetlat = self.config["target_region"][0]
-                targetlon = self.config["target_region"][1]
-                f_dict[key] = f_dict[key].sel(lat = targetlat, lon = targetlon, method = 'nearest')
+                if self.config["target_region"].size == 2: # Specific city / lat lon location
+                    targetlat = self.config["target_region"][0]
+                    targetlon = self.config["target_region"][1]
+                    f_dict[key] = f_dict[key].sel(lat = targetlat, lon = targetlon, method = 'nearest')
 
-                # REMOVE SEASONAL CYCLE
+                elif self.config["target_region"].size == 4: # Generalized region of interest (lat-lon box)
+                    min_lat, max_lat = self.config["target_region"][:2]
+                    min_lon, max_lon = self.config["target_region"][2:]
+
+                    if isinstance(f_dict[key], xr.DataArray):
+                        mask_lon = (f_dict[key].lon >= min_lon) & (f_dict[key].lon <= max_lon)
+                        mask_lat = (f_dict[key].lat >= min_lat) & (f_dict[key].lat <= max_lat)
+                        data_masked = f_dict[key].where(mask_lon & mask_lat, drop=True)
+                        f_dict[key] = data_masked.mean('TS')
+                        
+                        print(f"Shape of f_dict[key] after averaging across target region: {f_dict[key].shape}")
+
+                    else:
+                        raise NotImplementedError("data must be xarray")
+
+                # REMOVE SEASONAL CYCLE 
                 f_dict[key] = self.trend_remove_seasonal_cycle(f_dict[key])
 
                 # ROLLING AVERAGE
@@ -216,7 +232,7 @@ class ClimateData:
             
         return f_dict
     
-    def _extractregion(self, da): 
+    def _extractinputregion(self, da): 
         if self.config["input_region"] == "None": 
             
             # "input_region": [[-15.0, 15.0, 40.0, 300.0],
@@ -375,7 +391,7 @@ def multi_input_data_organizer(config, MJO=False, ENSO = False, PRECT_VC = False
         print("Opening Vancouver PRECT time series")
 
         print("Opening exp004 PRECIP input data for TRAINING")
-        target_savename = config['data_dir'] + 'presaved/exp001_4_train_VANCOUVER_1850-2014.pkl'
+        target_savename = config['data_dir'] + 'presaved/exp004_d_train_VANCOUVER_1850-2014.pkl'
         with gzip.open(target_savename, "rb") as obj:
             exp004_d_train_VC = pickle.load(obj)
 
@@ -385,7 +401,7 @@ def multi_input_data_organizer(config, MJO=False, ENSO = False, PRECT_VC = False
             exp004_d_val_VC = pickle.load(obj)
 
         print("Opening exp004 PRECIP input data for TESTING")
-        target_savename = config['data_dir'] + 'presaved/exp0014d_test_VANCOUVER_1850-2014.pkl'
+        target_savename = config['data_dir'] + 'presaved/exp004_d_test_VANCOUVER_1850-2014.pkl'
         with gzip.open(target_savename, "rb") as obj:
             exp004_d_test_VC = pickle.load(obj)
     
@@ -450,8 +466,12 @@ def multi_input_data_organizer(config, MJO=False, ENSO = False, PRECT_VC = False
     # Create Input and Target Arrays ------------------------------------------------------------
 
     print("Combining Input and target data")
-    inputda = np.zeros([60225 - config["databuilder"]["lagtime"], 3, 3])
-    print(inputda.shape)
+    if MJO == True and ENSO == True: 
+        inputda = np.zeros([60225 - config["databuilder"]["lagtime"], 3, 3])
+        print(inputda.shape)
+    elif ENSO== True and PRECT_VC == True:
+        inputda = np.zeros([60225 - config["databuilder"]["lagtime"], 2, 3])
+        print(inputda.shape)
     target = np.zeros([60225 - config["databuilder"]["lagtime"], 3], dtype=float) 
     
     data_dict = {0: exp002_d_train_target, 1: exp002_d_val_target, 2:exp002_d_test_target}
@@ -465,7 +485,7 @@ def multi_input_data_organizer(config, MJO=False, ENSO = False, PRECT_VC = False
             inputda[:,0,key] = MJOarray[ :-config["databuilder"]["lagtime"], 2,key]  #RMM1
             inputda[:,1,key] = MJOarray[ :-config["databuilder"]["lagtime"], 3,key]  #RMM2
         elif PRECT_VC==True:
-            inputda[:,1,key] = vc_prect_dict[key]  # VANCOUVER PRECIP (PRE-PROCESSED/PRE-LAGGED)
+            inputda[:,1,key] = vc_prect_dict[key]["y"]  # VANCOUVER PRECIP (PRE-PROCESSED/PRE-LAGGED)
         
         target[:,key] = value["y"] # Target : TARGET HAS ALREADY BEEN LAGGED IN PRE-PROCESSING (CLIMATE DATA CLASS - config_001/analysis_001)
 

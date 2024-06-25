@@ -1,12 +1,12 @@
-{"expname": "exp002",
-    "device": "gpu",
+{"expname": "exp005",
+    "device": "mps",
     "seed_list": [7],
-"data_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/",
+
+    "data_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/",
     "figure_dir": "/Users/C830793391/Documents/Research/E3SM/visuals/",
     "model_dir": "/Users/C830793391/Documents/Research/E3SM/saved/models",
     "output_dir": "/Users/C830793391/Documents/Research/E3SM/saved/output",
     "fig_dpi": 200,
-    
 
     "metrics": [
         "custom_mae", "iqr_capture", "sign_test"
@@ -16,18 +16,19 @@
 
     "databuilder": {
         
-        "input_vars": ["PRECT"],
-        "network_inputs": ["RMM1", "RMM2", "Nino34"],
+        "input_vars": ["TS"],
+        "network_inputs": ["TS_VC", "Nino34"],
         "input_region": "None",
         "input_mask": ["None"],
         "ensembles": ["ens1", "ens2", "ens3"],
         "ensemble_codes": ["0101", "0151", "0201"],
-        "target_var": "PRECT",
-        "target_region": [47.6, 122.0],
+        "target_var": "TS",
+        "target_region": [45.543, 49.002, -124.763, -116.915],
         "target_months": [4, 5, 6, 7, 8, 9],
         "averaging_length": 7,
-        "lagtime": 14
-        
+        "lagtime": 14,
+        "front_cutoff": 74, 
+        "back_cutoff": 32
     }, 
 
     "data_loader": {
@@ -42,11 +43,11 @@
 
         "basic_act": ["ReLU", "ReLU"],
 
-        "hiddens_block_in": [3, 3],
-        "hiddens_block_out": [2, 2],
+        "hiddens_block_in": [2, 2],
+        "hiddens_block_out": 6,
         "hiddens_block_act": ["ReLU", "ReLU"],
 
-        "hiddens_final_in": 2,
+        "hiddens_final_in": 6,
         "hiddens_final_out": 4,
         "hiddens_final_act": "ReLU"
     }, 
@@ -54,19 +55,18 @@
     "optimizer": {
         "type": "Adam",
         "args": {
-            "lr": 0.001,
-            "weight_decay": 0.07,
-            "amsgrad": false
+            "lr": 0.00001,
+            "weight_decay": 0.0
         }
     },
 
     "trainer": {
-        "max_epochs": 30,
+        "max_epochs": 3000,
         "save_dir": "/Users/C830793391/Documents/Research/E3SM/saved/",
         "early_stopping":{
             "args":{
                 "patience": 5,
-                "min_delta": 0.001
+                "min_delta": 0.0
             }
         }
     }

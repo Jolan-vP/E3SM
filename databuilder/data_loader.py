@@ -11,6 +11,7 @@ import torch
 import numpy as np
 import pickle
 import gzip
+from sklearn.preprocessing import StandardScaler
 
 
 class CustomData(torch.utils.data.Dataset):
@@ -18,15 +19,15 @@ class CustomData(torch.utils.data.Dataset):
     Custom dataset for data in dictionaries.
     """
 
-    def __init__(self, data_file):
+    def __init__(self, data_file, front_cutoff, back_cutoff):
         with gzip.open(data_file, "rb") as handle:
             dict_data = pickle.load(handle)
 
-        front_cutoff = 121  # remove front nans
-        back_cutoff = 32    # remove back nans
-
         self.input = dict_data["x"][front_cutoff:-back_cutoff,:]
         self.target = dict_data["y"][front_cutoff:-back_cutoff]
+        # # Normalize Inputs
+        # scaler = StandardScaler()
+        # self.input = scaler.fit_transform(self.input)
 
         assert not np.any(np.isnan(self.input))
         assert not np.any(np.isnan(self.target))

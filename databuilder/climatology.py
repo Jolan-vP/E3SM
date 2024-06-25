@@ -34,7 +34,7 @@ import gzip
 
 
 
-def deriveclimatology(output, climate_data, samples, x):
+def deriveclimatology(output, climate_data, samples, x, valset):
     """
     Input: Filename for climate data, SHASH parameters for sample
     Output: probability density distribution for given data and shash curve
@@ -45,24 +45,34 @@ def deriveclimatology(output, climate_data, samples, x):
         data = pickle.load(obj1)
     climatology = data["y"]
    
-    plt.figure(figsize=(8, 4), dpi=200)
+   
 
     dist = Shash(output)
     p = dist.prob(x).numpy()
     
-    print(p[:,samples])
+    # print(p[:,samples])
 
+    plt.figure(figsize=(8, 4), dpi=200)
     plt.hist(
         climatology, x, density=True, color="gray", alpha=0.75, label="climatology"
     )
-
-    plt.plot(x, p[:, samples], label=samples)
+    y = [0.07, 0.1, 0.05, 0.039, 0.039]
+    print(valset[samples][1])
+   
+    # for isamp, samp in enumerate(samples): 
+       # for isamp, samp in enumerate(samples): 
+    #     plt.plot(valset[samp][1], y[isamp], 'o')
+    #     plt.xlabel("value")
+    #     plt.ylabel("probability density")
+    #     plt.title("Network Shash Prediction")
+    
+    plt.plot(x, p[:, samples], label = samples)
     plt.xlabel("value")
     plt.ylabel("probability density")
     plt.title("Network Shash Prediction")
     plt.legend()
     plt.show()
-    return 
+    return p
 
 
 
