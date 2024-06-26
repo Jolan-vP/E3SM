@@ -145,34 +145,39 @@ class ClimateData:
 
                 f_dict[key] = ds[self.config["target_var"]]
                 print(f"Length of target = {(len(f_dict[key]))}")
-
+                
+                
                 if self.config["target_var"] == "PRECT": # CONVERTING PRECIP TO MM/DAY!
                     f_dict[key] = f_dict[key] * 10e3 * 86400 
                 
                 # EXTRACT TARGET LOCATION
-                if self.config["target_region"].size == 2: # Specific city / lat lon location
+                if len(self.config["target_region"]) == 2: # Specific city / lat lon location
                     targetlat = self.config["target_region"][0]
                     targetlon = self.config["target_region"][1]
                     f_dict[key] = f_dict[key].sel(lat = targetlat, lon = targetlon, method = 'nearest')
-
-                elif self.config["target_region"].size == 4: # Generalized region of interest (lat-lon box)
+                
+                elif len(self.config["target_region"]) == 4: # Generalized region of interest (lat-lon box)
                     min_lat, max_lat = self.config["target_region"][:2]
                     min_lon, max_lon = self.config["target_region"][2:]
-
+    
                     if isinstance(f_dict[key], xr.DataArray):
                         mask_lon = (f_dict[key].lon >= min_lon) & (f_dict[key].lon <= max_lon)
                         mask_lat = (f_dict[key].lat >= min_lat) & (f_dict[key].lat <= max_lat)
                         data_masked = f_dict[key].where(mask_lon & mask_lat, drop=True)
-                        f_dict[key] = data_masked.mean('TS')
-                        
+                        f_dict[key] = data_masked.mean(['lat', 'lon'])
+                        print(f_dict[key][500:540])
                         print(f"Shape of f_dict[key] after averaging across target region: {f_dict[key].shape}")
 
                     else:
                         raise NotImplementedError("data must be xarray")
-
+                
+                print(f"Shape of f_dict[key] before seasonal cycle removal: {f_dict[key].shape}")
+                print(f_dict[key][500:540])
                 # REMOVE SEASONAL CYCLE 
                 f_dict[key] = self.trend_remove_seasonal_cycle(f_dict[key])
-
+                
+                print(f"Shape of f_dict[key] after seasonal cycle removal: {f_dict[key].shape}")
+                
                 # ROLLING AVERAGE
                 f_dict[key] = self.rolling_ave(f_dict[key]) # first six values are now nans due to 7-day rolling mean
 
