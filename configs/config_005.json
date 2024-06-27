@@ -2,7 +2,7 @@
     "device": "mps",
     "seed_list": [7],
 
-    "data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/",
+    "data_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/",
     "figure_dir": "/Users/C830793391/Documents/Research/E3SM/visuals/",
     "model_dir": "/Users/C830793391/Documents/Research/E3SM/saved/models",
     "output_dir": "/Users/C830793391/Documents/Research/E3SM/saved/output",
@@ -23,7 +23,7 @@
         "ensembles": ["ens1", "ens2", "ens3"],
         "ensemble_codes": ["0101", "0151", "0201"],
         "target_var": "TS",
-        "target_region": [45.543, 49.002, -124.763, -116.915],
+        "target_region": [49.15, 123.11],
         "target_months": [4, 5, 6, 7, 8, 9],
         "averaging_length": 7,
         "lagtime": 14,

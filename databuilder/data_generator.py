@@ -71,16 +71,16 @@ class ClimateData:
             if self.verbose:
                 print(ens)
             if ens == "ens1":   
-                #train_ds = filemethods.get_netcdf_da(self.data_dir["local"] + ens + "/input_vars.v2.LR.historical_0101.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
-                train_ds = filemethods.get_netcdf_da(self.data_dir +  "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+                train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+                #train_ds = filemethods.get_netcdf_da(self.data_dir +  "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
 
             if ens == "ens2":
-                #validate_ds = filemethods.get_netcdf_da(self.data_dir["local"] + ens + "/input_vars.v2.LR.historical_0151.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
-                validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
+                validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
+                #validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
 
             elif ens == "ens3":
-                #test_ds = filemethods.get_netcdf_da(self.data_dir["local"] + ens + "/input_vars.v2.LR.historical_0201.eam.h1." + str(self.config["data_range"][0]) + "-" + str(self.config["data_range"][1]) + ".nc")
-                test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
+                test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
+                #test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
         
         train_ds = train_ds.sel(time = slice("1850", "2014"))
         validate_ds = validate_ds.sel(time = slice("1850", "2014"))
@@ -123,12 +123,15 @@ class ClimateData:
         for ivar, var in enumerate(self.config["input_vars"]):
             if ivar == 0:
                 da = ds[var]
-                print("isolating variables from ds")
+                print("Isolating variables from Dataset")
+
                 if var == "PRECT": ## CONVERTING PRECIP TO MM/DAY!
                     da = da * 10e3 * 86400 
                 else:
                     pass
-                da = da.expand_dims(dim={"channel": 1}, axis = -1)   # (2) Create a channel dimension in da
+
+                if len(self.config["input_vars"]) > 1: # If there is more than one input variable to process here
+                    da = da.expand_dims(dim={"channel": 1}, axis = -1)   # (2) Create a channel dimension in da
             else: 
                 da = xr.concat([da, ds[var]], dim = "channel")  # (3) Fill channel dim with var array
       
@@ -144,40 +147,43 @@ class ClimateData:
                 print("Processing target output")
 
                 f_dict[key] = ds[self.config["target_var"]]
-                print(f"Length of target = {(len(f_dict[key]))}")
+                print(f"Target before processing: \n {(f_dict[key][500:540])}")
                 
-                
-                if self.config["target_var"] == "PRECT": # CONVERTING PRECIP TO MM/DAY!
+                if self.config["target_var"] == "PRECT": # CONVERTING PRECIP TO MM/DAY! Must do this twice, one for input PRECT, one for Target PRECT
                     f_dict[key] = f_dict[key] * 10e3 * 86400 
                 
                 # EXTRACT TARGET LOCATION
                 if len(self.config["target_region"]) == 2: # Specific city / lat lon location
+                    print("Target region is a single grid point")
                     targetlat = self.config["target_region"][0]
                     targetlon = self.config["target_region"][1]
                     f_dict[key] = f_dict[key].sel(lat = targetlat, lon = targetlon, method = 'nearest')
                 
                 elif len(self.config["target_region"]) == 4: # Generalized region of interest (lat-lon box)
+                    print("Target region is a box region")
                     min_lat, max_lat = self.config["target_region"][:2]
                     min_lon, max_lon = self.config["target_region"][2:]
     
                     if isinstance(f_dict[key], xr.DataArray):
                         mask_lon = (f_dict[key].lon >= min_lon) & (f_dict[key].lon <= max_lon)
                         mask_lat = (f_dict[key].lat >= min_lat) & (f_dict[key].lat <= max_lat)
+                        # print(f"mask_lat = {mask_lat}")
+                        # print(f"mask_lon = {mask_lon}")
                         data_masked = f_dict[key].where(mask_lon & mask_lat, drop=True)
                         f_dict[key] = data_masked.mean(['lat', 'lon'])
-                        print(f_dict[key][500:540])
-                        print(f"Shape of f_dict[key] after averaging across target region: {f_dict[key].shape}")
 
                     else:
                         raise NotImplementedError("data must be xarray")
                 
-                print(f"Shape of f_dict[key] before seasonal cycle removal: {f_dict[key].shape}")
-                print(f_dict[key][500:540])
+                # print(f"Shape of f_dict[key] before seasonal cycle removal: {f_dict[key].shape}")
+                # print(f_dict[key][500:540])
+
                 # REMOVE SEASONAL CYCLE 
                 f_dict[key] = self.trend_remove_seasonal_cycle(f_dict[key])
                 
-                print(f"Shape of f_dict[key] after seasonal cycle removal: {f_dict[key].shape}")
-                
+                # print(f"Shape of f_dict[key] after seasonal cycle removal: {f_dict[key].shape}")
+                # print(f_dict[key][500:540])
+
                 # ROLLING AVERAGE
                 f_dict[key] = self.rolling_ave(f_dict[key]) # first six values are now nans due to 7-day rolling mean
 
@@ -354,7 +360,7 @@ class ClimateData:
 
 
 
-def multi_input_data_organizer(config, MJO=False, ENSO = False, PRECT_VC = False):
+def multi_input_data_organizer(config, MJO=False, ENSO = False, TEMP_VC = False):
     """
         train {x: RMM1, RMM2, Nino34}, 
               {y: target}
@@ -391,24 +397,24 @@ def multi_input_data_organizer(config, MJO=False, ENSO = False, PRECT_VC = False
     else:
         pass
 
-    # PRECIP IN LOCAL REGION - VANCOUVER, BC -------------------------------
-    if PRECT_VC == True: 
-        print("Opening Vancouver PRECT time series")
+    # TEMP IN LOCAL REGION - VANCOUVER, BC -------------------------------
+    if TEMP_VC == True: 
+        print("Opening Vancouver TEMP time series")
 
-        print("Opening exp004 PRECIP input data for TRAINING")
-        target_savename = config['data_dir'] + 'presaved/exp004_d_train_VANCOUVER_1850-2014.pkl'
-        with gzip.open(target_savename, "rb") as obj:
-            exp004_d_train_VC = pickle.load(obj)
+        print("Opening exp005 VC TS input data for TRAINING")
+        input_savename = config['data_dir'] + 'presaved/exp005_d_train_VC_TS_1850-2014.pkl'
+        with gzip.open(input_savename, "rb") as obj:
+            exp005_d_train_PNW_TS = pickle.load(obj)
 
-        print("Opening exp004 PRECIP input data for VALIDATION")
-        target_savename = config['data_dir'] + 'presaved/exp004_d_val_VANCOUVER_1850-2014.pkl'
-        with gzip.open(target_savename, "rb") as obj:
-            exp004_d_val_VC = pickle.load(obj)
+        print("Opening exp005 VC TS input data for VALIDATION")
+        input_savename = config['data_dir'] + 'presaved/exp005_d_val_VC_TS_1850-2014.pkl'
+        with gzip.open(input_savename, "rb") as obj:
+            exp005_d_val_PNW_TS = pickle.load(obj)
 
-        print("Opening exp004 PRECIP input data for TESTING")
-        target_savename = config['data_dir'] + 'presaved/exp004_d_test_VANCOUVER_1850-2014.pkl'
-        with gzip.open(target_savename, "rb") as obj:
-            exp004_d_test_VC = pickle.load(obj)
+        print("Opening exp005 VC TS input data for TESTING")
+        input_savename = config['data_dir'] + 'presaved/exp005_d_test_VC_TS_1850-2014.pkl'
+        with gzip.open(input_savename, "rb") as obj:
+            exp005_d_test_PNW_TS = pickle.load(obj)
     
 
     else:
@@ -452,20 +458,20 @@ def multi_input_data_organizer(config, MJO=False, ENSO = False, PRECT_VC = False
     #     print(f"Exp002 Target files have been created and data has been pickled.")
 
    
-    print("Opening exp002 target data for TRAINING")
-    target_savename = config['data_dir'] + 'presaved/exp001_d_train_TARGET_1850-2014.pkl'
+    print("Opening exp005 PNW TS target data for TRAINING")
+    target_savename = config['data_dir'] + 'presaved/exp005_d_train_PNW_TS_1850-2014.pkl'
     with gzip.open(target_savename, "rb") as obj:
-        exp002_d_train_target = pickle.load(obj)
+        exp005_d_train_target = pickle.load(obj)
 
-    print("Opening exp002 target data for VALIDATION")
-    target_savename = config['data_dir'] + 'presaved/exp001_d_val_TARGET_1850-2014.pkl'
+    print("Opening exp005 PNW TS target data for VALIDATION")
+    target_savename = config['data_dir'] + 'presaved/exp005_d_val_PNW_TS_1850-2014.pkl'
     with gzip.open(target_savename, "rb") as obj:
-        exp002_d_val_target = pickle.load(obj)
+        exp005_d_val_target = pickle.load(obj)
 
-    print("Opening exp002 target data for TESTING")
-    target_savename = config['data_dir'] + 'presaved/exp001_d_test_TARGET_1850-2014.pkl'
+    print("Opening exp005 PNW TS target data for TESTING")
+    target_savename = config['data_dir'] + 'presaved/exp005_d_test_PNW_TS_1850-2014.pkl'
     with gzip.open(target_savename, "rb") as obj:
-        exp002_d_test_target = pickle.load(obj)
+        exp005_d_test_target = pickle.load(obj)
     
  
     # Create Input and Target Arrays ------------------------------------------------------------
@@ -474,13 +480,13 @@ def multi_input_data_organizer(config, MJO=False, ENSO = False, PRECT_VC = False
     if MJO == True and ENSO == True: 
         inputda = np.zeros([60225 - config["databuilder"]["lagtime"], 3, 3])
         print(inputda.shape)
-    elif ENSO== True and PRECT_VC == True:
+    elif ENSO== True and TEMP_VC == True:
         inputda = np.zeros([60225 - config["databuilder"]["lagtime"], 2, 3])
         print(inputda.shape)
     target = np.zeros([60225 - config["databuilder"]["lagtime"], 3], dtype=float) 
     
-    data_dict = {0: exp002_d_train_target, 1: exp002_d_val_target, 2:exp002_d_test_target}
-    vc_prect_dict = {0: exp004_d_train_VC, 1: exp004_d_val_VC, 2:exp004_d_test_VC}
+    data_dict = {0: exp005_d_train_target, 1: exp005_d_val_target, 2:exp005_d_test_target}
+    vc_temp_dict = {0: exp005_d_train_PNW_TS, 1: exp005_d_val_PNW_TS, 2:exp005_d_test_PNW_TS}
 
     for key, value in data_dict.items():
         if ENSO==True:
@@ -489,10 +495,10 @@ def multi_input_data_organizer(config, MJO=False, ENSO = False, PRECT_VC = False
         if MJO==True:
             inputda[:,0,key] = MJOarray[ :-config["databuilder"]["lagtime"], 2,key]  #RMM1
             inputda[:,1,key] = MJOarray[ :-config["databuilder"]["lagtime"], 3,key]  #RMM2
-        elif PRECT_VC==True:
-            inputda[:,1,key] = vc_prect_dict[key]["y"]  # VANCOUVER PRECIP (PRE-PROCESSED/PRE-LAGGED)
+        elif TEMP_VC==True:
+            inputda[:,1,key] = vc_temp_dict[key]["y"]  # VANCOUVER TS (PRE-PROCESSED/PRE-LAGGED)
         
-        target[:,key] = value["y"] # Target : TARGET HAS ALREADY BEEN LAGGED IN PRE-PROCESSING (CLIMATE DATA CLASS - config_001/analysis_001)
+        target[:,key] = value["y"] # Target - REGIONAL TEMP : SEATTLE METRO AREA: TARGET HAS ALREADY BEEN LAGGED IN PRE-PROCESSING (CLIMATE DATA CLASS - config_001/analysis_001)
 
     # INPUT DICT - Save to Pickle
     s_dict_train = SampleDict()
@@ -509,27 +515,3 @@ def multi_input_data_organizer(config, MJO=False, ENSO = False, PRECT_VC = False
 
     return s_dict_train, s_dict_val, s_dict_test
 
-
-
-
-
-# ----------------------------------------------------
-
-    
-    # print("Opening exp001 to extract target data for TRAINING")
-    # MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_train_TARGET.pkl'
-    # with gzip.open(MJOsavename, "rb") as obj:
-    #     exp001_d_train_target = pickle.load(obj)
-    # obj.close()
-
-    # print("Opening exp001 to extract target data for VALIDATION")
-    # MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_val_TARGET.pkl'
-    # with gzip.open(MJOsavename, "rb") as obj:
-    #     exp001_d_val_target = pickle.load(obj)
-    # obj.close()
-
-    # print("Opening exp001 to extract target data for TESTING")
-    # MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp001_d_test_TARGET.pkl'
-    # with gzip.open(MJOsavename, "rb") as obj:
-    #     exp001_d_test_target = pickle.load(obj)
-    # obj.close()
