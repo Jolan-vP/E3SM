@@ -25,6 +25,7 @@ class CustomData(torch.utils.data.Dataset):
 
         self.input = dict_data["x"][front_cutoff:-back_cutoff,:]
         self.target = dict_data["y"][front_cutoff:-back_cutoff]
+        
         # # Normalize Inputs
         # scaler = StandardScaler()
         # self.input = scaler.fit_transform(self.input)

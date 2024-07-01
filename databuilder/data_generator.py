@@ -27,6 +27,7 @@ import xarray as xr
 import pickle
 import gzip
 import utils
+import time
 import utils.filemethods as filemethods
 from databuilder.sampleclass import SampleDict
 
@@ -119,26 +120,44 @@ class ClimateData:
 
         f_dict = SampleDict() 
 
-        # (1) Isolate the individual dataset values of ds : PRECT, TS, etc. 
-        for ivar, var in enumerate(self.config["input_vars"]):
-            if ivar == 0:
-                da = ds[var]
-                print("Isolating variables from Dataset")
+        # (1) Isolate the individual dataset values of ds : PRECT, TS, etc. for INPUTS:
+        if self.config["input_vars"] == "None": 
+            pass
+        else:
+            for ivar, var in enumerate(self.config["input_vars"]):
+                if ivar == 0:
+                    da = ds[var]
+                    print("Isolating variables from Dataset")
 
-                if var == "PRECT": ## CONVERTING PRECIP TO MM/DAY!
-                    da = da * 10e3 * 86400 
-                else:
-                    pass
+                    if var == "PRECT": ## CONVERTING PRECIP TO MM/DAY!
+                        da_copy = da.copy()
 
-                if len(self.config["input_vars"]) > 1: # If there is more than one input variable to process here
-                    da = da.expand_dims(dim={"channel": 1}, axis = -1)   # (2) Create a channel dimension in da
-            else: 
-                da = xr.concat([da, ds[var]], dim = "channel")  # (3) Fill channel dim with var array
+                        inc = 45 # 45 degree partitions in longitude to split up the data
+                    
+                        for iloop in np.arange(0, da_copy.shape[2] // inc + 1):
+                            start = inc * iloop
+                            end = np.min([inc * (iloop + 1), da_copy.shape[2]])
+                            if start == end:
+                                break
+                            
+                            mm_day = da_copy[:,:,start:end] * 10e3 * 86400
+                            da[:, :, start:end] = mm_day
+                            # stacked = da[:, :, start:end].stack(z=("lat", "lon"))
+                            # da_copy[:, :, start:end] = stacked.groupby("time.dayofyear").map(self.subtract_trend).unstack()
+
+                        print(f"da post incremental unit conversion: {da.values[500:540]}")
+                    else:
+                        pass
+
+                    if len(self.config["input_vars"]) > 1: # If there is more than one input variable to process here
+                        da = da.expand_dims(dim={"channel": 1}, axis = -1)   # (2) Create a channel dimension in da
+                else: 
+                    da = xr.concat([da, ds[var]], dim = "channel")  # (3) Fill channel dim with var array
       
-        da = da.rename('SAMPLES')
-        da.attrs['long_name'] = None
-        da.attrs['units'] = None
-        da.attrs['cell_methods'] = None
+            da = da.rename('SAMPLES')
+            da.attrs['long_name'] = None
+            da.attrs['units'] = None
+            da.attrs['cell_methods'] = None
 
 
         # For each input variable or data entity you would like to process: 
@@ -146,11 +165,23 @@ class ClimateData:
             if key == "y":
                 print("Processing target output")
 
+                time.sleep(10)
+                
                 f_dict[key] = ds[self.config["target_var"]]
-                print(f"Target before processing: \n {(f_dict[key][500:540])}")
                 
                 if self.config["target_var"] == "PRECT": # CONVERTING PRECIP TO MM/DAY! Must do this twice, one for input PRECT, one for Target PRECT
-                    f_dict[key] = f_dict[key] * 10e3 * 86400 
+                    da_copy = f_dict[key].copy()
+
+                    inc = 45 # 45 degree partitions in longitude to split up the data
+                
+                    for iloop in np.arange(0, da_copy.shape[2] // inc + 1):
+                        start = inc * iloop
+                        end = np.min([inc * (iloop + 1), da_copy.shape[2]])
+                        if start == end:
+                            break
+                        
+                        mm_day = da_copy[:,:,start:end] * 10e3 * 86400
+                        f_dict[key][:, :, start:end] = mm_day
                 
                 # EXTRACT TARGET LOCATION
                 if len(self.config["target_region"]) == 2: # Specific city / lat lon location
@@ -160,7 +191,7 @@ class ClimateData:
                     f_dict[key] = f_dict[key].sel(lat = targetlat, lon = targetlon, method = 'nearest')
                 
                 elif len(self.config["target_region"]) == 4: # Generalized region of interest (lat-lon box)
-                    print("Target region is a box region")
+                    print("Target region is a box region. Calculating regional average")
                     min_lat, max_lat = self.config["target_region"][:2]
                     min_lon, max_lon = self.config["target_region"][2:]
     
@@ -179,20 +210,24 @@ class ClimateData:
                 # print(f_dict[key][500:540])
 
                 # REMOVE SEASONAL CYCLE 
+                print("removing seasonal cycle")
                 f_dict[key] = self.trend_remove_seasonal_cycle(f_dict[key])
                 
                 # print(f"Shape of f_dict[key] after seasonal cycle removal: {f_dict[key].shape}")
                 # print(f_dict[key][500:540])
 
                 # ROLLING AVERAGE
+                print("rolling average")
                 f_dict[key] = self.rolling_ave(f_dict[key]) # first six values are now nans due to 7-day rolling mean
 
                 # LAG ADJUSTMENT OF TARGET DATASET : Lagging by self.config["lagtime"] number of days allows the input and target samples to align
                 #  such that each input is paired with a target that is X days in the future
+                print("lag")
                 if self.config["lagtime"] != 0: 
                     f_dict[key] = f_dict[key][ self.config["lagtime"]: ]
                  #TODO: Confirm addition of nans?? "Lead/Lag code for y - shift forward 10 days = input 10x nans at the beginning of the dataset"
-
+                
+                print("completed processing target")
             else: 
                 if self.target_only == True:
                     pass
