@@ -44,8 +44,7 @@ def deriveclimatology(output, climate_data, samples, x, valset):
     with gzip.open(climate_data, "rb") as obj1:
         data = pickle.load(obj1)
     climatology = data["y"]
-   
-   
+  
 
     dist = Shash(output)
     p = dist.prob(x).numpy()
@@ -66,12 +65,14 @@ def deriveclimatology(output, climate_data, samples, x, valset):
     #     plt.ylabel("probability density")
     #     plt.title("Network Shash Prediction")
     
-    plt.plot(x, p[:, samples], label = samples)
+    plt.plot(x, p[:, samples], linewidth = 0.6 ) #label = samples
     plt.xlabel("value")
     plt.ylabel("probability density")
     plt.title("Network Shash Prediction")
     plt.legend()
     plt.show()
+
+    print(f"Maximum probability values for each sample: {np.max(p[:,samples])}")
     return p
 
 

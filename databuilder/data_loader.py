@@ -23,8 +23,8 @@ class CustomData(torch.utils.data.Dataset):
         with gzip.open(data_file, "rb") as handle:
             dict_data = pickle.load(handle)
 
-        self.input = dict_data["x"][front_cutoff:-back_cutoff,:]
-        self.target = dict_data["y"][front_cutoff:-back_cutoff]
+        self.input = dict_data["x"][front_cutoff : -back_cutoff, :]
+        self.target = dict_data["y"][front_cutoff : -back_cutoff]
         
         # # Normalize Inputs
         # scaler = StandardScaler()

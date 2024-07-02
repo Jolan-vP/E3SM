@@ -164,8 +164,6 @@ class ClimateData:
         for ikey, key in enumerate(f_dict):
             if key == "y":
                 print("Processing target output")
-
-                time.sleep(10)
                 
                 f_dict[key] = ds[self.config["target_var"]]
                 
@@ -395,7 +393,7 @@ class ClimateData:
 
 
 
-def multi_input_data_organizer(config, MJO=False, ENSO = False, TEMP_VC = False):
+def multi_input_data_organizer(config, MJO=False, ENSO = False, other = False):
     """
         train {x: RMM1, RMM2, Nino34}, 
               {y: target}
@@ -432,9 +430,9 @@ def multi_input_data_organizer(config, MJO=False, ENSO = False, TEMP_VC = False)
     else:
         pass
 
-    # TEMP IN LOCAL REGION - VANCOUVER, BC -------------------------------
-    if TEMP_VC == True: 
-        print("Opening Vancouver TEMP time series")
+    # OTHER INPUT:  -------------------------------
+    if other == True: 
+        print("Opening OTHER")
 
         print("Opening exp005 VC TS input data for TRAINING")
         input_savename = config['data_dir'] + 'presaved/exp005_d_train_VC_TS_1850-2014.pkl'
@@ -450,10 +448,10 @@ def multi_input_data_organizer(config, MJO=False, ENSO = False, TEMP_VC = False)
         input_savename = config['data_dir'] + 'presaved/exp005_d_test_VC_TS_1850-2014.pkl'
         with gzip.open(input_savename, "rb") as obj:
             exp005_d_test_PNW_TS = pickle.load(obj)
-    
 
     else:
         pass
+
     # Target : Lagged Precip at Target Location : --------------------------
     
     # config = utils.get_config("exp002")
@@ -493,46 +491,40 @@ def multi_input_data_organizer(config, MJO=False, ENSO = False, TEMP_VC = False)
     #     print(f"Exp002 Target files have been created and data has been pickled.")
 
    
-    print("Opening exp005 PNW TS target data for TRAINING")
-    target_savename = config['data_dir'] + 'presaved/exp005_d_train_PNW_TS_1850-2014.pkl'
+    print("Opening exp006 Seattle-area PRECIP target data for TRAINING")
+    target_savename = config['data_dir'] + 'presaved/exp006_d_train_SeattleRegional_PRECT_1850-2014.pkl'
     with gzip.open(target_savename, "rb") as obj:
-        exp005_d_train_target = pickle.load(obj)
+        exp006_d_train_target = pickle.load(obj)
 
-    print("Opening exp005 PNW TS target data for VALIDATION")
-    target_savename = config['data_dir'] + 'presaved/exp005_d_val_PNW_TS_1850-2014.pkl'
+    print("Opening exp006 Seattle-area PRECIP target data for VALIDATION")
+    target_savename = config['data_dir'] + 'presaved/exp006_d_val_SeattleRegional_PRECT_1850-2014.pkl'
     with gzip.open(target_savename, "rb") as obj:
-        exp005_d_val_target = pickle.load(obj)
+        exp006_d_val_target = pickle.load(obj)
 
-    print("Opening exp005 PNW TS target data for TESTING")
-    target_savename = config['data_dir'] + 'presaved/exp005_d_test_PNW_TS_1850-2014.pkl'
+    print("Opening exp006 Seattle-area PRECIP target data for TESTING")
+    target_savename = config['data_dir'] + 'presaved/exp006_d_test_SeattleRegional_PRECT_1850-2014.pkl'
     with gzip.open(target_savename, "rb") as obj:
-        exp005_d_test_target = pickle.load(obj)
+        exp006_d_test_target = pickle.load(obj)
     
  
     # Create Input and Target Arrays ------------------------------------------------------------
 
     print("Combining Input and target data")
-    if MJO == True and ENSO == True: 
-        inputda = np.zeros([60225 - config["databuilder"]["lagtime"], 3, 3])
-        print(inputda.shape)
-    elif ENSO== True and TEMP_VC == True:
-        inputda = np.zeros([60225 - config["databuilder"]["lagtime"], 2, 3])
-        print(inputda.shape)
+
+    # if MJO == True and ENSO == True: 
+    inputda = np.zeros([60225 - config["databuilder"]["lagtime"], 3, 3])
+    print(inputda.shape)
+
     target = np.zeros([60225 - config["databuilder"]["lagtime"], 3], dtype=float) 
     
-    data_dict = {0: exp005_d_train_target, 1: exp005_d_val_target, 2:exp005_d_test_target}
-    vc_temp_dict = {0: exp005_d_train_PNW_TS, 1: exp005_d_val_PNW_TS, 2:exp005_d_test_PNW_TS}
+    target_dict = {0: exp006_d_train_target, 1: exp006_d_val_target, 2:exp006_d_test_target}
 
-    for key, value in data_dict.items():
-        if ENSO==True:
-            inputda[:,0,key] = ninox_array[ :-config["databuilder"]["lagtime"], key] #ENSO
-            inputda[:30,0,key] = np.nan # Fill beginning 30 zeros with Nans
-        if MJO==True:
-            inputda[:,0,key] = MJOarray[ :-config["databuilder"]["lagtime"], 2,key]  #RMM1
-            inputda[:,1,key] = MJOarray[ :-config["databuilder"]["lagtime"], 3,key]  #RMM2
-        elif TEMP_VC==True:
-            inputda[:,1,key] = vc_temp_dict[key]["y"]  # VANCOUVER TS (PRE-PROCESSED/PRE-LAGGED)
-        
+    for key, value in target_dict.items():
+        inputda[:,0,key] = ninox_array[ :-config["databuilder"]["lagtime"], key] #ENSO
+        inputda[:30,0,key] = np.nan # Fill beginning 30 zeros with Nans
+        inputda[:,1,key] = MJOarray[ :-config["databuilder"]["lagtime"], 2,key]  #RMM1
+        inputda[:,2,key] = MJOarray[ :-config["databuilder"]["lagtime"], 3,key]  #RMM2
+    
         target[:,key] = value["y"] # Target - REGIONAL TEMP : SEATTLE METRO AREA: TARGET HAS ALREADY BEEN LAGGED IN PRE-PROCESSING (CLIMATE DATA CLASS - config_001/analysis_001)
 
     # INPUT DICT - Save to Pickle
