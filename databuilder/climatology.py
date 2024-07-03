@@ -45,7 +45,6 @@ def deriveclimatology(output, climate_data, samples, x, valset):
         data = pickle.load(obj1)
     climatology = data["y"]
   
-
     dist = Shash(output)
     p = dist.prob(x).numpy()
     
@@ -55,7 +54,7 @@ def deriveclimatology(output, climate_data, samples, x, valset):
     plt.hist(
         climatology, x, density=True, color="gray", alpha=0.75, label="climatology"
     )
-    y = [0.07, 0.1, 0.05, 0.039, 0.039]
+   
     print(valset[samples][1])
    
     # for isamp, samp in enumerate(samples): 
@@ -72,7 +71,7 @@ def deriveclimatology(output, climate_data, samples, x, valset):
     plt.legend()
     plt.show()
 
-    print(f"Maximum probability values for each sample: {np.max(p[:,samples])}")
+    #print(f"Maximum probability values for each sample: {np.max(p[:,samples])}")
     return p
 
 

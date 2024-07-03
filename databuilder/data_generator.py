@@ -72,15 +72,15 @@ class ClimateData:
             if self.verbose:
                 print(ens)
             if ens == "ens1":   
-                #train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+                # train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1.1850-1900.nc")
                 train_ds = filemethods.get_netcdf_da(self.data_dir +  "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
 
             if ens == "ens2":
-                #validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
+                # validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1.1850-1900.nc")
                 validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
 
             elif ens == "ens3":
-                #test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
+                # test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1.1850-1900.nc")
                 test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
         
         train_ds = train_ds.sel(time = slice("1850", "2014"))
@@ -140,7 +140,7 @@ class ClimateData:
                             if start == end:
                                 break
                             
-                            mm_day = da_copy[:,:,start:end] * 10e3 * 86400
+                            mm_day = da_copy[:,:,start:end] * 10**3 * 86400
                             da[:, :, start:end] = mm_day
                             # stacked = da[:, :, start:end].stack(z=("lat", "lon"))
                             # da_copy[:, :, start:end] = stacked.groupby("time.dayofyear").map(self.subtract_trend).unstack()
@@ -169,7 +169,7 @@ class ClimateData:
                 
                 if self.config["target_var"] == "PRECT": # CONVERTING PRECIP TO MM/DAY! Must do this twice, one for input PRECT, one for Target PRECT
                     da_copy = f_dict[key].copy()
-
+                    
                     inc = 45 # 45 degree partitions in longitude to split up the data
                 
                     for iloop in np.arange(0, da_copy.shape[2] // inc + 1):
@@ -178,7 +178,7 @@ class ClimateData:
                         if start == end:
                             break
                         
-                        mm_day = da_copy[:,:,start:end] * 10e3 * 86400
+                        mm_day = da_copy[:,:,start:end] * 10**3 * 86400
                         f_dict[key][:, :, start:end] = mm_day
                 
                 # EXTRACT TARGET LOCATION
