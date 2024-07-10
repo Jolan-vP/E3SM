@@ -52,7 +52,7 @@ def deriveclimatology(output, climate_data, samples, x, valset):
 
     plt.figure(figsize=(8, 4), dpi=200)
     plt.hist(
-        climatology, x, density=True, color="gray", alpha=0.75, label="climatology"
+        climatology, x, density=True, color="silver", alpha=0.75, label="climatology"
     )
    
     print(valset[samples][1])
@@ -64,13 +64,15 @@ def deriveclimatology(output, climate_data, samples, x, valset):
     #     plt.ylabel("probability density")
     #     plt.title("Network Shash Prediction")
     
-    plt.plot(x, p[:, samples], linewidth = 0.6 ) #label = samples
+    plt.plot(x, p[:, samples], linewidth = 0.5 ) #label = samples
     plt.xlabel("value")
     plt.ylabel("probability density")
     plt.title("Network Shash Prediction")
     plt.legend()
+    plt.savefig('/Users/C830793391/Documents/Research/E3SM/visuals/ens3/exp006_50_predictions_w_climatology.png', format='png', bbox_inches ='tight', dpi = 300)
     plt.show()
 
+    
     #print(f"Maximum probability values for each sample: {np.max(p[:,samples])}")
     return p
 

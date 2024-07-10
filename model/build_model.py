@@ -113,7 +113,7 @@ class TorchModel(BaseModel):
 
         return x
 
-    def predict(self, dataset=None, dataloader=None, batch_size=128, device="gpu"):
+    def predict(self, dataset=None, dataloader=None, batch_size=128, device="mps"):
 
         if (dataset is None) & (dataloader is None):
             raise ValueError("both dataset and dataloader cannot be done.")

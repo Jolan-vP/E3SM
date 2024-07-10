@@ -76,41 +76,47 @@ def pit(output, target):
     return bins, pit_hist, D, EDp
 
 
-def crps(cdf, y, bins, single_cdf=False):
-    # see alternative formulation in ``crps_sample_score``
+# def crps(cdf, y, bins, single_cdf=False):
+#     # see alternative formulation in ``crps_sample_score``
 
-    crps = np.zeros((len(y),))
-    for isample in np.arange(0, len(y)):
-        ibin = np.argmin(np.abs(bins[:-1] - y[isample]))
-        if single_cdf:
-            cdf_sample = cdf
-        else:
-            cdf_sample = cdf[isample, :]
-        term_1 = np.sum((cdf_sample[:ibin]) ** 2)
-        term_2 = np.sum((cdf_sample[ibin:] - 1) ** 2)
-        crps[isample] = term_1 + term_2
+#     crps = np.zeros((len(y),))
+#     for isample in np.arange(0, len(y)):
+#         ibin = np.argmin(np.abs(bins[:-1] - y[isample]))
+#         if single_cdf:
+#             cdf_sample = cdf
+#         else:
+#             cdf_sample = cdf[isample, :]
+#         term_1 = np.sum((cdf_sample[:ibin]) ** 2)
+#         term_2 = np.sum((cdf_sample[ibin:] - 1) ** 2)
+#         crps[isample] = term_1 + term_2
 
-    return crps * np.diff(bins)[0]
-
-
-def compute_crps(pred, y, bins, climatology=False, parametric=True):
-    if climatology:
-        pdf, __ = np.histogram(pred, bins, density=True)
-        pdf = pdf / (np.sum(pdf) * np.diff(bins)[0])
-        cdf_base = np.cumsum(pdf) / np.sum(pdf)
-        return crps(cdf_base, y, bins, climatology)
-
-    elif parametric:
-        return crps(pred, y, bins)
-
-    else:
-        crps_out = np.zeros((len(y),))
-        for isample in range(len(y)):
-            pdf, __ = np.histogram(pred[isample, :], bins, density=True)
-            pdf = pdf / (np.sum(pdf) * np.diff(bins)[0])
-            cdf = np.cumsum(pdf) / np.sum(pdf)
-            crps_out[isample] = crps(cdf[np.newaxis, :], y[isample], bins)
-
-        return crps_out
+#     return crps * np.diff(bins)[0]
 
 
+# def compute_crps(pred, y, bins, climatology=False, parametric=True):
+#     if climatology:
+#         pdf, __ = np.histogram(pred, bins, density=True)
+#         pdf = pdf / (np.sum(pdf) * np.diff(bins)[0])
+#         cdf_base = np.cumsum(pdf) / np.sum(pdf)
+#         return crps(cdf_base, y, bins, climatology)
+
+#     elif parametric:
+#         return crps(pred, y, bins)
+
+#     else:
+#         crps_out = np.zeros((len(y),))
+#         for isample in range(len(y)):
+#             pdf, __ = np.histogram(pred[isample, :], bins, density=True)
+#             pdf = pdf / (np.sum(pdf) * np.diff(bins)[0])
+#             cdf = np.cumsum(pdf) / np.sum(pdf)
+#             crps_out[isample] = crps(cdf[np.newaxis, :], y[isample], bins)
+
+#         return crps_out
+
+
+def computeCRPS():
+    """
+    
+    """
+    CRPS = []
+    return CRPS
