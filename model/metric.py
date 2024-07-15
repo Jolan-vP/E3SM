@@ -114,9 +114,22 @@ def pit(output, target):
 #         return crps_out
 
 
-def computeCRPS():
+def computeCRPS(x, output):
     """
-    
+    Inputs: 
+    - SHASH parameters [mu,   sigma,   tau,   gamma]
+    - Target parameter [ x ]
+
+    Outputs: 
+    - CRPS value: area between distribution CDF and discreet CDF curves
+
     """
-    CRPS = []
+
+    crps_lower = Shash(output).cdf(x) # area under SHASH CDF up until target value
+
+                # heaviside - (1- crps_lower) = (x_inf - x) - (1 - crps_lower) = x_delta - (1 - crps_lower)
+    crps_upper =  x_delta - (1 - crps_lower) # area between heaviside function and SHASH CDF 
+
+    CRPS =  (crps_lower + crps_upper) ** 2
+
     return CRPS

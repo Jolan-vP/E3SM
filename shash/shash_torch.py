@@ -9,6 +9,7 @@ Shash()
 __author__ = "Randal J. Barnes and Elizabeth A. Barnes"
 __date__ = "03 February 2024"
 
+import scipy.special
 import torch
 import numpy as np
 import scipy
@@ -516,3 +517,46 @@ class Shash:
         denom = torch.pow(torch.sqrt(evX2 - evX * evX), 3)
 
         return (term_1 + term_2 + term_3) / denom
+    
+
+    # ------------------------------------------------------------------------------------
+
+
+    def cdf_NONTENSOR(self, output, x):
+        """Cumulative distribution function (cdf).
+
+        Parameters
+        ----------
+        x : float (batch size x 1) 
+            The values at which to compute the probability density function.
+
+        mu : float (batch size x 1) 
+            The location parameter. Must be the same shape as x.
+
+        sigma : float (batch size x 1) 
+            The scale parameter. Must be strictly positive. Must be the same
+            shape as x.
+
+        gamma : float (batch size x 1) 
+            The skewness parameter. Must be the same shape as x.
+
+        tau : float (batch size x 1)  or None
+            The tail-weight parameter. Must be strictly positive. Must be the same
+            shape as x. If tau is None then the default value of tau=1 is used.
+
+        Returns
+        -------
+        F : float (batch size x 1) 
+            The computed cumulative probability distribution function (cdf)
+            evaluated at the values of x.  F has the same shape as x.
+
+        """
+        
+        y = (x - output[:,0]) / output[:,1]
+
+        if output[:,3] is None:
+            z = np.sinh(np.arcsinh(y) - output[:,2])
+        else:
+            z = np.sinh(output[:,3] * np.arcsinh(y) - output[:,2])
+
+        return 0.5 * (1.0 + scipy.special.erf(ONE_OVER_SQRT_TWO * z))
