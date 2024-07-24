@@ -106,7 +106,7 @@ def pit(output, target):
 #     else:
 #         crps_out = np.zeros((len(y),))
 #         for isample in range(len(y)):
-#             pdf, __ = np.histogram(pred[isample, :], bins, density=True)
+#             pdf, __ = np.histogram(pred[isample, :], bins, density=True)  # PDF = shash.dist()
 #             pdf = pdf / (np.sum(pdf) * np.diff(bins)[0])
 #             cdf = np.cumsum(pdf) / np.sum(pdf)
 #             crps_out[isample] = crps(cdf[np.newaxis, :], y[isample], bins)
