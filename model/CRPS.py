@@ -10,6 +10,9 @@ Functions: -------------------
     crps_cdf_single
     crps_quadrature
 
+Classes: ---------------------
+    CumulativeSum
+
 """
 
 import sys
@@ -134,7 +137,26 @@ def _discover_bounds(cdf, tol=1e-7):
 
 def _crps_cdf_single(x, cdf_or_dist, xmin=None, xmax=None, tol=1e-6):
     """
-    See crps_cdf for docs.
+     Parameters
+    ----------
+    x : np.ndarray
+        Observations/Target associated with the forecast distribution cdf_or_dist sample(s)
+    cdf_or_dist : callable or scipy.stats.distribution
+        Function which returns the the cumulative density of the
+        forecast distribution at value x.  This can also be an object with
+        a callable cdf() method such as a scipy.stats.distribution object.
+    xmin : np.ndarray or scalar
+        The lower bounds for integration, this is required to perform
+        quadrature.
+    xmax : np.ndarray or scalar
+        The upper bounds for integration, this is required to perform
+        quadrature.
+    tol : float , optional
+        The desired accuracy of the CRPS, larger values will speed
+        up integration. If tol is set to None, bounds errors or integration
+        tolerance errors will be ignored.
+    Returns:
+        CRPS
     """
     # TODO: this function is pretty slow.  Look for clever ways to speed it up.
 
@@ -220,3 +242,43 @@ def crps_quadrature(x, cdf_or_dist, xmin=None, xmax=None, tol=1e-6):
         given forecast distribution.
     """
     return _crps_cdf(x, cdf_or_dist, xmin, xmax, tol)
+
+
+
+class CumulativeSum:
+    def __init__(self, axis=1):
+        """
+        Initialize the CumulativeSum class with the specified axis.
+
+        Parameters:
+        axis: the axis along which the cumulative sum is computed (default is 1)
+        """
+        self.axis = axis
+
+    def __call__(self, p, target):
+        """
+        Make the CumulativeSum class instance callable.
+
+        Parameters:
+        p: the input array of PDF distributions
+
+        Returns:
+        The cumulative sum of the input array along the specified axis.
+        """
+
+        cdf_array = np.cumsum(p, axis=self.axis)
+        cdf_array = cdf_array / np.expand_dims(cdf_array.take(indices=-1, axis=self.axis), axis=self.axis)
+
+
+        def cdf_function(cdf_array, target):
+            # Interpolate or find the appropriate value at X
+            if self.axis == 1:
+                # Interpolate for each row (i.e., along columns)
+                cdf_values_at_target = np.array([np.interp(target, np.arange(cdf_array.shape[1]), cdf_row) for cdf_row in cdf_array])
+            else:
+                # Interpolate for each column (i.e., along rows)
+                cdf_values_at_target = np.array([np.interp(target, np.arange(cdf_array.shape[0]), cdf_array[:, col]) for col in range(cdf_array.shape[1])])
+                
+            return cdf_values_at_target
+        
+        return cdf_function(p, target)
