@@ -33,7 +33,8 @@ import gzip
 import scipy
 from scipy import stats
 import properscoring as ps
-from scipy.stats import norm
+from scipy.stats import rv_continuous
+from scipy.interpolate import interp1d
 
 
 def crps_basic_numeric(pred, target_y, bins, single_cdf=False):
@@ -60,82 +61,36 @@ def crps_basic_numeric(pred, target_y, bins, single_cdf=False):
 # PROPER SCORING RULES - https://sites.stat.washington.edu/raftery/Research/PDF/Gneiting2007jasa.pdf
 # Original github - https://github.com/properscoring/properscoring/tree/master/properscoring
 # CRPS is a generalization of mean absolute error and is easily calculated from a finite number of samples of a probability distribution.
-
-
-def crps_gaussian(x, mu, sig, grad=False):
-    """
-    Computes the CRPS of observations x relative to normally distributed
-    forecasts with mean, mu, and standard deviation, sig.
-
-    CRPS(N(mu, sig^2); x)
-
-    Formula taken from Equation (5):
-
-    Calibrated Probablistic Forecasting Using Ensemble Model Output
-    Statistics and Minimum CRPS Estimation. Gneiting, Raftery,
-    Westveld, Goldman. Monthly Weather Review 2004
-
-    http://journals.ametsoc.org/doi/pdf/10.1175/MWR2904.1
-
-    Parameters
-    ----------
-    x : scalar or np.ndarray
-        The observation or set of observations.
-    mu : scalar or np.ndarray
-        The mean of the forecast normal distribution
-    sig : scalar or np.ndarray
-        The standard deviation of the forecast distribution
-    grad : boolean
-        If True the gradient of the CRPS w.r.t. mu and sig
-        is returned along with the CRPS.
-
-    Returns
-    -------
-    crps : scalar or np.ndarray or tuple of
-        The CRPS of each observation x relative to mu and sig.
-        The shape of the output array is determined by numpy
-        broadcasting rules.
-    crps_grad : np.ndarray (optional)
-        If grad=True the gradient of the crps is returned as
-        a numpy array [grad_wrt_mu, grad_wrt_sig].  The
-        same broadcasting rules apply.
-    """
-    x = np.asarray(x)
-    mu = np.asarray(mu)
-    sig = np.asarray(sig)
-    # standadized x
-    sx = (x - mu) / sig
-    # some precomputations to speed up the gradient
-    pdf = _normpdf(sx)
-    cdf = _normcdf(sx)
-    pi_inv = 1. / np.sqrt(np.pi)
-    # the actual crps
-    crps = sig * (sx * (2 * cdf - 1) + 2 * pdf - pi_inv)
-    if grad:
-        dmu = 1 - 2 * cdf
-        dsig = 2 * pdf - pi_inv
-        return crps, np.array([dmu, dsig])
-    else:
-        return crps
     
 
-def _discover_bounds(cdf, tol=1e-7):
+def _discover_bounds(cdf_array, x_values, tolerance = 1e-7):
     """
     Uses scipy's general continuous distribution methods
     which compute the ppf from the cdf, then use the ppf
     to find the lower and upper limits of the distribution.
     """
-    class DistFromCDF(stats.distributions.rv_continuous):
-        def cdf(self, x):
-            return cdf(x)
-    dist = DistFromCDF()
-    # the ppf is the inverse cdf
-    lower = dist.ppf(tol)
-    upper = dist.ppf(1. - tol)
-    return lower, upper
+    class CustomDistribution(rv_continuous):
+        def __init__(self, x_values, cdf_values, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self._ppf_interpolator = interp1d(cdf_values, x_values, bounds_error=False, fill_value=(x_values[0], x_values[-1]))
+
+        def _ppf(self, q):
+            return self._ppf_interpolator(q)
+
+    bounds = np.zeros((len(x_values), 2))
+
+    # Loop through each sample and calculate the PPF for upper and lower tol bounds
+    for i in range(len(x_values)):
+        custom_scipy_shash = CustomDistribution(a=x_values[0], b=x_values[-1], x_values=x_values, cdf_values=cdf_array[:, i])
+        ppf_value = custom_scipy_shash.ppf([tolerance, 1-tolerance])
+        bounds[i, :] = ppf_value
+    
+    print(f"The shape of the upper and lower distribution limits array is {bounds.shape}")
+    return bounds
 
 
-def _crps_cdf_single(x, cdf_or_dist, xmin=None, xmax=None, tol=1e-6):
+
+def _crps_cdf_single(p, x, cdf_or_dist, xmin=None, xmax=None, tol=1e-6):
     """
      Parameters
     ----------
@@ -164,7 +119,7 @@ def _crps_cdf_single(x, cdf_or_dist, xmin=None, xmax=None, tol=1e-6):
     cdf = getattr(cdf_or_dist, 'cdf', cdf_or_dist)
     assert callable(cdf)
 
-    # if bounds aren't given, discover them
+    # # if bounds aren't given, discover them
     if xmin is None or xmax is None:
         # Note that infinite values for xmin and xmax are valid, but
         # it slows down the resulting quadrature significantly.
@@ -245,6 +200,7 @@ def crps_quadrature(x, cdf_or_dist, xmin=None, xmax=None, tol=1e-6):
 
 
 
+
 class CumulativeSum:
     def __init__(self, axis=1):
         """
@@ -255,30 +211,64 @@ class CumulativeSum:
         """
         self.axis = axis
 
-    def __call__(self, p, target):
+    def __call__(self, p, target, x_values):
         """
         Make the CumulativeSum class instance callable.
 
         Parameters:
         p: the input array of PDF distributions
+        target: the target values for which the CDF is computed
 
         Returns:
-        The cumulative sum of the input array along the specified axis.
+        A callable function that computes the CDF at given x values.
         """
+        # Ensure the input PDF array is normalized
+        p_sum = np.sum(p, axis=0, keepdims=True)
+        if not np.allclose(p_sum, 1):
+            print("Normalizing input PDF array")
+            p = p / p_sum
 
-        cdf_array = np.cumsum(p, axis=self.axis)
-        cdf_array = cdf_array / np.expand_dims(cdf_array.take(indices=-1, axis=self.axis), axis=self.axis)
+        cdf_array = np.cumsum(p, axis=0)
+        cdf_array = cdf_array / cdf_array[-1, :]
+        plt.figure()
+        for i in range(cdf_array.shape[1]):
+            plt.plot(x_values, cdf_array[:, i])      
+        print(f"cdf_array shape within CumulativeSum: {cdf_array.shape}")
+        print(f"cdf_array last row: {cdf_array[-1,:]}")  # Debug print to check normalization
 
-
-        def cdf_function(cdf_array, target):
-            # Interpolate or find the appropriate value at X
-            if self.axis == 1:
-                # Interpolate for each row (i.e., along columns)
-                cdf_values_at_target = np.array([np.interp(target, np.arange(cdf_array.shape[1]), cdf_row) for cdf_row in cdf_array])
-            else:
-                # Interpolate for each column (i.e., along rows)
-                cdf_values_at_target = np.array([np.interp(target, np.arange(cdf_array.shape[0]), cdf_array[:, col]) for col in range(cdf_array.shape[1])])
-                
-            return cdf_values_at_target
+        # Interpolate to compute the CDF at the target values (PRINTING CHECK PURPOSES ONLY)
+        calculated_cdf_values = np.zeros(len(target))
+        for i, truth in enumerate(target):
+            x1 = np.where(x_values <= truth)[0][-1]
+            x2 = np.where(x_values >= truth)[0][0]
+            # print(f"x1: {x1}, x2: {x2}")
+            cdf1 = cdf_array[x1, i]
+            cdf2 = cdf_array[x2, i]
+            # print(f"cdf1: {cdf1}, cdf2: {cdf2}")
+            cdfs = cdf1 + (cdf2 - cdf1) * (truth - x_values[x1]) / (x_values[x2] - x_values[x1])
+            calculated_cdf_values[i] = np.round(cdfs, 6)
+            print(f"cdf for sample {i} (target = {np.round(truth, 3)}) : {calculated_cdf_values[i]}")
         
-        return cdf_function(p, target)
+        def cdf_function(target, x_values):
+            # Interpolate for each row (i.e., along columns)
+            x1 = np.where(x_values <= target)[0][-1]
+            x2 = np.where(x_values >= target)[0][0]
+            # print(f"x1: {x1}, x2: {x2}")
+            cdf1 = cdf_array[x1, i]
+            cdf2 = cdf_array[x2, i]
+            # print(f"cdf1: {cdf1}, cdf2: {cdf2}")
+            cdf = cdf1 + (cdf2 - cdf1) * (truth - x_values[x1]) / (x_values[x2] - x_values[x1])
+            calculated_cdf_value = np.round(cdf, 6)
+            print(f"cdf value at target ({target}) : {calculated_cdf_value}")
+            return calculated_cdf_value
+
+        return cdf_function
+    
+    def cdf_array_output(p):
+        p_sum = np.sum(p, axis=0, keepdims=True)
+        if not np.allclose(p_sum, 1):
+            p = p / p_sum
+
+        cdf_array = np.cumsum(p, axis=0)
+        cdf_array = cdf_array / cdf_array[-1, :]
+        return cdf_array

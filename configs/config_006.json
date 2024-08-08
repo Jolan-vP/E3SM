@@ -28,7 +28,8 @@
         "averaging_length": 7,
         "lagtime": 14, 
         "front_cutoff": 121, 
-        "back_cutoff": 32
+        "back_cutoff": 32, 
+        "CRPS_tolerance": 1e-7
         
     }, 
 
