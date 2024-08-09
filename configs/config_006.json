@@ -1,6 +1,7 @@
 {"expname": "exp006",
     "device": "mps",
     "seed_list": [7],
+    "CRPS_tolerance": 0.000001,
 
     "data_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/",
     "figure_dir": "/Users/C830793391/Documents/Research/E3SM/visuals/",

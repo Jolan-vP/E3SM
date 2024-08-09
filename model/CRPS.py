@@ -35,6 +35,8 @@ from scipy import stats
 import properscoring as ps
 from scipy.stats import rv_continuous
 from scipy.interpolate import interp1d
+import scipy.integrate as integrate
+import warnings
 
 
 def crps_basic_numeric(pred, target_y, bins, single_cdf=False):
@@ -77,10 +79,10 @@ def _discover_bounds(cdf_array, x_values, tolerance = 1e-7):
         def _ppf(self, q):
             return self._ppf_interpolator(q)
 
-    bounds = np.zeros((len(x_values), 2))
+    bounds = np.zeros((len(cdf_array[0,:]), 2))
 
     # Loop through each sample and calculate the PPF for upper and lower tol bounds
-    for i in range(len(x_values)):
+    for i in range(len(bounds)):
         custom_scipy_shash = CustomDistribution(a=x_values[0], b=x_values[-1], x_values=x_values, cdf_values=cdf_array[:, i])
         ppf_value = custom_scipy_shash.ppf([tolerance, 1-tolerance])
         bounds[i, :] = ppf_value
@@ -90,13 +92,13 @@ def _discover_bounds(cdf_array, x_values, tolerance = 1e-7):
 
 
 
-def _crps_cdf_single(p, x, cdf_or_dist, xmin=None, xmax=None, tol=1e-6):
+def _crps_single(target, cdf_func, cdf_array, x_values, xmin=None, xmax=None, tol=1e-6):
     """
      Parameters
     ----------
     x : np.ndarray
-        Observations/Target associated with the forecast distribution cdf_or_dist sample(s)
-    cdf_or_dist : callable or scipy.stats.distribution
+        Observations/Target associated with the forecast distribution cdf_func sample(s)
+    cdf_func : callable or scipy.stats.distribution
         Function which returns the the cumulative density of the
         forecast distribution at value x.  This can also be an object with
         a callable cdf() method such as a scipy.stats.distribution object.
@@ -116,43 +118,53 @@ def _crps_cdf_single(p, x, cdf_or_dist, xmin=None, xmax=None, tol=1e-6):
     # TODO: this function is pretty slow.  Look for clever ways to speed it up.
 
     # allow for directly passing in scipy.stats distribution objects.
-    cdf = getattr(cdf_or_dist, 'cdf', cdf_or_dist)
-    assert callable(cdf)
+    # cdf = getattr(cdf_func, 'cdf', cdf_func)
+    cdf = cdf_func
 
+    # Check if cdf is callable
+    if not callable(cdf):
+        raise TypeError("cdf_func must be a callable function or an object with a callable 'cdf' method.")
+    
     # # if bounds aren't given, discover them
     if xmin is None or xmax is None:
         # Note that infinite values for xmin and xmax are valid, but
         # it slows down the resulting quadrature significantly.
         xmin, xmax = _discover_bounds(cdf)
 
+    # print("Inside _crps_cdf_single:")
+    # print("Type of cdf:", type(cdf))
+    # print("Is cdf callable?:", callable(cdf))
+
     # make sure the bounds haven't clipped the cdf.
-    if (tol is not None) and (cdf(xmin) >= tol) or (cdf(xmax) <= (1. - tol)):
+    if (tol is not None) and (cdf(xmin, cdf_array, x_values) >= tol) or (cdf(xmax, cdf_array, x_values) <= (1. - tol)):
         raise ValueError('CDF does not meet tolerance requirements at %s '
                          'extreme(s)! Consider using function defaults '
                          'or using infinities at the bounds. '
-                         % ('lower' if cdf(xmin) >= tol else 'upper'))
+                         % ('lower' if cdf(xmin, cdf_array, x_values) >= tol else 'upper'))
 
     # CRPS = int_-inf^inf (F(y) - H(x))**2 dy
     #      = int_-inf^x F(y)**2 dy + int_x^inf (1 - F(y))**2 dy
+
     def lhs(y):
         # left hand side of CRPS integral
-        return np.square(cdf(y))
+        return np.square(cdf(y, cdf_array, x_values))
     # use quadrature to integrate the lhs
-    lhs_int, lhs_tol = integrate.quad(lhs, xmin, x)
+    lhs_int, lhs_tol = integrate.quad(lhs, xmin, target)
     # make sure the resulting CRPS will be with tolerance
     if (tol is not None) and (lhs_tol >= 0.5 * tol):
-        raise ValueError('Lower integral did not evaluate to within tolerance! '
-                         'Tolerance achieved: %f , Value of integral: %f \n'
-                         'Consider setting the lower bound to -np.inf.' %
-                         (lhs_tol, lhs_int))
+        # raise ValueError('Lower integral did not evaluate to within tolerance! '
+        #                  'Tolerance achieved: %f , Value of integral: %f \n'
+        #                  'Consider setting the lower bound to -np.inf.' %
+        #                  (lhs_tol, lhs_int))
+        warnings.warn('Lower integral did not evaluate to within tolerance! \n')
 
     def rhs(y):
         # right hand side of CRPS integral
-        return np.square(1. - cdf(y))
-    rhs_int, rhs_tol = integrate.quad(rhs, x, xmax)
+        return np.square(1. - cdf(y, cdf_array, x_values))
+    rhs_int, rhs_tol = integrate.quad(rhs, target, xmax)
     # make sure the resulting CRPS will be with tolerance
     if (tol is not None) and (rhs_tol >= 0.5 * tol):
-        raise ValueError('Upper integral did not evaluate to within tolerance! \n'
+        warnings.warn('Upper integral did not evaluate to within tolerance! \n'
                          'Tolerance achieved: %f , Value of integral: %f \n'
                          'Consider setting the upper bound to np.inf or if '
                          'you already have, set warn_level to `ignore`.' %
@@ -160,7 +172,7 @@ def _crps_cdf_single(p, x, cdf_or_dist, xmin=None, xmax=None, tol=1e-6):
 
     return lhs_int + rhs_int
 
-_crps_cdf = np.vectorize(_crps_cdf_single)
+_crps_cdf = np.vectorize(_crps_single)
 
 
 def crps_quadrature(x, cdf_or_dist, xmin=None, xmax=None, tol=1e-6):
@@ -196,6 +208,9 @@ def crps_quadrature(x, cdf_or_dist, xmin=None, xmax=None, tol=1e-6):
         The continuously ranked probability score of an observation x
         given forecast distribution.
     """
+    print("Inside crps_quadrature:")
+    print("Type of cdf:", type(cdf_or_dist))
+
     return _crps_cdf(x, cdf_or_dist, xmin, xmax, tol)
 
 
@@ -232,34 +247,30 @@ class CumulativeSum:
         cdf_array = cdf_array / cdf_array[-1, :]
         plt.figure()
         for i in range(cdf_array.shape[1]):
-            plt.plot(x_values, cdf_array[:, i])      
+            plt.plot(x_values, cdf_array[:, i], linewidth = 1)      
         print(f"cdf_array shape within CumulativeSum: {cdf_array.shape}")
         print(f"cdf_array last row: {cdf_array[-1,:]}")  # Debug print to check normalization
 
-        # Interpolate to compute the CDF at the target values (PRINTING CHECK PURPOSES ONLY)
+        # Interpolate to compute the CDF at the target values for all samples (PRINTING CHECK PURPOSES ONLY)
         calculated_cdf_values = np.zeros(len(target))
         for i, truth in enumerate(target):
             x1 = np.where(x_values <= truth)[0][-1]
             x2 = np.where(x_values >= truth)[0][0]
-            # print(f"x1: {x1}, x2: {x2}")
             cdf1 = cdf_array[x1, i]
             cdf2 = cdf_array[x2, i]
-            # print(f"cdf1: {cdf1}, cdf2: {cdf2}")
             cdfs = cdf1 + (cdf2 - cdf1) * (truth - x_values[x1]) / (x_values[x2] - x_values[x1])
             calculated_cdf_values[i] = np.round(cdfs, 6)
-            print(f"cdf for sample {i} (target = {np.round(truth, 3)}) : {calculated_cdf_values[i]}")
+            #print(f"cdf for sample {i} (target = {np.round(truth, 3)}) : {calculated_cdf_values[i]}")
         
-        def cdf_function(target, x_values):
-            # Interpolate for each row (i.e., along columns)
+        def cdf_function(target, cdf1D, x_values):
+            # Interpolate for each row of the 1-dimensional CDF array (single sample at a time)
             x1 = np.where(x_values <= target)[0][-1]
             x2 = np.where(x_values >= target)[0][0]
-            # print(f"x1: {x1}, x2: {x2}")
-            cdf1 = cdf_array[x1, i]
-            cdf2 = cdf_array[x2, i]
-            # print(f"cdf1: {cdf1}, cdf2: {cdf2}")
-            cdf = cdf1 + (cdf2 - cdf1) * (truth - x_values[x1]) / (x_values[x2] - x_values[x1])
+            cdf1 = cdf1D[x1]
+            cdf2 = cdf1D[x2]
+            cdf = cdf1 + (cdf2 - cdf1) * (target - x_values[x1]) / (x_values[x2] - x_values[x1])
             calculated_cdf_value = np.round(cdf, 6)
-            print(f"cdf value at target ({target}) : {calculated_cdf_value}")
+            #print(f"cdf value at target ({target}) : {calculated_cdf_value}")
             return calculated_cdf_value
 
         return cdf_function
