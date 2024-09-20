@@ -37,6 +37,9 @@ np.random.seed(seed)
 random.seed(seed)
 torch.backends.cudnn.deterministic = True
 
+front_cutoff = config["databuilder"]["front_cutoff"] # remove front nans : 74 ENSO - two front nans before daily interpolation = 60 days, daily interpolation takes 1/2 the original time step = 15 days TOTAL = ~75
+back_cutoff = config["databuilder"]["back_cutoff"]  # remove back nans : 32 ~ 1 month of nans
+
 # -------------------------------------------------------------------
 
 # Open Model Outputs
