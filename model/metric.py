@@ -32,6 +32,10 @@ def iqr_capture(output, target):
     (i.e. the interquartile range).
 
     """
+    # If output and target are not tensors, make them tensors: 
+    output = torch.tensor(output)
+    target = torch.tensor(target)
+
     with torch.no_grad():
         assert len(output[:, 0]) == len(target)
 
@@ -75,3 +79,16 @@ def pit(output, target):
 
     return bins, pit_hist, D, EDp
 
+def iqr_basic(output):
+    """Compute the interquartile range of the output."""
+    # If output is not a tensor, convert to tensor: 
+    output = torch.tensor(output)
+
+    dist = Shash(output)
+    lower = dist.quantile(torch.tensor(0.25))
+    upper = dist.quantile(torch.tensor(0.75))
+
+    iqr_range = upper - lower
+    # convert iqr_range to numpy array and return as float32
+    iqr_range = iqr_range.numpy()
+    return iqr_range.astype(np.float32) 
