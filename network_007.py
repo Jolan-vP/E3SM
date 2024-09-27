@@ -18,8 +18,6 @@ import scipy
 from scipy import stats
 #import matplotlib.colors as mcolorsxx
 
-# %load_ext autoreload
-# %autoreload 2
 import utils
 import utils.filemethods as filemethods
 import databuilder.data_loader as data_loader
@@ -36,7 +34,6 @@ from utils import utils
 from shash.shash_torch import Shash
 import analysis.analysis_metrics as analysis_metrics
 
-# import databuilder.nino_indices as nino_indices # CAUSES CELL TO HANG
 
 print(f"python version = {sys.version}")
 print(f"numpy version = {np.__version__}")
@@ -74,32 +71,38 @@ data = ClimateData(
     fetch=False,
     verbose=False
 )
+print("Instantiated ClimateData Class")
+
 # Fetch training, validation, and testing data
 d_train, d_val, d_test = data.fetch_data()
-
-# target_PRECT_savename1 = "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp006_d_train_SeattleRegional_PRECT_1850-2014.pkl"
-# #target_PRECT_savename1 = "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/exp006_d_train_SeattleRegional_PRECT_1850-2014.pkl"
-# analysis_metrics.save_pickle(d_train, target_PRECT_savename1)
-
-# target_PRECT_savename2 = "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp006_d_val_SeattleRegional_PRECT_1850-2014.pkl"
-# #target_PRECT_savename2 = "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/exp006_d_val_SeattleRegional_PRECT_1850-2014.pkl"
-# analysis_metrics.save_pickle(d_val, target_PRECT_savename2)
-
-# target_PRECT_savename3 = "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp006_d_test_SeattleRegional_PRECT_1850-2014.pkl"
-# #target_PRECT_savename3 = "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/exp006_d_test_SeattleRegional_PRECT_1850-2014.pkl"
-# analysis_metrics.save_pickle(d_test, target_PRECT_savename3)
+print("Fetched data")
 
 # Save processed data files
-s_dict_savename1 = '/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/exp007_train.pkl'
-analysis_metrics.save_pickle(d_train, s_dict_savename1)
+savename1 = "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp007_d_train_PRECT_TS_SeattleR_1850-2014.pkl"
+# #target_savename1 = "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/exp007_d_train_SeattleRegional_PRECT_1850-2014.pkl"
+analysis_metrics.save_pickle(d_train, savename1)
+print("Saved Training Data")
 
-s_dict_savename2 = '/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/exp007_val.pkl'
-analysis_metrics.save_pickle(d_val, s_dict_savename2)
+savename2 = "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp007_d_val_PRECT_TS_SeattleR_1850-2014.pkl"
+# #target_savename2 = "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/exp007_d_val_SeattleRegional_PRECT_1850-2014.pkl"
+analysis_metrics.save_pickle(d_val, savename2)
+print("Saved Validation Data")
 
-s_dict_savename3 = '/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/exp007_test.pkl'
-analysis_metrics.save_pickle(d_test, s_dict_savename3)
+savename3 = "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp007_d_test_PRECT_TS_SeattleR_1850-2014.pkl"
+# #target_savename3 = "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/exp007_d_test_SeattleRegional_PRECT_1850-2014.pkl"
+analysis_metrics.save_pickle(d_test, savename3)
+print("Saved Testing Data")
 
-# Open processed data files
+# s_dict_savename1 = '/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/exp007_train.pkl'
+# analysis_metrics.load_pickle(d_train, s_dict_savename1)
+
+# s_dict_savename2 = '/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/exp007_val.pkl'
+# analysis_metrics.load_pickle(d_val, s_dict_savename2)
+
+# s_dict_savename3 = '/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/exp007_test.pkl'
+# analysis_metrics.load_pickle(d_test, s_dict_savename3)
+
+# Open processed data filess
 train_dat = analysis_metrics.load_pickle(s_dict_savename1)
 val_dat = analysis_metrics.load_pickle(s_dict_savename2)
 test_dat = analysis_metrics.load_pickle(s_dict_savename3)
