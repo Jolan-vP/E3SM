@@ -3,6 +3,7 @@
     "seed_list": [7],
 
     "data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata",
+    "inputs_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/",
     "figure_dir": "/Users/C830793391/Documents/Research/E3SM/visuals/",
     "model_dir": "/Users/C830793391/Documents/Research/E3SM/saved/models",
     "output_dir": "/Users/C830793391/Documents/Research/E3SM/saved/output",
@@ -40,10 +41,12 @@
     }, 
 
     "arch": {
-        "type": "basicnn",
+        "type": "cnn",
         "n_inputchannel": 1,
-
-        "basic_act": ["ReLU", "ReLU"],
+        "freeze_id" : ["tau"],
+        "filters" : [32, 32, 32], 
+        "kernel_size": [3, 3, 3],
+        "cnn_act": ["ReLU", "ReLU"],
 
         "hiddens_block_in": [3, 3],
         "hiddens_block_out": 6,

@@ -2,7 +2,8 @@
 
 Functions
 ---------
-
+conv_couplet(in_channels, out_channels, act_fun, *args, **kwargs)
+conv_block(in_channels, out_channels, act_fun, kernel_size)
 
 Classes
 ---------
@@ -14,6 +15,54 @@ import torch
 import numpy as np
 from base.base_model import BaseModel
 import torch.nn.functional as F
+
+
+def conv_couplet(in_channels, out_channels, act_fun, *args, **kwargs):
+    return torch.nn.Sequential(
+        torch.nn.Conv2d(in_channels=in_channels, out_channels=out_channels, *args, **kwargs),
+        getattr(torch.nn, act_fun)(),
+        torch.nn.MaxPool2d(kernel_size = (2, 2), ceil_mode = True),
+    )
+
+def conv_block(in_channels, out_channels, act_fun, kernel_size):
+    block = [
+        conv_couplet(in_channels, out_channels, act_fun, kernel_size, padding = "same")
+        for in_channels, out_channels, act_fun, kernel_size in zip(
+            [*in_channels], 
+            [*out_channels],
+            [*act_fun], 
+            [*kernel_size]
+        )
+    ]
+
+def dense_lazy_couplet(out_features, act_fun, *args, **kwargs):
+    return torch.nn.Sequential(
+        torch.nn.LazyLinear(out_features=out_features, bias=True),
+        getattr(torch.nn, act_fun)(),
+    )
+
+
+def dense_couplet(in_features, out_features, act_fun, *args, **kwargs):
+    return torch.nn.Sequential(
+        torch.nn.Linear(in_features=in_features, out_features=out_features, bias=True),
+        getattr(torch.nn, act_fun)(),
+    )
+
+def dense_block(out_features, act_fun, in_features=None):
+    if in_features is None:
+        block = [
+            dense_lazy_couplet(out_channels, act_fun)
+            for out_channels, act_fun in zip([*out_features], [*act_fun])
+        ]
+        return torch.nn.Sequential(*block)
+    else:
+        block = [
+            dense_couplet(in_features, out_features, act_fun)
+            for in_features, out_features, act_fun in zip(
+                [*in_features], [*out_features], [*act_fun]
+            )
+        ]
+        return torch.nn.Sequential(*block)
 
 
 class RescaleLayer:
@@ -47,6 +96,16 @@ class TorchModel(BaseModel):
         else:
             self.target_std = torch.tensor(target_std)
 
+        # Longitude padding
+        self.pad_lons = torch.nn.CircularPad2d(config["circular_padding"])
+
+        # CNN Block
+        self.conv_block = conv_block(
+            [config["n_inputchannel"], *config["filters"][:-1]],
+            [*config["filters"]],
+            [*config["cnn_act"]],
+            [*config["kernel_size"]],
+        )
 
         # Simple Network Layers
         self.layer1 = torch.nn.Linear(in_features=config["hiddens_block_in"][0], 
@@ -62,10 +121,41 @@ class TorchModel(BaseModel):
         # Flat layer
         self.flat = torch.nn.Flatten(start_dim=1)
 
+        # Dense blocks
+        self.denseblock_mu = dense_block(
+            config["hiddens_block"],
+            config["hiddens_block_act"],
+            in_features=config["hiddens_block_in"],
+        )
+        self.denseblock_sigma = dense_block(
+            config["hiddens_block"],
+            config["hiddens_block_act"],
+            in_features=config["hiddens_block_in"],
+        )
+        self.denseblock_gamma = dense_block(
+            config["hiddens_block"],
+            config["hiddens_block_act"],
+            in_features=config["hiddens_block_in"],
+        )
+        self.denseblock_tau = dense_block(
+            config["hiddens_block"],
+            config["hiddens_block_act"],
+            in_features=config["hiddens_block_in"],
+        )
+
         # Rescaling layers
         self.rescale_mu = RescaleLayer(self.target_std, self.target_mean)
         self.rescale_sigma = RescaleLayer(torch.tensor(1.0), torch.log(self.target_std))
-        self.rescale_tau = RescaleLayer(torch.tensor(0.0), torch.tensor(1.0))
+
+        if "gamma" in config.get("freeze_id", []):
+            self.rescale_gamma = RescaleLayer(torch.tensor(0.0), torch.tensor(0.0))
+        else: 
+            self.rescale_gamma = RescaleLayer(torch.tensor(1.0), torch.tensor(0.0))
+
+        if "tau" in config.get("freeze_id", []):
+            self.rescale_tau = RescaleLayer(torch.tensor(0.0), torch.tensor(0.0))
+        else:
+            self.rescale_tau = RescaleLayer(torch.tensor(1.0), torch.tensor(0.0))
 
         # Output layers
         self.output_mu = torch.nn.Linear(
@@ -84,32 +174,39 @@ class TorchModel(BaseModel):
     def forward(self, input):
 
         #x = F.normalize(input, p = 1, dim = 1)
+        x = self.pad_lons(input)
+        x = self.conv_block(x)
+        x = self.flat(x)
 
-        # basic hidden layers
-        x = self.layer1(input)
-        x = F.relu(x)
-        # x = self.layer2(x)
-        # x = F.relu(x)
-        x = self.final(x)
+        # mu layers:
+        x_mu = self.denseblock_mu(x)
+        mu_out = self.output_mu(x_mu)
 
-        # x = self.flat(x)
+        # sigma layers:
+        x_sigma = self.denseblock_sigma(x)
+        sigma_out = self.output_sigma(x_sigma)
 
-        # Ensure x has at least 4 columns
-        if x.shape[1] < 4:
-            raise ValueError("Input tensor does not have enough dimensions for indexing.")
+        # gamma layers:
+        x_gamma = self.denseblock_gamma(x)
+        gamma_out = self.output_gamma(x_gamma)
+
+        # tau layers:
+        x_tau = self.denseblock_tau(x)
+        tau_out = self.output_tau(x_tau)
         
         # rescaling layers
-        mu_out = self.rescale_mu(x[:,0])
-        sigma_out = self.rescale_sigma(x[:,1])
+        mu_out = self.rescale_mu(mu_out)
+
+        sigma_out = self.rescale_sigma(sigma_out)
         sigma_out = torch.exp(sigma_out)
-        tau_out = self.rescale_tau(x[:,3])
+
+        tau_out = self.rescale_tau(tau_out)
+        tau_out = torch.exp(tau_out)
         
-        # gamma_out
-        gamma_out = x[:,2]
+        gamma_out = self.rescale_gamma(gamma_out)
 
         # final output, concatenate parameters together
-        x = torch.stack((mu_out, sigma_out, gamma_out, tau_out), dim=-1)
-
+        x = torch.cat((mu_out, sigma_out, gamma_out, tau_out), dim=-1)
 
         return x
 
@@ -151,110 +248,25 @@ class TorchModel(BaseModel):
     
 
 
+
+
+
+
+
+
+
     # -------------------------------------------------------------------------------
+
+
+  # basic hidden layers
+        # x = self.layer1(input)
+        # x = F.relu(x)
+        # x = self.layer2(x)
+        # x = F.relu(x)
+        # x = self.final(x)
+
 
  # assert (
         #     len(self.config["basic_act"])
         #     == len(self.config["filters"])
         # )
-
-
-    # def dense_lazy_couplet(out_features, act_fun, *args, **kwargs):
-#     return torch.nn.Sequential(
-#         torch.nn.LazyLinear(out_features=out_features, bias=True),
-#         getattr(torch.nn, act_fun)(),
-#     )
-
-# def dense_couplet(in_features, out_features, act_fun, *args, **kwargs):
-#     return torch.nn.Sequential(
-#         torch.nn.Linear(in_features=in_features, out_features=out_features, bias=True),
-#         getattr(torch.nn, act_fun)(),
-#     )
-
-# def dense_block(out_features, act_fun, in_features=None):
-#     if in_features is None:
-#         block = [
-#             dense_lazy_couplet(out_channels, act_fun)
-#             for out_channels, act_fun in zip([*out_features], [*act_fun])
-#         ]
-#         return torch.nn.Sequential(*block)
-#     else:
-#         block = [
-#             dense_couplet(in_features, out_features, act_fun)
-#             for in_features, out_features, act_fun in zip(
-#                 [*in_features], [*out_features], [*act_fun]
-#             )
-#         ]
-#         return torch.nn.Sequential(*block)
-
-
-   # # # Longitude padding
-        # self.pad_lons = torch.nn.CircularPad2d(config["circular_padding"])
-
-
-        # # Dense blocks
-        # self.denseblock_mu = dense_block(
-        #     config["hiddens_block"],
-        #     config["hiddens_block_act"],
-        #     in_features=config["hiddens_block_in"],
-        # )
-        # self.denseblock_sigma = dense_block(
-        #     config["hiddens_block"],
-        #     config["hiddens_block_act"],
-        #     in_features=config["hiddens_block_in"],
-        # )
-        # self.denseblock_gamma = dense_block(
-        #     config["hiddens_block"],
-        #     config["hiddens_block_act"],
-        #     in_features=config["hiddens_block_in"],
-        # )
-        # self.denseblock_tau = dense_block(
-        #     config["hiddens_block"],
-        #     config["hiddens_block_act"],
-        #     in_features=config["hiddens_block_in"],
-        # )
-
-        # # Final dense layer
-        # self.finaldense_mu = dense_couplet(
-        #     out_features=config["hiddens_final"],
-        #     act_fun=config["hiddens_final_act"],
-        #     in_features=config["hiddens_final_in"],
-        # )
-        # self.finaldense_sigma = dense_couplet(
-        #     out_features=config["hiddens_final"],
-        #     act_fun=config["hiddens_final_act"],
-        #     in_features=config["hiddens_final_in"],
-        # )
-        # self.finaldense_gamma = dense_couplet(
-        #     out_features=config["hiddens_final"],
-        #     act_fun=config["hiddens_final_act"],
-        #     in_features=config["hiddens_final_in"],
-        # )
-        # self.finaldense_tau = dense_couplet(
-        #     out_features=config["hiddens_final"],
-        #     act_fun=config["hiddens_final_act"],
-        #     in_features=config["hiddens_final_in"],
-        # )
-
-
-
-
-        # # build mu_layers
-        # x_mu = self.denseblock_mu(x)
-        # x_mu = self.finaldense_mu(x_mu)
-        # mu_out = self.output_mu(x_mu)
-
-        # # build sigma_layers
-        # x_sigma = self.denseblock_sigma(x)
-        # x_sigma = self.finaldense_sigma(x_sigma)
-        # sigma_out = self.output_sigma(x_sigma)
-
-        # # build gamma_layers
-        # x_gamma = self.denseblock_gamma(x)
-        # x_gamma = self.finaldense_gamma(x_gamma)
-        # gamma_out = self.output_gamma(x_gamma)
-
-        # # build tau_layers
-        # x_tau = self.denseblock_tau(x)
-        # x_tau = self.finaldense_tau(x_tau)
-        # tau_out = self.output_tau(x_tau)

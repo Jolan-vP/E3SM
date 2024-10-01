@@ -42,7 +42,7 @@ print(f"pytorch version = {torch.__version__}")
 
 # https://github.com/victoresque/pytorch-template/tree/master
  
- # ------------------------------------------------------------------
+# ------------------------------------------------------------------
 
 config = utils.get_config("exp007")
 seed = config["seed_list"][0]
@@ -53,12 +53,12 @@ np.random.seed(seed)
 random.seed(seed)
 torch.backends.cudnn.deterministic = True
 
-imp.reload(utils)
-imp.reload(filemethods)
-imp.reload(data_generator)
-
 
 # ---------------- Data Processing ----------------------------------
+
+# imp.reload(utils)
+# imp.reload(filemethods)
+# imp.reload(data_generator)
 
 # Instantiate Climate Data class for Global Map input data processing
 data = ClimateData(
@@ -71,36 +71,31 @@ data = ClimateData(
     fetch=False,
     verbose=False
 )
-print("Instantiated ClimateData Class")
+# print("Instantiated ClimateData Class")
 
-# Fetch training, validation, and testing data
-d_train, d_val, d_test = data.fetch_data()
-print("Fetched data")
+# # Fetch training, validation, and testing data
+# d_train, d_val, d_test = data.fetch_data()
+# print("Fetched data")
 
-# Save processed data files
-savename1 = "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp007_d_train_PRECT_TS_SeattleR_1850-2014.pkl"
-# #target_savename1 = "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/exp007_d_train_SeattleRegional_PRECT_1850-2014.pkl"
-analysis_metrics.save_pickle(d_train, savename1)
-print("Saved Training Data")
+# # Save processed data files
+# savename1 = "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp007_d_train.pkl"
+# # #target_savename1 = "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/exp007_d_train.pkl"
+# analysis_metrics.save_pickle(d_train, savename1)
+# print("Saved Training Data")
 
-savename2 = "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp007_d_val_PRECT_TS_SeattleR_1850-2014.pkl"
-# #target_savename2 = "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/exp007_d_val_SeattleRegional_PRECT_1850-2014.pkl"
-analysis_metrics.save_pickle(d_val, savename2)
-print("Saved Validation Data")
+# savename2 = "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp007_d_val.pkl"
+# # #target_savename2 = "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/exp007_d_val.pkl"
+# analysis_metrics.save_pickle(d_val, savename2)
+# print("Saved Validation Data")
 
-savename3 = "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp007_d_test_PRECT_TS_SeattleR_1850-2014.pkl"
-# #target_savename3 = "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/exp007_d_test_SeattleRegional_PRECT_1850-2014.pkl"
-analysis_metrics.save_pickle(d_test, savename3)
-print("Saved Testing Data")
+# savename3 = "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp007_d_test.pkl"
+# # #target_savename3 = "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/exp007_d_test.pkl"
+# analysis_metrics.save_pickle(d_test, savename3)
+# print("Saved Testing Data")
 
-# s_dict_savename1 = '/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/exp007_train.pkl'
-# analysis_metrics.load_pickle(d_train, s_dict_savename1)
-
-# s_dict_savename2 = '/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/exp007_val.pkl'
-# analysis_metrics.load_pickle(d_val, s_dict_savename2)
-
-# s_dict_savename3 = '/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/exp007_test.pkl'
-# analysis_metrics.load_pickle(d_test, s_dict_savename3)
+s_dict_savename1 = str(config["inputs_dir"]) + str(config["expname"]) + '_d_train.pkl'
+s_dict_savename2 = str(config["inputs_dir"]) + str(config["expname"]) + '_d_val.pkl'
+s_dict_savename3 = str(config["inputs_dir"]) + str(config["expname"]) + '_d_test.pkl'
 
 # Open processed data filess
 train_dat = analysis_metrics.load_pickle(s_dict_savename1)
@@ -110,14 +105,13 @@ test_dat = analysis_metrics.load_pickle(s_dict_savename3)
 print(test_dat["y"][500:530]) # test a small sample of the target data
 
 # Confirm there are no nans in the data / adjust front and back cutoff values if needed
-print(np.isnan(train_dat["x"][121:-32]).any())
-print(np.isnan(val_dat["x"][121:-32]).any())
-print(np.isnan(test_dat["x"][121:-32]).any())
+print(np.isnan(train_dat["x"]).any())
+print(np.isnan(val_dat["x"]).any())
+print(np.isnan(test_dat["x"]).any())
 
-print(np.isnan(train_dat["y"][121:-32]).any())
-print(np.isnan(val_dat["y"][121:-32]).any())
-print(np.isnan(test_dat["y"][121:-32]).any())
-
+print(np.isnan(train_dat["y"]).any())
+print(np.isnan(val_dat["y"]).any())
+print(np.isnan(test_dat["y"]).any())
 
 # ----------- Model Training ----------------------------------
 
@@ -125,9 +119,9 @@ print(np.isnan(test_dat["y"][121:-32]).any())
 front_cutoff = config["databuilder"]["front_cutoff"] # remove front nans : 74 ENSO - two front nans before daily interpolation = 60 days, daily interpolation takes 1/2 the original time step = 15 days TOTAL = ~75
 back_cutoff = config["databuilder"]["back_cutoff"]  # remove back nans : 32 ~ 1 month of nans
 
-trainset = data_loader.CustomData(config["data_loader"]["data_dir"] + "/Network Inputs/exp007_train.pkl", front_cutoff, back_cutoff)
-valset = data_loader.CustomData(config["data_loader"]["data_dir"] + "/Network Inputs/exp007_val.pkl", front_cutoff, back_cutoff)
-testset = data_loader.CustomData(config["data_loader"]["data_dir"] + "/Network Inputs/exp007_test.pkl", front_cutoff, back_cutoff)
+trainset = data_loader.CustomData(config["data_loader"]["data_dir"] + "/Network Inputs/" + str(config["expname"]) + "_d_train.pkl", front_cutoff, back_cutoff)
+valset = data_loader.CustomData(config["data_loader"]["data_dir"] + "/Network Inputs/" + str(config["expname"]) + "_d_val.pkl", front_cutoff, back_cutoff)
+testset = data_loader.CustomData(config["data_loader"]["data_dir"] + "/Network Inputs/" + str(config["expname"]) + "_d_test.pkl", front_cutoff, back_cutoff)
 
 train_loader = torch.utils.data.DataLoader(
     trainset,
@@ -215,8 +209,9 @@ plt.show()
 with torch.inference_mode():
     print(device)
     output = model.predict(dataset=testset, batch_size=128, device=device) # The output is the batched SHASH distribution parameters
-output[:20]
+
+print(output[:20]) # look at a small sample of the output data
 
 # Save Model Outputs
-model_output_pred = '/Users/C830793391/Documents/Research/E3SM/saved/output/exp007_output_pred_testset.pkl'
-analysis_metrics.save_pickle(output, model_output_pred)
+model_output = str(config["output_dir"]) + 'exp007_output_testset.pkl'
+analysis_metrics.save_pickle(output, model_output)
