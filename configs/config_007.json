@@ -3,7 +3,8 @@
     "seed_list": [7],
 
     "data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata",
-    "inputs_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/",
+    "perlmutter_inputs_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",
+    "local_inputs_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/",
     "figure_dir": "/Users/C830793391/Documents/Research/E3SM/visuals/",
     "model_dir": "/Users/C830793391/Documents/Research/E3SM/saved/models",
     "output_dir": "/Users/C830793391/Documents/Research/E3SM/saved/output",
@@ -19,6 +20,7 @@
         
         "input_vars": ["PRECT", "TS"],
         "network_inputs": ["PRECT", "TS"],
+        "input_years": [1850, 1900],
         "input_region": "None",
         "input_mask": ["None"],
         "ensembles": ["ens1", "ens2", "ens3"],

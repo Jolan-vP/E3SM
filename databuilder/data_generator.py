@@ -83,9 +83,9 @@ class ClimateData:
                 # test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
                 test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
         
-        train_ds = train_ds.sel(time = slice("1850", "2014"))
-        validate_ds = validate_ds.sel(time = slice("1850", "2014"))
-        test_ds = test_ds.sel(time = slice("1850", "2014"))
+        train_ds = train_ds.sel(time = slice(str(self.config["input_years"][0]), str(self.config["input_years"][1])))
+        validate_ds = validate_ds.sel(time = slice(str(self.config["input_years"][0]), str(self.config["input_years"][1])))
+        test_ds = test_ds.sel(time = slice(str(self.config["input_years"][0]), str(self.config["input_years"][1])))
 
         # Get opened X and Y data
         # Process Data (compute anomalies)
