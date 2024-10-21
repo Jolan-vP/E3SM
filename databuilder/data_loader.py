@@ -12,6 +12,7 @@ import numpy as np
 import pickle
 import gzip
 from sklearn.preprocessing import StandardScaler
+import xarray as xr
 
 
 class CustomData(torch.utils.data.Dataset):
@@ -20,21 +21,18 @@ class CustomData(torch.utils.data.Dataset):
     """
 
     def __init__(self, data_file, front_cutoff, back_cutoff):
-        with gzip.open(data_file, "rb") as handle:
-            dict_data = pickle.load(handle)
+        # with gzip.open(data_file, "rb") as handle:
+        #     dict_data = pickle.load(handle)
+        dict_data = xr.open_dataset(data_file)
 
         self.input = dict_data["x"][front_cutoff : -back_cutoff, :]
         self.target = dict_data["y"][front_cutoff : -back_cutoff]
-        
-        # # Normalize Inputs
-        # scaler = StandardScaler()
-        # self.input = scaler.fit_transform(self.input)
 
         assert not np.any(np.isnan(self.input))
         assert not np.any(np.isnan(self.target))
 
         # Print shapes for debugging
-        print(f"X1 shape: {self.input.shape}")
+        print(f"X shape: {self.input.shape}")
         print(f"Target shape: {self.target.shape}")
 
     def __len__(self):

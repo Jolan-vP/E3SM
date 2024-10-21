@@ -70,90 +70,103 @@ data = ClimateData(
     fetch=False,
     verbose=False
 )
-print("Instantiated ClimateData Class")
+# print("Instantiated ClimateData Class")
 
 # # Fetch training, validation, and testing data
 # d_train, d_val, d_test = data.fetch_data()
 # print("Fetched data")
 
-# # Save processed data files
-# savename1 = "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp007_d_train.pkl"
-# # #target_savename1 = "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/exp007_d_train.pkl"
-# analysis_metrics.save_pickle(d_train, savename1)
-# print("Saved Training Data")
+# # convert data to xarray form from SampleClass object: 
+# d_train_dict = dict(d_train) 
+# d_train_xr = xr.Dataset(d_train_dict)
 
-# savename2 = "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp007_d_val.pkl"
-# # #target_savename2 = "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/exp007_d_val.pkl"
-# analysis_metrics.save_pickle(d_val, savename2)
-# print("Saved Validation Data")
+# d_val_dict = dict(d_val) 
+# d_val_xr = xr.Dataset(d_val_dict)
 
-# savename3 = "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp007_d_test.pkl"
-# # #target_savename3 = "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/exp007_d_test.pkl"
-# analysis_metrics.save_pickle(d_test, savename3)
-# print("Saved Testing Data")
-print(f"Opening data: \n")
+# d_test_dict = dict(d_test) 
+# d_test_xr = xr.Dataset(d_test_dict)
 
-s_dict_savename1 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + '_d_train.pkl'
-s_dict_savename2 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + '_d_val.pkl'
-s_dict_savename3 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + '_d_test.pkl'
+# # Saving training data as NetCDF
+# savename1 = "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp007_d_train_1850-1900.nc"
+# d_train_xr.to_netcdf(savename1)
+# print("Saved Training Data as NetCDF")
+
+# # Saving validation data as NetCDF
+# savename2 = "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp007_d_val_1850-1900.nc"
+# d_val_xr.to_netcdf(savename2)
+# print("Saved Validation Data as NetCDF")
+
+# # Saving testing data as NetCDF
+# savename3 = "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp007_d_test_1850-1900.nc"
+# d_test_xr.to_netcdf(savename3)
+# print("Saved Testing Data as NetCDF")
+
+s_dict_savename1 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + '_d_train_1850-1900.nc'
+s_dict_savename2 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + '_d_val_1850-1900.nc'
+s_dict_savename3 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + '_d_test_1850-1900.nc'
 
 # Open processed data filess
-train_dat = analysis_metrics.load_pickle(s_dict_savename1)
-val_dat = analysis_metrics.load_pickle(s_dict_savename2)
-test_dat = analysis_metrics.load_pickle(s_dict_savename3)
+train_dat = xr.open_dataset(s_dict_savename1)
+val_dat = xr.open_dataset(s_dict_savename2)
+test_dat = xr.open_dataset(s_dict_savename3)
 
-print(f"training data shape: {train_dat.shape}")
-print(f"val data shape: {val_dat.shape}")
-print(f"test data shape: {test_dat.shape} \n")
+print(f"training data shape: {train_dat['x'].shape}")
+print(f"val data shape: {val_dat['x'].shape}")
+print(f"test data shape: {test_dat['x'].shape} \n")
 
-print(f" Some target test data: {test_dat['y'][500:530]} \n") # test a small sample of the target data
-
-# Confirm there are no nans in the data / adjust front and back cutoff values if needed
-print(np.isnan(train_dat["x"]).any())
-print(np.isnan(val_dat["x"]).any())
-print(np.isnan(test_dat["x"]).any())
-
-print(np.isnan(train_dat["y"]).any())
-print(np.isnan(val_dat["y"]).any())
-print(np.isnan(test_dat["y"]).any())
+print(f"training data shape: {train_dat['y'].shape}")
+print(f"val data shape: {val_dat['y'].shape}")
+print(f"test data shape: {test_dat['y'].shape} \n")
 
 # # ----------- Model Training ----------------------------------
 
-# # Setup the Data
-# front_cutoff = config["databuilder"]["front_cutoff"] # remove front nans : 74 ENSO - two front nans before daily interpolation = 60 days, daily interpolation takes 1/2 the original time step = 15 days TOTAL = ~75
-# back_cutoff = config["databuilder"]["back_cutoff"]  # remove back nans : 32 ~ 1 month of nans
+# Setup the Data
+front_cutoff = config["databuilder"]["front_cutoff"] # remove front 14 nans due to target lag
+back_cutoff = config["databuilder"]["back_cutoff"]  # remove back 14 nans
 
-# trainset = data_loader.CustomData(config["data_loader"]["data_dir"] + "/Network Inputs/" + str(config["expname"]) + "_d_train.pkl", front_cutoff, back_cutoff)
-# valset = data_loader.CustomData(config["data_loader"]["data_dir"] + "/Network Inputs/" + str(config["expname"]) + "_d_val.pkl", front_cutoff, back_cutoff)
-# testset = data_loader.CustomData(config["data_loader"]["data_dir"] + "/Network Inputs/" + str(config["expname"]) + "_d_test.pkl", front_cutoff, back_cutoff)
+# # Confirm there are no nans in the data / adjust front and back cutoff values if needed
+# print(np.isnan(train_dat["x"][front_cutoff : -back_cutoff, :]).any())
+# print(np.isnan(val_dat["x"][front_cutoff : -back_cutoff, :]).any())
+# print(np.isnan(test_dat["x"][front_cutoff : -back_cutoff, :]).any())
 
-# train_loader = torch.utils.data.DataLoader(
-#     trainset,
-#     batch_size=config["data_loader"]["batch_size"],
-#     shuffle=True,
-#     drop_last=False,
-# )
+# print(np.isnan(train_dat["y"][front_cutoff : -back_cutoff]).any())
+# print(np.isnan(val_dat["y"][front_cutoff : -back_cutoff]).any())
+# print(np.isnan(test_dat["y"][front_cutoff : -back_cutoff]).any())
 
-# val_loader = torch.utils.data.DataLoader(
-#     valset,
-#     batch_size=config["data_loader"]["batch_size"],
-#     shuffle=False,
-#     drop_last=False,
-# )
+# trainset = data_loader.CustomData(config["data_loader"]["data_dir"] + "/Network Inputs/" + str(config["expname"]) + "_d_train_1850-1900.nc", front_cutoff, back_cutoff)
+# valset = data_loader.CustomData(config["data_loader"]["data_dir"] + "/Network Inputs/" + str(config["expname"]) + "_d_val_1850-1900.nc", front_cutoff, back_cutoff)
+# testset = data_loader.CustomData(config["data_loader"]["data_dir"] + "/Network Inputs/" + str(config["expname"]) + "_d_test_1850-1900.nc", front_cutoff, back_cutoff)
 
+trainset = data_loader.CustomData(config["perlmutter_inputs_dir"] + str(config["expname"]) + "_d_train_1850-1900.nc", front_cutoff, back_cutoff)
+valset = data_loader.CustomData(config["perlmutter_inputs_dir"] + str(config["expname"]) + "_d_val_1850-1900.nc", front_cutoff, back_cutoff)
+testset = data_loader.CustomData(config["perlmutter_inputs_dir"] + str(config["expname"]) + "_d_test_1850-1900.nc", front_cutoff, back_cutoff)
 
-# # Setup the Model
-# model = TorchModel(
-#     config=config["arch"],
-#     target_mean=trainset.target.mean(axis=0),
-#     target_std=trainset.target.std(axis=0),
-# )
-# model.freeze_layers(freeze_id="tau")
-# optimizer = getattr(torch.optim, config["optimizer"]["type"])(
-#     model.parameters(), **config["optimizer"]["args"]
-# )
-# criterion = getattr(module_loss, config["criterion"])()
-# metric_funcs = [getattr(module_metric, met) for met in config["metrics"]]
+train_loader = torch.utils.data.DataLoader(
+    trainset,
+    batch_size=config["data_loader"]["batch_size"],
+    shuffle=True,
+    drop_last=False,
+)
+
+val_loader = torch.utils.data.DataLoader(
+    valset,
+    batch_size=config["data_loader"]["batch_size"],
+    shuffle=False,
+    drop_last=False,
+)
+
+# Setup the Model
+model = TorchModel(
+    config=config["arch"],
+    target_mean=trainset.target.mean(axis=0),
+    target_std=trainset.target.std(axis=0),
+)
+model.freeze_layers(freeze_id="tau")
+optimizer = getattr(torch.optim, config["optimizer"]["type"])(
+    model.parameters(), **config["optimizer"]["args"]
+)
+criterion = getattr(module_loss, config["criterion"])()
+metric_funcs = [getattr(module_metric, met) for met in config["metrics"]]
 
 # # Build the trainer
 # device = utils.prepare_device(config["device"])
@@ -219,3 +232,40 @@ print(np.isnan(test_dat["y"]).any())
 # # Save Model Outputs
 # model_output = str(config["output_dir"]) + 'exp007_output_testset.pkl'
 # analysis_metrics.save_pickle(output, model_output)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# EXTRA -------------------------------------------------------------------------
+
+# # Save processed data files
+# savename1 = "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp007_d_train_1850-1900.pkl"
+# # #target_savename1 = "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/exp007_d_train.pkl"
+# analysis_metrics.save_pickle(d_train, savename1)
+# print("Saved Training Data")
+
+# savename2 = "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp007_d_val_1850-1900.pkl"
+# # #target_savename2 = "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/exp007_d_val.pkl"
+# analysis_metrics.save_pickle(d_val, savename2)
+# print("Saved Validation Data")
+
+# savename3 = "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp007_d_test_1850-1900.pkl"
+# # #target_savename3 = "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/exp007_d_test.pkl"
+# analysis_metrics.save_pickle(d_test, savename3)
+# print("Saved Testing Data")
+# print(f"Opening data: \n")
+
+# train_dat = analysis_metrics.load_pickle(s_dict_savename1)
+# val_dat = analysis_metrics.load_pickle(s_dict_savename2)
+# test_dat = analysis_metrics.load_pickle(s_dict_savename3)

@@ -142,10 +142,8 @@ class ClimateData:
                             
                             mm_day = da_copy[:,:,start:end] * 10**3 * 86400
                             da[:, :, start:end] = mm_day
-                            # stacked = da[:, :, start:end].stack(z=("lat", "lon"))
-                            # da_copy[:, :, start:end] = stacked.groupby("time.dayofyear").map(self.subtract_trend).unstack()
 
-                        # print(f"da post incremental unit conversion: {da.values[500:540]}")
+                        print(f"da post incremental unit conversion: {da.values[500:510]}")
                     else:
                         pass
 
@@ -155,10 +153,9 @@ class ClimateData:
                     da = xr.concat([da, ds[var]], dim = "channel")  # (3) Fill channel dim with var array
       
             da = da.rename('SAMPLES')
-            da.attrs['long_name'] = None
-            da.attrs['units'] = None
-            da.attrs['cell_methods'] = None
-
+            da.attrs['long_name'] = 'long_name'
+            da.attrs['units'] = 'units'
+            da.attrs['cell_methods'] = 'cell_methods'
 
         # For each input variable or data entity you would like to process: 
         for ikey, key in enumerate(f_dict):
@@ -167,19 +164,23 @@ class ClimateData:
                 
                 f_dict[key] = ds[self.config["target_var"]]
                 
-                if self.config["target_var"] == "PRECT": # CONVERTING PRECIP TO MM/DAY! Must do this twice, one for input PRECT, one for Target PRECT
-                    da_copy = f_dict[key].copy()
-                    
-                    inc = 45 # 45 degree partitions in longitude to split up the data
+                print(f"magnitude of target pre-unit conversion: {f_dict[key][500:510]}")
                 
-                    for iloop in np.arange(0, da_copy.shape[2] // inc + 1):
-                        start = inc * iloop
-                        end = np.min([inc * (iloop + 1), da_copy.shape[2]])
-                        if start == end:
-                            break
+                # if self.config["target_var"] == "PRECT": # CONVERTING PRECIP TO MM/DAY! Must do this twice, one for input PRECT, one for Target PRECT
+                #     da_copy = f_dict[key].copy()
+                    
+                #     inc = 45 # 45 degree partitions in longitude to split up the data
+                
+                #     for iloop in np.arange(0, da_copy.shape[2] // inc + 1):
+                #         start = inc * iloop
+                #         end = np.min([inc * (iloop + 1), da_copy.shape[2]])
+                #         if start == end:
+                #             break
                         
-                        mm_day = da_copy[:,:,start:end] * 10**3 * 86400
-                        f_dict[key][:, :, start:end] = mm_day
+                #         mm_day = da_copy[:,:,start:end] * 10**3 * 86400
+                #         f_dict[key][:, :, start:end] = mm_day
+
+                print(f"magnitude of target post unit-conversion: {f_dict[key][500:510]}") 
                 
                 # EXTRACT TARGET LOCATION
                 if len(self.config["target_region"]) == 2: # Specific city / lat lon location
@@ -203,9 +204,6 @@ class ClimateData:
 
                     else:
                         raise NotImplementedError("data must be xarray")
-                
-                # print(f"Shape of f_dict[key] before seasonal cycle removal: {f_dict[key].shape}")
-                # print(f_dict[key][500:540])
 
                 # REMOVE SEASONAL CYCLE 
                 print("removing seasonal cycle")
@@ -223,7 +221,7 @@ class ClimateData:
                 print("lag")
                 if self.config["lagtime"] != 0: 
                     f_dict[key] = f_dict[key][ self.config["lagtime"]: ]
-                 #TODO: Confirm addition of nans?? "Lead/Lag code for y - shift forward 10 days = input 10x nans at the beginning of the dataset"
+                
                 
                 print("completed processing target")
             else: 
