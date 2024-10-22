@@ -34,6 +34,7 @@ def conv_block(in_channels, out_channels, act_fun, kernel_size):
             [*kernel_size]
         )
     ]
+    return torch.nn.Sequential(*block)
 
 def dense_lazy_couplet(out_features, act_fun, *args, **kwargs):
     return torch.nn.Sequential(
@@ -86,6 +87,12 @@ class TorchModel(BaseModel):
             self.config["hiddens_block_act"]
         )
 
+        assert (
+            len(self.config["cnn_act"])
+            == len(self.config["kernel_size"])
+            == len(self.config["filters"])
+        )
+
         if target_mean is None:
             self.target_mean = torch.tensor(0.0)
         else:
@@ -97,7 +104,8 @@ class TorchModel(BaseModel):
             self.target_std = torch.tensor(target_std)
 
         # Longitude padding
-        self.pad_lons = torch.nn.CircularPad2d(config["circular_padding"])
+        # self.pad_lons = torch.nn.CircularPad2d(config["circular_padding"])  # This is throwing an error for some reason :/ 
+        self.pad_lons = config["circular_padding"]
 
         # CNN Block
         self.conv_block = conv_block(
@@ -174,7 +182,7 @@ class TorchModel(BaseModel):
     def forward(self, input):
 
         #x = F.normalize(input, p = 1, dim = 1)
-        x = self.pad_lons(input)
+        x = F.pad(x, (self.pad_lons), mode = 'circular')
         x = self.conv_block(x)
         x = self.flat(x)
 

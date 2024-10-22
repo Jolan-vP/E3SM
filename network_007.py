@@ -110,13 +110,13 @@ train_dat = xr.open_dataset(s_dict_savename1)
 val_dat = xr.open_dataset(s_dict_savename2)
 test_dat = xr.open_dataset(s_dict_savename3)
 
-print(f"training data shape: {train_dat['x'].shape}")
-print(f"val data shape: {val_dat['x'].shape}")
-print(f"test data shape: {test_dat['x'].shape} \n")
+# print(f"training data shape: {train_dat['x'].shape}")
+# print(f"val data shape: {val_dat['x'].shape}")
+# print(f"test data shape: {test_dat['x'].shape} \n")
 
-print(f"training data shape: {train_dat['y'].shape}")
-print(f"val data shape: {val_dat['y'].shape}")
-print(f"test data shape: {test_dat['y'].shape} \n")
+# print(f"training data shape: {train_dat['y'].shape}")
+# print(f"val data shape: {val_dat['y'].shape}")
+# print(f"test data shape: {test_dat['y'].shape} \n")
 
 # # ----------- Model Training ----------------------------------
 
@@ -154,12 +154,18 @@ val_loader = torch.utils.data.DataLoader(
     shuffle=False,
     drop_last=False,
 )
+######
 
+print(trainset.target)
+
+
+
+######
 # Setup the Model
 model = TorchModel(
     config=config["arch"],
-    target_mean=trainset.target.mean(axis=0),
-    target_std=trainset.target.std(axis=0),
+    target_mean=trainset.target.values.mean(axis=0),
+    target_std=trainset.target.values.std(axis=0),
 )
 model.freeze_layers(freeze_id="tau")
 optimizer = getattr(torch.optim, config["optimizer"]["type"])(

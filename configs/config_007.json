@@ -39,6 +39,7 @@
     "data_loader": {
 
         "data_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/", 
+        "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",
         "batch_size": 64
     }, 
 
@@ -46,13 +47,14 @@
         "type": "cnn",
         "n_inputchannel": 1,
         "freeze_id" : ["tau"],
+        "circular_padding": [15, 15, 0, 0],
         "filters" : [32, 32, 32], 
         "kernel_size": [3, 3, 3],
-        "cnn_act": ["ReLU", "ReLU"],
+        "cnn_act": ["ReLU", "ReLU", "ReLu"],
 
-        "hiddens_block_in": [3, 3],
+        "hiddens_block_in": [10, 10, 10],
+        "hiddens_block_act": ["ReLU", "ReLU", "ReLU"],
         "hiddens_block_out": 6,
-        "hiddens_block_act": ["ReLU", "ReLU"],
 
         "hiddens_final_in": 6,
         "hiddens_final_out": 4,
@@ -70,6 +72,7 @@
     "trainer": {
         "max_epochs": 4000,
         "save_dir": "/Users/C830793391/Documents/Research/E3SM/saved/",
+        "perlmutter_save_dir": "/pscratch/sd/p/plutzner/E3SM/saved/models",
         "early_stopping":{
             "args":{
                 "patience": 5,
