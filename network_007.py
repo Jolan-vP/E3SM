@@ -101,9 +101,13 @@ data = ClimateData(
 # d_test_xr.to_netcdf(savename3)
 # print("Saved Testing Data as NetCDF")
 
-s_dict_savename1 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + '_d_train_1850-1900.nc'
-s_dict_savename2 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + '_d_val_1850-1900.nc'
-s_dict_savename3 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + '_d_test_1850-1900.nc'
+# s_dict_savename1 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + '_d_train_1850-1900.nc'
+# s_dict_savename2 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + '_d_val_1850-1900.nc'
+# s_dict_savename3 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + '_d_test_1850-1900.nc'
+
+s_dict_savename1 = str(config["local_inputs_dir"]) + "/" + str(config["expname"]) + '_d_train_1850-1900.nc'
+s_dict_savename2 = str(config["local_inputs_dir"]) + "/" + str(config["expname"]) + '_d_val_1850-1900.nc'
+s_dict_savename3 = str(config["local_inputs_dir"]) + "/" + str(config["expname"]) + '_d_test_1850-1900.nc'
 
 # Open processed data filess
 train_dat = xr.open_dataset(s_dict_savename1)
@@ -121,25 +125,13 @@ test_dat = xr.open_dataset(s_dict_savename3)
 # # ----------- Model Training ----------------------------------
 
 # Setup the Data
-front_cutoff = config["databuilder"]["front_cutoff"] # remove front 14 nans due to target lag
-back_cutoff = config["databuilder"]["back_cutoff"]  # remove back 14 nans
+trainset = data_loader.CustomData(config["data_loader"]["data_dir"] + "/Network Inputs/" + str(config["expname"]) + "_d_train_1850-1900.nc", config["databuilder"]["lagtime"], config["databuilder"]["averaging_length"])
+valset = data_loader.CustomData(config["data_loader"]["data_dir"] + "/Network Inputs/" + str(config["expname"]) + "_d_val_1850-1900.nc", config["databuilder"]["lagtime"], config["databuilder"]["averaging_length"])
+testset = data_loader.CustomData(config["data_loader"]["data_dir"] + "/Network Inputs/" + str(config["expname"]) + "_d_test_1850-1900.nc", config["databuilder"]["lagtime"], config["databuilder"]["averaging_length"])
 
-# # Confirm there are no nans in the data / adjust front and back cutoff values if needed
-# print(np.isnan(train_dat["x"][front_cutoff : -back_cutoff, :]).any())
-# print(np.isnan(val_dat["x"][front_cutoff : -back_cutoff, :]).any())
-# print(np.isnan(test_dat["x"][front_cutoff : -back_cutoff, :]).any())
-
-# print(np.isnan(train_dat["y"][front_cutoff : -back_cutoff]).any())
-# print(np.isnan(val_dat["y"][front_cutoff : -back_cutoff]).any())
-# print(np.isnan(test_dat["y"][front_cutoff : -back_cutoff]).any())
-
-# trainset = data_loader.CustomData(config["data_loader"]["data_dir"] + "/Network Inputs/" + str(config["expname"]) + "_d_train_1850-1900.nc", front_cutoff, back_cutoff)
-# valset = data_loader.CustomData(config["data_loader"]["data_dir"] + "/Network Inputs/" + str(config["expname"]) + "_d_val_1850-1900.nc", front_cutoff, back_cutoff)
-# testset = data_loader.CustomData(config["data_loader"]["data_dir"] + "/Network Inputs/" + str(config["expname"]) + "_d_test_1850-1900.nc", front_cutoff, back_cutoff)
-
-trainset = data_loader.CustomData(config["perlmutter_inputs_dir"] + str(config["expname"]) + "_d_train_1850-1900.nc", front_cutoff, back_cutoff)
-valset = data_loader.CustomData(config["perlmutter_inputs_dir"] + str(config["expname"]) + "_d_val_1850-1900.nc", front_cutoff, back_cutoff)
-testset = data_loader.CustomData(config["perlmutter_inputs_dir"] + str(config["expname"]) + "_d_test_1850-1900.nc", front_cutoff, back_cutoff)
+# trainset = data_loader.CustomData(config["perlmutter_inputs_dir"] + str(config["expname"]) + "_d_train_1850-1900.nc", front_cutoff, back_cutoff)
+# valset = data_loader.CustomData(config["perlmutter_inputs_dir"] + str(config["expname"]) + "_d_val_1850-1900.nc", front_cutoff, back_cutoff)
+# testset = data_loader.CustomData(config["perlmutter_inputs_dir"] + str(config["expname"]) + "_d_test_1850-1900.nc", front_cutoff, back_cutoff)
 
 train_loader = torch.utils.data.DataLoader(
     trainset,
@@ -154,13 +146,7 @@ val_loader = torch.utils.data.DataLoader(
     shuffle=False,
     drop_last=False,
 )
-######
 
-print(trainset.target)
-
-
-
-######
 # Setup the Model
 model = TorchModel(
     config=config["arch"],
@@ -174,70 +160,71 @@ optimizer = getattr(torch.optim, config["optimizer"]["type"])(
 criterion = getattr(module_loss, config["criterion"])()
 metric_funcs = [getattr(module_metric, met) for met in config["metrics"]]
 
-# # Build the trainer
-# device = utils.prepare_device(config["device"])
-# trainer = Trainer(
-#     model,
-#     criterion,
-#     metric_funcs,
-#     optimizer,
-#     max_epochs=config["trainer"]["max_epochs"],
-#     data_loader=train_loader,
-#     validation_data_loader=val_loader,
-#     device=device,
-#     config=config,
-# )
+# Build the trainer
+device = utils.prepare_device(config["device"])
+trainer = Trainer(
+    model,
+    criterion,
+    metric_funcs,
+    optimizer,
+    max_epochs=config["trainer"]["max_epochs"],
+    data_loader=train_loader,
+    validation_data_loader=val_loader,
+    device=device,
+    config=config,
+)
 
-# # # Visualize the model
+# Visualize the model
 # torchinfo.summary(
 #     model,
 #     [   trainset.input[: config["data_loader"]["batch_size"]].shape ],
-#     verbose=1,
+#     verbose=0,
 #     col_names=("input_size", "output_size", "num_params"),
 # )
 
-# # Train the Model
-# model.to(device)
-# trainer.fit()
+# Train the Model
+print("training model")
+model.to(device)
+trainer.fit()
 
-# # Save the Model
-# # path = '/Users/C830793391/Documents/Research/E3SM/saved/models/exp007_v0.pth'
-# # torch.save(model.state_dict(), path)
+# Save the Model
+path = '/Users/C830793391/Documents/Research/E3SM/saved/models/exp007_v0.pth'
+torch.save(model.state_dict(), path)
 
-# # Load the Model
-# # path = '/Users/C830793391/Documents/Research/E3SM/saved/models/exp007_v0.pth'
-# # model = TorchModel(config=config["arch"])
-# # model.load_state_dict(torch.load(path))
-# # model.eval()
+# Load the Model
+path = '/Users/C830793391/Documents/Research/E3SM/saved/models/exp007_v0.pth'
+model = TorchModel(config=config["arch"])
+model.load_state_dict(torch.load(path))
+model.eval()
 
-# print(trainer.log.history.keys())
+print(trainer.log.history.keys())
 
-# plt.figure(figsize=(20, 4))
-# for i, m in enumerate(("loss", *config["metrics"])):
-#     plt.subplot(1, 4, i + 1)
-#     plt.plot(trainer.log.history["epoch"], trainer.log.history[m], label=m)
-#     plt.plot(
-#         trainer.log.history["epoch"], trainer.log.history["val_" + m], label="val_" + m
-#     )
-#     plt.axvline(
-#        x=trainer.early_stopper.best_epoch, linestyle="--", color="k", linewidth=0.75
-#     )
-#     plt.title(m)
-#     plt.legend()
-# plt.tight_layout()
-# plt.show()
+plt.figure(figsize=(20, 4))
+for i, m in enumerate(("loss", *config["metrics"])):
+    plt.subplot(1, 4, i + 1)
+    plt.plot(trainer.log.history["epoch"], trainer.log.history[m], label=m)
+    plt.plot(
+        trainer.log.history["epoch"], trainer.log.history["val_" + m], label="val_" + m
+    )
+    plt.axvline(
+       x=trainer.early_stopper.best_epoch, linestyle="--", color="k", linewidth=0.75
+    )
+    plt.title(m)
+    plt.legend()
+plt.tight_layout()
+plt.show()
 
 # # ---------------- Model Evaluation ----------------------------------
 
-# with torch.inference_mode():
-#     print(device)
-#     output = model.predict(dataset=testset, batch_size=128, device=device) # The output is the batched SHASH distribution parameters
+with torch.inference_mode():
+    print(device)
+    output = model.predict(dataset=testset, batch_size=128, device=device) # The output is the batched SHASH distribution parameters
 
-# print(output[:20]) # look at a small sample of the output data
+print(output[:20]) # look at a small sample of the output data
 
 # # Save Model Outputs
-# model_output = str(config["output_dir"]) + 'exp007_output_testset.pkl'
-# analysis_metrics.save_pickle(output, model_output)
+model_output = str(config["output_dir"]) + 'exp007_output_testset.pkl'
+analysis_metrics.save_pickle(output, model_output)
 
 
 

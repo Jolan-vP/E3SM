@@ -62,13 +62,12 @@ class Trainer(BaseTrainer):
 
 
         for batch_idx, (data, target) in enumerate(self.data_loader):
+
             input, target = (
                 data[0].to(self.device),
                 target.to(self.device)
             )
 
-            # print(f"Inputs: {input}")
-            # print(f"Targets: {target}")
 
             # Zero your gradients for every batch!
             self.optimizer.zero_grad()

@@ -17,9 +17,9 @@ from base.base_model import BaseModel
 import torch.nn.functional as F
 
 
-def conv_couplet(in_channels, out_channels, act_fun, *args, **kwargs):
+def conv_couplet(in_channels, out_channels, act_fun, kernel_size, **kwargs):
     return torch.nn.Sequential(
-        torch.nn.Conv2d(in_channels=in_channels, out_channels=out_channels, *args, **kwargs),
+        torch.nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size = kernel_size, **kwargs),
         getattr(torch.nn, act_fun)(),
         torch.nn.MaxPool2d(kernel_size = (2, 2), ceil_mode = True),
     )
@@ -104,8 +104,8 @@ class TorchModel(BaseModel):
             self.target_std = torch.tensor(target_std)
 
         # Longitude padding
-        # self.pad_lons = torch.nn.CircularPad2d(config["circular_padding"])  # This is throwing an error for some reason :/ 
-        self.pad_lons = config["circular_padding"]
+        self.pad_lons = torch.nn.CircularPad2d(config["circular_padding"])  # This is throwing an error for some reason :/ 
+        # self.pad_lons = config["circular_padding"]
 
         # CNN Block
         self.conv_block = conv_block(
@@ -167,29 +167,31 @@ class TorchModel(BaseModel):
 
         # Output layers
         self.output_mu = torch.nn.Linear(
-            in_features=config["hiddens_final_out"], out_features=1, bias=True
+            in_features=config["hiddens_final_in"], out_features=1, bias=True
         )
         self.output_sigma = torch.nn.Linear(
-            in_features=config["hiddens_final_out"], out_features=1, bias=True
+            in_features=config["hiddens_final_in"], out_features=1, bias=True
         )
         self.output_gamma = torch.nn.Linear(
-            in_features=config["hiddens_final_out"], out_features=1, bias=True
+            in_features=config["hiddens_final_in"], out_features=1, bias=True
         )
         self.output_tau = torch.nn.Linear(
-            in_features=config["hiddens_final_out"], out_features=1, bias=True
+            in_features=config["hiddens_final_in"], out_features=1, bias=True
         )
 
     def forward(self, input):
+        
 
-        #x = F.normalize(input, p = 1, dim = 1)
-        x = F.pad(x, (self.pad_lons), mode = 'circular')
+        # x = F.pad(input, (self.pad_lons), mode = 'circular')
+        x = self.pad_lons(input)
+
         x = self.conv_block(x)
         x = self.flat(x)
 
         # mu layers:
         x_mu = self.denseblock_mu(x)
         mu_out = self.output_mu(x_mu)
-
+     
         # sigma layers:
         x_sigma = self.denseblock_sigma(x)
         sigma_out = self.output_sigma(x_sigma)
