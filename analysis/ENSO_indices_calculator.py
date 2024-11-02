@@ -7,7 +7,7 @@ iENSO(SST_fn)
 import matplotlib.pyplot as plt
 import numpy as np  
 
-def identify_nino_phases(nino34_index, threshold=0.4, window=6, front_cutoff=0, back_cutoff=0):
+def identify_nino_phases(nino34_index, threshold=0.4, window=6, lagtime = None, smoothing_length = None):
     """
     Function to identify El Niño, La Niña, and Neutral phases based on Nino 3.4 SST index.
     The Niño 3.4 index typically uses a 5-month running mean, and El Niño or La  Niña events are defined when the  
@@ -53,8 +53,9 @@ def identify_nino_phases(nino34_index, threshold=0.4, window=6, front_cutoff=0, 
                 index_array_daily[current_day : current_day + days_in_month_array[row], col] = month_chunk
             current_day += days_in_month_array[row]
 
-    # Chop front and back according to nerual network input size: 
-    index_array_daily = index_array_daily[front_cutoff : -back_cutoff, :]
+    # Chop front and back according to neural network input size: 
+    index_array_daily = index_array_daily[:-lagtime, :]
+    index_array_daily = index_array_daily[smoothing_length:]
 
     # Multiply the index_array_daily by the row number to recover the index of each day
     
@@ -72,6 +73,16 @@ def identify_nino_phases(nino34_index, threshold=0.4, window=6, front_cutoff=0, 
 
 def ENSO_CRPS(enso_indices_daily, crps_scores, config): 
     # Isolate non-zero indices for each ENSO phase
+    print(f"enso indices daily: {enso_indices_daily}")
+
+    # Calculate index of first non-zero value when counting from back to front
+    nino_indices = np.where(enso_indices_daily[:,0] != 0)[0]
+    nina_indices = np.where(enso_indices_daily[:,1] != 0)[0]
+
+    if nino_indices.size == 0:
+        raise ValueError("No non-zero elements found in enso_indices_daily[:,0].")
+    if nina_indices.size == 0:
+        raise ValueError("No non-zero elements found in enso_indices_daily[:,1].")
     
     # Calculate index of first non-zero value when counting from back to front
     maxnino = max(np.where(enso_indices_daily[:,0] != 0)[0])

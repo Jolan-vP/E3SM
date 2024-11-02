@@ -39,7 +39,12 @@ import scipy.integrate as integrate
 import warnings
 from shash.shash_torch import Shash
 from analysis.analysis_metrics import climatologyCDF
+import utils
 
+### SET PROPER CONFIG FILE ################################
+exp = "exp007"
+config = utils.get_config(exp)
+###########################################################
 
 # def crps_basic_numeric(pred, target_y, bins, single_cdf=False):
 #     # see alternative formulation in ``crps_sample_score``
@@ -89,7 +94,7 @@ def _discover_bounds(cdf_array, x_values, tolerance = 1e-7):
         ppf_value = custom_scipy_shash.ppf([tolerance, 1-tolerance])
         bounds[i, :] = ppf_value
     
-    print(f"The shape of the upper and lower distribution limits array is {bounds.shape}")
+    # print(f"The shape of the upper and lower distribution limits array is {bounds.shape}")
     return bounds
 
 
@@ -118,7 +123,7 @@ def _crps_single(target, cdf_func, cdf_array, x_values, xmin=None, xmax=None, to
         CRPS
     """
     # TODO: this function is pretty slow.  Look for clever ways to speed it up.
-
+    
     # allow for directly passing in scipy.stats distribution objects.
     # cdf = getattr(cdf_func, 'cdf', cdf_func)
     cdf = cdf_func
@@ -133,9 +138,9 @@ def _crps_single(target, cdf_func, cdf_array, x_values, xmin=None, xmax=None, to
         # it slows down the resulting quadrature significantly.
         xmin, xmax = _discover_bounds(cdf)
 
-    # print("Inside _crps_cdf_single:")
-    # print("Type of cdf:", type(cdf))
-    # print("Is cdf callable?:", callable(cdf))
+    # Ignore specific warnings
+    warnings.filterwarnings('ignore', message='Lower integral did not evaluate to within tolerance!')
+    warnings.filterwarnings('ignore', message='Upper integral did not evaluate to within tolerance!')
 
     # make sure the bounds haven't clipped the cdf.
     if (tol is not None) and (cdf(xmin, cdf_array, x_values) >= tol) or (cdf(xmax, cdf_array, x_values) <= (1. - tol)):
@@ -239,40 +244,56 @@ class CumulativeSum:
         Returns:
         A callable function that computes the CDF at given x values.
         """
+        # check if target contains nans:
+        if np.isnan(target).any():
+            raise ValueError("The target array contains NaNs.")
+
         # Ensure the input PDF array is normalized
         p_sum = np.sum(p, axis=0, keepdims=True)
         if not np.allclose(p_sum, 1):
-            print("Normalizing input PDF array")
             p = p / p_sum
 
         cdf_array = np.cumsum(p, axis=0)
-        cdf_array = cdf_array / cdf_array[-1, :]
+
+        if len(cdf_array.shape) == 1:
+            cdf_array = cdf_array / cdf_array[-1]
+            
+
+        else:
+            cdf_array = cdf_array / cdf_array[-1, :]
+            assert cdf_array[-1, :].all() == 1 #check normalization
+
         # plt.figure()
         # for i in range(cdf_array.shape[1]):
-        #     plt.plot(x_values, cdf_array[:, i], linewidth = 1)      
-        print(f"cdf_array shape within CumulativeSum: {cdf_array.shape}")
-        print(f"cdf_array last row: {cdf_array[-1,:]}")  # Debug print to check normalization
+        #     plt.plot(x_values, cdf_array[:, i], linewidth = 1)    
+        # plt.savefig(str(config["figure_dir"]) + str(exp) + "cdfs.png", format='png', bbox_inches ='tight', dpi = 300)
 
-        # Interpolate to compute the CDF at the target values for all samples (PRINTING CHECK PURPOSES ONLY)
-        calculated_cdf_values = np.zeros(len(target))
-        for i, truth in enumerate(target):
-            x1 = np.where(x_values <= truth)[0][-1]
-            x2 = np.where(x_values >= truth)[0][0]
-            cdf1 = cdf_array[x1, i]
-            cdf2 = cdf_array[x2, i]
-            cdfs = cdf1 + (cdf2 - cdf1) * (truth - x_values[x1]) / (x_values[x2] - x_values[x1])
-            calculated_cdf_values[i] = np.round(cdfs, 6)
-            #print(f"cdf for sample {i} (target = {np.round(truth, 3)}) : {calculated_cdf_values[i]}")
+        # Interpolate to compute the CDF at the target values for all samples (PRINTING FOR CHECK PURPOSES ONLY)
+        # calculated_cdf_values = np.zeros(len(target))
+        # for i, truth in enumerate(target.values):
+        #     x1 = np.where(x_values <= truth)[-1]
+        #     x2 = np.where(x_values >= truth)[0]
+
+        #     cdf1 = cdf_array[x1, i]
+        #     cdf2 = cdf_array[x2, i]
+        #     print(f"cdf1 shape: {cdf1.shape}")
+        #     print(f"cdf2 shape: {cdf2.shape}")
+
+        #     cdfs = cdf1 + (cdf2 - cdf1) * (truth - x_values[x1]) / (x_values[x2] - x_values[x1])
+        #     calculated_cdf_values[i] = np.round(cdfs, 6)
+        #     #print(f"cdf for sample {i} (target = {np.round(truth, 3)}) : {calculated_cdf_values[i]}")
         
         def cdf_function(target, cdf1D, x_values):
             # Interpolate for each row of the 1-dimensional CDF array (single sample at a time)
             x1 = np.where(x_values <= target)[0][-1]
-            x2 = np.where(x_values >= target)[0][0]
+            x2 = np.where(x_values >= target)[0][0] # TODO: capture edge cases
+
             cdf1 = cdf1D[x1]
             cdf2 = cdf1D[x2]
+
             cdf = cdf1 + (cdf2 - cdf1) * (target - x_values[x1]) / (x_values[x2] - x_values[x1])
             calculated_cdf_value = np.round(cdf, 6)
-            #print(f"cdf value at target ({target}) : {calculated_cdf_value}")
+         
             return calculated_cdf_value
 
         return cdf_function
@@ -304,9 +325,9 @@ def CRPScompare(crps_scores, crps_climatology_scores):
     ax.set_xlabel("Sample Index")
     ax.set_ylabel("CRPS Score")
     ax.legend(markerscale = 9)
-    plt.show()
+    plt.savefig(str(config["figure_dir"]) + "/" + str(exp) + "/climatology_figures_comparison.png", format='png', bbox_inches ='tight', dpi = 300)
 
-    return CRPS_forecast, CRPS_climatology
+    # return CRPS_forecast, CRPS_climatology
 
 
 def calculateCRPS(output, target, x, config, climatology = None):
@@ -316,15 +337,20 @@ def calculateCRPS(output, target, x, config, climatology = None):
     """
     if climatology is not None:
 
-        climatology_array = climatologyCDF(target, x, climatology)
+        climatology_array, climatology_pdf = climatologyCDF(target, x, climatology)
         tol = config["databuilder"]["CRPS_tolerance"]
+
+        cumulative_sum = CumulativeSum(axis=1)
+        cdf_clima = cumulative_sum(climatology_pdf, target, x)
 
         bounds = _discover_bounds(climatology_array, x[:len(climatology_array)], tolerance =tol)
 
         CRPS_clima = np.zeros(len(target))
-        for i, target in enumerate(target):
-            CRPS_clima[i] = _crps_single(target[i], cdf, climatology_array[:,i], x, xmin = bounds[i,0], xmax= bounds[i,1], tol=tol)
+        for i in range(len(target)):
+            CRPS_clima[i] = _crps_single(target[i], cdf_clima, climatology_array[:,i], x, xmin = bounds[i,0], xmax= bounds[i,1], tol=tol)
 
+        return CRPS_clima
+    
     elif climatology == None:
         dist = Shash(output)
         p = dist.prob(x).numpy()
@@ -339,18 +365,18 @@ def calculateCRPS(output, target, x, config, climatology = None):
 
         # Discover Bounds for CDF distributions: -------------------------
         tol = config["databuilder"]["CRPS_tolerance"]
-        print(f"tolerance: {tol}")
+        # print(f"tolerance: {tol}")
 
         bounds = _discover_bounds(cdf_array, x, tolerance =tol)
 
         # Calculate Prediction CRPS scores: ----------------------------------------
         CRPS = np.zeros(len(target))
-        for i, target in enumerate(target):
+        for i in range(len(target)):
             CRPS[i] = _crps_single(target[i], cdf, cdf_array[:,i], x, xmin = bounds[i,0], xmax= bounds[i,1], tol=tol)
 
-    plt.figure()
-    plt.plot(CRPS)
-    plt.xlabel('Time (Samples in Chronological Order)')
-    plt.ylabel('CRPS Score')
-
-    return CRPS
+        plt.figure()
+        plt.plot(CRPS)
+        plt.xlabel('Time (Samples in Chronological Order)')
+        plt.ylabel('CRPS Score')
+        plt.savefig('/Users/C830793391/Documents/Research/E3SM/saved/figures/' + str(config["expname"]) + '/CRPS_score_time_series_all_sampes.png', format = 'png', dpi = 300)   
+        return CRPS

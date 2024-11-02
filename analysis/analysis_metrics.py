@@ -38,7 +38,7 @@ import gzip
 from model.metric import iqr_basic
 from shash.shash_torch import Shash
 import torch
-
+import xarray as xr
 
 def save_pickle(variable, filename):
     with gzip.open(filename, "wb") as fp:
@@ -60,11 +60,12 @@ def climatologyCDF(target, x, preprocessed_data_file = None):
     if preprocessed_data_file is not None: 
         # Create pdf distribution of climatology, calculate CDF, and repeat same CDF across all samples
         data = preprocessed_data_file
-        with gzip.open(data, "rb") as obj1:
-            data = pickle.load(obj1)
-            climatology = data["y"] # pulling all target values from processed data
-            print(f"Climatological Mean = {np.mean(climatology)}")
-            print(f"Climatological Variance = {np.var(climatology)}")
+        data = xr.open_dataset(data)
+        # with gzip.open(data, "rb") as obj1:
+        #     data = pickle.load(obj1)
+        climatology = data["y"] # pulling all target values from processed data
+        print(f"Climatological Mean = {np.mean(climatology)}")
+        print(f"Climatological Variance = {np.var(climatology)}")
 
     else: 
         climatology = target
@@ -76,17 +77,18 @@ def climatologyCDF(target, x, preprocessed_data_file = None):
 
     # Echo cdf_base across the depth of all samples: 
     climatology_array = np.tile(cdf_base, (len(target), 1))
+    climatology_pdf = np.tile(pdf, (len(target)))
     # Flip climatology array to match the shape of the cdf_array
     climatology_array = np.transpose(climatology_array)
     print(climatology_array.shape)
 
-    return climatology_array
-
+    return climatology_array, climatology_pdf
 
 
 def discard_plot(networkoutput, target, crps_scores, crps_climatology_scores, config):
     # iqr capture relies on SHASH output parameters (mu, sigma, tau, gamma) and the SHASH class
     iqr = iqr_basic(networkoutput)
+
     percentiles = np.linspace(100, 0, 101)
 
     avg_crps = []
@@ -106,16 +108,18 @@ def discard_plot(networkoutput, target, crps_scores, crps_climatology_scores, co
     ax1.set_xlabel('IQR Percentile (% Data Remaining)', color=color)
     ax1.plot(percentiles, avg_crps, color=color)
     ax1.tick_params(axis='y', labelcolor=color)
-    ax1.axhline(y=crps_climatology_scores.mean(), color='grey', linestyle='--', label='Climatology Mean')
+    ax1.axhline(y=crps_climatology_scores.mean(), color='grey', linestyle='--', label='CRPS Mean Climatology')
     # ax1.set_ylim([1.05, 1.205])
     ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+    # legend
+    ax1.legend(loc = 'upper center')
 
     color = 'tab:olive'
     ax2.set_ylabel('Average Target Anomalies (mm/day)', color=color)
     ax2.plot(percentiles, avg_target, color=color)
     ax2.tick_params(axis='y', labelcolor=color)
 
-    plt.savefig('/Users/C830793391/Documents/Research/E3SM/visuals/' + str(config["expname"]) + 'CRPS_IQR_DiscardPlot.png', format='png', bbox_inches ='tight', dpi = 300)
+    plt.savefig('/Users/C830793391/Documents/Research/E3SM/saved/figures/' + str(config["expname"]) + '/CRPS_IQR_DiscardPlot.png', format='png', bbox_inches ='tight', dpi = 300)
     return sample_index
 
 def anomalies_by_ENSO_phase(elnino, lanina, neutral, target, target_raw, sample_index, config):
@@ -129,7 +133,7 @@ def anomalies_by_ENSO_phase(elnino, lanina, neutral, target, target_raw, sample_
     plt.legend(markerscale = 22, loc = 'upper right')
     plt.ylim(-7, 22)
 
-    plt.savefig('/Users/C830793391/Documents/Research/E3SM/visuals/' + str(config["expname"]) + 'scatter_ENSO_phases.png', format='png', bbox_inches ='tight', dpi = 300)
+    plt.savefig('/Users/C830793391/Documents/Research/E3SM/saved/figures/' + str(config["expname"]) + '/scatter_ENSO_phases.png', format='png', bbox_inches ='tight', dpi = 300)
 
     print(f"Mean Anomaly during El Nino: {np.round(target[elnino].mean(), 4)}")
     print(f"Mean Anomaly during La Nina: {np.round(target[lanina].mean(), 4)}")
@@ -212,4 +216,4 @@ def spread_skill(output, target, config):
     plt.legend()
     plt.show()
 
-    plt.savefig('/Users/C830793391/Documents/Research/E3SM/visuals/' + str(config["expname"]) + 'SpreadSkillRatio_network_vs_climatology.png', format='png', bbox_inches ='tight', dpi = 300)
+    plt.savefig('/Users/C830793391/Documents/Research/E3SM/saved/figures/' + str(config["expname"]) + '/SpreadSkillRatio_network_vs_climatology.png', format='png', bbox_inches ='tight', dpi = 300)

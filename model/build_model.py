@@ -104,7 +104,7 @@ class TorchModel(BaseModel):
             self.target_std = torch.tensor(target_std)
 
         # Longitude padding
-        self.pad_lons = torch.nn.CircularPad2d(config["circular_padding"])  # This is throwing an error for some reason :/ 
+        self.pad_lons = torch.nn.CircularPad2d(config["circular_padding"])  # This is throwing an error with torch info for some reason :/ 
         # self.pad_lons = config["circular_padding"]
 
         # CNN Block
@@ -116,15 +116,15 @@ class TorchModel(BaseModel):
         )
 
         # Simple Network Layers
-        self.layer1 = torch.nn.Linear(in_features=config["hiddens_block_in"][0], 
-                                  out_features=config["hiddens_block_out"],
-                                  bias=True)
-        self.layer2 = torch.nn.Linear(in_features=config["hiddens_block_out"], 
-                                   out_features=config["hiddens_block_out"],
-                                   bias=True)
-        self.final = torch.nn.Linear(in_features=config["hiddens_final_in"], 
-                                  out_features=config["hiddens_final_out"],
-                                  bias=True)
+        # self.layer1 = torch.nn.Linear(in_features=config["hiddens_block_in"][0], 
+        #                           out_features=config["hiddens_block_out"],
+        #                           bias=True)
+        # self.layer2 = torch.nn.Linear(in_features=config["hiddens_block_out"], 
+        #                            out_features=config["hiddens_block_out"],
+        #                            bias=True)
+        # self.final = torch.nn.Linear(in_features=config["hiddens_final_in"], 
+        #                           out_features=config["hiddens_final_out"],
+        #                           bias=True)
 
         # Flat layer
         self.flat = torch.nn.Flatten(start_dim=1)
@@ -180,11 +180,8 @@ class TorchModel(BaseModel):
         )
 
     def forward(self, input):
-        
-
-        # x = F.pad(input, (self.pad_lons), mode = 'circular')
+      
         x = self.pad_lons(input)
-
         x = self.conv_block(x)
         x = self.flat(x)
 

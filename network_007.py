@@ -174,7 +174,7 @@ trainer = Trainer(
     config=config,
 )
 
-# Visualize the model
+# # Visualize the model
 # torchinfo.summary(
 #     model,
 #     [   trainset.input[: config["data_loader"]["batch_size"]].shape ],
@@ -182,14 +182,14 @@ trainer = Trainer(
 #     col_names=("input_size", "output_size", "num_params"),
 # )
 
-# Train the Model
-print("training model")
-model.to(device)
-trainer.fit()
+# # Train the Model
+# print("training model")
+# model.to(device)
+# trainer.fit()
 
-# Save the Model
-path = '/Users/C830793391/Documents/Research/E3SM/saved/models/exp007_v0.pth'
-torch.save(model.state_dict(), path)
+# # Save the Model
+# path = '/Users/C830793391/Documents/Research/E3SM/saved/models/exp007_v0.pth'
+# torch.save(model.state_dict(), path)
 
 # Load the Model
 path = '/Users/C830793391/Documents/Research/E3SM/saved/models/exp007_v0.pth'
@@ -199,20 +199,20 @@ model.eval()
 
 print(trainer.log.history.keys())
 
-plt.figure(figsize=(20, 4))
-for i, m in enumerate(("loss", *config["metrics"])):
-    plt.subplot(1, 4, i + 1)
-    plt.plot(trainer.log.history["epoch"], trainer.log.history[m], label=m)
-    plt.plot(
-        trainer.log.history["epoch"], trainer.log.history["val_" + m], label="val_" + m
-    )
-    plt.axvline(
-       x=trainer.early_stopper.best_epoch, linestyle="--", color="k", linewidth=0.75
-    )
-    plt.title(m)
-    plt.legend()
-plt.tight_layout()
-plt.show()
+# plt.figure(figsize=(20, 4))
+# for i, m in enumerate(("loss", *config["metrics"])):
+#     plt.subplot(1, 4, i + 1)
+#     plt.plot(trainer.log.history["epoch"], trainer.log.history[m], label=m)
+#     plt.plot(
+#         trainer.log.history["epoch"], trainer.log.history["val_" + m], label="val_" + m
+#     )
+#     plt.axvline(
+#        x=trainer.early_stopper.best_epoch, linestyle="--", color="k", linewidth=0.75
+#     )
+#     plt.title(m)
+#     plt.legend()
+# plt.tight_layout()
+# plt.savefig('/Users/C830793391/Documents/Research/E3SM/visuals/' + str(config["expname"]) + '_training_metrics.png', format='png', bbox_inches ='tight', dpi = 300)
 
 # # ---------------- Model Evaluation ----------------------------------
 
@@ -225,9 +225,6 @@ print(output[:20]) # look at a small sample of the output data
 # # Save Model Outputs
 model_output = str(config["output_dir"]) + 'exp007_output_testset.pkl'
 analysis_metrics.save_pickle(output, model_output)
-
-
-
 
 
 

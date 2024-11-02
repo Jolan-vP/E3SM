@@ -1,5 +1,7 @@
 import sys
 import os
+
+import analysis.ENSO_indices_calculator
 os.environ['PROJ_DATA'] = "/pscratch/sd/p/plutzner/proj_data"
 import xarray as xr
 import torch
@@ -12,7 +14,6 @@ import matplotlib.pyplot as plt
 import pickle
 import cartopy.crs as ccrs
 import json
-import pickle
 import gzip
 import scipy
 from scipy import stats
@@ -22,6 +23,7 @@ import utils
 import utils.filemethods as filemethods
 from utils import utils
 from shash.shash_torch import Shash
+import analysis
 from analysis import analysis_metrics
 import analysis.climatology as climatology
 import analysis.CRPS as CRPS
@@ -37,39 +39,47 @@ np.random.seed(seed)
 random.seed(seed)
 torch.backends.cudnn.deterministic = True
 
-front_cutoff = config["databuilder"]["front_cutoff"] # remove front nans : 74 ENSO - two front nans before daily interpolation = 60 days, daily interpolation takes 1/2 the original time step = 15 days TOTAL = ~75
-back_cutoff = config["databuilder"]["back_cutoff"]  # remove back nans : 32 ~ 1 month of nans
+lagtime = config["databuilder"]["lagtime"] 
+smoothing_length = config["databuilder"]["averaging_length"]  
 
 # -------------------------------------------------------------------
 
 # Open Model Outputs
-model_output_pred = '/Users/C830793391/Documents/Research/E3SM/saved/output/exp007_FILENAME.pkl'
+model_output_pred = '/Users/C830793391/Documents/Research/E3SM/saved/outputexp007_output_testset.pkl'
 output = analysis_metrics.load_pickle(model_output_pred)
 
 # Open Target Data
-target = analysis_metrics.load_pickle('file')
+target = xr.open_dataset('/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/exp007_d_test_1850-1900.nc')
+target = target["y"][lagtime:]
+target = target[smoothing_length:]
 
+# Climatology Filename 
+climatology_filename = '/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/exp007_d_test_1850-1900.nc'
 
 # Compare SHASH predictions to climatology histogram
-x = np.arange(-7, 11, 0.01)
+x = np.arange(-15, 15, 0.01)
 
-p = climatology.deriveclimatology(output, target, x, number_of_samples=17, config=config, climate_data = False)
-print(p.shape)
+# p = climatology.deriveclimatology(output, target, x, number_of_samples=50, config=config, climate_data = False)
 
 # ----------------------------- CRPS ----------------------------------
 
+# # Comput CRPS for climatology
+# CRPS_climatology = CRPS.calculateCRPS(output, target, x, config, climatology_filename)
 
-# Compute CRPS for all predictions 
-CRPS_network = CRPS.calculateCRPS(output, target, x, config, climatology = None)
+# # Compute CRPS for all predictions 
+# CRPS_network = CRPS.calculateCRPS(output, target, x, config, climatology = None)
 
-# Comput CRPS for climatology
-CRPS_climatology = CRPS.calculateCRPS(output, target, x, config, climatology_filename)
+# analysis_metrics.save_pickle(CRPS_climatology, str(config["output_dir"]) + "/" + str(config["expname"]) + "/CRPS_climatology_values.pkl")
+# analysis_metrics.save_pickle(CRPS_network, str(config["output_dir"]) + "/" + str(config["expname"]) + "/CRPS_network_values.pkl")
+
+CRPS_climatology = analysis_metrics.load_pickle(str(config["output_dir"]) + "/" + str(config["expname"]) + "/CRPS_climatology_values.pkl")
+CRPS_network = analysis_metrics.load_pickle(str(config["output_dir"]) + "/" + str(config["expname"]) + "/CRPS_network_values.pkl")
 
 # Compare CRPS scores for climatology vs predictions (Is network better than climatology on average?)
-CRPS_forecast, CRPS_climatology = CRPS.CRPScompare(CRPS_network, CRPS_climatology)
+CRPS.CRPScompare(CRPS_network, CRPS_climatology)
 
 # Discard plot of CRPS vs IQR Percentile, CRPS vs Anomalies & true precip
-sample_index = analysis_metrics.discard_plot(output, target, CRPS_forecast, CRPS_climatology, config)
+sample_index = analysis_metrics.discard_plot(output, target, CRPS_network, CRPS_climatology, config)
 
 # ----------------------------- ENSO ----------------------------------
 
@@ -77,10 +87,10 @@ sample_index = analysis_metrics.discard_plot(output, target, CRPS_forecast, CRPS
 monthlyENSO = xr.open_dataset('/Users/C830793391/BIG_DATA/E3SM_Data/presaved/ENSO_ne30pg2_HighRes/nino.member0201.nc')
 Nino34 = monthlyENSO.nino34.values
 
-enso_indices_daily = analysis_metrics.identify_nino_phases(Nino34, threshold=0.4, window=6, front_cutoff=0, back_cutoff=0)
-
+enso_indices_daily = analysis.ENSO_indices_calculator.identify_nino_phases(Nino34, threshold=0.4, window=6, lagtime = lagtime, smoothing_length = smoothing_length)
+print(enso_indices_daily)
 # Separate CRPS scores by ENSO phases 
-elnino, lanina, neutral, CRPS_elnino, CRPS_lanina, CRPS_neutral = CRPS.ENSO_CRPS(enso_indices_daily, CRPS_forecast, config)
+elnino, lanina, neutral, CRPS_elnino, CRPS_lanina, CRPS_neutral = analysis.ENSO_indices_calculator.ENSO_CRPS(enso_indices_daily, CRPS_network, config)
 
 # Compare Distributions? 
 
@@ -99,8 +109,10 @@ if isinstance(prect_global, xr.DataArray):
     mask_lat = (prect_global.lat >= min_lat) & (prect_global.lat <= max_lat)
     prect_regional = prect_global.where(mask_lon & mask_lat, drop=True)
 
-prect_regional = prect_regional.mean(dim=['lat', 'lon']).values[front_cutoff + 7 : - (back_cutoff+8)]
-print(f"prect_regional shape: {prect_regional.shape}")
+prect_regional = prect_regional.mean(dim=['lat', 'lon']).values[lagtime:]
+prect_regional = prect_regional[smoothing_length:]
+
+print(f"raw target prect_regional shape: {prect_regional.shape}")
 
 target_raw = prect_regional * 86400 * 1000  # Convert to mm/day
 
