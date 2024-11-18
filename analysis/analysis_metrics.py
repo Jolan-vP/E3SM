@@ -52,18 +52,18 @@ def load_pickle(filename):
     return data
 
 
-def climatologyCDF(target, x, preprocessed_data_file = None):
+def climatologyCDF(target, x, climatology_var = None):
     """
     test_target: 2D array of target values
     x: 1D array of bin edges
     """
-    if preprocessed_data_file is not None: 
+    if climatology_var is not None: 
         # Create pdf distribution of climatology, calculate CDF, and repeat same CDF across all samples
-        data = preprocessed_data_file
-        data = xr.open_dataset(data)
-        # with gzip.open(data, "rb") as obj1:
-        #     data = pickle.load(obj1)
-        climatology = data["y"] # pulling all target values from processed data
+        climatology = climatology_var
+        # data = xr.open_dataset(data)
+        # # with gzip.open(data, "rb") as obj1:
+        # #     data = pickle.load(obj1)
+        # climatology = data["y"] # pulling all target values from processed data
         print(f"Climatological Mean = {np.mean(climatology)}")
         print(f"Climatological Variance = {np.var(climatology)}")
 
@@ -85,7 +85,7 @@ def climatologyCDF(target, x, preprocessed_data_file = None):
     return climatology_array, climatology_pdf
 
 
-def discard_plot(networkoutput, target, crps_scores, crps_climatology_scores, config):
+def discard_plot(networkoutput, target, crps_scores, crps_climatology_scores, config, target_type = 'anomalous'):
     # iqr capture relies on SHASH output parameters (mu, sigma, tau, gamma) and the SHASH class
     iqr = iqr_basic(networkoutput)
 
@@ -114,12 +114,21 @@ def discard_plot(networkoutput, target, crps_scores, crps_climatology_scores, co
     # legend
     ax1.legend(loc = 'upper center')
 
-    color = 'tab:olive'
-    ax2.set_ylabel('Average Target Anomalies (mm/day)', color=color)
-    ax2.plot(percentiles, avg_target, color=color)
-    ax2.tick_params(axis='y', labelcolor=color)
+    if target_type == 'anomalous':
+        color = 'tab:olive'
+        ax2.set_ylabel('Average Target Anomalies (mm/day)', color=color)
+        ax2.plot(percentiles, avg_target, color=color)
+        ax2.tick_params(axis='y', labelcolor=color)
 
-    plt.savefig('/Users/C830793391/Documents/Research/E3SM/saved/figures/' + str(config["expname"]) + '/CRPS_IQR_DiscardPlot.png', format='png', bbox_inches ='tight', dpi = 300)
+        plt.savefig('/Users/C830793391/Documents/Research/E3SM/saved/figures/' + str(config["expname"]) + '/CRPS_IQR_DiscardPlot_anomalies.png', format='png', bbox_inches ='tight', dpi = 300)
+
+    elif target_type == 'raw':
+        color = 'tab:olive'
+        ax2.set_ylabel('Raw Target Values (mm/day)', color=color)
+        ax2.plot(percentiles, avg_target, color=color)
+        ax2.tick_params(axis='y', labelcolor=color)
+        plt.savefig('/Users/C830793391/Documents/Research/E3SM/saved/figures/' + str(config["expname"]) + '/CRPS_IQR_DiscardPlot_true_precip.png', format='png', bbox_inches ='tight', dpi = 300)
+
     return sample_index
 
 def anomalies_by_ENSO_phase(elnino, lanina, neutral, target, target_raw, sample_index, config):
@@ -135,9 +144,9 @@ def anomalies_by_ENSO_phase(elnino, lanina, neutral, target, target_raw, sample_
 
     plt.savefig('/Users/C830793391/Documents/Research/E3SM/saved/figures/' + str(config["expname"]) + '/scatter_ENSO_phases.png', format='png', bbox_inches ='tight', dpi = 300)
 
-    print(f"Mean Anomaly during El Nino: {np.round(target[elnino].mean(), 4)}")
-    print(f"Mean Anomaly during La Nina: {np.round(target[lanina].mean(), 4)}")
-    print(f"Mean Anomaly during Neutral: {np.round(target[neutral].mean(), 4)}")
+    print(f"Mean Anomaly during El Nino: {np.round(target[elnino].values.mean(), 4)}")
+    print(f"Mean Anomaly during La Nina: {np.round(target[lanina].values.mean(), 4)}")
+    print(f"Mean Anomaly during Neutral: {np.round(target[neutral].values.mean(), 4)}")
 
     print(f"Mean True Amount during El Nino: {np.round(target_raw[elnino].mean(), 4)}")
     print(f"Mean True Amount during La Nina: {np.round(target_raw[lanina].mean(), 4)}")
@@ -174,13 +183,17 @@ def spread_skill(output, target, config):
 
     ## Climatology: 
     climatology_mean = target.mean()
-    climatology_std = np.std(target)
-    climatology_std = np.repeat(climatology_std, len(target))
+    climatology_std = np.std(target.values)
+    # print(f"climatology_std : {climatology_std}")
+
+    climatology_std = np.repeat(climatology_std, len(target), axis = 0)
     climatology_rmse = np.sqrt( ((target - climatology_mean) **2) / len(target) )
 
     num_bins = 12
     percentile_bins = np.percentile(network_std, np.linspace(0, 100, num_bins + 1))
+    # print(f"percentile_bins: {percentile_bins}")
     network_bin_indices = np.digitize(network_std, percentile_bins)
+    # print(f"network_bin_indices: {network_bin_indices}")
 
     # Calculate the mean values for each bin
     network_std_binned = []
@@ -188,6 +201,7 @@ def spread_skill(output, target, config):
 
     for i in range(1, num_bins + 1):
         bin_mask = network_bin_indices == i
+        # print(f"bin_mask: {bin_mask}")
         if np.any(bin_mask):
             network_std_binned.append(network_std[bin_mask].mean())
             network_rmse_binned.append(network_rmse[bin_mask].mean())

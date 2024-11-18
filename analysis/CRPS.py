@@ -42,7 +42,7 @@ from analysis.analysis_metrics import climatologyCDF
 import utils
 
 ### SET PROPER CONFIG FILE ################################
-exp = "exp007"
+exp = "exp008"
 config = utils.get_config(exp)
 ###########################################################
 
@@ -317,15 +317,23 @@ def CRPScompare(crps_scores, crps_climatology_scores):
     CRPS_forecast = np.round(np.mean(crps_scores), 4)
     CRPS_climatology = np.round(np.mean(crps_climatology_scores), 4)
 
-    # Plot CRPS comparison
+    # Calculate proportion of forecast CRPS scores that are better (lower) than climatology CRPS average
+    print(f"Length of CRPS scores: {len(crps_scores)}")
+    print(f"Length of CRPS climatology scores: {len(crps_climatology_scores)}")
+
+    better_than_climatology = 100 * np.sum(crps_scores < crps_climatology_scores) / len(crps_scores)
+    print(f"Proportion of forecast CRPS scores that are better than climatology: {round(better_than_climatology, 2)}%")
+
+    # Plot CRPS comparison Histogram:
+    num_bins = 50
     fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-    ax.scatter(np.arange(0, len(crps_scores)), crps_scores, alpha = 0.4, s=0.4, color ='#26828e', label = f'Forecast CRPS Average: {CRPS_forecast} ')
-    ax.scatter(np.arange(0, len(crps_climatology_scores)), crps_climatology_scores,  alpha = 0.4, s=0.4, color ='#f5a962', label = f'Climatology CRPS Average: {CRPS_climatology} ')
+    ax.hist(crps_scores, bins = num_bins, alpha = 0.4, color ='#26828e', label = f'Forecast CRPS Average: {CRPS_forecast} ')
+    ax.hist(crps_climatology_scores,bins = num_bins, alpha = 0.4, color ='#f5a962', label = f'Climatology CRPS Average: {CRPS_climatology} ')
     ax.set_title("CRPS Comparison")
-    ax.set_xlabel("Sample Index")
-    ax.set_ylabel("CRPS Score")
+    ax.set_xlabel("CRPS Score")
+    ax.set_ylabel("Frequency")
     ax.legend(markerscale = 9)
-    plt.savefig(str(config["figure_dir"]) + "/" + str(exp) + "/climatology_figures_comparison.png", format='png', bbox_inches ='tight', dpi = 300)
+    plt.savefig(str(config["figure_dir"]) + "/" + str(exp) + "/CRPS_comparative_histogram.png", format='png', bbox_inches ='tight', dpi = 300)
 
     # return CRPS_forecast, CRPS_climatology
 

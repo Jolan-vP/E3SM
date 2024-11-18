@@ -68,7 +68,7 @@ def deriveclimatology(output, target, x_values, number_of_samples, config, clima
     plt.title("Network Shash Prediction")
     # plt.axvline(valset[:len(output)], color='r', linestyle='dashed', linewidth=1)
     plt.legend()
-    plt.savefig('/Users/C830793391/Documents/Research/E3SM/visuals/ens3/exp007_predictions_w_climatology.png', format='png', bbox_inches ='tight', dpi = 300)
+    plt.savefig('/Users/C830793391/Documents/Research/E3SM/saved/figures/' + str(config["expname"]) + '/' + str(config["expname"]) + '_predictions_w_climatology.png', format='png', bbox_inches ='tight', dpi = 300)
     plt.xlim([-10, 10])
     # plt.show(block = False)
 

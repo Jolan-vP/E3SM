@@ -30,7 +30,7 @@ import analysis.CRPS as CRPS
 
 # ------------------------------------------------------------------
 
-config = utils.get_config("exp007")
+config = utils.get_config("exp009")
 seed = config["seed_list"][0]
 
 torch.manual_seed(seed)
@@ -62,11 +62,11 @@ climatology = climatology[smoothing_length:]
 # Compare SHASH predictions to climatology histogram
 x = np.arange(-15, 15, 0.01)
 
-# p = calc_climatology.deriveclimatology(output, climatology, x, number_of_samples=50, config=config, climate_data = False)
+p = calc_climatology.deriveclimatology(output, climatology, x, number_of_samples=50, config=config, climate_data = False)
 
 # ----------------------------- CRPS ----------------------------------
 
-# Comput CRPS for climatology
+# # Comput CRPS for climatology
 # CRPS_climatology = CRPS.calculateCRPS(output, target, x, config, climatology)
 
 # # Compute CRPS for all predictions 
@@ -93,10 +93,10 @@ Nino34 = Nino34.values
 enso_indices_daily = analysis.ENSO_indices_calculator.identify_nino_phases(Nino34, threshold=0.4, window=6, lagtime = lagtime, smoothing_length = smoothing_length)
 
 # Separate CRPS scores by ENSO phases 
-elnino, lanina, neutral, CRPS_elnino, CRPS_lanina, CRPS_neutral = analysis.ENSO_indices_calculator.ENSO_CRPS(enso_indices_daily, CRPS_network, config)
+elnino, lanina, neutral, CRPS_elnino, CRPS_lanina, CRPS_neutral = analysis.ENSO_indices_calculator.ENSO_CRPS(enso_indices_daily, CRPS_network, climatology, x, output, config)
 
 # Compare Distributions? 
-
+p = calc_climatology.deriveclimatology(output, climatology, x, number_of_samples=50, config=config, climate_data = False)
 
 # Calculate precipitation anomalies during each ENSO Phase + Plot
 

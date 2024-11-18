@@ -6,6 +6,7 @@ iENSO(SST_fn)
 
 import matplotlib.pyplot as plt
 import numpy as np  
+from shash.shash_torch import Shash
 
 def identify_nino_phases(nino34_index, threshold=0.4, window=6, lagtime = None, smoothing_length = None):
     """
@@ -71,10 +72,8 @@ def identify_nino_phases(nino34_index, threshold=0.4, window=6, lagtime = None, 
 
 
 
-def ENSO_CRPS(enso_indices_daily, crps_scores, config): 
+def ENSO_CRPS(enso_indices_daily, crps_scores, climatology, x_values, output, config): 
     # Isolate non-zero indices for each ENSO phase
-    print(f"enso indices daily: {enso_indices_daily}")
-
     # Calculate index of first non-zero value when counting from back to front
     nino_indices = np.where(enso_indices_daily[:,0] != 0)[0]
     nina_indices = np.where(enso_indices_daily[:,1] != 0)[0]
@@ -90,13 +89,18 @@ def ENSO_CRPS(enso_indices_daily, crps_scores, config):
 
     elnino = enso_indices_daily[:maxnino, 0]
     lanina = enso_indices_daily[:maxnina, 1]
+
+    # print(f"len of elnino: {len(elnino)}")
+    # print(f"len of lanina: {len(lanina)}")
+    # print(f"len of crps_scores: {len(crps_scores)}")
+
     non_neutral = np.concatenate((elnino, lanina))
     neutral_total = (len(crps_scores) - (len(elnino) + len(lanina)))
     neutral = np.setdiff1d(np.arange(0, 60225), non_neutral)[:neutral_total]
 
-    CRPS_elnino = np.round(crps_scores[elnino].mean(), 4)
-    CRPS_lanina = np.round(crps_scores[lanina].mean(), 4)
-    CRPS_neutral = np.round(crps_scores[neutral].mean(), 4)
+    CRPS_elnino = round(crps_scores[elnino].mean(), 5)
+    CRPS_lanina = round(crps_scores[lanina].mean(), 5)
+    CRPS_neutral = round(crps_scores[neutral].mean(), 5)
 
     # Plot CRPS by ENSO index
     # create a subplot with three columns and one row
@@ -116,10 +120,62 @@ def ENSO_CRPS(enso_indices_daily, crps_scores, config):
     ax[2].legend(loc = 'upper right')
     plt.subplots_adjust(hspace=0.3)
 
+    # Create plot with climatology histogram in the background and 100 random ENSO phase distributions on top
+    # select 100 random samples each from elnino, lanina, and neutral
+    np.random.seed(config["seed_list"][0])
+    num_samples = 300
+    rand_samps_elnino = np.random.choice(len(elnino), num_samples)
+    rand_samps_lanina = np.random.choice(len(lanina), num_samples)
+    rand_samps_neutral = np.random.choice(len(neutral), num_samples)
+
+    dist_elnino = Shash(output[rand_samps_elnino])
+    dist_lanina = Shash(output[rand_samps_lanina])
+    dist_neutral = Shash(output[rand_samps_neutral])
+
+    p_elnino = dist_elnino.prob(x_values).numpy()
+    p_lanina = dist_lanina.prob(x_values).numpy()
+    p_neutral = dist_neutral.prob(x_values).numpy()
+
+    print(f"shape of p_elnino: {p_elnino.shape}")
+    print(f"x_values shape: {x_values.shape}")  
+
+    plt.figure(figsize=(12, 7), dpi=200)
+    plt.hist(
+        climatology, x_values, density=True, color="silver", alpha=0.75, label="climatology"
+    )
+     # Plot the first curve with a label
+    plt.plot(x_values, p_elnino[:,0], alpha=0.1, color='#648FFF', linewidth=0.9, label=f'{num_samples} Random Predictions (El Nino)')
+    plt.plot(x_values, p_elnino, alpha=0.1, color='#648FFF', linewidth=0.9, label=None)
+
+    # Plot the first curve with a label
+    plt.plot(x_values, p_lanina[:,0], alpha=0.1, color='#FE6100', linewidth=0.9, label=f'{num_samples} Random Predictions (La Nina)')
+    plt.plot(x_values, p_lanina, alpha=0.1, color='#FE6100', linewidth=0.9, label=None)
+
+    # # Plot the first curve with a label
+    # plt.plot(x_values, p_neutral[:,0], alpha=0.2, color='#646363', linewidth=0.7, label=f'{num_samples} Random Predictions (Neutral ENSO)')
+    # plt.plot(x_values, p_neutral, alpha=0.2, color='#646363', linewidth=0.7, label=None)
+
+    # plt.plot(x_values, p_elnino, alpha = 0.2, color = '#648FFF', linewidth = 0.5 , label = f'{num_samples} Random Predictions during El Nino') 
+    # plt.plot(x_values, p_lanina, alpha = 0.2, color = '#FFB000' , linewidth = 0.5, label = f'{num_samples} Random Predictions during La Nina') 
+    # plt.plot(x_values, p_neutral, alpha = 0.2, color = '#b0b0b0', linewidth = 0.5, label = f'{num_samples} Random Predictions during Neutral ENSO') 
+    plt.xlabel("Precipitation Anomalies (mm/day)")
+    plt.ylabel("Probability Density")
+    plt.title("Network Shash Prediction")
+    plt.xlim([-10, 12])
+    plt.ylim([0, 0.75])
+    # plt.axvline(valset[:len(output)], color='r', linestyle='dashed', linewidth=1)
+    lege = plt.legend(loc = 'upper left', )
+    for lh in lege.legendHandles: 
+        lh.set_alpha(1)
+    plt.savefig('/Users/C830793391/Documents/Research/E3SM/saved/figures/' + str(config["expname"]) + '/' + str(config["expname"]) + '_ENSO_phase_predictions_w_climatology.png', format='png', bbox_inches ='tight', dpi = 300)
+   
+
+
+
     print(f"El Nino average CRPS across all samples: {np.round(crps_scores[elnino].mean(), 4)}")
     print(f"La Nina average CRPS across all samples: {np.round(crps_scores[lanina].mean(), 4)}")
     print(f"Neutral average CRPS across all samples: {np.round(crps_scores[neutral].mean(), 4)}")
 
-    plt.savefig('/Users/C830793391/Documents/Research/E3SM/visuals/' + str(config["expname"]) + '/CRPS_vs_ENSO_Phases_' + str(config["expname"]) + '_allsamples.png', format='png', bbox_inches ='tight', dpi = 300)
+    plt.savefig('/Users/C830793391/Documents/Research/E3SM/saved/figures/' + str(config["expname"]) + '/CRPS_vs_ENSO_Phases_' + str(config["expname"]) + '.png', format='png', bbox_inches ='tight', dpi = 300)
 
     return elnino, lanina, neutral, CRPS_elnino, CRPS_lanina, CRPS_neutral
