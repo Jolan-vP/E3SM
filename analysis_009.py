@@ -45,17 +45,17 @@ smoothing_length = config["databuilder"]["averaging_length"]
 # -------------------------------------------------------------------
 
 # Open Model Outputs
-model_output_pred = '/Users/C830793391/Documents/Research/E3SM/saved/outputexp007_output_testset.pkl'
+model_output_pred = '/Users/C830793391/Documents/Research/E3SM/saved/output' + str(config["expname"]) + '_output_testset.pkl'
 output = analysis_metrics.load_pickle(model_output_pred)
 
 # Open Target Data
-target = xr.open_dataset('/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/exp007_d_test_1850-1900.nc')
+target = xr.open_dataset('/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/' + str(config["expname"]) + '_d_test_1850-1900.nc')
 target = target["y"][lagtime:]
 target = target[smoothing_length:]
 
 # Open Climatology Data: TRAINING DATA
-climatology_filename = '/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/exp007_d_train_1850-1900.nc'
-climatology_da = xr.open_dataset('/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/exp007_d_test_1850-1900.nc')
+climatology_filename = '/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/' + str(config["expname"]) + '_d_train_1850-1900.nc'
+climatology_da = xr.open_dataset(climatology_filename)
 climatology = climatology_da["y"][lagtime:]
 climatology = climatology[smoothing_length:]
 
@@ -66,14 +66,14 @@ p = calc_climatology.deriveclimatology(output, climatology, x, number_of_samples
 
 # ----------------------------- CRPS ----------------------------------
 
-# # Comput CRPS for climatology
-# CRPS_climatology = CRPS.calculateCRPS(output, target, x, config, climatology)
+# Comput CRPS for climatology
+CRPS_climatology = CRPS.calculateCRPS(output, target, x, config, climatology)
 
-# # Compute CRPS for all predictions 
-# CRPS_network = CRPS.calculateCRPS(output, target, x, config, climatology = None)
+# Compute CRPS for all predictions 
+CRPS_network = CRPS.calculateCRPS(output, target, x, config, climatology = None)
 
-# analysis_metrics.save_pickle(CRPS_climatology, str(config["output_dir"]) + "/" + str(config["expname"]) + "/CRPS_climatology_values.pkl")
-# analysis_metrics.save_pickle(CRPS_network, str(config["output_dir"]) + "/" + str(config["expname"]) + "/CRPS_network_values.pkl")
+analysis_metrics.save_pickle(CRPS_climatology, str(config["output_dir"]) + "/" + str(config["expname"]) + "/CRPS_climatology_values.pkl")
+analysis_metrics.save_pickle(CRPS_network, str(config["output_dir"]) + "/" + str(config["expname"]) + "/CRPS_network_values.pkl")
 
 CRPS_climatology = analysis_metrics.load_pickle(str(config["output_dir"]) + "/" + str(config["expname"]) + "/CRPS_climatology_values.pkl")
 CRPS_network = analysis_metrics.load_pickle(str(config["output_dir"]) + "/" + str(config["expname"]) + "/CRPS_network_values.pkl")
