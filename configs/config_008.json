@@ -1,13 +1,14 @@
-{"expname": "exp006",
+{"expname": "exp008",
     "device": "mps",
     "seed_list": [7],
-    "CRPS_tolerance": 0.000001,
 
-    "data_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/",
-    "figure_dir": "/Users/C830793391/Documents/Research/E3SM/visuals/",
+    "data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata",
+    "perlmutter_inputs_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",
+    "local_inputs_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/",
+    "figure_dir": "/Users/C830793391/Documents/Research/E3SM/saved/figures",
     "model_dir": "/Users/C830793391/Documents/Research/E3SM/saved/models",
     "output_dir": "/Users/C830793391/Documents/Research/E3SM/saved/output",
-    "fig_dpi": 200,
+    "fig_dpi": 300,
 
     "metrics": [
         "custom_mae", "iqr_capture", "sign_test"
@@ -17,11 +18,11 @@
 
     "databuilder": {
         
-        "input_vars": "None",
-        "network_inputs": ["RMM1", "RMM2", "Nino34"],
+        "input_vars": ["PRECT", "TS"],
+        "network_inputs": ["PRECT", "TS"],
+        "input_years": [1850, 1900],
         "input_region": "None",
         "input_mask": ["None"],
-        "input_years": [1850, 2014],
         "ensembles": ["ens1", "ens2", "ens3"],
         "ensemble_codes": ["0101", "0151", "0201"],
         "target_var": "PRECT",
@@ -29,8 +30,8 @@
         "target_months": [4, 5, 6, 7, 8, 9],
         "averaging_length": 7,
         "lagtime": 14, 
-        "front_cutoff": 121, 
-        "back_cutoff": 32, 
+        "front_cutoff": 14, 
+        "back_cutoff": 14, 
         "CRPS_tolerance": 1e-7
         
     }, 
@@ -38,20 +39,25 @@
     "data_loader": {
 
         "data_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/", 
-        "batch_size": 64
+        "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",
+        "batch_size": 32
     }, 
 
     "arch": {
-        "type": "basicnn",
-        "n_inputchannel": 1,
+        "type": "cnn",
+        "n_inputchannel": 2,
+        "freeze_id" : ["None"],
+        "circular_padding": [15, 15, 0, 0],
+        "filters" : [32, 32], 
+        "kernel_size": [3, 3],
+        "cnn_act": ["ReLU", "ReLU"],
 
-        "basic_act": ["ReLU", "ReLU"],
+        "hiddens_block": [10, 10],
+        "hiddens_block_in": [141120],
+        "hiddens_block_act": ["ReLU"],
+        "hiddens_block_out": 10,
 
-        "hiddens_block_in": [3, 3],
-        "hiddens_block_out": 6,
-        "hiddens_block_act": ["ReLU", "ReLU"],
-
-        "hiddens_final_in": 6,
+        "hiddens_final_in": 10,
         "hiddens_final_out": 4,
         "hiddens_final_act": "ReLU"
     }, 
@@ -65,11 +71,12 @@
     },
 
     "trainer": {
-        "max_epochs": 4000,
+        "max_epochs": 1000,
         "save_dir": "/Users/C830793391/Documents/Research/E3SM/saved/",
+        "perlmutter_save_dir": "/pscratch/sd/p/plutzner/E3SM/saved/models",
         "early_stopping":{
             "args":{
-                "patience": 5,
+                "patience": 80,
                 "min_delta": 0.0
             }
         }

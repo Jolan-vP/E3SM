@@ -119,13 +119,10 @@ data = ClimateData(
 # latitude = np.arange(-89.5, 90.5, 1)  
 # longitude = np.arange(0.5, 360.5, 1)  
 
-# # Generate random precipitation values
-# precipitation = np.random.random((len(time), len(latitude), len(longitude)))
-# temperature_2m = np.random.random((len(time), len(latitude), len(longitude)))
-
 # channels = ["PRECT", "TS"]
 
-# data = np.random.random((len(time), len(latitude), len(longitude), len(channels)))
+# print("Creating randomized data")
+# data = np.random.randint(0, 10, (len(time), len(latitude), len(longitude), len(channels))).astype("float32")
 
 # # Create the DataArray
 # print("Creating DataArray")
@@ -182,9 +179,9 @@ test_dat = xr.open_dataset(s_dict_savename3)
 
 # Setup the Data - EXPERIMENT 008 INPUT DATA IS SAME AS EXPERIMENT 007
 print("Setting up the data with CustomData dataloader")
-trainset = data_loader.CustomData(config["data_loader"]["data_dir"] + "/Network Inputs/" + str(config["expname"]) + "_d_train_1850-1900.nc", config["databuilder"]["lagtime"], config["databuilder"]["averaging_length"])
-valset = data_loader.CustomData(config["data_loader"]["data_dir"] + "/Network Inputs/" + str(config["expname"]) + "_d_val_1850-1900.nc", config["databuilder"]["lagtime"], config["databuilder"]["averaging_length"])
-testset = data_loader.CustomData(config["data_loader"]["data_dir"] + "/Network Inputs/" + str(config["expname"]) + "_d_test_1850-1900.nc", config["databuilder"]["lagtime"], config["databuilder"]["averaging_length"])
+trainset = data_loader.CustomData(s_dict_savename1, config["databuilder"]["lagtime"], config["databuilder"]["averaging_length"])
+valset = data_loader.CustomData(s_dict_savename2, config["databuilder"]["lagtime"], config["databuilder"]["averaging_length"])
+testset = data_loader.CustomData(s_dict_savename3, config["databuilder"]["lagtime"], config["databuilder"]["averaging_length"])
 
 # trainset = data_loader.CustomData(config["perlmutter_inputs_dir"] + str(config["expname"]) + "_d_train_1850-1900.nc", front_cutoff, back_cutoff)
 # valset = data_loader.CustomData(config["perlmutter_inputs_dir"] + str(config["expname"]) + "_d_val_1850-1900.nc", front_cutoff, back_cutoff)

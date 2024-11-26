@@ -5,9 +5,11 @@
     "data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata",
     "perlmutter_inputs_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",
     "local_inputs_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/",
-    "figure_dir": "/Users/C830793391/Documents/Research/E3SM/saved/figures",
+    "figure_dir": "/Users/C830793391/Documents/Research/E3SM/saved/figures/",
+    "perlmutter_figure_dir": "/pscratch/sd/p/plutzner/E3SM/saved/figures/",
     "model_dir": "/Users/C830793391/Documents/Research/E3SM/saved/models",
     "output_dir": "/Users/C830793391/Documents/Research/E3SM/saved/output",
+    "perlmutter_output_dir": "/pscratch/sd/p/plutzner/E3SM/", 
     "fig_dpi": 300,
 
     "metrics": [
@@ -76,7 +78,7 @@
         "perlmutter_save_dir": "/pscratch/sd/p/plutzner/E3SM/saved/models",
         "early_stopping":{
             "args":{
-                "patience": 80,
+                "patience": 30,
                 "min_delta": 0.0
             }
         }

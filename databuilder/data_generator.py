@@ -72,16 +72,16 @@ class ClimateData:
             if self.verbose:
                 print(ens)
             if ens == "ens1":   
-                # train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-                train_ds = filemethods.get_netcdf_da(self.data_dir +  "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+                train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+                # train_ds = filemethods.get_netcdf_da(self.data_dir +  "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
 
             if ens == "ens2":
-                # validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
-                validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
+                validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
+                # validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
 
             elif ens == "ens3":
-                # test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
-                test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
+                test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
+                # test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
         
         train_ds = train_ds.sel(time = slice(str(self.config["input_years"][0]), str(self.config["input_years"][1])))
         validate_ds = validate_ds.sel(time = slice(str(self.config["input_years"][0]), str(self.config["input_years"][1])))
@@ -166,19 +166,19 @@ class ClimateData:
                 
                 print(f"magnitude of target pre-unit conversion: {f_dict[key][500:510]}")
                 
-                # if self.config["target_var"] == "PRECT": # CONVERTING PRECIP TO MM/DAY! Must do this twice, one for input PRECT, one for Target PRECT
-                #     da_copy = f_dict[key].copy()
+                if self.config["target_var"] == "PRECT": # CONVERTING PRECIP TO MM/DAY! Must do this twice, one for input PRECT, one for Target PRECT
+                    da_copy = f_dict[key].copy()
                     
-                #     inc = 45 # 45 degree partitions in longitude to split up the data
+                    inc = 45 # 45 degree partitions in longitude to split up the data
                 
-                #     for iloop in np.arange(0, da_copy.shape[2] // inc + 1):
-                #         start = inc * iloop
-                #         end = np.min([inc * (iloop + 1), da_copy.shape[2]])
-                #         if start == end:
-                #             break
+                    for iloop in np.arange(0, da_copy.shape[2] // inc + 1):
+                        start = inc * iloop
+                        end = np.min([inc * (iloop + 1), da_copy.shape[2]])
+                        if start == end:
+                            break
                         
-                #         mm_day = da_copy[:,:,start:end] * 10**3 * 86400
-                #         f_dict[key][:, :, start:end] = mm_day
+                        mm_day = da_copy[:,:,start:end] * 10**3 * 86400
+                        f_dict[key][:, :, start:end] = mm_day
 
                 print(f"magnitude of target post unit-conversion: {f_dict[key][500:510]}") 
                 
@@ -214,14 +214,7 @@ class ClimateData:
 
                 # ROLLING AVERAGE
                 print("rolling average")
-                f_dict[key] = self.rolling_ave(f_dict[key]) # first six values are now nans due to 7-day rolling mean
-
-                # LAG ADJUSTMENT OF TARGET DATASET : Lagging by self.config["lagtime"] number of days allows the input and target samples to align
-                #  such that each input is paired with a target that is X days in the future
-                print("lag")
-                if self.config["lagtime"] != 0: 
-                    f_dict[key] = f_dict[key][ self.config["lagtime"]: ]
-                
+                f_dict[key] = self.rolling_ave(f_dict[key]) # first six values are now nans due to 7-day rolling mean    
                 
                 print("completed processing target")
             else: 
@@ -420,9 +413,13 @@ def multi_input_data_organizer(config, MJO=False, ENSO = False, other = False):
         ninox_array = np.zeros([60225, 3])
         for iens, ens in enumerate(config["databuilder"]["ensemble_codes"]):
             fpath = config["data_dir"] + "presaved/ENSO_ne30pg2_HighRes/nino.member" + str(ens) + ".daily.nc"
-            print(fpath)
             ninox = filemethods.get_netcdf_da(fpath)
-            ninox_array[30:,iens] = ninox.nino34
+            # add 30 new days of nans to the beginning of the array such that the total array length is now 30 values longer:
+            nan_array = np.zeros([30, 1])
+            ninox_array = np.concatenate((nan_array, ninox_array), axis = 0)
+            print(f"ninox array: {ninox_array[:40]}")
+            print(f"ninox shape: {ninox_array.shape}")
+
             # 104 front nans, 30 values missing (first month) from 60225 total samples due to backward rolling average and monthly time step configuration
             # By starting at index 31, the ninox array should begin on 0 days since 1850-01-01 rather than 31 days since 1850-01-01
     else:
@@ -510,18 +507,17 @@ def multi_input_data_organizer(config, MJO=False, ENSO = False, other = False):
     print("Combining Input and target data")
 
     # if MJO == True and ENSO == True: 
-    inputda = np.zeros([60225 - config["databuilder"]["lagtime"], 3, 3])
-    print(inputda.shape)
+    inputda = np.zeros([60225, 3, 3])
 
-    target = np.zeros([60225 - config["databuilder"]["lagtime"], 3], dtype=float) 
+    target = np.zeros([60225, 3], dtype=float) 
     
-    target_dict = {0: exp006_d_train_target, 1: exp006_d_val_target, 2:exp006_d_test_target}
+    target_dict = {0: exp006_d_train_target, 1: exp006_d_val_target, 2: exp006_d_test_target}
 
     for key, value in target_dict.items():
-        inputda[:,0,key] = ninox_array[ :-config["databuilder"]["lagtime"], key] #ENSO
-        inputda[:30,0,key] = np.nan # Fill beginning 30 zeros with Nans
-        inputda[:,1,key] = MJOarray[ :-config["databuilder"]["lagtime"], 2,key]  #RMM1
-        inputda[:,2,key] = MJOarray[ :-config["databuilder"]["lagtime"], 3,key]  #RMM2
+        inputda[:,  0, key] = ninox_array[ :-config["databuilder"]["lagtime"], key] #ENSO
+        inputda[:30,0, key] = np.nan # Fill beginning 30 zeros with Nans
+        inputda[: , 1, key] = MJOarray[ :-config["databuilder"]["lagtime"], 2,key]  #RMM1
+        inputda[: , 2, key] = MJOarray[ :-config["databuilder"]["lagtime"], 3,key]  #RMM2
     
         target[:,key] = value["y"] # Target - REGIONAL TEMP : SEATTLE METRO AREA: TARGET HAS ALREADY BEEN LAGGED IN PRE-PROCESSING (CLIMATE DATA CLASS - config_001/analysis_001)
 

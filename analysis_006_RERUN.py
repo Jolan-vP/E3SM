@@ -30,7 +30,7 @@ import analysis.CRPS as CRPS
 
 # ------------------------------------------------------------------
 
-config = utils.get_config("exp009")
+config = utils.get_config("exp006")
 seed = config["seed_list"][0]
 
 torch.manual_seed(seed)
@@ -45,16 +45,16 @@ smoothing_length = config["databuilder"]["averaging_length"]
 # -------------------------------------------------------------------
 
 # Open Model Outputs
-model_output_pred = '/Users/C830793391/Documents/Research/E3SM/saved/output' + str(config["expname"]) + '_output_pred_testset_RERUN.pkl'
+model_output_pred = '/Users/C830793391/Documents/Research/E3SM/saved/output' + str(config["expname"]) + '_output_testset.pkl'
 output = analysis_metrics.load_pickle(model_output_pred)
 
 # Open Target Data
-target = xr.open_dataset('/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/' + str(config["expname"]) + '_d_test_1850-2014.nc')
+target = xr.open_dataset('/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/' + str(config["expname"]) + '_d_test_1850-1900.nc')
 target = target["y"][lagtime:]
 target = target[smoothing_length:]
 
 # Open Climatology Data: TRAINING DATA
-climatology_filename = '/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/' + str(config["expname"]) + '_d_train_1850-2014.nc'
+climatology_filename = '/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/' + str(config["expname"]) + '_d_train_1850-1900.nc'
 climatology_da = xr.open_dataset(climatology_filename)
 climatology = climatology_da["y"][lagtime:]
 climatology = climatology[smoothing_length:]
@@ -129,4 +129,4 @@ sample_index = analysis_metrics.discard_plot(output, target_raw, CRPS_network, C
 anomalies_by_ENSO_phase = analysis_metrics.anomalies_by_ENSO_phase(elnino, lanina, neutral, target, target_raw, sample_index, config)
 
 # Spread-Skill Ratio
-# spread_skill_plot = analysis_metrics.spread_skill(output, target, config)
+spread_skill_plot = analysis_metrics.spread_skill(output, target, config)
