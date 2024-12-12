@@ -86,12 +86,46 @@ class TorchModel(BaseModel):
         assert len(self.config["hiddens_block_in"]) == len(
             self.config["hiddens_block_act"]
         )
+        
+        if self.config["type"] == "cnn":  
+            # Longitude padding
+            self.pad_lons = torch.nn.CircularPad2d(config["circular_padding"])  # This is throwing an error with torch info for some reason :/ 
+            # self.pad_lons = config["circular_padding"]
 
-        assert (
-            len(self.config["cnn_act"])
-            == len(self.config["kernel_size"])
-            == len(self.config["filters"])
-        )
+            assert (
+                len(self.config["cnn_act"])
+                == len(self.config["kernel_size"])
+                == len(self.config["filters"])
+            )
+            
+            # CNN Block
+            self.conv_block = conv_block(
+            [config["n_inputchannel"], *config["filters"][:-1]],
+            [*config["filters"]],
+            [*config["cnn_act"]],
+            [*config["kernel_size"]], )
+
+            # Dense blocks
+            self.denseblock_mu = dense_block(
+            config["hiddens_block"],
+            config["hiddens_block_act"],
+            in_features=config["hiddens_block_in"], )
+
+            self.denseblock_sigma = dense_block(
+            config["hiddens_block"],
+            config["hiddens_block_act"],
+            in_features=config["hiddens_block_in"], )
+
+            self.denseblock_gamma = dense_block(
+            config["hiddens_block"],
+            config["hiddens_block_act"],
+            in_features=config["hiddens_block_in"], )
+
+            self.denseblock_tau = dense_block(
+            config["hiddens_block"],
+            config["hiddens_block_act"],
+            in_features=config["hiddens_block_in"], )
+
 
         if target_mean is None:
             self.target_mean = torch.tensor(0.0)
@@ -103,53 +137,20 @@ class TorchModel(BaseModel):
         else:
             self.target_std = torch.tensor(target_std)
 
-        # Longitude padding
-        self.pad_lons = torch.nn.CircularPad2d(config["circular_padding"])  # This is throwing an error with torch info for some reason :/ 
-        # self.pad_lons = config["circular_padding"]
-
-        # CNN Block
-        self.conv_block = conv_block(
-            [config["n_inputchannel"], *config["filters"][:-1]],
-            [*config["filters"]],
-            [*config["cnn_act"]],
-            [*config["kernel_size"]],
-        )
 
         # Simple Network Layers
-        # self.layer1 = torch.nn.Linear(in_features=config["hiddens_block_in"][0], 
-        #                           out_features=config["hiddens_block_out"],
-        #                           bias=True)
-        # self.layer2 = torch.nn.Linear(in_features=config["hiddens_block_out"], 
-        #                            out_features=config["hiddens_block_out"],
-        #                            bias=True)
-        # self.final = torch.nn.Linear(in_features=config["hiddens_final_in"], 
-        #                           out_features=config["hiddens_final_out"],
-        #                           bias=True)
+        self.layer1 = torch.nn.Linear(in_features=config["hiddens_block_in"][0], 
+                                  out_features=config["hiddens_block_out"],
+                                  bias=True)
+        self.layer2 = torch.nn.Linear(in_features=config["hiddens_block_out"], 
+                                   out_features=config["hiddens_block_out"],
+                                   bias=True)
+        self.final = torch.nn.Linear(in_features=config["hiddens_final_in"], 
+                                  out_features=config["hiddens_final_out"],
+                                  bias=True)
 
         # Flat layer
         self.flat = torch.nn.Flatten(start_dim=1)
-
-        # Dense blocks
-        self.denseblock_mu = dense_block(
-            config["hiddens_block"],
-            config["hiddens_block_act"],
-            in_features=config["hiddens_block_in"],
-        )
-        self.denseblock_sigma = dense_block(
-            config["hiddens_block"],
-            config["hiddens_block_act"],
-            in_features=config["hiddens_block_in"],
-        )
-        self.denseblock_gamma = dense_block(
-            config["hiddens_block"],
-            config["hiddens_block_act"],
-            in_features=config["hiddens_block_in"],
-        )
-        self.denseblock_tau = dense_block(
-            config["hiddens_block"],
-            config["hiddens_block_act"],
-            in_features=config["hiddens_block_in"],
-        )
 
         # Rescaling layers
         self.rescale_mu = RescaleLayer(self.target_std, self.target_mean)
@@ -180,40 +181,66 @@ class TorchModel(BaseModel):
         )
 
     def forward(self, input):
-      
-        x = self.pad_lons(input)
-        x = self.conv_block(x)
-        x = self.flat(x)
+            
+        if self.config["type"] == "basicnn":
+            x = self.layer1(input)
+            x = F.relu(x)
+            x = self.final(x)
 
-        # mu layers:
-        x_mu = self.denseblock_mu(x)
-        mu_out = self.output_mu(x_mu)
-     
-        # sigma layers:
-        x_sigma = self.denseblock_sigma(x)
-        sigma_out = self.output_sigma(x_sigma)
+             # Ensure x has at least 4 columns
+            if x.shape[1] < 4:
+                raise ValueError("Input tensor does not have enough dimensions for indexing.")
+            
+            # rescaling layers
+            mu_out = self.rescale_mu(x[:,0])
+            sigma_out = self.rescale_sigma(x[:,1])
+            sigma_out = torch.exp(sigma_out)
+            tau_out = self.rescale_tau(x[:,3])
+            
+            # gamma_out
+            gamma_out = x[:,2]
 
-        # gamma layers:
-        x_gamma = self.denseblock_gamma(x)
-        gamma_out = self.output_gamma(x_gamma)
+            # final output, concatenate parameters together
+            x = torch.stack((mu_out, sigma_out, gamma_out, tau_out), dim=-1)
 
-        # tau layers:
-        x_tau = self.denseblock_tau(x)
-        tau_out = self.output_tau(x_tau)
+        elif self.config["type"] == "cnn":
+            
+            # Configure Channel Dimension to be in position 1
+            input = torch.permute(input, [2, 0, 1])
+            
+            x = self.pad_lons(input)
+            x = self.conv_block(x)
+            x = self.flat(x)
+
+            # mu layers:
+            x_mu = self.denseblock_mu(x)
+            mu_out = self.output_mu(x_mu)
         
-        # rescaling layers
-        mu_out = self.rescale_mu(mu_out)
+            # sigma layers:
+            x_sigma = self.denseblock_sigma(x)
+            sigma_out = self.output_sigma(x_sigma)
 
-        sigma_out = self.rescale_sigma(sigma_out)
-        sigma_out = torch.exp(sigma_out)
+            # gamma layers:
+            x_gamma = self.denseblock_gamma(x)
+            gamma_out = self.output_gamma(x_gamma)
 
-        tau_out = self.rescale_tau(tau_out)
-        tau_out = torch.exp(tau_out)
-        
-        gamma_out = self.rescale_gamma(gamma_out)
+            # tau layers:
+            x_tau = self.denseblock_tau(x)
+            tau_out = self.output_tau(x_tau)
+            
+            # rescaling layers
+            mu_out = self.rescale_mu(mu_out)
 
-        # final output, concatenate parameters together
-        x = torch.cat((mu_out, sigma_out, gamma_out, tau_out), dim=-1)
+            sigma_out = self.rescale_sigma(sigma_out)
+            sigma_out = torch.exp(sigma_out)
+
+            tau_out = self.rescale_tau(tau_out)
+            tau_out = torch.exp(tau_out)
+            
+            gamma_out = self.rescale_gamma(gamma_out)
+
+            # final output, concatenate parameters together
+            x = torch.cat((mu_out, sigma_out, gamma_out, tau_out), dim=-1)
 
         return x
 

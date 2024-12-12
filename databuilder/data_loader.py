@@ -13,6 +13,8 @@ import pickle
 import gzip
 from sklearn.preprocessing import StandardScaler
 import xarray as xr
+from utils.filemethods import open_data_file as open_data_file
+from utils.utils import trim_nans
 
 
 class CustomData(torch.utils.data.Dataset):
@@ -21,14 +23,20 @@ class CustomData(torch.utils.data.Dataset):
     """
 
     def __init__(self, data_file, lagtime, smoothing_length):
-        dict_data = xr.open_dataset(data_file)
+        
+        dict_data = open_data_file(data_file)
+        
+        # If there are leading or ending nans, cut the inputs evenly so there are no longer nans
+        trimmed_data = {key: value[120:-47] for key, value in dict_data.items() }
+        
+        print(f"trimmed data shape: {trimmed_data['y'].shape}")
 
         # Cut data to ensure proper lag & alignment: 
         # Remove Lag-length BACK nans from Input
-        self.input = dict_data["x"][:-lagtime]
+        self.input = trimmed_data["x"][:-lagtime]
 
         # Remove Lag-length FRONT nans from Target
-        self.target = dict_data["y"][lagtime:]
+        self.target = trimmed_data["y"][lagtime:]
 
         # Remove Smoothing-length FRONT nans from BOTH Input and Target
         self.input = self.input[smoothing_length:]
@@ -48,10 +56,7 @@ class CustomData(torch.utils.data.Dataset):
 
         input = torch.tensor(self.input[idx, ...].data)
 
-        # Configure Channel Dimension to be in position 1
-        input = torch.permute(input, [2, 0, 1])
-
-        target = self.target[idx].values    
+        target = self.target[idx]    
         
         return (
             [ torch.tensor(input, dtype=torch.float32)],

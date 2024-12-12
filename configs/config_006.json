@@ -4,9 +4,13 @@
     "CRPS_tolerance": 0.000001,
 
     "data_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/",
+    "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/",
     "figure_dir": "/Users/C830793391/Documents/Research/E3SM/visuals/",
+    "perlmutter_figure_dir": "/pscratch/sd/p/plutzner/E3SM/saved/figures/", 
     "model_dir": "/Users/C830793391/Documents/Research/E3SM/saved/models",
-    "output_dir": "/Users/C830793391/Documents/Research/E3SM/saved/output",
+    "perlmutter_model_dir": "/pscratch/sd/p/plutzner/E3SM/saved/models/",
+    "output_dir": "/Users/C830793391/Documents/Research/E3SM/saved/output/",
+    "perlmutter_output_dir": "/pscratch/sd/p/plutzner/E3SM/saved/output/", 
     "fig_dpi": 200,
 
     "metrics": [
@@ -28,9 +32,9 @@
         "target_region": [46.5, 49, 241.5, 243.5],
         "target_months": [4, 5, 6, 7, 8, 9],
         "averaging_length": 7,
-        "lagtime": 14, 
+        "lagtime": 28, 
         "front_cutoff": 121, 
-        "back_cutoff": 32, 
+        "back_cutoff": 47, 
         "CRPS_tolerance": 1e-7
         
     }, 
@@ -38,6 +42,7 @@
     "data_loader": {
 
         "data_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/", 
+        "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",
         "batch_size": 64
     }, 
 
@@ -46,14 +51,17 @@
         "n_inputchannel": 1,
 
         "basic_act": ["ReLU", "ReLU"],
-
+        "freeze_id" : ["tau"],
         "hiddens_block_in": [3, 3],
         "hiddens_block_out": 6,
         "hiddens_block_act": ["ReLU", "ReLU"],
 
         "hiddens_final_in": 6,
         "hiddens_final_out": 4,
-        "hiddens_final_act": "ReLU"
+        "hiddens_final_act": "ReLU",
+        "filters" : [0], 
+        "cnn_act": ["None"], 
+        "kernel_size": [0]
     }, 
 
     "optimizer": {
@@ -66,10 +74,9 @@
 
     "trainer": {
         "max_epochs": 4000,
-        "save_dir": "/Users/C830793391/Documents/Research/E3SM/saved/",
         "early_stopping":{
             "args":{
-                "patience": 5,
+                "patience": 200,
                 "min_delta": 0.0
             }
         }

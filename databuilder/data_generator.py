@@ -72,17 +72,19 @@ class ClimateData:
             if self.verbose:
                 print(ens)
             if ens == "ens1":   
-                train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-                # train_ds = filemethods.get_netcdf_da(self.data_dir +  "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+                # train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+                train_ds = filemethods.get_netcdf_da(self.data_dir +  "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
 
             if ens == "ens2":
-                validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
-                # validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
+                # validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
+                validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
 
             elif ens == "ens3":
-                test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
-                # test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
+                # test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
+                test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
         
+        print(self.config["input_years"])
+        print(train_ds.time)
         train_ds = train_ds.sel(time = slice(str(self.config["input_years"][0]), str(self.config["input_years"][1])))
         validate_ds = validate_ds.sel(time = slice(str(self.config["input_years"][0]), str(self.config["input_years"][1])))
         test_ds = test_ds.sel(time = slice(str(self.config["input_years"][0]), str(self.config["input_years"][1])))
@@ -399,28 +401,28 @@ def multi_input_data_organizer(config, MJO=False, ENSO = False, other = False):
     # MJO Principle Components --------------------------------------------
     if MJO == True: 
         print("Opening MJO PCs")
-        # MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/MJOarray.leadnans.1850-2014.pkl'
-        MJOsavename = '/Users/C830793391/BIG_DATA/E3SM_Data/presaved/MJOarray.leadnans.1850-2014.pkl'
+        MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/MJOarray.leadnans.1850-2014.pkl'
+        # MJOsavename = '/Users/C830793391/BIG_DATA/E3SM_Data/presaved/MJOarray.leadnans.1850-2014.pkl'
         with gzip.open(MJOsavename, "rb") as obj:
             MJOarray = pickle.load(obj)
         obj.close()
     else:
         pass
+        print(MJOarray)
 
     # ENSO Indices / Temperature Time Series of Nino3.4 -------------------
     if ENSO == True: 
         print("Opening high-res Nino34 Data")
         ninox_array = np.zeros([60225, 3])
         for iens, ens in enumerate(config["databuilder"]["ensemble_codes"]):
-            fpath = config["data_dir"] + "presaved/ENSO_ne30pg2_HighRes/nino.member" + str(ens) + ".daily.nc"
+            fpath = config["perlmutter_data_dir"] + "presaved/ENSO_ne30pg2_HighRes/nino.member" + str(ens) + ".daily.nc"
             ninox = filemethods.get_netcdf_da(fpath)
+            nino34 = ninox.nino34.values
             # add 30 new days of nans to the beginning of the array such that the total array length is now 30 values longer:
-            nan_array = np.zeros([30, 1])
-            ninox_array = np.concatenate((nan_array, ninox_array), axis = 0)
-            print(f"ninox array: {ninox_array[:40]}")
-            print(f"ninox shape: {ninox_array.shape}")
-
-            # 104 front nans, 30 values missing (first month) from 60225 total samples due to backward rolling average and monthly time step configuration
+            nan_array = np.zeros(30)
+            ninox_array[:, iens] = np.concatenate((nan_array, nino34), axis = 0)
+        # print(ninox_array.shape)
+            # 30 values missing (first month) from 60225 total samples due to backward rolling average and monthly time step configuration
             # By starting at index 31, the ninox array should begin on 0 days since 1850-01-01 rather than 31 days since 1850-01-01
     else:
         pass
@@ -487,23 +489,24 @@ def multi_input_data_organizer(config, MJO=False, ENSO = False, other = False):
 
    
     print("Opening exp006 Seattle-area PRECIP target data for TRAINING")
-    target_savename = config['data_dir'] + 'presaved/exp006_d_train_SeattleRegional_PRECT_1850-2014.pkl'
+    target_savename = config['perlmutter_data_dir'] + 'presaved/exp006_d_train_PRECT_1850-2014_unlagged.pkl'
     with gzip.open(target_savename, "rb") as obj:
         exp006_d_train_target = pickle.load(obj)
 
     print("Opening exp006 Seattle-area PRECIP target data for VALIDATION")
-    target_savename = config['data_dir'] + 'presaved/exp006_d_val_SeattleRegional_PRECT_1850-2014.pkl'
+    target_savename = config['perlmutter_data_dir'] + 'presaved/exp006_d_val_PRECT_1850-2014_unlagged.pkl'
     with gzip.open(target_savename, "rb") as obj:
         exp006_d_val_target = pickle.load(obj)
 
     print("Opening exp006 Seattle-area PRECIP target data for TESTING")
-    target_savename = config['data_dir'] + 'presaved/exp006_d_test_SeattleRegional_PRECT_1850-2014.pkl'
+    target_savename = config['perlmutter_data_dir'] + 'presaved/exp006_d_test_PRECT_1850-2014_unlagged.pkl'
     with gzip.open(target_savename, "rb") as obj:
         exp006_d_test_target = pickle.load(obj)
     
  
     # Create Input and Target Arrays ------------------------------------------------------------
-
+    
+    # NO LAGGING OCCURS IN THIS CODE
     print("Combining Input and target data")
 
     # if MJO == True and ENSO == True: 
@@ -514,12 +517,11 @@ def multi_input_data_organizer(config, MJO=False, ENSO = False, other = False):
     target_dict = {0: exp006_d_train_target, 1: exp006_d_val_target, 2: exp006_d_test_target}
 
     for key, value in target_dict.items():
-        inputda[:,  0, key] = ninox_array[ :-config["databuilder"]["lagtime"], key] #ENSO
-        inputda[:30,0, key] = np.nan # Fill beginning 30 zeros with Nans
-        inputda[: , 1, key] = MJOarray[ :-config["databuilder"]["lagtime"], 2,key]  #RMM1
-        inputda[: , 2, key] = MJOarray[ :-config["databuilder"]["lagtime"], 3,key]  #RMM2
+        inputda[:,  0, key] = ninox_array[:, key] #ENSO
+        inputda[: , 1, key] = MJOarray[:, 2, key]  #RMM1
+        inputda[: , 2, key] = MJOarray[:, 3, key]  #RMM2
     
-        target[:,key] = value["y"] # Target - REGIONAL TEMP : SEATTLE METRO AREA: TARGET HAS ALREADY BEEN LAGGED IN PRE-PROCESSING (CLIMATE DATA CLASS - config_001/analysis_001)
+        target[:,key] = value["y"] # Seattle Regional Precip (unlagged) 
 
     # INPUT DICT - Save to Pickle
     s_dict_train = SampleDict()

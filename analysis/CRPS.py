@@ -333,7 +333,7 @@ def CRPScompare(crps_scores, crps_climatology_scores):
     ax.set_xlabel("CRPS Score")
     ax.set_ylabel("Frequency")
     ax.legend(markerscale = 9)
-    plt.savefig(str(config["figure_dir"]) + "/" + str(exp) + "/CRPS_comparative_histogram.png", format='png', bbox_inches ='tight', dpi = 300)
+    plt.savefig(str(config["perlmutter_figure_dir"]) + "/" + str(exp) + "/CRPS_comparative_histogram.png", format='png', bbox_inches ='tight', dpi = 300)
 
     # return CRPS_forecast, CRPS_climatology
 
@@ -353,9 +353,11 @@ def calculateCRPS(output, target, x, config, climatology = None):
 
         bounds = _discover_bounds(climatology_array, x[:len(climatology_array)], tolerance =tol)
 
+        print(len(target), climatology_array.shape[1], bounds.shape[0])
+
         CRPS_clima = np.zeros(len(target))
-        for i in range(len(target)):
-            CRPS_clima[i] = _crps_single(target[i], cdf_clima, climatology_array[:,i], x, xmin = bounds[i,0], xmax= bounds[i,1], tol=tol)
+        # for i in range(len(target)+1):
+        #     CRPS_clima[i] = _crps_single(target[i], cdf_clima, climatology_array[:,i], x, xmin = bounds[i,0], xmax= bounds[i,1], tol=tol)
 
         return CRPS_clima
     
@@ -386,5 +388,5 @@ def calculateCRPS(output, target, x, config, climatology = None):
         plt.plot(CRPS)
         plt.xlabel('Time (Samples in Chronological Order)')
         plt.ylabel('CRPS Score')
-        plt.savefig('/Users/C830793391/Documents/Research/E3SM/saved/figures/' + str(config["expname"]) + '/CRPS_score_time_series_all_sampes.png', format = 'png', dpi = 300)   
+        plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/CRPS_score_time_series_all_sampes.png', format = 'png', dpi = 300)   
         return CRPS

@@ -49,6 +49,36 @@ def prepare_device(device="mps"):
 
     return device
 
+def trim_nans(data_dict):
+    """
+    Removes leading and trailing NaNs consistently across all keys.
+    
+    Args:
+        data_dict (dict): A dictionary of data (keys are column names, values are arrays/lists).
+    
+    Returns:
+        dict: A dictionary with trimmed data, with no leading or trailing NaNs.
+    """
+    # Convert all values to numpy arrays for uniformity
+    arrays = {key: np.asarray(value) for key, value in data_dict.items()}
+    
+    # Determine the valid range across all keys
+    start_idx = 0
+    end_idx = float('inf')
+    
+    for array in arrays.values():
+        # Find first and last non-NaN indices
+        non_nan_indices = np.where(~np.isnan(array))[0]
+        if non_nan_indices.size > 0:  # Ensure the array has non-NaN values
+            start_idx = max(start_idx, non_nan_indices[0])  # Max of start indices
+            end_idx = min(end_idx, non_nan_indices[-1])  # Min of end indices
+        else:
+            raise ValueError("One of the columns contains only NaNs.")
+    
+    # Slice all arrays to the valid range [start_idx, end_idx]
+    cleaned_data = {key: array[start_idx:end_idx + 1] for key, array in arrays.items()}
+    
+    return cleaned_data
 
 def save_torch_model(model, filename):
     torch.save(model.state_dict(), filename)
