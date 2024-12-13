@@ -55,7 +55,7 @@ def deriveclimatology(output, climate_data, samples, x, valset):
         climatology, x, density=True, color="silver", alpha=0.75, label="climatology"
     )
    
-    print(valset[samples][1])
+    # print(valset[samples][1])
    
     # for isamp, samp in enumerate(samples): 
        # for isamp, samp in enumerate(samples): 
@@ -69,7 +69,7 @@ def deriveclimatology(output, climate_data, samples, x, valset):
     plt.ylabel("probability density")
     plt.title("Network Shash Prediction")
     plt.legend()
-    plt.savefig('/Users/C830793391/Documents/Research/E3SM/visuals/ens3/exp006_50_predictions_w_climatology.png', format='png', bbox_inches ='tight', dpi = 300)
+    # plt.savefig('/Users/C830793391/Documents/Research/E3SM/visuals/ens3/exp006_RERUN_predictions_w_climatology.png', format='png', bbox_inches ='tight', dpi = 300)
     plt.show()
 
     
