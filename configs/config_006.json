@@ -41,7 +41,7 @@
     "arch": {
         "type": "basicnn",
         "n_inputchannel": 1,
-
+        "freeze_id": ["tau"],
         "basic_act": ["ReLU", "ReLU"],
 
         "hiddens_block_in": [3, 3],
@@ -62,7 +62,7 @@
     },
 
     "trainer": {
-        "max_epochs": 3000,
+        "max_epochs": 1000,
         "save_dir": "/Users/C830793391/Documents/Research/E3SM/saved/",
         "early_stopping":{
             "args":{

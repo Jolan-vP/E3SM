@@ -520,12 +520,12 @@ def multi_input_data_organizer(config, MJO=False, ENSO = False, other = False):
     target_dict = {0: exp006_d_train_target, 1: exp006_d_val_target, 2:exp006_d_test_target}
 
     for key, value in target_dict.items():
-        inputda[:,0,key] = ninox_array[ :-config["databuilder"]["lagtime"], key] #ENSO
-        inputda[:30,0,key] = np.nan # Fill beginning 30 zeros with Nans
-        inputda[:,1,key] = MJOarray[ :-config["databuilder"]["lagtime"], 2,key]  #RMM1
-        inputda[:,2,key] = MJOarray[ :-config["databuilder"]["lagtime"], 3,key]  #RMM2
+        inputda[:,   0, key] = ninox_array[ :-config["databuilder"]["lagtime"], key] #ENSO
+        inputda[:30, 0, key] = np.nan # Fill beginning 30 zeros with Nans
+        inputda[:,   1, key] = MJOarray[ :-config["databuilder"]["lagtime"], 2, key]  #RMM1
+        inputda[:,   2, key] = MJOarray[ :-config["databuilder"]["lagtime"], 3, key]  #RMM2
     
-        target[:,key] = value["y"] # Target - REGIONAL TEMP : SEATTLE METRO AREA: TARGET HAS ALREADY BEEN LAGGED IN PRE-PROCESSING (CLIMATE DATA CLASS - config_001/analysis_001)
+        target[:, key] = value["y"] # Target - REGIONAL TEMP : SEATTLE METRO AREA: TARGET HAS ALREADY BEEN LAGGED IN PRE-PROCESSING (CLIMATE DATA CLASS - config_001/analysis_001)
 
     # INPUT DICT - Save to Pickle
     s_dict_train = SampleDict()

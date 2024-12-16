@@ -67,6 +67,15 @@ class TorchModel(BaseModel):
         self.rescale_sigma = RescaleLayer(torch.tensor(1.0), torch.log(self.target_std))
         self.rescale_tau = RescaleLayer(torch.tensor(0.0), torch.tensor(1.0))
 
+        # if "gamma" in config.get("freeze_id", []):
+        #     self.rescale_gamma = RescaleLayer(torch.tensor(0.0), torch.tensor(0.0))
+        # else: 
+        #     self.rescale_gamma = RescaleLayer(torch.tensor(1.0), torch.tensor(0.0))
+        # if "tau" in config.get("freeze_id", []):
+        #     self.rescale_tau = RescaleLayer(torch.tensor(0.0), torch.tensor(0.0))
+        # else:
+        #     self.rescale_tau = RescaleLayer(torch.tensor(1.0), torch.tensor(0.0))
+
         # Output layers
         self.output_mu = torch.nn.Linear(
             in_features=config["hiddens_final_out"], out_features=1, bias=True
