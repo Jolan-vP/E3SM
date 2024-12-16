@@ -1,5 +1,5 @@
 {"expname": "exp006",
-    "device": "mps",
+    "device": "cpu",
     "seed_list": [7],
 
     "data_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/",
@@ -62,7 +62,7 @@
     },
 
     "trainer": {
-        "max_epochs": 4000,
+        "max_epochs": 3000,
         "save_dir": "/Users/C830793391/Documents/Research/E3SM/saved/",
         "early_stopping":{
             "args":{

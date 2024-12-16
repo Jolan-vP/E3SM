@@ -87,7 +87,7 @@ class TorchModel(BaseModel):
 
         # basic hidden layers
         x = self.layer1(input)
-        # x = F.relu(x)
+        x = F.relu(x)
         # x = self.layer2(x)
         # x = F.relu(x)
         x = self.final(x)
