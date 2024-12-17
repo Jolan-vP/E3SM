@@ -62,7 +62,7 @@
     },
 
     "trainer": {
-        "max_epochs": 1000,
+        "max_epochs": 50,
         "save_dir": "/Users/C830793391/Documents/Research/E3SM/saved/",
         "early_stopping":{
             "args":{
