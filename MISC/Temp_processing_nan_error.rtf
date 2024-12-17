@@ -1,0 +1,288 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2761
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;\f1\fnil\fcharset0 Menlo-Bold;}
+{\colortbl;\red255\green255\blue255;\red128\green128\blue128;\red226\green226\blue226;\red0\green0\blue0;
+}
+{\*\expandedcolortbl;;\csgray\c57415;\cssrgb\c90980\c90980\c90980;\cssrgb\c0\c0\c0;
+}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\deftab720
+\pard\pardeftab720\partightenfactor0
+
+\f0\fs25\fsmilli12700 \cf2 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec3 Opening .nc files\
+Opening .nc files\
+Opening .nc files\
+Processing training\
+isolating variables from ds\
+Processing target output\
+Length of target = 60225\
+Shape of f_dict[key] after averaging across target region: (60225,)\
+Shape of f_dict[key] before seasonal cycle removal: (60225,)\
+<xarray.DataArray 'TS' (time: 40)> Size: 160B\
+array([nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan,\
+       nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan,\
+       nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan,\
+       nan], dtype=float32)\
+Coordinates:\
+  * time     (time) object 320B 1851-05-16 00:00:00 ... 1851-06-24 00:00:00\
+Shape of f_dict[key] after seasonal cycle removal: (0,)\
+\cf3 \
+\pard\pardeftab720\partightenfactor0
+\cf0 \strokec4 ---------------------------------------------------------------------------\cf3 \strokec3 \
+\cf0 \strokec4 ValueError\cf3 \strokec3                                 Traceback (most recent call last)\
+Cell \cf0 \strokec4 In[28], {\field{\*\fldinst{HYPERLINK "vscode-notebook-cell:?execution_count=28&line=1"}}{\fldrslt \ul line 1}}\
+----> {\field{\*\fldinst{HYPERLINK "vscode-notebook-cell:?execution_count=28&line=1"}}{\fldrslt \ul 1}} d_train, d_val, d_test \cf3 \strokec3 = data.fetch_data()\
+\
+File \cf0 \strokec4 /pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:59\cf3 \strokec3 , in \cf0 \strokec4 ClimateData.fetch_data(self, verbose)\cf3 \strokec3 \
+\pard\pardeftab720\partightenfactor0
+
+\f1\b \cf0 \strokec4      {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:56"}}{\fldrslt \ul 56}} \cf3 \strokec3 self.d_val = SampleDict()\
+\cf0 \strokec4      {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:57"}}{\fldrslt \ul 57}} \cf3 \strokec3 self.d_test = SampleDict()\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b0 \cf0 \strokec4 ---> {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:59"}}{\fldrslt \ul 59}} \cf3 \strokec3 self._create_data() \
+\pard\pardeftab720\partightenfactor0
+
+\f1\b \cf0 \strokec4      {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:61"}}{\fldrslt \ul 61}} \cf3 \strokec3 # if self.verbose:
+\f0\b0 \cf3 \strokec3 \
+
+\f1\b \cf0 \strokec4      {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:62"}}{\fldrslt \ul 62}} \cf3 \strokec3 #     self.d_train.summary()
+\f0\b0 \cf3 \strokec3 \
+
+\f1\b \cf0 \strokec4      {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:63"}}{\fldrslt \ul 63}} \cf3 \strokec3 #     self.d_val.summary()
+\f0\b0 \cf3 \strokec3 \
+
+\f1\b \cf0 \strokec4      {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:64"}}{\fldrslt \ul 64}} \cf3 \strokec3 #     self.d_test.summary()
+\f0\b0 \cf3 \strokec3 \
+
+\f1\b \cf0 \strokec4      {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:66"}}{\fldrslt \ul 66}} \cf3 \strokec3 return
+\f0\b0 \cf3 \strokec3  self.d_train, self.d_val, self.d_test\
+\
+File \cf0 \strokec4 /pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:92\cf3 \strokec3 , in \cf0 \strokec4 ClimateData._create_data(self)\cf3 \strokec3 \
+
+\f1\b \cf0 \strokec4      {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:89"}}{\fldrslt \ul 89}} \cf3 \strokec3 # Get opened X and Y data
+\f0\b0 \cf3 \strokec3 \
+
+\f1\b \cf0 \strokec4      {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:90"}}{\fldrslt \ul 90}} \cf3 \strokec3 # Process Data (compute anomalies)
+\f0\b0 \cf3 \strokec3 \
+
+\f1\b \cf0 \strokec4      {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:91"}}{\fldrslt \ul 91}} \cf3 \strokec3 print("Processing training")\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b0 \cf0 \strokec4 ---> {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:92"}}{\fldrslt \ul 92}} f_dict_train \cf3 \strokec3 = self._process_data(train_ds)\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b \cf0 \strokec4      {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:93"}}{\fldrslt \ul 93}} \cf3 \strokec3 print("Processing validation")\
+\cf0 \strokec4      {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:94"}}{\fldrslt \ul 94}} f_dict_val \cf3 \strokec3 = self._process_data(validate_ds)\
+\
+File 
+\f0\b0 \cf0 \strokec4 /pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:181\cf3 \strokec3 , in \cf0 \strokec4 ClimateData._process_data(self, ds)\cf3 \strokec3 \
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:178"}}{\fldrslt \ul 178}} \cf3 \strokec3 print(f"Shape of f_dict[key] after seasonal cycle removal: \{
+\f0\b0 \cf3 \strokec3 f_dict[key].shape\}")\
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:180"}}{\fldrslt \ul 180}} \cf3 \strokec3 # ROLLING AVERAGE
+\f0\b0 \cf3 \strokec3 \
+\pard\pardeftab720\partightenfactor0
+\cf0 \strokec4 --> {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:181"}}{\fldrslt \ul 181}} f_dict[key] \cf3 \strokec3 = self.rolling_ave(f_dict[key]) # first six values are now nans due to 7-day rolling mean\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:183"}}{\fldrslt \ul 183}} \cf3 \strokec3 # LAG ADJUSTMENT OF TARGET DATASET : Lagging by self.config["lagtime"] number of days allows the input and target samples to align
+\f0\b0 \cf3 \strokec3 \
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:184"}}{\fldrslt \ul 184}} \cf3 \strokec3 #  such that each input is paired with a target that is X days in the future
+\f0\b0 \cf3 \strokec3 \
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:185"}}{\fldrslt \ul 185}} \cf3 \strokec3 if
+\f0\b0 \cf3 \strokec3  self.config["lagtime"] != 0: \
+\
+File \cf0 \strokec4 /pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:321\cf3 \strokec3 , in \cf0 \strokec4 ClimateData.rolling_ave(self, da)\cf3 \strokec3 \
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:319"}}{\fldrslt \ul 319}} \cf3 \strokec3 else
+\f0\b0 \cf3 \strokec3 : \
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:320"}}{\fldrslt \ul 320}}     \cf3 \strokec3 if
+\f0\b0 \cf3 \strokec3  len(da.shape) == 1: \
+\pard\pardeftab720\partightenfactor0
+\cf0 \strokec4 --> {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:321"}}{\fldrslt \ul 321}}         \cf3 \strokec3 return da.rolling(time = self.config["averaging_length"]).mean()\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:322"}}{\fldrslt \ul 322}}     \cf3 \strokec3 else
+\f0\b0 \cf3 \strokec3 : \
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/pscratch/sd/p/plutzner/E3SM/databuilder/data_generator.py:323"}}{\fldrslt \ul 323}}         da_copy \cf3 \strokec3 = da.copy()\
+\
+File 
+\f0\b0 \cf0 \strokec4 /global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:177\cf3 \strokec3 , in \cf0 \strokec4 Rolling._reduce_method.<locals>.method(self, keep_attrs, **kwargs)\cf3 \strokec3 \
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:174"}}{\fldrslt \ul 174}} \cf3 \strokec3 def
+\f0\b0 \cf3 \strokec3  method(self, keep_attrs=None, **kwargs):\
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:175"}}{\fldrslt \ul 175}}     keep_attrs \cf3 \strokec3 = self._get_keep_attrs(keep_attrs)\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b0 \cf0 \strokec4 --> {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:177"}}{\fldrslt \ul 177}}     \cf3 \strokec3 return self._array_reduce(\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:178"}}{\fldrslt \ul 178}}         array_agg_func\cf3 \strokec3 =array_agg_func,\
+\cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:179"}}{\fldrslt \ul 179}}         bottleneck_move_func\cf3 \strokec3 =bottleneck_move_func,\
+\cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:180"}}{\fldrslt \ul 180}}         numbagg_move_func\cf3 \strokec3 =numbagg_move_func,\
+\cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:181"}}{\fldrslt \ul 181}}         rolling_agg_func\cf3 \strokec3 =rolling_agg_func,\
+\cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:182"}}{\fldrslt \ul 182}}         keep_attrs\cf3 \strokec3 =keep_attrs,\
+\cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:183"}}{\fldrslt \ul 183}}         fillna\cf3 \strokec3 =fillna,\
+\cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:184"}}{\fldrslt \ul 184}}         \cf3 \strokec3 **kwargs,\
+\cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:185"}}{\fldrslt \ul 185}}     )\
+\
+File 
+\f0\b0 /global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:681\cf3 \strokec3 , in \cf0 \strokec4 DataArrayRolling._array_reduce(self, array_agg_func, bottleneck_move_func, numbagg_move_func, rolling_agg_func, keep_attrs, fillna, **kwargs)\cf3 \strokec3 \
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:676"}}{\fldrslt \ul 676}}     \cf3 \strokec3 return
+\f0\b0 \cf3 \strokec3  self._bottleneck_reduce(\
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:677"}}{\fldrslt \ul 677}}         bottleneck_move_func, keep_attrs\cf3 \strokec3 =keep_attrs, **kwargs\
+\cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:678"}}{\fldrslt \ul 678}}     )\
+    {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:680"}}{\fldrslt \ul 680}} \cf3 \strokec3 if
+\f0\b0 \cf3 \strokec3  rolling_agg_func:\
+\pard\pardeftab720\partightenfactor0
+\cf0 \strokec4 --> {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:681"}}{\fldrslt \ul 681}}     \cf3 \strokec3 return rolling_agg_func(self, keep_attrs=self._get_keep_attrs(keep_attrs))\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:683"}}{\fldrslt \ul 683}} \cf3 \strokec3 if
+\f0\b0 \cf3 \strokec3  fillna is not None:\
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:684"}}{\fldrslt \ul 684}}     \cf3 \strokec3 if
+\f0\b0 \cf3 \strokec3  fillna is dtypes.INF:\
+\
+File \cf0 \strokec4 /global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:192\cf3 \strokec3 , in \cf0 \strokec4 Rolling._mean(self, keep_attrs, **kwargs)\cf3 \strokec3 \
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:191"}}{\fldrslt \ul 191}} \cf3 \strokec3 def
+\f0\b0 \cf3 \strokec3  _mean(self, keep_attrs, **kwargs):\
+\pard\pardeftab720\partightenfactor0
+\cf0 \strokec4 --> {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:192"}}{\fldrslt \ul 192}}     result \cf3 \strokec3 = self.sum(keep_attrs=False, **kwargs) / duck_array_ops.astype(\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:193"}}{\fldrslt \ul 193}}         \cf3 \strokec3 self.count(keep_attrs=False
+\f0\b0 \cf3 \strokec3 ), dtype=self.obj.dtype, copy=False\
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:194"}}{\fldrslt \ul 194}}     )\
+    {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:195"}}{\fldrslt \ul 195}}     \cf3 \strokec3 if
+\f0\b0 \cf3 \strokec3  keep_attrs:\
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:196"}}{\fldrslt \ul 196}}         result\cf3 \strokec3 .attrs = self.obj.attrs\
+\
+File 
+\f0\b0 \cf0 \strokec4 /global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:177\cf3 \strokec3 , in \cf0 \strokec4 Rolling._reduce_method.<locals>.method(self, keep_attrs, **kwargs)\cf3 \strokec3 \
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:174"}}{\fldrslt \ul 174}} \cf3 \strokec3 def
+\f0\b0 \cf3 \strokec3  method(self, keep_attrs=None, **kwargs):\
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:175"}}{\fldrslt \ul 175}}     keep_attrs \cf3 \strokec3 = self._get_keep_attrs(keep_attrs)\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b0 \cf0 \strokec4 --> {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:177"}}{\fldrslt \ul 177}}     \cf3 \strokec3 return self._array_reduce(\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:178"}}{\fldrslt \ul 178}}         array_agg_func\cf3 \strokec3 =array_agg_func,\
+\cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:179"}}{\fldrslt \ul 179}}         bottleneck_move_func\cf3 \strokec3 =bottleneck_move_func,\
+\cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:180"}}{\fldrslt \ul 180}}         numbagg_move_func\cf3 \strokec3 =numbagg_move_func,\
+\cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:181"}}{\fldrslt \ul 181}}         rolling_agg_func\cf3 \strokec3 =rolling_agg_func,\
+\cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:182"}}{\fldrslt \ul 182}}         keep_attrs\cf3 \strokec3 =keep_attrs,\
+\cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:183"}}{\fldrslt \ul 183}}         fillna\cf3 \strokec3 =fillna,\
+\cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:184"}}{\fldrslt \ul 184}}         \cf3 \strokec3 **kwargs,\
+\cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:185"}}{\fldrslt \ul 185}}     )\
+\
+File 
+\f0\b0 /global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:691\cf3 \strokec3 , in \cf0 \strokec4 DataArrayRolling._array_reduce(self, array_agg_func, bottleneck_move_func, numbagg_move_func, rolling_agg_func, keep_attrs, fillna, **kwargs)\cf3 \strokec3 \
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:688"}}{\fldrslt \ul 688}}     kwargs\cf3 \strokec3 .setdefault("skipna", False
+\f0\b0 \cf3 \strokec3 )\
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:689"}}{\fldrslt \ul 689}}     kwargs\cf3 \strokec3 .setdefault("fillna", fillna)\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b0 \cf0 \strokec4 --> {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:691"}}{\fldrslt \ul 691}} \cf3 \strokec3 return self.reduce(array_agg_func, keep_attrs=keep_attrs, **kwargs)\
+\
+File \cf0 \strokec4 /global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:497\cf3 \strokec3 , in \cf0 \strokec4 DataArrayRolling.reduce(self, func, keep_attrs, **kwargs)\cf3 \strokec3 \
+\pard\pardeftab720\partightenfactor0
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:495"}}{\fldrslt \ul 495}} \cf3 \strokec3 else
+\f0\b0 \cf3 \strokec3 :\
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:496"}}{\fldrslt \ul 496}}     obj \cf3 \strokec3 = self.obj\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b0 \cf0 \strokec4 --> {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:497"}}{\fldrslt \ul 497}} windows \cf3 \strokec3 = self._construct(\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:498"}}{\fldrslt \ul 498}}     obj, rolling_dim, keep_attrs\cf3 \strokec3 =keep_attrs, fill_value=fillna\
+\cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:499"}}{\fldrslt \ul 499}} )\
+    {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:501"}}{\fldrslt \ul 501}} dim \cf3 \strokec3 = list(rolling_dim.values())\
+\cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:502"}}{\fldrslt \ul 502}} result \cf3 \strokec3 = windows.reduce(func, dim=dim, keep_attrs=keep_attrs, **kwargs)\
+\
+File 
+\f0\b0 \cf0 \strokec4 /global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:414\cf3 \strokec3 , in \cf0 \strokec4 DataArrayRolling._construct(self, obj, window_dim, stride, fill_value, keep_attrs, **window_dim_kwargs)\cf3 \strokec3 \
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:409"}}{\fldrslt \ul 409}} window_dims \cf3 \strokec3 = self._mapping_to_list(\
+\cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:410"}}{\fldrslt \ul 410}}     window_dim, allow_default\cf3 \strokec3 =False
+\f0\b0 \cf3 \strokec3 , allow_allsame=False\
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:411"}}{\fldrslt \ul 411}} )\
+    {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:412"}}{\fldrslt \ul 412}} strides \cf3 \strokec3 = self._mapping_to_list(stride, default=1)\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b0 \cf0 \strokec4 --> {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:414"}}{\fldrslt \ul 414}} window \cf3 \strokec3 = obj.variable.rolling_window(\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:415"}}{\fldrslt \ul 415}}     \cf3 \strokec3 self.dim, self.window, window_dims, self.center, fill_value=fill_value\
+\cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:416"}}{\fldrslt \ul 416}} )\
+    {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:418"}}{\fldrslt \ul 418}} attrs \cf3 \strokec3 = obj.attrs if
+\f0\b0 \cf3 \strokec3  keep_attrs else \{\}\
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:420"}}{\fldrslt \ul 420}} result \cf3 \strokec3 = DataArray(\
+\cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:421"}}{\fldrslt \ul 421}}     window,\
+    {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:422"}}{\fldrslt \ul 422}}     dims\cf3 \strokec3 =obj.dims + tuple(window_dims),\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b0 \cf0 \strokec4    (...)\cf3 \strokec3 \
+\pard\pardeftab720\partightenfactor0
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:425"}}{\fldrslt \ul 425}}     name\cf3 \strokec3 =obj.name,\
+\cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/rolling.py:426"}}{\fldrslt \ul 426}} )\
+\
+File 
+\f0\b0 /global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/variable.py:2103\cf3 \strokec3 , in \cf0 \strokec4 Variable.rolling_window(self, dim, window, window_dim, center, fill_value)\cf3 \strokec3 \
+
+\f1\b \cf0 \strokec4    {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/variable.py:2099"}}{\fldrslt \ul 2099}} axis \cf3 \strokec3 = self.get_axis_num(dim)\
+\cf0 \strokec4    {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/variable.py:2100"}}{\fldrslt \ul 2100}} new_dims \cf3 \strokec3 = self.dims + tuple(window_dim)\
+\cf0 \strokec4    {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/variable.py:2101"}}{\fldrslt \ul 2101}} \cf3 \strokec3 return
+\f0\b0 \cf3 \strokec3  Variable(\
+
+\f1\b \cf0 \strokec4    {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/variable.py:2102"}}{\fldrslt \ul 2102}}     new_dims,\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b0 \cf0 -> {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/variable.py:2103"}}{\fldrslt \ul 2103}}     duck_array_ops\cf3 \strokec3 .sliding_window_view(\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b \cf0 \strokec4    {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/variable.py:2104"}}{\fldrslt \ul 2104}}         padded\cf3 \strokec3 .data, window_shape=window, axis=axis\
+\cf0 \strokec4    {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/variable.py:2105"}}{\fldrslt \ul 2105}}     ),\
+   {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/xarray/core/variable.py:2106"}}{\fldrslt \ul 2106}} )\
+\
+File 
+\f0\b0 /global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/numpy/lib/stride_tricks.py:332\cf3 \strokec3 , in \cf0 \strokec4 sliding_window_view(x, window_shape, axis, subok, writeable)\cf3 \strokec3 \
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/numpy/lib/stride_tricks.py:330"}}{\fldrslt \ul 330}} \cf3 \strokec3 for
+\f0\b0 \cf3 \strokec3  ax, dim in zip(axis, window_shape):\
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/numpy/lib/stride_tricks.py:331"}}{\fldrslt \ul 331}}     \cf3 \strokec3 if
+\f0\b0 \cf3 \strokec3  x_shape_trimmed[ax] < dim:\
+\pard\pardeftab720\partightenfactor0
+\cf0 \strokec4 --> {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/numpy/lib/stride_tricks.py:332"}}{\fldrslt \ul 332}}         \cf3 \strokec3 raise ValueError(\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b \cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/numpy/lib/stride_tricks.py:333"}}{\fldrslt \ul 333}}             \cf3 \strokec3 'window shape cannot be larger than input array shape')\
+\cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/numpy/lib/stride_tricks.py:334"}}{\fldrslt \ul 334}}     x_shape_trimmed[ax] \cf3 \strokec3 -= dim - 1\
+\cf0 \strokec4     {\field{\*\fldinst{HYPERLINK "https://file+.vscode-resource.vscode-cdn.net/global/common/software/m4620/conda/envs/env-torch/lib/python3.10/site-packages/numpy/lib/stride_tricks.py:335"}}{\fldrslt \ul 335}} out_shape \cf3 \strokec3 = tuple(x_shape_trimmed) + window_shape\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b0 \cf0 \strokec4 ValueError\cf3 \strokec3 : window shape cannot be larger than input array shape}
