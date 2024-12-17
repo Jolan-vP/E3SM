@@ -73,7 +73,7 @@
     },
 
     "trainer": {
-        "max_epochs": 4000,
+        "max_epochs": 2000,
         "early_stopping":{
             "args":{
                 "patience": 200,
