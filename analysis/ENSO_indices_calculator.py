@@ -58,7 +58,6 @@ def identify_nino_phases(nino34_index, config, threshold=0.4, window=6, lagtime 
     index_array_daily = index_array_daily[121:-45] # TODO: Fix front-back nan situation: 
     index_array_daily = index_array_daily[:-lagtime, :]
     index_array_daily = index_array_daily[smoothing_length:]
-    print(index_array_daily)
 
     # Multiply the index_array_daily by the row number to recover the index of each day
     non_zero_indices = np.full_like(index_array_daily, np.nan)
@@ -71,7 +70,9 @@ def identify_nino_phases(nino34_index, config, threshold=0.4, window=6, lagtime 
         non_zero_values = index_array_daily[:, col][index_array_daily[:, col] != 0]
         non_zero_indices[:len(non_zero_values), col] = non_zero_values
 
-    
+    # convert all remaining nans to zeros:
+    non_zero_indices[np.isnan(non_zero_indices)] = 0
+
     return non_zero_indices.astype(int)  #index_array_daily.astype(int),
 
 
@@ -91,15 +92,15 @@ def ENSO_CRPS(enso_indices_daily, crps_scores, climatology, x_values, output, co
     maxnino = max(np.where(enso_indices_daily[:,0] != 0)[0])
     maxnina = max(np.where(enso_indices_daily[:,1] != 0)[0])
 
-    print(f"maxnino: {maxnino}")
-    print(f"maxnina: {maxnina}")
+    # print(f"maxnino: {maxnino}")
+    # print(f"maxnina: {maxnina}")
 
     elnino = enso_indices_daily[:maxnino, 0]
     lanina = enso_indices_daily[:maxnina, 1]
 
-    print(f"len of elnino: {len(elnino)}")
-    print(f"len of lanina: {len(lanina)}")
-    print(f"len of crps_scores: {len(crps_scores)}")
+    # print(f"len of elnino: {len(elnino)}")
+    # print(f"len of lanina: {len(lanina)}")
+    # print(f"len of crps_scores: {len(crps_scores)}")
 
     non_neutral = np.concatenate((elnino, lanina))
     neutral_total = (len(crps_scores) - (len(elnino) + len(lanina)))
@@ -143,8 +144,8 @@ def ENSO_CRPS(enso_indices_daily, crps_scores, climatology, x_values, output, co
     p_lanina = dist_lanina.prob(x_values).numpy()
     p_neutral = dist_neutral.prob(x_values).numpy()
 
-    print(f"shape of p_elnino: {p_elnino.shape}")
-    print(f"x_values shape: {x_values.shape}")  
+    # print(f"shape of p_elnino: {p_elnino.shape}")
+    # print(f"x_values shape: {x_values.shape}")  
 
     plt.figure(figsize=(12, 7), dpi=200)
     plt.hist(
@@ -169,20 +170,18 @@ def ENSO_CRPS(enso_indices_daily, crps_scores, climatology, x_values, output, co
     plt.ylabel("Probability Density")
     plt.title("Network Shash Prediction")
     plt.xlim([-10, 12])
-    plt.ylim([0, 0.75])
+    plt.ylim([0, 0.35])
     # plt.axvline(valset[:len(output)], color='r', linestyle='dashed', linewidth=1)
     lege = plt.legend(loc = 'upper left', )
     for lh in lege.legendHandles: 
         lh.set_alpha(1)
-    plt.savefig('/Users/C830793391/Documents/Research/E3SM/saved/figures/' + str(config["expname"]) + '/' + str(config["expname"]) + '_ENSO_phase_predictions_w_climatology.png', format='png', bbox_inches ='tight', dpi = 300)
+    plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + '_ENSO_phase_predictions_w_climatology.png', format='png', bbox_inches ='tight', dpi = 300)
    
-
-
 
     print(f"El Nino average CRPS across all samples: {np.round(crps_scores[elnino].mean(), 4)}")
     print(f"La Nina average CRPS across all samples: {np.round(crps_scores[lanina].mean(), 4)}")
     print(f"Neutral average CRPS across all samples: {np.round(crps_scores[neutral].mean(), 4)}")
 
-    plt.savefig('/Users/C830793391/Documents/Research/E3SM/saved/figures/' + str(config["expname"]) + '/CRPS_vs_ENSO_Phases_' + str(config["expname"]) + '.png', format='png', bbox_inches ='tight', dpi = 300)
+    # plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/CRPS_vs_ENSO_Phases_' + str(config["expname"]) + '.png', format='png', bbox_inches ='tight', dpi = 300)
 
     return elnino, lanina, neutral, CRPS_elnino, CRPS_lanina, CRPS_neutral

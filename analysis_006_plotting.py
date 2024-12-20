@@ -118,8 +118,14 @@ p = calc_climatology.deriveclimatology(output, climatology, x, number_of_samples
 
 # Open raw target data
 # nc_file = xr.open_dataset('/Users/C830793391/BIG_DATA/E3SM_Data/ens3/PRECT.v2.LR.historical_0201.eam.h1.1850-2014.nc')
-nc_file = xr.open_datset('/pscratch/sd/p/plutzner/E3SM/bigdata/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc')
-prect_global = nc_file.PRECT.sel(time = slice(str(config["databuilder"]["input_years"][0]) + '-01-01', str(config["databuilder"]["input_years"][1])))
+nc_file = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc')
+prect_global = nc_file.PRECT.sel(
+    time=slice(
+        str(config["databuilder"]["input_years"][0]), #+ '-01-01-0000',
+        str(config["databuilder"]["input_years"][1]) #+ '-12-31-0000'
+    )
+)
+# prect_global = nc_file.PRECT.sel(time = slice(str(config["databuilder"]["input_years"][0]) + '-01-01-0000', str(config["databuilder"]["input_years"][1] + '-12-31-0000')))
 
 min_lat, max_lat = config["databuilder"]["target_region"][:2]
 min_lon, max_lon = config["databuilder"]["target_region"][2:]
