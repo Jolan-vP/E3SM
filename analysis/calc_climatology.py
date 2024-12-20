@@ -63,13 +63,13 @@ def deriveclimatology(output, target, x_values, number_of_samples, config, clima
     )
 
     plt.plot(x_values, p, linewidth = 0.5 ) #label = samples
-    plt.xlabel("value")
+    plt.xlabel("precipitation anomaly (mm/day)")
     plt.ylabel("probability density")
-    plt.title("Network Shash Prediction")
+    plt.title("Network Shash Prediction - exp006 RERUN")
     # plt.axvline(valset[:len(output)], color='r', linestyle='dashed', linewidth=1)
     plt.legend()
-    plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + '_predictions_w_climatology_28lag_frozenTau.png', format='png', bbox_inches ='tight', dpi = 300)
-    plt.xlim([-10, 10])
+    plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + '_predictions_w_climatology_exp006_RERUN.png', format='png', bbox_inches ='tight', dpi = 300)
+    plt.xlim([-10, 12])
     # plt.show(block = False)
 
     

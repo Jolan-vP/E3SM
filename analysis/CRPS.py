@@ -308,7 +308,7 @@ class CumulativeSum:
         return cdf_array
     
 
-def CRPScompare(crps_scores, crps_climatology_scores):
+def CRPScompare(crps_scores, crps_climatology_scores, config):
     """
     crps_scores: 1D array of CRPS scores
     crps_climatology_scores: 1D array of CRPS scores
@@ -316,10 +316,12 @@ def CRPScompare(crps_scores, crps_climatology_scores):
     # Calculate the mean CRPS scores for the forecast and climatology
     CRPS_forecast = np.round(np.mean(crps_scores), 4)
     CRPS_climatology = np.round(np.mean(crps_climatology_scores), 4)
+    print(f"Mean CRPS score of model predictions: {CRPS_forecast}")
+    print(f"Mean CRPS score for climatology: {CRPS_climatology}")
 
     # Calculate proportion of forecast CRPS scores that are better (lower) than climatology CRPS average
-    print(f"Length of CRPS scores: {len(crps_scores)}")
-    print(f"Length of CRPS climatology scores: {len(crps_climatology_scores)}")
+    # print(f"Length of CRPS scores: {len(crps_scores)}")
+    # print(f"Length of CRPS climatology scores: {len(crps_climatology_scores)}")
 
     better_than_climatology = 100 * np.sum(crps_scores < crps_climatology_scores) / len(crps_scores)
     print(f"Proportion of forecast CRPS scores that are better than climatology: {round(better_than_climatology, 2)}%")
@@ -333,7 +335,7 @@ def CRPScompare(crps_scores, crps_climatology_scores):
     ax.set_xlabel("CRPS Score")
     ax.set_ylabel("Frequency")
     ax.legend(markerscale = 9)
-    plt.savefig(str(config["perlmutter_figure_dir"]) + "/" + str(exp) + "/CRPS_comparative_histogram.png", format='png', bbox_inches ='tight', dpi = 300)
+    plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + "/CRPS_comparative_histogram.png", format='png', bbox_inches ='tight', dpi = 300)
 
     # return CRPS_forecast, CRPS_climatology
 
@@ -356,8 +358,8 @@ def calculateCRPS(output, target, x, config, climatology = None):
         print(len(target), climatology_array.shape[1], bounds.shape[0])
 
         CRPS_clima = np.zeros(len(target))
-        # for i in range(len(target)+1):
-        #     CRPS_clima[i] = _crps_single(target[i], cdf_clima, climatology_array[:,i], x, xmin = bounds[i,0], xmax= bounds[i,1], tol=tol)
+        for i in range(len(target)):
+            CRPS_clima[i] = _crps_single(target[i], cdf_clima, climatology_array[:,i], x, xmin = bounds[i,0], xmax= bounds[i,1], tol=tol)
 
         return CRPS_clima
     

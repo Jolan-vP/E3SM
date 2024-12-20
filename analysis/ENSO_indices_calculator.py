@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np  
 from shash.shash_torch import Shash
 
-def identify_nino_phases(nino34_index, threshold=0.4, window=6, lagtime = None, smoothing_length = None):
+def identify_nino_phases(nino34_index, config, threshold=0.4, window=6, lagtime = None, smoothing_length = None):
     """
     Function to identify El Niño, La Niña, and Neutral phases based on Nino 3.4 SST index.
     The Niño 3.4 index typically uses a 5-month running mean, and El Niño or La  Niña events are defined when the  
@@ -44,7 +44,7 @@ def identify_nino_phases(nino34_index, threshold=0.4, window=6, lagtime = None, 
 
     days_in_month = [28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 31]
     days_in_month_array = np.tile(days_in_month, 165) # repeat days in month pattern to match SST data
-    index_array_daily = np.full([60225,3], np.nan)
+    index_array_daily = np.full([60225, 3], np.nan, dtype=float)
 
     current_day = 0
     # Interpolate each column of 'ones' and 'zeros' from monthly to daily according to the 355-no leap calendar
@@ -54,20 +54,24 @@ def identify_nino_phases(nino34_index, threshold=0.4, window=6, lagtime = None, 
                 index_array_daily[current_day : current_day + days_in_month_array[row], col] = month_chunk
             current_day += days_in_month_array[row]
 
-    # Chop front and back according to neural network input size: 
+    # Chop front and back according to neural network input size AND NUMBER OF FRONT AND BACK NANS: 
+    index_array_daily = index_array_daily[121:-45] # TODO: Fix front-back nan situation: 
     index_array_daily = index_array_daily[:-lagtime, :]
     index_array_daily = index_array_daily[smoothing_length:]
+    print(index_array_daily)
 
     # Multiply the index_array_daily by the row number to recover the index of each day
-    
     non_zero_indices = np.full_like(index_array_daily, np.nan)
+
     for col in range(index_array_daily.shape[1]):
         for row in range(index_array_daily.shape[0]):
-            index_array_daily[row, col] = index_array_daily[row, col] * (row)
+            if index_array_daily[row, col] != 0:
+                index_array_daily[row, col] = index_array_daily[row, col] * row
         # Remove all zeros from each column so that only non-zero values remain
         non_zero_values = index_array_daily[:, col][index_array_daily[:, col] != 0]
         non_zero_indices[:len(non_zero_values), col] = non_zero_values
 
+    
     return non_zero_indices.astype(int)  #index_array_daily.astype(int),
 
 
@@ -87,12 +91,15 @@ def ENSO_CRPS(enso_indices_daily, crps_scores, climatology, x_values, output, co
     maxnino = max(np.where(enso_indices_daily[:,0] != 0)[0])
     maxnina = max(np.where(enso_indices_daily[:,1] != 0)[0])
 
+    print(f"maxnino: {maxnino}")
+    print(f"maxnina: {maxnina}")
+
     elnino = enso_indices_daily[:maxnino, 0]
     lanina = enso_indices_daily[:maxnina, 1]
 
-    # print(f"len of elnino: {len(elnino)}")
-    # print(f"len of lanina: {len(lanina)}")
-    # print(f"len of crps_scores: {len(crps_scores)}")
+    print(f"len of elnino: {len(elnino)}")
+    print(f"len of lanina: {len(lanina)}")
+    print(f"len of crps_scores: {len(crps_scores)}")
 
     non_neutral = np.concatenate((elnino, lanina))
     neutral_total = (len(crps_scores) - (len(elnino) + len(lanina)))

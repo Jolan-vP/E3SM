@@ -29,7 +29,7 @@ class CustomData(torch.utils.data.Dataset):
         # If there are leading or ending nans, cut the inputs evenly so there are no longer nans
         trimmed_data = {key: value[120:-47] for key, value in dict_data.items() }
         
-        print(f"trimmed data shape: {trimmed_data['y'].shape}")
+        # print(f"trimmed data shape: {trimmed_data['y'].shape}")
 
         # Cut data to ensure proper lag & alignment: 
         # Remove Lag-length BACK nans from Input

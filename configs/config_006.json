@@ -1,5 +1,5 @@
 {"expname": "exp006",
-    "device": "mps",
+    "device": "cpu",
     "seed_list": [7],
     "CRPS_tolerance": 0.000001,
 
@@ -32,7 +32,7 @@
         "target_region": [46.5, 49, 241.5, 243.5],
         "target_months": [4, 5, 6, 7, 8, 9],
         "averaging_length": 7,
-        "lagtime": 28, 
+        "lagtime": 14, 
         "front_cutoff": 121, 
         "back_cutoff": 47, 
         "CRPS_tolerance": 1e-7

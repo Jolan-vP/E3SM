@@ -47,53 +47,66 @@ smoothing_length = config["databuilder"]["averaging_length"]
 # Open Model Outputs
 model_output_pred = str(config["perlmutter_output_dir"]) + 'exp006_output_pred_testset_RERUN.pkl'
 output = analysis_metrics.load_pickle(model_output_pred)
+print(f"output shape: {output.shape}")
 
 # Open Target Data
 # target = xr.open_dataset('/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/' + str(config["expname"]) + '_d_test_1850-1900.nc')
-target = filemethods.open_data_file(config["perlmutter_data_dir"] + '/presaved/exp006_test_unlagged.pkl')
-target = target["y"][lagtime:]
+target = filemethods.open_data_file(config["perlmutter_data_dir"] + '/presaved/exp006_test_unlagged_28.pkl')
+target = target["y"][120:-47]
+target = target[lagtime:]
 target = target[smoothing_length:]
+print(f"target shape: {target.shape}")
 
 # Open Climatology Data: TRAINING DATA
 # climatology_filename = '/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/' + str(config["expname"]) + '_d_train_1850-1900.nc'
-climatology_filename = str(config["perlmutter_data_dir"]) + '/presaved/exp006_train_unlagged.pkl'
+climatology_filename = str(config["perlmutter_data_dir"]) + '/presaved/exp006_train_unlagged_28.pkl'
 climatology_da = analysis_metrics.load_pickle(climatology_filename)
-climatology = climatology_da["y"][lagtime:]
+climatology = climatology_da["y"][120:-47]
+climatology = climatology[lagtime:]
 climatology = climatology[smoothing_length:]
+print(f"climatology shape {climatology.shape}")
+
 
 # Compare SHASH predictions to climatology histogram
-x = np.arange(-15, 15, 0.01)
+x = np.arange(-10, 12, 0.01)
 
-p = calc_climatology.deriveclimatology(output, climatology, x, number_of_samples=50, config=config, climate_data = False)
+# p = calc_climatology.deriveclimatology(output, climatology, x, number_of_samples=50, config=config, climate_data = False)
 
-# ----------------------------- CRPS ----------------------------------
+# # # ----------------------------- CRPS ----------------------------------
+x_wide = np.arange(-15, 15, 0.01)
 
-# Comput CRPS for climatology
-CRPS_climatology = CRPS.calculateCRPS(output, target, x, config, climatology)
+# # Comput CRPS for climatology
+# CRPS_climatology = CRPS.calculateCRPS(output, target, x_wide, config, climatology)
 
-# Compute CRPS for all predictions 
-CRPS_network = CRPS.calculateCRPS(output, target, x, config, climatology = None)
+# # Compute CRPS for all predictions 
+# CRPS_network = CRPS.calculateCRPS(output, target, x_wide, config, climatology = None)
 
-analysis_metrics.save_pickle(CRPS_climatology, str(config["perlmutter_output_dir"]) + "/CRPS_climatology_values.pkl")
-analysis_metrics.save_pickle(CRPS_network, str(config["perlmutter_output_dir"]) + "/CRPS_network_values.pkl")
+# analysis_metrics.save_pickle(CRPS_climatology, str(config["perlmutter_output_dir"]) + "/CRPS_climatology_values.pkl")
+# analysis_metrics.save_pickle(CRPS_network, str(config["perlmutter_output_dir"]) + "/CRPS_network_values.pkl")
 
 CRPS_climatology = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + "/CRPS_climatology_values.pkl")
 CRPS_network = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + "/CRPS_network_values.pkl")
 
 # Compare CRPS scores for climatology vs predictions (Is network better than climatology on average?)
-CRPS.CRPScompare(CRPS_network, CRPS_climatology)
+CRPS.CRPScompare(CRPS_network, CRPS_climatology, config)
 
 # ----------------------------- ENSO ----------------------------------
 
 # Calculate ENSO Indices: 
 # monthlyENSO = xr.open_dataset('/Users/C830793391/BIG_DATA/E3SM_Data/presaved/ENSO_ne30pg2_HighRes/nino.member0201.nc')
-monthlyENSO = xr.open_dataset('pscratch/sd/p/plutzner/E3SM/bigdata/presaved/ENSO_ne30pg2_HighRes/nino.member0201.nc')
+monthlyENSO = xr.open_dataset(str(config["perlmutter_data_dir"]) + 'presaved/ENSO_ne30pg2_HighRes/nino.member0201.nc')
 Nino34 = monthlyENSO.nino34
 # select a slice of only certain years
 Nino34 = Nino34.sel(time=slice ( str(config["databuilder"]["input_years"][0]) + '-01-01', str(config["databuilder"]["input_years"][1]) + '-12-31'))
 Nino34 = Nino34.values
 
-enso_indices_daily = analysis.ENSO_indices_calculator.identify_nino_phases(Nino34, threshold=0.4, window=6, lagtime = lagtime, smoothing_length = smoothing_length)
+enso_indices_daily = analysis.ENSO_indices_calculator.identify_nino_phases(Nino34, config, threshold=0.4, window=6, lagtime = lagtime, smoothing_length = smoothing_length)
+
+plt.figure()
+plt.plot(enso_indices_daily[:,0])
+plt.plot(enso_indices_daily[:,1])
+plt.plot(enso_indices_daily[:,2])
+plt.savefig('/pscratch/sd/p/plutzner/E3SM/visuals/exp006/enso_indices_plot_check.png')
 
 # Separate CRPS scores by ENSO phases 
 elnino, lanina, neutral, CRPS_elnino, CRPS_lanina, CRPS_neutral = analysis.ENSO_indices_calculator.ENSO_CRPS(enso_indices_daily, CRPS_network, climatology, x, output, config)
