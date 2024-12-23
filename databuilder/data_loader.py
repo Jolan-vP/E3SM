@@ -15,7 +15,9 @@ from sklearn.preprocessing import StandardScaler
 import xarray as xr
 from utils.filemethods import open_data_file as open_data_file
 from utils.utils import trim_nans
-
+from utils.utils import filter_months
+import calendar
+from datetime import date, timedelta
 
 class CustomData(torch.utils.data.Dataset):
     """
@@ -23,30 +25,34 @@ class CustomData(torch.utils.data.Dataset):
     """
 
     def __init__(self, data_file, config):
-        lagtime = config["databuilder"]["lagtime"]
-        smoothing_length = config["databuilder"]["averaging_length"]
-        selected_months = config["databuilder"]["averaging_length"]
+        config = config["databuilder"]
+        lagtime = config["lagtime"]
+        smoothing_length = config["averaging_length"]
+        selected_months = config["averaging_length"]
+        input_years = config["input_years"]
+        front_nans = config["front_cutoff"]
+        back_nans = config["back_cutoff"]
 
         dict_data = open_data_file(data_file)
 
         # If there are leading or ending nans, cut the inputs evenly so there are no longer nans
-        trimmed_data = {key: value[120:-47] for key, value in dict_data.items() }
-
+        trimmed_data = {key: value[front_nans : -back_nans] for key, value in dict_data.items() }
+        print(type(trimmed_data["y"]))
         # Cut data to ensure proper lag & alignment: 
         # Remove Lag-length BACK nans from Input
-        self.input = trimmed_data["x"][:-lagtime]
-
+        input = trimmed_data["x"][:-lagtime]
+        
         # Remove Lag-length FRONT nans from Target
-        self.target = trimmed_data["y"][lagtime:]
-
-        # Isolate months of interest from input and target using metadata. 
-        # Want target values to align with target months, and input values to correspond to 'lagtime # of days BEFORE hand' 
+        target = trimmed_data["y"][lagtime:]
+   
         if selected_months is not None: 
-            self.target = self.target.sel(time = self.target['time.month'].isin(selected_months))
+            input_filtered, target_filtered = filter_months(input, target, selected_months, lagtime)
+        else: 
+            print("Using input and target data from all year round")
 
         # Remove Smoothing-length FRONT nans from BOTH Input and Target
-        self.input = self.input[smoothing_length:]
-        self.target = self.target[smoothing_length:]
+        self.input = input_filtered[smoothing_length:]
+        self.target = target_filtered[smoothing_length:]
 
         assert not np.any(np.isnan(self.input))
         assert not np.any(np.isnan(self.target))

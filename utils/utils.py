@@ -11,6 +11,8 @@ import json
 import pandas as pd
 import torch
 import numpy as np
+import calendar
+from datetime import date, timedelta
 
 def get_config(exp_name):
 
@@ -132,3 +134,81 @@ class MetricTracker:
                         print(f"  {key}[{idx}] = " + " | ".join([f"{v:.5f}" for v in self.history[key][idx]]))
                 else:
                     print(f"  {key}[{idx}] = {self.history[key][idx]:.5f}")
+
+
+
+def daysinmonth(month):
+    import calendar
+
+    # Generate the number of days for each month of a non-leap year
+    days_in_month_no_leap = [
+        28 if month == 2 else calendar.monthrange(2023, month)[1] 
+        for month in range(1, 13) ]
+
+    days_array_no_leap = np.array(days_in_month_no_leap)
+
+    return days_array_no_leap[month]
+
+def specifydates(target_months, lagtime):
+
+    # Helper function to format date as 'MM-DD'
+    def format_date(month, day):
+        return f"{str(month).zfill(2)}-{str(day).zfill(2)}"
+
+    # Target start date: First day of the first target month
+    target_start_month = target_months[0]
+    target_start_date = format_date(target_start_month, 1)
+
+    # Input start date: 14 days before the target start date
+    input_start_obj = date(2023, target_start_month, 1) - timedelta(days=lagtime)
+    input_start_date = format_date(input_start_obj.month, input_start_obj.day)
+
+    # Target end date: Last day of the last target month
+    target_end_month = target_months[-1]
+    last_day_of_target_end_month = calendar.monthrange(2023, target_end_month)[1]  # Get the last day of the month
+    target_end_date = format_date(target_end_month, last_day_of_target_end_month)
+
+    # Input end date: 14 days before the target end date
+    input_end_obj = date(2023, target_end_month, last_day_of_target_end_month) - timedelta(days=lagtime)
+    input_end_date = format_date(input_end_obj.month, input_end_obj.day)
+
+    # Print the results
+    print("Target Start:", target_start_date)  # e.g., '04-01'
+    print("Input Start:", input_start_date)    # e.g., '03-18'
+    print("Target End:", target_end_date)      # e.g., '09-30'
+    print("Input End:", input_end_date)        # e.g., '09-16'
+
+    return target_start_date, target_end_date, input_start_date, input_end_date
+
+
+def filter_months(input, target, selected_months, lagtime):
+    """
+    Filters an xarray dataset or DataArray to include only the specified months
+    for both input and target arrays
+
+    Parameters:
+    - data: xarray.Dataset or xarray.DataArray with a 'time' coordinate (input and target).
+    - selected_months: List of integers (1-12) representing the months to keep.
+    - lagtime: Optional integer (days) for lagging the start and end dates.
+
+    Returns:
+    - Filtered xarray object with only the desired months.
+    """
+    # Extract month and day from the 'time' coordinate
+    months = target["time"].dt.month
+
+    # Filter for selected months
+    target_filtered = target.where(months.isin(selected_months), drop=True)
+
+    # Adjust input selection based on lagtime
+    _, _, input_start_date, input_end_date = specifydates(selected_months, lagtime)
+    
+    input_condition = (
+    (input.time.dt.month == input_start_date[1:2]) & (input.time.dt.day >= input_start_date[3:]) | 
+    (input.time.dt.month == input_end_date[1:2]) & (input.time.dt.day <= input_end_date[3:])
+    )
+
+    input_filtered = input.sel(time = input_condition, drop=True)
+
+    return input_filtered, target_filtered
+

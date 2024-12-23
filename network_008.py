@@ -147,84 +147,84 @@ val_loader = torch.utils.data.DataLoader(
     drop_last=False,
 )
 
-# Setup the Model
-model = TorchModel(
-    config=config["arch"],
-    target_mean=trainset.target.values.mean(axis=0),
-    target_std=trainset.target.values.std(axis=0),
-)
-# model.freeze_layers(freeze_id="tau")
-optimizer = getattr(torch.optim, config["optimizer"]["type"])(
-    model.parameters(), **config["optimizer"]["args"]
-)
-criterion = getattr(module_loss, config["criterion"])()
-metric_funcs = [getattr(module_metric, met) for met in config["metrics"]]
+# # Setup the Model
+# model = TorchModel(
+#     config=config["arch"],
+#     target_mean=trainset.target.values.mean(axis=0),
+#     target_std=trainset.target.values.std(axis=0),
+# )
+# # model.freeze_layers(freeze_id="tau")
+# optimizer = getattr(torch.optim, config["optimizer"]["type"])(
+#     model.parameters(), **config["optimizer"]["args"]
+# )
+# criterion = getattr(module_loss, config["criterion"])()
+# metric_funcs = [getattr(module_metric, met) for met in config["metrics"]]
 
-# Build the trainer
-device = utils.prepare_device(config["device"])
-trainer = Trainer(
-    model,
-    criterion,
-    metric_funcs,
-    optimizer,
-    max_epochs=config["trainer"]["max_epochs"],
-    data_loader=train_loader,
-    validation_data_loader=val_loader,
-    device=device,
-    config=config,
-)
-
-# # Visualize the model
-# torchinfo.summary(
+# # Build the trainer
+# device = utils.prepare_device(config["device"])
+# trainer = Trainer(
 #     model,
-#     [   trainset.input[: config["data_loader"]["batch_size"]].shape ],
-#     verbose=0,
-#     col_names=("input_size", "output_size", "num_params"),
+#     criterion,
+#     metric_funcs,
+#     optimizer,
+#     max_epochs=config["trainer"]["max_epochs"],
+#     data_loader=train_loader,
+#     validation_data_loader=val_loader,
+#     device=device,
+#     config=config,
 # )
 
-# Train the Model
-print("training model")
-model.to(device)
-trainer.fit()
+# # # Visualize the model
+# # torchinfo.summary(
+# #     model,
+# #     [   trainset.input[: config["data_loader"]["batch_size"]].shape ],
+# #     verbose=0,
+# #     col_names=("input_size", "output_size", "num_params"),
+# # )
 
-# Save the Model
-path = '/Users/C830793391/Documents/Research/E3SM/saved/models/' + str(config["expname"]) + '_v0.pth'
-torch.save(model.state_dict(), path)
+# # Train the Model
+# print("training model")
+# model.to(device)
+# trainer.fit()
 
-# Load the Model
-path = '/Users/C830793391/Documents/Research/E3SM/saved/models/'+ str(config["expname"]) + '_v0.pth'
-model = TorchModel(config=config["arch"])
-model.load_state_dict(torch.load(path))
-model.eval()
+# # Save the Model
+# path = '/Users/C830793391/Documents/Research/E3SM/saved/models/' + str(config["expname"]) + '_v0.pth'
+# torch.save(model.state_dict(), path)
 
-print(trainer.log.history.keys())
+# # Load the Model
+# path = '/Users/C830793391/Documents/Research/E3SM/saved/models/'+ str(config["expname"]) + '_v0.pth'
+# model = TorchModel(config=config["arch"])
+# model.load_state_dict(torch.load(path))
+# model.eval()
 
-plt.figure(figsize=(20, 4))
-for i, m in enumerate(("loss", *config["metrics"])):
-    plt.subplot(1, 4, i + 1)
-    plt.plot(trainer.log.history["epoch"], trainer.log.history[m], label=m)
-    plt.plot(
-        trainer.log.history["epoch"], trainer.log.history["val_" + m], label="val_" + m
-    )
-    plt.axvline(
-       x=trainer.early_stopper.best_epoch, linestyle="--", color="k", linewidth=0.75
-    )
-    plt.title(m)
-    plt.legend()
-plt.tight_layout()
-plt.savefig('/Users/C830793391/Documents/Research/E3SM/saved/figures/' + str(config["expname"]) + '/' + str(config["expname"]) + '_training_metrics.png', format='png', bbox_inches ='tight', dpi = 300)
+# print(trainer.log.history.keys())
 
-# # ---------------- Model Evaluation ----------------------------------
+# plt.figure(figsize=(20, 4))
+# for i, m in enumerate(("loss", *config["metrics"])):
+#     plt.subplot(1, 4, i + 1)
+#     plt.plot(trainer.log.history["epoch"], trainer.log.history[m], label=m)
+#     plt.plot(
+#         trainer.log.history["epoch"], trainer.log.history["val_" + m], label="val_" + m
+#     )
+#     plt.axvline(
+#        x=trainer.early_stopper.best_epoch, linestyle="--", color="k", linewidth=0.75
+#     )
+#     plt.title(m)
+#     plt.legend()
+# plt.tight_layout()
+# plt.savefig('/Users/C830793391/Documents/Research/E3SM/saved/figures/' + str(config["expname"]) + '/' + str(config["expname"]) + '_training_metrics.png', format='png', bbox_inches ='tight', dpi = 300)
 
-with torch.inference_mode():
-    print(device)
-    output = model.predict(dataset=testset, batch_size=128, device=device) # The output is the batched SHASH distribution parameters
+# # # ---------------- Model Evaluation ----------------------------------
 
-print(output[:20]) # look at a small sample of the output data
+# with torch.inference_mode():
+#     print(device)
+#     output = model.predict(dataset=testset, batch_size=128, device=device) # The output is the batched SHASH distribution parameters
 
-# # Save Model Outputs
-model_output = str(config["output_dir"]) + str(config["expname"]) + '_output_testset.pkl'
-analysis_metrics.save_pickle(output, model_output)
+# print(output[:20]) # look at a small sample of the output data
+
+# # # Save Model Outputs
+# model_output = str(config["output_dir"]) + str(config["expname"]) + '_output_testset.pkl'
+# analysis_metrics.save_pickle(output, model_output)
 
 
 

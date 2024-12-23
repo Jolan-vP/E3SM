@@ -386,7 +386,7 @@ class ClimateData:
 
 
 
-def multi_input_data_organizer(config, MJO=False, ENSO = False, other = False):
+def multi_input_data_organizer(config, fn1, fn2, fn3, MJO=False, ENSO = False, other = False):
     """
         train {x: RMM1, RMM2, Nino34}, 
               {y: target}
@@ -488,19 +488,16 @@ def multi_input_data_organizer(config, MJO=False, ENSO = False, other = False):
     #     print(f"Exp002 Target files have been created and data has been pickled.")
 
    
-    print("Opening exp006 Seattle-area PRECIP target data for TRAINING")
-    target_savename = config['perlmutter_data_dir'] + 'presaved/exp006_d_train_PRECT_1850-2014_unlagged.pkl'
-    with gzip.open(target_savename, "rb") as obj:
+    print("Opening Seattle-area PRECIP target data for TRAINING")
+    with gzip.open(fn1, "rb") as obj:
         exp006_d_train_target = pickle.load(obj)
 
-    print("Opening exp006 Seattle-area PRECIP target data for VALIDATION")
-    target_savename = config['perlmutter_data_dir'] + 'presaved/exp006_d_val_PRECT_1850-2014_unlagged.pkl'
-    with gzip.open(target_savename, "rb") as obj:
+    print("Opening Seattle-area PRECIP target data for VALIDATION")
+    with gzip.open(fn2, "rb") as obj:
         exp006_d_val_target = pickle.load(obj)
 
-    print("Opening exp006 Seattle-area PRECIP target data for TESTING")
-    target_savename = config['perlmutter_data_dir'] + 'presaved/exp006_d_test_PRECT_1850-2014_unlagged.pkl'
-    with gzip.open(target_savename, "rb") as obj:
+    print("Opening Seattle-area PRECIP target data for TESTING")
+    with gzip.open(fn3, "rb") as obj:
         exp006_d_test_target = pickle.load(obj)
     
  
@@ -523,7 +520,7 @@ def multi_input_data_organizer(config, MJO=False, ENSO = False, other = False):
     
         target[:,key] = value["y"] # Seattle Regional Precip (unlagged) 
 
-    # INPUT DICT - Save to Pickle
+    # INPUT DICT
     s_dict_train = SampleDict()
     s_dict_train["x"] = inputda[:,:,0]
     s_dict_train["y"] = target[:,0]
@@ -535,6 +532,22 @@ def multi_input_data_organizer(config, MJO=False, ENSO = False, other = False):
     s_dict_test = SampleDict()
     s_dict_test["x"] = inputda[:,:,2]
     s_dict_test["y"] = target[:,2]
+
+    target_metadata = {
+    "dims": s_dict_train['y'].dims,
+    "coords": s_dict_train['y'].coords,
+    "attrs": s_dict_train['y'].attrs
+    }
+
+    input_dicts = [s_dict_train["x"], s_dict_val["x"], s_dict_test["x"]]
+
+    for idict, dict in enumerate(input_dicts):
+        dict = xr.DataArray(
+            inputda[:, :, idict], 
+            dims = target_metadata['dims'],
+            coords = {'time': dict.coords['time']}, 
+            attrs = {"description" : "Input dataset with time metadata from target precip netcdf"}
+        )
 
     return s_dict_train, s_dict_val, s_dict_test
 

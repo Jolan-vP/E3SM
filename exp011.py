@@ -18,8 +18,9 @@ import scipy
 from scipy import stats
 #import matplotlib.colors as mcolorsxx
 
+# %load_ext autoreload
+# %autoreload 2
 import utils
-from utils import utils
 import utils.filemethods as filemethods
 import databuilder.data_loader as data_loader
 import databuilder.data_generator as data_generator
@@ -33,27 +34,8 @@ from model.build_model import TorchModel
 from base.base_model import BaseModel
 from utils import utils
 from shash.shash_torch import Shash
-import analysis.analysis_metrics as analysis_metrics
-import analysis.ENSO_indices_calculator
-from shash.shash_torch import Shash
 import analysis.calc_climatology as calc_climatology
-import analysis.CRPS as CRPS
-
-
-
-# ------------------------------------------------------------------
-# Run CNN with all year round data to see what the overall predicted shash curves look like 
-# ------------------------------------------------------------------
-
-config = utils.get_config("exp006")
-seed = config["seed_list"][0]
-
-torch.manual_seed(seed)
-torch.cuda.manual_seed(seed)
-np.random.seed(seed)
-random.seed(seed)
-torch.backends.cudnn.deterministic = True
-
+from analysis import analysis_metrics
 
 print(f"python version = {sys.version}")
 print(f"numpy version = {np.__version__}")
@@ -61,10 +43,9 @@ print(f"xarray version = {xr.__version__}")
 print(f"pytorch version = {torch.__version__}")
 
 # https://github.com/victoresque/pytorch-template/tree/master
- 
-# ------------------------------------------------------------------
 
-config = utils.get_config("exp010")
+# ----CONFIG AND CLASS SETUP----------------------------------------------
+config = utils.get_config("exp011")
 seed = config["seed_list"][0]
 
 torch.manual_seed(seed)
@@ -73,68 +54,82 @@ np.random.seed(seed)
 random.seed(seed)
 torch.backends.cudnn.deterministic = True
 
-# ---------------- Data Processing ----------------------------------
+imp.reload(utils)
+imp.reload(filemethods)
+imp.reload(data_generator)
+imp.reload(data_loader)
 
-# Instantiate Climate Data class for Global Map input data processing
 data = ClimateData(
     config["databuilder"], 
     expname = config["expname"],
     seed=seed,
-    data_dir = config["data_dir"], 
-    figure_dir=config["figure_dir"],
-    target_only = False, 
+    data_dir = config["perlmutter_data_dir"], 
+    figure_dir=config["perlmutter_output_dir"],
+    target_only = True, 
     fetch=False,
     verbose=False
 )
 
-# Fetch training, validation, and testing data
+# ----PROCESS E3SM DATA----------------------------------------------
+
 d_train, d_val, d_test = data.fetch_data()
-print("Fetched data")
 
-# convert data to xarray form from SampleClass object: 
-d_train_dict = dict(d_train) 
-d_train_xr = xr.Dataset(d_train_dict)
+target_savename1 = str(config["data_dir"]) + str(config["expname"]) + "_d_train_TARGET_1850-2014.pkl"
+with gzip.open(target_savename1, "wb") as fp:
+    pickle.dump(d_train, fp)
 
-d_val_dict = dict(d_val) 
-d_val_xr = xr.Dataset(d_val_dict)
+target_savename2 = str(config["data_dir"]) + str(config["expname"]) + "_d_val_TARGET_1850-2014.pkl"
+with gzip.open(target_savename2, "wb") as fp:
+    pickle.dump(d_val, fp)
 
-d_test_dict = dict(d_test) 
-d_test_xr = xr.Dataset(d_test_dict)
+target_savename3 = str(config["data_dir"]) + str(config["expname"]) + "_d_test_TARGET_1850-2014.pkl"
+with gzip.open(target_savename3, "wb") as fp:
+    pickle.dump(d_test, fp)
 
-# # Saving training data as NetCDF
-s_dict_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_train_" + str(config["input_years"][0]) + "-" + str(config["input_years"][1]) + ".nc"
-d_train_xr.to_netcdf(s_dict_trainfn)
-print("Saved Training Data as NetCDF")
+s_dict_train, s_dict_val, s_dict_test = multi_input_data_organizer(config, target_savename1, target_savename2, target_savename3, MJO = True, ENSO = True, other = False)
 
-# # Saving validation data as NetCDF
-s_dict_valfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_val_" + str(config["input_years"][0]) + "-" + str(config["input_years"][1]) + ".nc"
-d_val_xr.to_netcdf(s_dict_valfn)
-print("Saved Validation Data as NetCDF")
+# confirm metadata is stored for both input and target
+print(type(s_dict_train['x']))
+print(s_dict_train['x'].time)
 
-# # Saving testing data as NetCDF
-s_dict_testfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_test" + str(config["input_years"][0]) + "-" + str(config["input_years"][1]) + ".nc"
-d_test_xr.to_netcdf(s_dict_testfn)
-print("Saved Testing Data as NetCDF")
+print(type(s_dict_train['y']))
+print(s_dict_train['y'].time)
 
-# Open processed data filess
-train_dat = xr.open_dataset(s_dict_trainfn)
-val_dat = xr.open_dataset(s_dict_valfn)
-test_dat = xr.open_dataset(s_dict_testfn)
+# --- SAVE DATA---
 
-print(f"training data shape: {train_dat['x'].shape}")
-print(f"val data shape: {val_dat['x'].shape}")
-print(f"test data shape: {test_dat['x'].shape} \n")
+s_dict_savename1 = str(config["data_dir"]) + str(config["expname"]) + "_d_train.pkl"
+with gzip.open(s_dict_savename1, "wb") as fp:
+    pickle.dump(s_dict_train, fp)
 
-print(f"training data shape: {train_dat['y'].shape}")
-print(f"val data shape: {val_dat['y'].shape}")
-print(f"test data shape: {test_dat['y'].shape} \n")
+s_dict_savename2 = str(config["data_dir"]) + str(config["expname"]) + "_d_val.pkl"
+with gzip.open(s_dict_savename2, "wb") as fp:
+    pickle.dump(s_dict_val, fp)
 
-# # ----------- Model Training ----------------------------------
+s_dict_savename3 = str(config["data_dir"]) + str(config["expname"]) + "_d_test.pkl"
+with gzip.open(s_dict_savename3, "wb") as fp:
+    pickle.dump(s_dict_test, fp)
 
-# Setup the Data
-trainset = data_loader.CustomData(s_dict_trainfn, config)
-valset = data_loader.CustomData(s_dict_valfn, config)
-testset = data_loader.CustomData(s_dict_testfn, config)
+# ---OPEN DATA---------------------------------------------
+
+with gzip.open(s_dict_savename1, "rb") as obj1:
+    train_dat = pickle.load(obj1)
+obj1.close()
+
+with gzip.open(s_dict_savename2, "rb") as obj2:
+    val_dat = pickle.load(obj2)
+obj2.close()
+
+with gzip.open(s_dict_savename3, "rb") as obj3:
+    test_dat = pickle.load(obj3)
+obj3.close()
+
+# --- Setup the Data for Training ---------------------------------------------
+lagtime = config["databuilder"]["lagtime"] 
+smoothing_length = config["databuilder"]["averaging_length"]
+
+trainset = data_loader.CustomData(s_dict_savename1, config)
+valset = data_loader.CustomData(s_dict_savename2, config)
+testset = data_loader.CustomData(s_dict_savename3, config)
 
 train_loader = torch.utils.data.DataLoader(
     trainset,
@@ -150,11 +145,11 @@ val_loader = torch.utils.data.DataLoader(
     drop_last=False,
 )
 
-# # Setup the Model
+# --- Setup the Model ----------------------------------------------------
 # model = TorchModel(
 #     config=config["arch"],
-#     target_mean=trainset.target.values.mean(axis=0),
-#     target_std=trainset.target.values.std(axis=0),
+#     target_mean=trainset.target.mean(axis=0),
+#     target_std=trainset.target.std(axis=0),
 # )
 # std_mean = {"trainset_target_mean": trainset.target.mean(axis=0), "trainset_target_std": trainset.target.std(axis=0)}
 
@@ -179,25 +174,25 @@ val_loader = torch.utils.data.DataLoader(
 #     config=config,
 # )
 
-# # # Visualize the model
+# # # # Visualize the model
 # # torchinfo.summary(
 # #     model,
 # #     [   trainset.input[: config["data_loader"]["batch_size"]].shape ],
-# #     verbose=0,
+# #     verbose=1,
 # #     col_names=("input_size", "output_size", "num_params"),
 # # )
 
-# # Train the Model
-# print("training model")
+# # TRAIN THE MODEL
 # model.to(device)
 # trainer.fit()
 
 # # Save the Model
-# path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
+# path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + ".pth"
 # torch.save({
 #             "model_state_dict" : model.state_dict(),
 #             "training_std_mean" : std_mean,
 #              }, path)
+
 
 # # Load the Model
 # path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
@@ -217,6 +212,8 @@ val_loader = torch.utils.data.DataLoader(
 # model.eval()
 
 # # Evaluate Training Metrics
+# print(trainer.log.history.keys())
+
 # print(trainer.log.history.keys())
 
 # plt.figure(figsize=(20, 4))
@@ -253,7 +250,8 @@ val_loader = torch.utils.data.DataLoader(
 # smoothing_length = config["databuilder"]["averaging_length"]  
 
 # # -------------------------------------------------------------------
-# TODO: FIX DIRECTORIES!!!!!! **
+# TODO: FIX DIRECTORIES FROM THIS LINE ONWARDS!
+
 # # Open Model Outputs
 # model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + 'network_SHASH_parameters.pkl'
 # output = analysis_metrics.load_pickle(model_output)
