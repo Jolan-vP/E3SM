@@ -125,9 +125,9 @@ test_dat = xr.open_dataset(s_dict_savename3)
 # # ----------- Model Training ----------------------------------
 
 # Setup the Data
-trainset = data_loader.CustomData(config["data_loader"]["data_dir"] + "/Network Inputs/" + str(config["expname"]) + "_d_train_1850-1900.nc", config["databuilder"]["lagtime"], config["databuilder"]["averaging_length"])
-valset = data_loader.CustomData(config["data_loader"]["data_dir"] + "/Network Inputs/" + str(config["expname"]) + "_d_val_1850-1900.nc", config["databuilder"]["lagtime"], config["databuilder"]["averaging_length"])
-testset = data_loader.CustomData(config["data_loader"]["data_dir"] + "/Network Inputs/" + str(config["expname"]) + "_d_test_1850-1900.nc", config["databuilder"]["lagtime"], config["databuilder"]["averaging_length"])
+trainset = data_loader.CustomData(config["data_loader"]["data_dir"] + "/Network Inputs/" + str(config["expname"]) + "_d_train_1850-1900.nc", config)
+valset = data_loader.CustomData(config["data_loader"]["data_dir"] + "/Network Inputs/" + str(config["expname"]) + "_d_val_1850-1900.nc", config)
+testset = data_loader.CustomData(config["data_loader"]["data_dir"] + "/Network Inputs/" + str(config["expname"]) + "_d_test_1850-1900.nc", config)
 
 # trainset = data_loader.CustomData(config["perlmutter_inputs_dir"] + str(config["expname"]) + "_d_train_1850-1900.nc", front_cutoff, back_cutoff)
 # valset = data_loader.CustomData(config["perlmutter_inputs_dir"] + str(config["expname"]) + "_d_val_1850-1900.nc", front_cutoff, back_cutoff)

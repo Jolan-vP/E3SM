@@ -132,9 +132,9 @@ print(f"test data shape: {test_dat['y'].shape} \n")
 # # ----------- Model Training ----------------------------------
 
 # Setup the Data
-trainset = data_loader.CustomData(s_dict_trainfn, config["databuilder"]["lagtime"], config["databuilder"]["averaging_length"])
-valset = data_loader.CustomData(s_dict_valfn, config["databuilder"]["lagtime"], config["databuilder"]["averaging_length"])
-testset = data_loader.CustomData(s_dict_testfn, config["databuilder"]["lagtime"], config["databuilder"]["averaging_length"])
+trainset = data_loader.CustomData(s_dict_trainfn, config)
+valset = data_loader.CustomData(s_dict_valfn, config)
+testset = data_loader.CustomData(s_dict_testfn, config)
 
 # trainset = data_loader.CustomData(config["perlmutter_inputs_dir"] + str(config["expname"]) + "_d_train_1850-1900.nc", front_cutoff, back_cutoff)
 # valset = data_loader.CustomData(config["perlmutter_inputs_dir"] + str(config["expname"]) + "_d_val_1850-1900.nc", front_cutoff, back_cutoff)

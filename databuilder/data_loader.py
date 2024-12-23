@@ -22,14 +22,15 @@ class CustomData(torch.utils.data.Dataset):
     Custom dataset for data in dictionaries.
     """
 
-    def __init__(self, data_file, lagtime, smoothing_length):
-        
+    def __init__(self, data_file, config):
+        lagtime = config["databuilder"]["lagtime"]
+        smoothing_length = config["databuilder"]["averaging_length"]
+        selected_months = config["databuilder"]["averaging_length"]
+
         dict_data = open_data_file(data_file)
-        
+
         # If there are leading or ending nans, cut the inputs evenly so there are no longer nans
         trimmed_data = {key: value[120:-47] for key, value in dict_data.items() }
-        
-        # print(f"trimmed data shape: {trimmed_data['y'].shape}")
 
         # Cut data to ensure proper lag & alignment: 
         # Remove Lag-length BACK nans from Input
@@ -37,6 +38,11 @@ class CustomData(torch.utils.data.Dataset):
 
         # Remove Lag-length FRONT nans from Target
         self.target = trimmed_data["y"][lagtime:]
+
+        # Isolate months of interest from input and target using metadata. 
+        # Want target values to align with target months, and input values to correspond to 'lagtime # of days BEFORE hand' 
+        if selected_months is not None: 
+            self.target = self.target.sel(time = self.target['time.month'].isin(selected_months))
 
         # Remove Smoothing-length FRONT nans from BOTH Input and Target
         self.input = self.input[smoothing_length:]
