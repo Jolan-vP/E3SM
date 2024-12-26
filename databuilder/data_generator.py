@@ -145,7 +145,7 @@ class ClimateData:
                             mm_day = da_copy[:,:,start:end] * 10**3 * 86400
                             da[:, :, start:end] = mm_day
 
-                        print(f"da post incremental unit conversion: {da.values[500:510]}")
+                        print(f"da post incremental unit conversion: {da.values[500:505]}")
                     else:
                         pass
 
@@ -166,7 +166,7 @@ class ClimateData:
                 
                 f_dict[key] = ds[self.config["target_var"]]
                 
-                print(f"magnitude of target pre-unit conversion: {f_dict[key][500:510]}")
+                print(f"magnitude of target pre-unit conversion: {f_dict[key][500:505].values}")
                 
                 if self.config["target_var"] == "PRECT": # CONVERTING PRECIP TO MM/DAY! Must do this twice, one for input PRECT, one for Target PRECT
                     da_copy = f_dict[key].copy()
@@ -182,7 +182,7 @@ class ClimateData:
                         mm_day = da_copy[:,:,start:end] * 10**3 * 86400
                         f_dict[key][:, :, start:end] = mm_day
 
-                print(f"magnitude of target post unit-conversion: {f_dict[key][500:510]}") 
+                print(f"magnitude of target post unit-conversion: {f_dict[key][500:505].values}") 
                 
                 # EXTRACT TARGET LOCATION
                 if len(self.config["target_region"]) == 2: # Specific city / lat lon location
@@ -402,7 +402,6 @@ def multi_input_data_organizer(config, fn1, fn2, fn3, MJO=False, ENSO = False, o
     if MJO == True: 
         print("Opening MJO PCs")
         MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/MJOarray.leadnans.1850-2014.pkl'
-        # MJOsavename = '/Users/C830793391/BIG_DATA/E3SM_Data/presaved/MJOarray.leadnans.1850-2014.pkl'
         with gzip.open(MJOsavename, "rb") as obj:
             MJOarray = pickle.load(obj)
         obj.close()
@@ -428,126 +427,61 @@ def multi_input_data_organizer(config, fn1, fn2, fn3, MJO=False, ENSO = False, o
         pass
 
     # OTHER INPUT:  -------------------------------
-    if other == True: 
-        print("Opening OTHER")
-
-        print("Opening exp005 VC TS input data for TRAINING")
-        input_savename = config['data_dir'] + 'presaved/exp005_d_train_VC_TS_1850-2014.pkl'
-        with gzip.open(input_savename, "rb") as obj:
-            exp005_d_train_PNW_TS = pickle.load(obj)
-
-        print("Opening exp005 VC TS input data for VALIDATION")
-        input_savename = config['data_dir'] + 'presaved/exp005_d_val_VC_TS_1850-2014.pkl'
-        with gzip.open(input_savename, "rb") as obj:
-            exp005_d_val_PNW_TS = pickle.load(obj)
-
-        print("Opening exp005 VC TS input data for TESTING")
-        input_savename = config['data_dir'] + 'presaved/exp005_d_test_VC_TS_1850-2014.pkl'
-        with gzip.open(input_savename, "rb") as obj:
-            exp005_d_test_PNW_TS = pickle.load(obj)
-
-    else:
-        pass
-
-    # Target : Lagged Precip at Target Location : --------------------------
-    
-    # config = utils.get_config("exp002")
-    # seed = config["seed_list"][0]
-
-    # data = ClimateData(
-    #     config["databuilder"], 
-    #     expname = config["expname"],
-    #     seed=seed,
-    #     data_dir = config["data_dir"], 
-    #     figure_dir=config["figure_dir"],
-    #     target_only=True,
-    #     fetch=False,
-    #     verbose=False
-    # )
-    
-    # d_train, d_val, d_test = data.fetch_data()
-
-    # data_savename1 = "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp002_d_train_TARGET.pkl"
-    # data_savename2 = "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp002_d_val_TARGET.pkl"
-    # data_savename3 = "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp002_d_test_TARGET.pkl"
-
-    # if not os.path.exists(data_savename1) or not os.path.exists(data_savename2) or not os.path.exists(data_savename3):
-
-    #     #data_savename1 = "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/exp001_d_train.pkl"
-    #     with gzip.open(data_savename1, "wb") as fp:
-    #         pickle.dump(d_train, fp)
-
-    #     #data_savename2 = "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/exp001_d_val.pkl"
-    #     with gzip.open(data_savename2, "wb") as fp:
-    #         pickle.dump(d_val, fp)
-
-    #     #data_savename3 = "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/exp001_d_test.pkl"
-    #     with gzip.open(data_savename3, "wb") as fp:
-    #         pickle.dump(d_test, fp)
-
-    #     print(f"Exp002 Target files have been created and data has been pickled.")
-
+    # if other == True: 
+    #     print("Opening OTHER")
    
+    # OPEN PREPROCESSED TARGET INPUT  ------------------------------- 
+
     print("Opening Seattle-area PRECIP target data for TRAINING")
     with gzip.open(fn1, "rb") as obj:
-        exp006_d_train_target = pickle.load(obj)
+        d_train_target = pickle.load(obj)
 
     print("Opening Seattle-area PRECIP target data for VALIDATION")
     with gzip.open(fn2, "rb") as obj:
-        exp006_d_val_target = pickle.load(obj)
+        d_val_target = pickle.load(obj)
 
     print("Opening Seattle-area PRECIP target data for TESTING")
     with gzip.open(fn3, "rb") as obj:
-        exp006_d_test_target = pickle.load(obj)
+        d_test_target = pickle.load(obj)
     
- 
+    # print(f"time training target data from processed pkl : {d_train_target['y'].time}")
+
     # Create Input and Target Arrays ------------------------------------------------------------
     
     # NO LAGGING OCCURS IN THIS CODE
     print("Combining Input and target data")
 
-    # if MJO == True and ENSO == True: 
     inputda = np.zeros([60225, 3, 3])
-
-    target = np.zeros([60225, 3], dtype=float) 
+    target_dict = {0: d_train_target, 1: d_val_target, 2: d_test_target}
     
-    target_dict = {0: exp006_d_train_target, 1: exp006_d_val_target, 2: exp006_d_test_target}
-
     for key, value in target_dict.items():
         inputda[:,  0, key] = ninox_array[:, key] #ENSO
         inputda[: , 1, key] = MJOarray[:, 2, key]  #RMM1
         inputda[: , 2, key] = MJOarray[:, 3, key]  #RMM2
-    
-        target[:,key] = value["y"] # Seattle Regional Precip (unlagged) 
 
     # INPUT DICT
     s_dict_train = SampleDict()
-    s_dict_train["x"] = inputda[:,:,0]
-    s_dict_train["y"] = target[:,0]
-
     s_dict_val  = SampleDict()
-    s_dict_val["x"] = inputda[:,:,1]
-    s_dict_val["y"] = target[:,1]
-
     s_dict_test = SampleDict()
-    s_dict_test["x"] = inputda[:,:,2]
-    s_dict_test["y"] = target[:,2]
 
-    target_metadata = {
-    "dims": s_dict_train['y'].dims,
-    "coords": s_dict_train['y'].coords,
-    "attrs": s_dict_train['y'].attrs
-    }
+    # Collect input and target data
+    input_dicts = [s_dict_train, s_dict_val, s_dict_test]
 
-    input_dicts = [s_dict_train["x"], s_dict_val["x"], s_dict_test["x"]]
-
-    for idict, dict in enumerate(input_dicts):
-        dict = xr.DataArray(
+    # Assign target time coordinate to input data in new xarray dataarray
+    for idict, s_dict in enumerate(input_dicts):
+        s_dict["x"] = xr.DataArray(
             inputda[:, :, idict], 
-            dims = target_metadata['dims'],
-            coords = {'time': dict.coords['time']}, 
+            dims=["time", "variables"],  # Specify the dimensions
+            coords={
+                "time": d_train_target['y'].coords["time"],  # Use the 'time' from 'y'
+                "variables": ["RMM1", "RMM2", "ENSO"] 
+            },
             attrs = {"description" : "Input dataset with time metadata from target precip netcdf"}
         )
+        # Assign target data from preprocessed target data above
+        s_dict["y"] = target_dict[idict]["y"]
 
+    # Confirm correct metadata for input and time coordinates
+    # print(f"s_dict_train input time coordinate: {s_dict_train['x'].time}")
+    # print(f"s_dict_train target time coordinate: {s_dict_train['y'].time}")
     return s_dict_train, s_dict_val, s_dict_test
-

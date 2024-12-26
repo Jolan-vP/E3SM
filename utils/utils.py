@@ -173,15 +173,15 @@ def specifydates(target_months, lagtime):
     input_end_date = format_date(input_end_obj.month, input_end_obj.day)
 
     # Print the results
-    print("Target Start:", target_start_date)  # e.g., '04-01'
-    print("Input Start:", input_start_date)    # e.g., '03-18'
-    print("Target End:", target_end_date)      # e.g., '09-30'
-    print("Input End:", input_end_date)        # e.g., '09-16'
+    # print("Target Start:", target_start_date)  # e.g., '04-01'
+    # print("Input Start:", input_start_date)    # e.g., '03-18'
+    # print("Target End:", target_end_date)      # e.g., '09-30'
+    # print("Input End:", input_end_date)        # e.g., '09-16'
 
     return target_start_date, target_end_date, input_start_date, input_end_date
 
 
-def filter_months(input, target, selected_months, lagtime):
+def filter_months(selected_months, lagtime, input=None, target=None):
     """
     Filters an xarray dataset or DataArray to include only the specified months
     for both input and target arrays
@@ -194,21 +194,37 @@ def filter_months(input, target, selected_months, lagtime):
     Returns:
     - Filtered xarray object with only the desired months.
     """
-    # Extract month and day from the 'time' coordinate
-    months = target["time"].dt.month
+    if input is not None and target is not None: 
+        # Extract month and day from the 'time' coordinate
+        months = target["time"].dt.month
 
-    # Filter for selected months
-    target_filtered = target.where(months.isin(selected_months), drop=True)
+        # Filter for selected months
+        target_filtered = target.where(months.isin(selected_months), drop=True)
 
-    # Adjust input selection based on lagtime
-    _, _, input_start_date, input_end_date = specifydates(selected_months, lagtime)
-    
-    input_condition = (
-    (input.time.dt.month == input_start_date[1:2]) & (input.time.dt.day >= input_start_date[3:]) | 
-    (input.time.dt.month == input_end_date[1:2]) & (input.time.dt.day <= input_end_date[3:])
-    )
+        # Adjust input selection based on lagtime
+        _, _, input_start_date, input_end_date = specifydates(selected_months, lagtime)
+        
+        print(input_start_date)
+        input_start_month = int(input_start_date[1:2])  # First two characters -> month
+        input_start_day = int(input_start_date[3:])    # Characters after '-' -> day
+        input_end_month = int(input_end_date[1:2])      # First two characters -> month
+        input_end_day = int(input_end_date[3:])    
 
-    input_filtered = input.sel(time = input_condition, drop=True)
+        input_condition = (
+        ((input.time.dt.month == input_start_month) & (input.time.dt.day >= input_start_day)) | 
+        ((input.time.dt.month == input_end_month) & (input.time.dt.day <= input_end_day)) | 
+        ((input.time.dt.month > input_start_month) & (input.time.dt.month < input_end_month))
+        )
 
-    return input_filtered, target_filtered
+        input_filtered = input.sel(time = input_condition, drop=True)
 
+        return input_filtered, target_filtered
+
+    elif input is None and target is not None: 
+        # Extract month and day from the 'time' coordinate
+        months = target["time"].dt.month
+
+        # Filter for selected months
+        target_filtered = target.where(months.isin(selected_months), drop=True)
+
+        return target_filtered

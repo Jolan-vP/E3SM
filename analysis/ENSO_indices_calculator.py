@@ -41,11 +41,13 @@ def identify_nino_phases(nino34_index, config, threshold=0.4, window=6, lagtime 
             # Mark neutral for all other periods
             phase_array[i:i + window, 2] = 1
 
+    print(f"lenght of phase array : {phase_array.shape}")
 
-    days_in_month = [28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 31]
+    days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     days_in_month_array = np.tile(days_in_month, 165) # repeat days in month pattern to match SST data
     index_array_daily = np.full([60225, 3], np.nan, dtype=float)
 
+    print(f"shape of tiled days in month array : {days_in_month_array.shape}")
     current_day = 0
     # Interpolate each column of 'ones' and 'zeros' from monthly to daily according to the 355-no leap calendar
     for row in range(phase_array.shape[0]):
@@ -55,7 +57,7 @@ def identify_nino_phases(nino34_index, config, threshold=0.4, window=6, lagtime 
             current_day += days_in_month_array[row]
 
     # Chop front and back according to neural network input size AND NUMBER OF FRONT AND BACK NANS: 
-    index_array_daily = index_array_daily[121:-45] # TODO: Fix front-back nan situation: 
+    index_array_daily = index_array_daily[config["databuilder"]["front_cutoff"] : -config["databuilder"]["back_cutoff"]]
     index_array_daily = index_array_daily[:-lagtime, :]
     index_array_daily = index_array_daily[smoothing_length:]
 

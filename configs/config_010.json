@@ -29,7 +29,7 @@
         "ensemble_codes": ["0101", "0151", "0201"],
         "target_var": "PRECT",
         "target_region": [46.5, 49, 241.5, 243.5],
-        "target_months": [4, 5, 6, 7, 8, 9],
+        "target_months": "None",
         "averaging_length": 7,
         "lagtime": 14, 
         "front_cutoff": 14, 
@@ -42,7 +42,7 @@
 
         "data_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/", 
         "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",
-        "batch_size": 32
+        "batch_size": 64
     }, 
 
     "arch": {

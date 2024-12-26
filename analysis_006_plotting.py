@@ -117,7 +117,6 @@ p = calc_climatology.deriveclimatology(output, climatology, x, number_of_samples
 # Calculate precipitation anomalies during each ENSO Phase + Plot
 
 # Open raw target data
-# nc_file = xr.open_dataset('/Users/C830793391/BIG_DATA/E3SM_Data/ens3/PRECT.v2.LR.historical_0201.eam.h1.1850-2014.nc')
 nc_file = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc')
 prect_global = nc_file.PRECT.sel(
     time=slice(
@@ -142,12 +141,19 @@ print(f"raw target prect_regional shape: {prect_regional.shape}")
 
 target_raw = prect_regional * 86400 * 1000  # Convert to mm/day
 
+front_nans = config["databuilder"]["front_cutoff"]
+back_nans = config["databuilder"]["back_cutoff"]
+
+# Cut raw dataset according to data-loader methods: front/back nans
+target_raw = target_raw[front_nans : -(back_nans -1)]
+
 print(f"mean raw target: {np.mean(target_raw)}")
 print(f"median raw target: {np.median(target_raw)}")
 print(f"std raw target: {np.std(target_raw)}")
 
 # Discard plot of CRPS vs IQR Percentile, CRPS vs Anomalies & true precip
 sample_index = analysis_metrics.discard_plot(output, target_raw, CRPS_network, CRPS_climatology, config, target_type = 'raw')
+sample_index = analysis_metrics.discard_plot(output, target, CRPS_network, CRPS_climatology, config, target_type = 'anomalous')
 
 anomalies_by_ENSO_phase = analysis_metrics.anomalies_by_ENSO_phase(elnino, lanina, neutral, target, target_raw, sample_index, config)
 

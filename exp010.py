@@ -121,6 +121,13 @@ train_dat = xr.open_dataset(s_dict_trainfn)
 val_dat = xr.open_dataset(s_dict_valfn)
 test_dat = xr.open_dataset(s_dict_testfn)
 
+# Confirm metadata is stored for both input and target: 
+print(type(train_dat['x']))
+print(train_dat['x'].time)
+
+print(type(train_dat['y']))
+print(train_dat['y'].time)
+
 print(f"training data shape: {train_dat['x'].shape}")
 print(f"val data shape: {val_dat['x'].shape}")
 print(f"test data shape: {test_dat['x'].shape} \n")

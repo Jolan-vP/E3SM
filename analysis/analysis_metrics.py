@@ -109,10 +109,10 @@ def discard_plot(networkoutput, target, crps_scores, crps_climatology_scores, co
     ax1.plot(percentiles, avg_crps, color=color)
     ax1.tick_params(axis='y', labelcolor=color)
     ax1.axhline(y=crps_climatology_scores.mean(), color='grey', linestyle='--', label='CRPS Mean Climatology')
-    # ax1.set_ylim([1.05, 1.205])
+    ax1.set_ylim([1.05, 1.205])
     ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
     # legend
-    ax1.legend(loc = 'upper center')
+    ax1.legend(loc = 'lower left')
 
     if target_type == 'anomalous':
         color = 'tab:olive'
@@ -120,14 +120,14 @@ def discard_plot(networkoutput, target, crps_scores, crps_climatology_scores, co
         ax2.plot(percentiles, avg_target, color=color)
         ax2.tick_params(axis='y', labelcolor=color)
 
-        plt.savefig('/Users/C830793391/Documents/Research/E3SM/saved/figures/' + str(config["expname"]) + '/CRPS_IQR_DiscardPlot_anomalies.png', format='png', bbox_inches ='tight', dpi = 300)
+        plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/CRPS_IQR_DiscardPlot_anomalies.png', format='png', bbox_inches ='tight', dpi = 300)
 
     elif target_type == 'raw':
         color = 'tab:olive'
         ax2.set_ylabel('Raw Target Values (mm/day)', color=color)
         ax2.plot(percentiles, avg_target, color=color)
         ax2.tick_params(axis='y', labelcolor=color)
-        plt.savefig('/Users/C830793391/Documents/Research/E3SM/saved/figures/' + str(config["expname"]) + '/CRPS_IQR_DiscardPlot_true_precip.png', format='png', bbox_inches ='tight', dpi = 300)
+        plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/CRPS_IQR_DiscardPlot_true_precip.png', format='png', bbox_inches ='tight', dpi = 300)
 
     return sample_index
 
@@ -142,11 +142,11 @@ def anomalies_by_ENSO_phase(elnino, lanina, neutral, target, target_raw, sample_
     plt.legend(markerscale = 22, loc = 'upper right')
     plt.ylim(-7, 22)
 
-    plt.savefig('/Users/C830793391/Documents/Research/E3SM/saved/figures/' + str(config["expname"]) + '/scatter_ENSO_phases.png', format='png', bbox_inches ='tight', dpi = 300)
+    plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/scatter_ENSO_phases.png', format='png', bbox_inches ='tight', dpi = 300)
 
-    print(f"Mean Anomaly during El Nino: {np.round(target[elnino].values.mean(), 4)}")
-    print(f"Mean Anomaly during La Nina: {np.round(target[lanina].values.mean(), 4)}")
-    print(f"Mean Anomaly during Neutral: {np.round(target[neutral].values.mean(), 4)}")
+    print(f"Mean Anomaly during El Nino: {np.round(target[elnino].mean(), 4)}")
+    print(f"Mean Anomaly during La Nina: {np.round(target[lanina].mean(), 4)}")
+    print(f"Mean Anomaly during Neutral: {np.round(target[neutral].mean(), 4)}")
 
     print(f"Mean True Amount during El Nino: {np.round(target_raw[elnino].mean(), 4)}")
     print(f"Mean True Amount during La Nina: {np.round(target_raw[lanina].mean(), 4)}")
@@ -230,4 +230,4 @@ def spread_skill(output, target, config):
     plt.legend()
     plt.show()
 
-    plt.savefig('/Users/C830793391/Documents/Research/E3SM/saved/figures/' + str(config["expname"]) + '/SpreadSkillRatio_network_vs_climatology.png', format='png', bbox_inches ='tight', dpi = 300)
+    plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/SpreadSkillRatio_network_vs_climatology.png', format='png', bbox_inches ='tight', dpi = 300)
