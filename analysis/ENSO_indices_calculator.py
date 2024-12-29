@@ -7,6 +7,9 @@ iENSO(SST_fn)
 import matplotlib.pyplot as plt
 import numpy as np  
 from shash.shash_torch import Shash
+from utils import filemethods
+import xarray as xr
+from databuilder.data_loader import universaldataloader
 
 def identify_nino_phases(nino34_index, config, threshold=0.4, window=6, lagtime = None, smoothing_length = None):
     """
@@ -41,13 +44,10 @@ def identify_nino_phases(nino34_index, config, threshold=0.4, window=6, lagtime 
             # Mark neutral for all other periods
             phase_array[i:i + window, 2] = 1
 
-    print(f"lenght of phase array : {phase_array.shape}")
-
-    days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    days_in_month = [28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 31] 
     days_in_month_array = np.tile(days_in_month, 165) # repeat days in month pattern to match SST data
     index_array_daily = np.full([60225, 3], np.nan, dtype=float)
 
-    print(f"shape of tiled days in month array : {days_in_month_array.shape}")
     current_day = 0
     # Interpolate each column of 'ones' and 'zeros' from monthly to daily according to the 355-no leap calendar
     for row in range(phase_array.shape[0]):
@@ -56,20 +56,38 @@ def identify_nino_phases(nino34_index, config, threshold=0.4, window=6, lagtime 
                 index_array_daily[current_day : current_day + days_in_month_array[row], col] = month_chunk
             current_day += days_in_month_array[row]
 
-    # Chop front and back according to neural network input size AND NUMBER OF FRONT AND BACK NANS: 
-    index_array_daily = index_array_daily[config["databuilder"]["front_cutoff"] : -config["databuilder"]["back_cutoff"]]
-    index_array_daily = index_array_daily[:-lagtime, :]
-    index_array_daily = index_array_daily[smoothing_length:]
+    # save index array daily as an xarray dataset with a time component (same as the original dataset)
+    # open original dataset: 
+    train_ds = filemethods.get_netcdf_da(str(config['perlmutter_data_dir']) + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+    train_ds = train_ds.sel(time = slice(str(config["databuilder"]["input_years"][0]), str(config["databuilder"]["input_years"][1])))
+
+    # Assign daily index array the same time coordinate from the original dataset
+    index_array_dailyXR = xr.DataArray(
+        index_array_daily, 
+        dims=["time", "variables"],  # Specify the dimensions
+        coords={
+            "time": train_ds.coords["time"],  # Use the 'time' from 'y'
+            "variables": ["El Nino Phase", "La Nina Phase", "Neutral Phase"] 
+        },
+        attrs = {"description" : "ENSO phases by each day carrying the time coord"}
+    )
+
+    # filter indices by target months, cut leads/lags, smoothing length, etc. 
+    filtered_daily_indicesXR = universaldataloader(index_array_dailyXR, config, target_only = True) 
+    # # Chop front and back according to neural network input size AND NUMBER OF FRONT AND BACK NANS: 
+    # index_array_daily = index_array_daily[config["databuilder"]["front_cutoff"] : -config["databuilder"]["back_cutoff"]]
+    # index_array_daily = index_array_daily[:-lagtime, :]
+    # index_array_daily = index_array_daily[smoothing_length:]
 
     # Multiply the index_array_daily by the row number to recover the index of each day
-    non_zero_indices = np.full_like(index_array_daily, np.nan)
+    non_zero_indices = np.full_like(filtered_daily_indicesXR, np.nan)
 
-    for col in range(index_array_daily.shape[1]):
-        for row in range(index_array_daily.shape[0]):
-            if index_array_daily[row, col] != 0:
-                index_array_daily[row, col] = index_array_daily[row, col] * row
+    for col in range(filtered_daily_indicesXR.shape[1]):
+        for row in range(filtered_daily_indicesXR.shape[0]):
+            if filtered_daily_indicesXR[row, col] != 0:
+                filtered_daily_indicesXR[row, col] = filtered_daily_indicesXR[row, col] * row
         # Remove all zeros from each column so that only non-zero values remain
-        non_zero_values = index_array_daily[:, col][index_array_daily[:, col] != 0]
+        non_zero_values = filtered_daily_indicesXR[:, col][filtered_daily_indicesXR[:, col] != 0]
         non_zero_indices[:len(non_zero_values), col] = non_zero_values
 
     # convert all remaining nans to zeros:

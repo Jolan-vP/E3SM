@@ -221,9 +221,10 @@ def filter_months(selected_months, lagtime, input=None, target=None):
         return input_filtered, target_filtered
 
     elif input is None and target is not None: 
-        # Extract month and day from the 'time' coordinate
+        # Extract months from the 'time' coordinate
         months = target["time"].dt.month
-
+        # TODO: SOME ISSUE WITH LINE 225? 
+        
         # Filter for selected months
         target_filtered = target.where(months.isin(selected_months), drop=True)
 

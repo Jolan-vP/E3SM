@@ -300,13 +300,14 @@ CRPS_network = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"])
 # Compare CRPS scores for climatology vs predictions (Is network better than climatology on average?)
 CRPS.CRPScompare(CRPS_network, CRPS_climatology, config)
 
-# ----------------------------- ENSO ----------------------------------
+# ----------------------------- ENSO -------------------------------------------
 
-# Calculate ENSO Indices: 
-# Open ENSO indices from TEST network inputs: MUST keep full dataset in order to calculate ENSO PHASES
-test_inputs = analysis_metrics.load_pickle(s_dict_savename3)
-Nino34 = test_inputs['x'][:,2]
-print(f"Nino34 shape {Nino34.shape}")
+# Calculate ENSO Indices from Monthly ENSO Data (Po-Lun): 
+monthlyENSO = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/ENSO_ne30pg2_HighRes/nino.member0201.nc')
+Nino34 = monthlyENSO.nino34
+# select a slice of only certain years
+Nino34 = Nino34.sel(time=slice ( str(config["databuilder"]["input_years"][0]) + '-01-01', str(config["databuilder"]["input_years"][1]) + '-12-31'))
+Nino34 = Nino34.values
 
 enso_indices_daily = ENSO_indices_calculator.identify_nino_phases(Nino34, config, threshold=0.4, window=6, lagtime = lagtime, smoothing_length = smoothing_length)
 
@@ -316,10 +317,10 @@ elnino, lanina, neutral, CRPS_elnino, CRPS_lanina, CRPS_neutral = analysis.ENSO_
 # Compare Distributions? 
 p = calc_climatology.deriveclimatology(output, climatology, x, number_of_samples=50, config=config, climate_data = False)
 
-# Calculate precipitation anomalies during each ENSO Phase + Plot
+# Calculate precipitation anomalies during each ENSO Phase + Plot -----------------
 
 # Open raw target data
-nc_file = xr.open_datset('/pscratch/sd/p/plutzner/E3SM/bigdata/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc')
+nc_file = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc')
 prect_global = nc_file.PRECT.sel(time = slice(str(config["databuilder"]["input_years"][0]) + '-01-01', str(config["databuilder"]["input_years"][1])))
 
 min_lat, max_lat = config["databuilder"]["target_region"][:2]
@@ -330,18 +331,20 @@ if isinstance(prect_global, xr.DataArray):
     mask_lat = (prect_global.lat >= min_lat) & (prect_global.lat <= max_lat)
     prect_regional = prect_global.where(mask_lon & mask_lat, drop=True)
 
-prect_regional = prect_regional.mean(dim=['lat', 'lon']).values[lagtime:]
-prect_regional = prect_regional[smoothing_length:]
+# average around seattle region 
+prect_regional = prect_regional.mean(dim=['lat', 'lon'])
 
-print(f"raw target prect_regional shape: {prect_regional.shape}")
+target_raw = universaldataloader(prect_regional, config, target_only = True)
 
-target_raw = prect_regional * 86400 * 1000  # Convert to mm/day
+print(target_raw.shape)
+# [lagtime:]
+# prect_regional = prect_regional[smoothing_length:]
+# front_nans = config["databuilder"]["front_cutoff"]
+# back_nans = config["databuilder"]["back_cutoff"]
+# # Cut raw dataset according to data-loader methods: front/back nans
+# target_raw = target_raw[front_nans : -(back_nans -1)]
 
-front_nans = config["databuilder"]["front_cutoff"]
-back_nans = config["databuilder"]["back_cutoff"]
-
-# Cut raw dataset according to data-loader methods: front/back nans
-target_raw = target_raw[front_nans : -(back_nans -1)]
+target_raw = target_raw * 86400 * 1000  # Convert to mm/day
 
 print(f"mean raw target: {np.mean(target_raw)}")
 print(f"median raw target: {np.median(target_raw)}")

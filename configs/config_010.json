@@ -3,6 +3,7 @@
     "seed_list": [7],
 
     "data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved",
+    "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/",
     "perlmutter_inputs_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",
     "local_inputs_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/",
     "figure_dir": "/Users/C830793391/Documents/Research/E3SM/saved/figures",
@@ -42,7 +43,7 @@
 
         "data_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/", 
         "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",
-        "batch_size": 64
+        "batch_size": 32
     }, 
 
     "arch": {

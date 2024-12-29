@@ -89,8 +89,8 @@ class TorchModel(BaseModel):
         
         if self.config["type"] == "cnn":  
             # Longitude padding
-            self.pad_lons = torch.nn.CircularPad2d(config["circular_padding"])  # This is throwing an error with torch info for some reason :/ 
-            # self.pad_lons = config["circular_padding"]
+            # self.pad_lons = torch.nn.CircularPad2d(config["circular_padding"])  # This is throwing an error with torch info for some reason :/ 
+            self.pad_lons = config["circular_padding"]
 
             assert (
                 len(self.config["cnn_act"])
@@ -205,11 +205,13 @@ class TorchModel(BaseModel):
             x = torch.stack((mu_out, sigma_out, gamma_out, tau_out), dim=-1)
 
         elif self.config["type"] == "cnn":
-            
+            print(input.shape)
+
             # Configure Channel Dimension to be in position 1
-            input = torch.permute(input, [2, 0, 1])
+            x = torch.permute(input, [2, 0, 1])
             
-            x = self.pad_lons(input)
+            # x = self.pad_lons(input)
+            x = F.pad(x, (self.pad_lons), mode = 'circular')
             x = self.conv_block(x)
             x = self.flat(x)
 

@@ -45,7 +45,7 @@ import analysis.CRPS as CRPS
 # Run CNN with all year round data to see what the overall predicted shash curves look like 
 # ------------------------------------------------------------------
 
-config = utils.get_config("exp006")
+config = utils.get_config("exp010")
 seed = config["seed_list"][0]
 
 torch.manual_seed(seed)
@@ -80,61 +80,61 @@ data = ClimateData(
     config["databuilder"], 
     expname = config["expname"],
     seed=seed,
-    data_dir = config["data_dir"], 
+    data_dir = config["perlmutter_data_dir"], 
     figure_dir=config["figure_dir"],
     target_only = False, 
     fetch=False,
     verbose=False
 )
 
-# Fetch training, validation, and testing data
-d_train, d_val, d_test = data.fetch_data()
-print("Fetched data")
+# # Fetch training, validation, and testing data
+# d_train, d_val, d_test = data.fetch_data()
+# print("Fetched data")
 
-# convert data to xarray form from SampleClass object: 
-d_train_dict = dict(d_train) 
-d_train_xr = xr.Dataset(d_train_dict)
+# # convert data to xarray form from SampleClass object: 
+# d_train_dict = dict(d_train) 
+# d_train_xr = xr.Dataset(d_train_dict)
 
-d_val_dict = dict(d_val) 
-d_val_xr = xr.Dataset(d_val_dict)
+# d_val_dict = dict(d_val) 
+# d_val_xr = xr.Dataset(d_val_dict)
 
-d_test_dict = dict(d_test) 
-d_test_xr = xr.Dataset(d_test_dict)
+# d_test_dict = dict(d_test) 
+# d_test_xr = xr.Dataset(d_test_dict)
 
-# # Saving training data as NetCDF
-s_dict_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_train_" + str(config["input_years"][0]) + "-" + str(config["input_years"][1]) + ".nc"
-d_train_xr.to_netcdf(s_dict_trainfn)
-print("Saved Training Data as NetCDF")
+# # # Saving training data as NetCDF
+s_dict_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_train_" + str(config["databuilder"]["input_years"][0]) + "-" + str(config["databuilder"]["input_years"][1]) + ".nc"
+# d_train_xr.to_netcdf(s_dict_trainfn)
+# print("Saved Training Data as NetCDF")
 
-# # Saving validation data as NetCDF
-s_dict_valfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_val_" + str(config["input_years"][0]) + "-" + str(config["input_years"][1]) + ".nc"
-d_val_xr.to_netcdf(s_dict_valfn)
-print("Saved Validation Data as NetCDF")
+# # # Saving validation data as NetCDF
+s_dict_valfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_val_" + str(config["databuilder"]["input_years"][0]) + "-" + str(config["databuilder"]["input_years"][1]) + ".nc"
+# d_val_xr.to_netcdf(s_dict_valfn)
+# print("Saved Validation Data as NetCDF")
 
-# # Saving testing data as NetCDF
-s_dict_testfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_test" + str(config["input_years"][0]) + "-" + str(config["input_years"][1]) + ".nc"
-d_test_xr.to_netcdf(s_dict_testfn)
-print("Saved Testing Data as NetCDF")
+# # # Saving testing data as NetCDF
+s_dict_testfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_test" + str(config["databuilder"]["input_years"][0]) + "-" + str(config["databuilder"]["input_years"][1]) + ".nc"
+# d_test_xr.to_netcdf(s_dict_testfn)
+# print("Saved Testing Data as NetCDF")
 
 # Open processed data filess
 train_dat = xr.open_dataset(s_dict_trainfn)
 val_dat = xr.open_dataset(s_dict_valfn)
 test_dat = xr.open_dataset(s_dict_testfn)
 
-# Confirm metadata is stored for both input and target: 
-print(type(train_dat['x']))
-print(train_dat['x'].time)
+# # Confirm metadata is stored for both input and target: 
+# print(type(train_dat['x']))
+# print(train_dat['x'].time)
 
-print(type(train_dat['y']))
-print(train_dat['y'].time)
+# print(type(train_dat['y']))
+# print(train_dat['y'].time)
 
-print(f"training data shape: {train_dat['x'].shape}")
-print(f"val data shape: {val_dat['x'].shape}")
-print(f"test data shape: {test_dat['x'].shape} \n")
+# print(f"training data shape: {train_dat['x'].shape}")
+# print(f"val data shape: {val_dat['x'].shape}")
+# print(f"test data shape: {test_dat['x'].shape} \n")
 
-print(f"training data shape: {train_dat['y'].shape}")
-print(f"val data shape: {val_dat['y'].shape}")
-print(f"test data shape: {test_dat['y'].shape} \n")
+# print(f"training data shape: {train_dat['y'].shape}")
+# print(f"val data shape: {val_dat['y'].shape}")
+# print(f"test data shape: {test_dat['y'].shape} \n")
 
 # # ----------- Model Training ----------------------------------
 
@@ -157,101 +157,101 @@ val_loader = torch.utils.data.DataLoader(
     drop_last=False,
 )
 
-# # Setup the Model
-# model = TorchModel(
-#     config=config["arch"],
-#     target_mean=trainset.target.values.mean(axis=0),
-#     target_std=trainset.target.values.std(axis=0),
-# )
-# std_mean = {"trainset_target_mean": trainset.target.mean(axis=0), "trainset_target_std": trainset.target.std(axis=0)}
+# Setup the Model
+model = TorchModel(
+    config=config["arch"],
+    target_mean=trainset.target.mean(axis=0),
+    target_std=trainset.target.std(axis=0),
+)
+std_mean = {"trainset_target_mean": trainset.target.mean(axis=0), "trainset_target_std": trainset.target.std(axis=0)}
 
-# model.freeze_layers(freeze_id="tau")
-# optimizer = getattr(torch.optim, config["optimizer"]["type"])(
-#     model.parameters(), **config["optimizer"]["args"]
-# )
-# criterion = getattr(module_loss, config["criterion"])()
-# metric_funcs = [getattr(module_metric, met) for met in config["metrics"]]
+model.freeze_layers(freeze_id="tau")
+optimizer = getattr(torch.optim, config["optimizer"]["type"])(
+    model.parameters(), **config["optimizer"]["args"]
+)
+criterion = getattr(module_loss, config["criterion"])()
+metric_funcs = [getattr(module_metric, met) for met in config["metrics"]]
 
-# # Build the trainer
-# device = utils.prepare_device(config["device"])
-# trainer = Trainer(
+# Build the trainer
+device = utils.prepare_device(config["device"])
+trainer = Trainer(
+    model,
+    criterion,
+    metric_funcs,
+    optimizer,
+    max_epochs=config["trainer"]["max_epochs"],
+    data_loader=train_loader,
+    validation_data_loader=val_loader,
+    device=device,
+    config=config,
+)
+
+# # Visualize the model
+# torchinfo.summary(
 #     model,
-#     criterion,
-#     metric_funcs,
-#     optimizer,
-#     max_epochs=config["trainer"]["max_epochs"],
-#     data_loader=train_loader,
-#     validation_data_loader=val_loader,
-#     device=device,
-#     config=config,
+#     [   trainset.input[: config["data_loader"]["batch_size"]].shape ],
+#     verbose=0,
+#     col_names=("input_size", "output_size", "num_params"),
 # )
 
-# # # Visualize the model
-# # torchinfo.summary(
-# #     model,
-# #     [   trainset.input[: config["data_loader"]["batch_size"]].shape ],
-# #     verbose=0,
-# #     col_names=("input_size", "output_size", "num_params"),
-# # )
+# Train the Model
+print("training model")
+model.to(device)
+trainer.fit()
 
-# # Train the Model
-# print("training model")
-# model.to(device)
-# trainer.fit()
+# Save the Model
+path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
+torch.save({
+            "model_state_dict" : model.state_dict(),
+            "training_std_mean" : std_mean,
+             }, path)
 
-# # Save the Model
-# path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
-# torch.save({
-#             "model_state_dict" : model.state_dict(),
-#             "training_std_mean" : std_mean,
-#              }, path)
+# Load the Model
+path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
 
-# # Load the Model
-# path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
+load_model_dict = torch.load(path)
 
-# load_model_dict = torch.load(path)
+state_dict = load_model_dict["model_state_dict"]
+training_std_mean = load_model_dict["training_std_mean"]
 
-# state_dict = load_model_dict["model_state_dict"]
-# training_std_mean = load_model_dict["training_std_mean"]
+model = TorchModel(
+    config=config["arch"],
+    target_mean=training_std_mean["trainset_target_mean"],
+    target_std=training_std_mean["trainset_target_std"],
+)
 
-# model = TorchModel(
-#     config=config["arch"],
-#     target_mean=training_std_mean["trainset_target_mean"],
-#     target_std=training_std_mean["trainset_target_std"],
-# )
+model.load_state_dict(state_dict)
+model.eval()
 
-# model.load_state_dict(state_dict)
-# model.eval()
+# Evaluate Training Metrics
+print(trainer.log.history.keys())
 
-# # Evaluate Training Metrics
-# print(trainer.log.history.keys())
+plt.figure(figsize=(20, 4))
+for i, m in enumerate(("loss", *config["metrics"])):
+    plt.subplot(1, 4, i + 1)
+    plt.plot(trainer.log.history["epoch"], trainer.log.history[m], label=m)
+    plt.plot(
+        trainer.log.history["epoch"], trainer.log.history["val_" + m], label="val_" + m
+    )
+    plt.axvline(
+       x=trainer.early_stopper.best_epoch, linestyle="--", color="k", linewidth=0.75
+    )
+    plt.title(m)
+    plt.legend()
+plt.tight_layout()
+plt.savefig(config["perlmutter_figure_dir"] + str(config["expname"]) + "/" + str(config["expname"]) + "training_metrics.png", format = 'png', dpi = 200) 
 
-# plt.figure(figsize=(20, 4))
-# for i, m in enumerate(("loss", *config["metrics"])):
-#     plt.subplot(1, 4, i + 1)
-#     plt.plot(trainer.log.history["epoch"], trainer.log.history[m], label=m)
-#     plt.plot(
-#         trainer.log.history["epoch"], trainer.log.history["val_" + m], label="val_" + m
-#     )
-#     plt.axvline(
-#        x=trainer.early_stopper.best_epoch, linestyle="--", color="k", linewidth=0.75
-#     )
-#     plt.title(m)
-#     plt.legend()
-# plt.tight_layout()
-# plt.savefig(config["perlmutter_figure_dir"] + str(config["expname"]) + "/" + str(config["expname"]) + "training_metrics.png", format = 'png', dpi = 200) 
+# ------------------------------ Model Inference ----------------------------------
 
-# # ------------------------------ Model Inference ----------------------------------
+with torch.inference_mode():
+    print(device)
+    output = model.predict(dataset=testset, batch_size=128, device=device) # The output is the batched SHASH distribution parameters
 
-# with torch.inference_mode():
-#     print(device)
-#     output = model.predict(dataset=testset, batch_size=128, device=device) # The output is the batched SHASH distribution parameters
+print(output[:20]) # look at a small sample of the output data
 
-# print(output[:20]) # look at a small sample of the output data
-
-# # Save Model Outputs
-# model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + 'network_SHASH_parameters.pkl'
-# analysis_metrics.save_pickle(output, model_output)
+# Save Model Outputs
+model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + 'network_SHASH_parameters.pkl'
+analysis_metrics.save_pickle(output, model_output)
 
 
 # # ------------------------------ Evaluate Network Predictions ----------------------------------
