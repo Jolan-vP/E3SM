@@ -10,7 +10,7 @@
     "perlmutter_figure_dir": "/pscratch/sd/p/plutzner/E3SM/saved/figures/",
     "model_dir": "/Users/C830793391/Documents/Research/E3SM/saved/models",
     "output_dir": "/Users/C830793391/Documents/Research/E3SM/saved/output",
-    "perlmutter_output_dir": "/pscratch/sd/p/plutzner/E3SM/", 
+    "perlmutter_output_dir": "/pscratch/sd/p/plutzner/E3SM/saved/output/", 
     "fig_dpi": 300,
 
     "metrics": [

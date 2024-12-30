@@ -157,10 +157,10 @@ class TorchModel(BaseModel):
         self.rescale_sigma = RescaleLayer(torch.tensor(1.0), torch.log(self.target_std))
         self.rescale_tau = RescaleLayer(torch.tensor(0.0), torch.tensor(1.0))
 
-        # if "gamma" in config.get("freeze_id", []):
-        #     self.rescale_gamma = RescaleLayer(torch.tensor(0.0), torch.tensor(0.0))
-        # else: 
-        #     self.rescale_gamma = RescaleLayer(torch.tensor(1.0), torch.tensor(0.0))
+        if "gamma" in config.get("freeze_id", []):
+            self.rescale_gamma = RescaleLayer(torch.tensor(0.0), torch.tensor(0.0))
+        else: 
+            self.rescale_gamma = RescaleLayer(torch.tensor(1.0), torch.tensor(0.0))
 
         # if "tau" in config.get("freeze_id", []):
         #     self.rescale_tau = RescaleLayer(torch.tensor(0.0), torch.tensor(0.0))
@@ -182,7 +182,7 @@ class TorchModel(BaseModel):
         )
 
     def forward(self, input):
-            
+    
         if self.config["type"] == "basicnn":
             x = self.layer1(input)
             x = F.relu(x)
@@ -205,10 +205,10 @@ class TorchModel(BaseModel):
             x = torch.stack((mu_out, sigma_out, gamma_out, tau_out), dim=-1)
 
         elif self.config["type"] == "cnn":
-            print(input.shape)
 
             # Configure Channel Dimension to be in position 1
-            x = torch.permute(input, [2, 0, 1])
+            # x = torch.permute(input, [2, 0, 1])
+            x = torch.permute(input, [0, 3, 1, 2])
             
             # x = self.pad_lons(input)
             x = F.pad(x, (self.pad_lons), mode = 'circular')
