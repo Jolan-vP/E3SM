@@ -34,7 +34,7 @@ class CustomData(torch.utils.data.Dataset):
         # front_nans = config["databuilder"]["front_cutoff"]
         # back_nans = config["databuilder"]["back_cutoff"]
 
-        # dict_data = open_data_file(data_file)
+        dict_data = open_data_file(data_file)
 
         # # If there are leading or ending nans, cut the inputs evenly so there are no longer nans
         # trimmed_data = {key: value[front_nans : -back_nans] for key, value in dict_data.items() }
@@ -61,11 +61,11 @@ class CustomData(torch.utils.data.Dataset):
         # input = input_filtered[smoothing_length:]
         # target = target_filtered[smoothing_length:]
 
-        input, target = universaldataloader(data_file, config, target_only = False)
+        # input, target = universaldataloader(data_file, config, target_only = False)
 
         # Ensure that the inputs and targets are now numpy arrays not xarray objects for the model
-        self.input = input.values
-        self.target= target.values
+        self.input = dict_data["x"].values
+        self.target= dict_data["y"].values
     
         assert not np.any(np.isnan(self.input))
         assert not np.any(np.isnan(self.target))
@@ -91,7 +91,7 @@ class CustomData(torch.utils.data.Dataset):
         )
     
 
-def universaldataloader(data_file, config, target_only = False): 
+def universaldataloader(data_file, config, target_only = False, repackage = False): 
     config_db = config["databuilder"]
     lagtime = config_db["lagtime"]
     smoothing_length = config_db["averaging_length"]
@@ -149,7 +149,18 @@ def universaldataloader(data_file, config, target_only = False):
         input = input_filtered[smoothing_length:]
         target = target_filtered[smoothing_length:]
 
-        return input, target 
+        if repackage == False:
+            return input, target 
+        
+        else: 
+
+            # data_dict = {'x':input, 'y': target}
+            # return data_dict
+            data_dict = xr.Dataset({
+            "x": (["time", "lat", "lon", "channel"], input.data),  # Adjust dimensions
+            "y": (["time"], target.data),
+            })
+            return data_dict
     
     elif target_only is True: 
         if selected_months != "None": 

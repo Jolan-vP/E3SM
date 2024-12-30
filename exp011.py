@@ -269,12 +269,12 @@ output = analysis_metrics.load_pickle(model_output)
 print(f"output shape: {output.shape}")
 
 # Open Target Data
-target = universaldataloader(s_dict_savename3, config, target_only = True)
+target = universaldataloader(s_dict_savename3, config, target_only = True, repackage = False)
 print(f"UDL target shape: {target.shape}")
 
 # Open Climatology Data: TRAINING DATA
 climatology_filename = s_dict_savename1
-climatology = universaldataloader(climatology_filename, config, target_only = True)
+climatology = universaldataloader(climatology_filename, config, target_only = True, repackage = False)
 print(f"UDL climatology shape {climatology.shape}")
 
 # Compare SHASH predictions to climatology histogram
@@ -334,7 +334,7 @@ if isinstance(prect_global, xr.DataArray):
 # average around seattle region 
 prect_regional = prect_regional.mean(dim=['lat', 'lon'])
 
-target_raw = universaldataloader(prect_regional, config, target_only = True)
+target_raw = universaldataloader(prect_regional, config, target_only = True, repackage = False)
 
 print(target_raw.shape)
 # [lagtime:]

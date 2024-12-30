@@ -30,6 +30,6 @@ def open_data_file(data_file):
     else:
         #assume datafile is a passed variable
         data = data_file
-        print("Data has been passed as variable rather than filename.")
+        print(f"Data passed directly as {type(data)} rather than filename.")
 
     return data
