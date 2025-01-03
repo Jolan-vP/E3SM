@@ -1,4 +1,4 @@
-{"expname": "exp010",
+{"expname": "exp014",
     "device": "cpu",
     "seed_list": [7],
 
@@ -8,7 +8,8 @@
     "local_inputs_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/",
     "figure_dir": "/Users/C830793391/Documents/Research/E3SM/saved/figures",
     "perlmutter_figure_dir": "/pscratch/sd/p/plutzner/E3SM/saved/figures/",
-    "model_dir": "/Users/C830793391/Documents/Research/E3SM/saved/models",
+    "model_dir": "/Users/C830793391/Documents/Research/E3SM/saved/models", 
+    "perlmutter_model_dir": "/pscratch/sd/p/plutzner/E3SM/saved/output/models/",
     "output_dir": "/Users/C830793391/Documents/Research/E3SM/saved/output",
     "perlmutter_output_dir": "/pscratch/sd/p/plutzner/E3SM/saved/output/", 
     "fig_dpi": 300,
@@ -74,12 +75,12 @@
     },
 
     "trainer": {
-        "max_epochs": 1000,
+        "max_epochs": 80,
         "save_dir": "/Users/C830793391/Documents/Research/E3SM/saved/",
         "perlmutter_save_dir": "/pscratch/sd/p/plutzner/E3SM/saved/models",
         "early_stopping":{
             "args":{
-                "patience": 80,
+                "patience": 30,
                 "min_delta": 0.0
             }
         }

@@ -1,4 +1,4 @@
-{"expname": "exp010",
+{"expname": "exp012",
     "device": "cpu",
     "seed_list": [7],
 
@@ -23,7 +23,7 @@
         
         "input_vars": ["PRECT", "TS"],
         "network_inputs": ["PRECT", "TS"],
-        "input_years": [1850, 2014],
+        "input_years": [1850, 1900],
         "input_region": "None",
         "input_mask": ["None"],
         "ensembles": ["ens1", "ens2", "ens3"],
@@ -33,8 +33,8 @@
         "target_months": "None",
         "averaging_length": 7,
         "lagtime": 14, 
-        "front_cutoff": 14, 
-        "back_cutoff": 14, 
+        "front_cutoff": 1, 
+        "back_cutoff": 40000, 
         "CRPS_tolerance": 1e-7
         
     }, 
@@ -53,16 +53,16 @@
         "circular_padding": [15, 15, 0, 0],
         "filters" : [32, 32], 
         "kernel_size": [3, 3],
-        "cnn_act": ["Tanh", "Tanh"],
+        "cnn_act": ["ReLU", "ReLU"],
 
         "hiddens_block": [10, 10],
-        "hiddens_block_in": [141120],
-        "hiddens_block_act": ["Tanh"],
+        "hiddens_block_in": [129600],
+        "hiddens_block_act": ["ReLU"],
         "hiddens_block_out": 10,
 
         "hiddens_final_in": 10,
         "hiddens_final_out": 4,
-        "hiddens_final_act": "Tanh"
+        "hiddens_final_act": "ReLU"
     }, 
 
     "optimizer": {

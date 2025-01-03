@@ -40,13 +40,11 @@ import analysis.calc_climatology as calc_climatology
 import analysis.CRPS as CRPS
 from databuilder.data_loader import universaldataloader
 
-
-
 # ------------------------------------------------------------------
 # Run CNN with all year round data to see what the overall predicted shash curves look like 
 # ------------------------------------------------------------------
 
-config = utils.get_config("exp010")
+config = utils.get_config("exp013")
 seed = config["seed_list"][0]
 
 torch.manual_seed(seed)
@@ -92,17 +90,20 @@ data = ClimateData(
 # d_test_xr = xr.Dataset(d_test_dict)
 
 # # # Saving training data as NetCDF
-s_dict_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_train_" + str(config["databuilder"]["input_years"][0]) + "-" + str(config["databuilder"]["input_years"][1]) + ".nc"
+# s_dict_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_train_" + str(config["databuilder"]["input_years"][0]) + "-" + str(config["databuilder"]["input_years"][1]) + ".nc"
+s_dict_trainfn = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp007_d_train_1850-1900.nc'
 # d_train_xr.to_netcdf(s_dict_trainfn)
 # print("Saved Training Data as NetCDF")
 
 # # # Saving validation data as NetCDF
-s_dict_valfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_val_" + str(config["databuilder"]["input_years"][0]) + "-" + str(config["databuilder"]["input_years"][1]) + ".nc"
+# s_dict_valfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_val_" + str(config["databuilder"]["input_years"][0]) + "-" + str(config["databuilder"]["input_years"][1]) + ".nc"
+s_dict_valfn = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp007_d_val_1850-1900.nc'
 # d_val_xr.to_netcdf(s_dict_valfn)
 # print("Saved Validation Data as NetCDF")
 
 # # # Saving testing data as NetCDF
-s_dict_testfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_test" + str(config["databuilder"]["input_years"][0]) + "-" + str(config["databuilder"]["input_years"][1]) + ".nc"
+# s_dict_testfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_test" + str(config["databuilder"]["input_years"][0]) + "-" + str(config["databuilder"]["input_years"][1]) + ".nc"
+s_dict_testfn = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp007_d_test_1850-1900.nc'
 # d_test_xr.to_netcdf(s_dict_testfn)
 # print("Saved Testing Data as NetCDF")
 
@@ -129,19 +130,29 @@ test_dat = xr.open_dataset(s_dict_testfn)
 # --------------- Perform Data Loader Manipulations BEFORE DataLoader Class (?) ----------
 
 train_dat_trimmed = universaldataloader(train_dat, config, target_only = False, repackage = True)
+trimmed_trainfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "train_dat.nc"
+train_dat_trimmed.to_netcdf(trimmed_trainfn)
+print(f"Data saved to {trimmed_trainfn}")
+
 val_dat_trimmed = universaldataloader(val_dat, config, target_only = False, repackage = True)
+trimmed_valfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "val_dat.nc"
+val_dat_trimmed.to_netcdf(trimmed_valfn)
+print(f"Data saved to {trimmed_valfn}")
+
 test_dat_trimmed = universaldataloader(test_dat, config, target_only = False, repackage = True)
+trimmed_testfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "test_dat.nc"
+test_dat_trimmed.to_netcdf(trimmed_testfn)
+print(f"Data saved to {trimmed_testfn}")
 
 # # ----------- Model Training ----------------------------------
 
 # Setup the Data
-trainset = data_loader.CustomData(train_dat_trimmed, config)
-valset = data_loader.CustomData(val_dat_trimmed, config)
-testset = data_loader.CustomData(test_dat_trimmed, config)
+trainset = data_loader.CustomData(trimmed_trainfn, config)
+valset = data_loader.CustomData(trimmed_valfn, config)
+testset = data_loader.CustomData(trimmed_testfn, config)
 # trainset = data_loader.CustomData(s_dict_trainfn, config)
 # valset = data_loader.CustomData(s_dict_valfn, config)
 # testset = data_loader.CustomData(s_dict_testfn, config)
-
 
 
 train_loader = torch.utils.data.DataLoader(
@@ -251,7 +262,7 @@ with torch.inference_mode():
 print(output[:20]) # look at a small sample of the output data
 
 # Save Model Outputs
-model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + 'network_SHASH_parameters.pkl'
+model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + '_network_SHASH_parameters.pkl'
 analysis_metrics.save_pickle(output, model_output)
 
 
@@ -266,7 +277,7 @@ analysis_metrics.save_pickle(output, model_output)
 # # -------------------------------------------------------------------
 
 # # Open Model Outputs
-# model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + 'network_SHASH_parameters.pkl'
+# model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + '_network_SHASH_parameters.pkl'
 # output = analysis_metrics.load_pickle(model_output)
 # print(f"output shape: {output.shape}")
 

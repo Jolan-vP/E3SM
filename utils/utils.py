@@ -9,9 +9,11 @@ get_config(exp_name)
 """
 import json
 import pandas as pd
+import xarray as xr
 import torch
 import numpy as np
 import calendar
+import cftime
 from datetime import date, timedelta
 
 def get_config(exp_name):
@@ -44,12 +46,15 @@ def prepare_device(device="mps"):
             print("Warning: MPS device not found." "Training will be performed on CPU.")
             device = torch.device("cpu")
     elif device == "cpu":
-        print("somwhere device = cpu")
+        print("device = cpu")
         device = torch.device("cpu")
     else:
         raise NotImplementedError
 
     return device
+
+def is_consecutive(lst):
+    return all(b-a == 1 for a, b in zip(lst, lst[1:]))
 
 def trim_nans(data_dict):
     """
@@ -173,10 +178,10 @@ def specifydates(target_months, lagtime):
     input_end_date = format_date(input_end_obj.month, input_end_obj.day)
 
     # Print the results
-    # print("Target Start:", target_start_date)  # e.g., '04-01'
-    # print("Input Start:", input_start_date)    # e.g., '03-18'
-    # print("Target End:", target_end_date)      # e.g., '09-30'
-    # print("Input End:", input_end_date)        # e.g., '09-16'
+    print("Target Start:", target_start_date)  # e.g., '04-01'
+    print("Input Start:", input_start_date)    # e.g., '03-18'
+    print("Target End:", target_end_date)      # e.g., '09-30'
+    print("Input End:", input_end_date)        # e.g., '09-16'
 
     return target_start_date, target_end_date, input_start_date, input_end_date
 
@@ -204,17 +209,32 @@ def filter_months(selected_months, lagtime, input=None, target=None):
         # Adjust input selection based on lagtime
         _, _, input_start_date, input_end_date = specifydates(selected_months, lagtime)
         
+ 
         print(input_start_date)
         input_start_month = int(input_start_date[1:2])  # First two characters -> month
         input_start_day = int(input_start_date[3:])    # Characters after '-' -> day
         input_end_month = int(input_end_date[1:2])      # First two characters -> month
         input_end_day = int(input_end_date[3:])    
 
-        input_condition = (
-        ((input.time.dt.month == input_start_month) & (input.time.dt.day >= input_start_day)) | 
-        ((input.time.dt.month == input_end_month) & (input.time.dt.day <= input_end_day)) | 
-        ((input.time.dt.month > input_start_month) & (input.time.dt.month < input_end_month))
-        )
+        # FOR WHEN THE INPUT MONTHS ARE CONTAINED WITHIN ONE YEAR: 
+        if is_consecutive(selected_months):
+            print(f"Months are consecutive")
+            input_condition = (
+            ((input.time.dt.month == input_start_month) & (input.time.dt.day >= input_start_day)) | 
+            ((input.time.dt.month == input_end_month) & (input.time.dt.day <= input_end_day)) | 
+            ((input.time.dt.month > input_start_month) & (input.time.dt.month < input_end_month))
+            )
+        else: # FOR WHEN THE INPUT MONTHS SPAN ACROSS JANUARY 1ST 
+            print(f"Months span New Year")
+            input_condition = (
+            # Dates from input start month to end of the year
+            ((input.time.dt.month == input_start_month) & (input.time.dt.day >= input_start_day)) |
+            ((input.time.dt.month > input_start_month) & (input.time.dt.month <= 12)) |
+
+            # Dates from the start of the next year to the input end date
+            ((input.time.dt.month == input_end_month) & (input.time.dt.day <= input_end_day)) |
+            ((input.time.dt.month >= 1) & (input.time.dt.month < input_end_month))
+            )
 
         input_filtered = input.sel(time = input_condition, drop=True)
 
@@ -229,3 +249,51 @@ def filter_months(selected_months, lagtime, input=None, target=None):
         target_filtered = target.where(months.isin(selected_months), drop=True)
 
         return target_filtered
+    
+
+
+
+
+
+
+    # GARBAGE LAND: ------------------------------------------
+
+
+    # # Exclude the first and last year from the filtered dates
+    #     all_years = target["time"].dt.year
+    #     min_year = all_years.min().item()
+    #     max_year = all_years.max().item()
+
+    #     filtered_dates = target_filtered["time"].values
+    #     filtered_dates_pd = [
+    #         pd.Timestamp(date.strftime("%Y-%m-%d")) if isinstance(date, cftime.datetime) else pd.Timestamp(date)
+    #         for date in filtered_dates
+    #         if min_year < (date.year if isinstance(date, cftime.datetime) else pd.Timestamp(date).year) < max_year ]
+     
+
+    #     # filtered_dates_pd = [
+    #     #     date for date in filtered_dates_pd if min_year < date.year < max_year
+    #     # ]
+
+    #     shifted_dates_forinput = [pd.Timestamp(date) + pd.Timedelta(days=-lagtime) for date in filtered_dates_pd]
+
+    #     # Convert cftime to pandas-compatible timestamps if necessary
+    #     def convert_to_timestamp(time):
+    #         if isinstance(time, cftime.datetime):
+    #             return pd.Timestamp(time.strftime("%Y-%m-%d"))
+    #         return pd.Timestamp(time)
+
+    #     # Convert the time bounds
+    #     input_time_bounds = (
+    #         convert_to_timestamp(input["time"].min().item()),
+    #         convert_to_timestamp(input["time"].max().item())
+    #     )
+
+    #     # Filter valid shifted dates within the time bounds
+    #     valid_shifted_dates = [
+    #         date for date in shifted_dates_forinput
+    #         if input_time_bounds[0] <= date <= input_time_bounds[1] ]
+        
+    #     input_conditioned = xr.concat([
+    #         input.sel(time = date) for date in valid_shifted_dates], dim = "time")
+        

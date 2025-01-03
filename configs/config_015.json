@@ -1,4 +1,4 @@
-{"expname": "exp010",
+{"expname": "exp015",
     "device": "cpu",
     "seed_list": [7],
 
@@ -8,7 +8,8 @@
     "local_inputs_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/",
     "figure_dir": "/Users/C830793391/Documents/Research/E3SM/saved/figures",
     "perlmutter_figure_dir": "/pscratch/sd/p/plutzner/E3SM/saved/figures/",
-    "model_dir": "/Users/C830793391/Documents/Research/E3SM/saved/models",
+    "model_dir": "/Users/C830793391/Documents/Research/E3SM/saved/models", 
+    "perlmutter_model_dir": "/pscratch/sd/p/plutzner/E3SM/saved/models/",
     "output_dir": "/Users/C830793391/Documents/Research/E3SM/saved/output",
     "perlmutter_output_dir": "/pscratch/sd/p/plutzner/E3SM/saved/output/", 
     "fig_dpi": 300,
@@ -29,8 +30,8 @@
         "ensembles": ["ens1", "ens2", "ens3"],
         "ensemble_codes": ["0101", "0151", "0201"],
         "target_var": "PRECT",
-        "target_region": [46.5, 49, 241.5, 243.5],
-        "target_months": "None",
+        "target_region": [41.5, 49.5, 240.5, 244.5],
+        "target_months": [12, 1, 2],
         "averaging_length": 7,
         "lagtime": 14, 
         "front_cutoff": 14, 
@@ -47,22 +48,21 @@
     }, 
 
     "arch": {
-        "type": "cnn",
-        "n_inputchannel": 2,
+        "type": "basicnn",
+        "n_inputchannel": 1,
+
+        "basic_act": ["ReLU", "ReLU"],
         "freeze_id" : ["tau"],
-        "circular_padding": [15, 15, 0, 0],
-        "filters" : [32, 32], 
-        "kernel_size": [3, 3],
-        "cnn_act": ["Tanh", "Tanh"],
+        "hiddens_block_in": [3, 3],
+        "hiddens_block_out": 6,
+        "hiddens_block_act": ["ReLU", "ReLU"],
 
-        "hiddens_block": [10, 10],
-        "hiddens_block_in": [141120],
-        "hiddens_block_act": ["Tanh"],
-        "hiddens_block_out": 10,
-
-        "hiddens_final_in": 10,
+        "hiddens_final_in": 6,
         "hiddens_final_out": 4,
-        "hiddens_final_act": "Tanh"
+        "hiddens_final_act": "ReLU",
+        "filters" : [0], 
+        "cnn_act": ["None"], 
+        "kernel_size": [0]
     }, 
 
     "optimizer": {
@@ -74,12 +74,12 @@
     },
 
     "trainer": {
-        "max_epochs": 1000,
+        "max_epochs": 2000,
         "save_dir": "/Users/C830793391/Documents/Research/E3SM/saved/",
         "perlmutter_save_dir": "/pscratch/sd/p/plutzner/E3SM/saved/models",
         "early_stopping":{
             "args":{
-                "patience": 80,
+                "patience": 50,
                 "min_delta": 0.0
             }
         }

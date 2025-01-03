@@ -42,8 +42,8 @@ from analysis.analysis_metrics import climatologyCDF
 import utils
 
 ### SET PROPER CONFIG FILE ################################
-exp = "exp008"
-config = utils.get_config(exp)
+# exp = "exp013"
+# config = utils.get_config(exp)
 ###########################################################
 
 # def crps_basic_numeric(pred, target_y, bins, single_cdf=False):

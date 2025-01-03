@@ -1,4 +1,4 @@
-{"expname": "exp010",
+{"expname": "exp017",
     "device": "cpu",
     "seed_list": [7],
 
@@ -9,6 +9,7 @@
     "figure_dir": "/Users/C830793391/Documents/Research/E3SM/saved/figures",
     "perlmutter_figure_dir": "/pscratch/sd/p/plutzner/E3SM/saved/figures/",
     "model_dir": "/Users/C830793391/Documents/Research/E3SM/saved/models",
+    "perlmutter_model_dir": "/pscratch/sd/p/plutzner/E3SM/saved/models/",
     "output_dir": "/Users/C830793391/Documents/Research/E3SM/saved/output",
     "perlmutter_output_dir": "/pscratch/sd/p/plutzner/E3SM/saved/output/", 
     "fig_dpi": 300,
@@ -23,14 +24,14 @@
         
         "input_vars": ["PRECT", "TS"],
         "network_inputs": ["PRECT", "TS"],
-        "input_years": [1850, 2014],
+        "input_years": [1850, 1900],
         "input_region": "None",
         "input_mask": ["None"],
         "ensembles": ["ens1", "ens2", "ens3"],
         "ensemble_codes": ["0101", "0151", "0201"],
         "target_var": "PRECT",
         "target_region": [46.5, 49, 241.5, 243.5],
-        "target_months": "None",
+        "target_months": [12, 1, 2],
         "averaging_length": 7,
         "lagtime": 14, 
         "front_cutoff": 14, 
@@ -74,12 +75,12 @@
     },
 
     "trainer": {
-        "max_epochs": 1000,
+        "max_epochs": 1,
         "save_dir": "/Users/C830793391/Documents/Research/E3SM/saved/",
-        "perlmutter_save_dir": "/pscratch/sd/p/plutzner/E3SM/saved/models",
+        "perlmutter_model_dir": "/pscratch/sd/p/plutzner/E3SM/saved/models",
         "early_stopping":{
             "args":{
-                "patience": 80,
+                "patience": 30,
                 "min_delta": 0.0
             }
         }

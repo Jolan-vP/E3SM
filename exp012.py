@@ -46,7 +46,7 @@ from databuilder.data_loader import universaldataloader
 # Run CNN with all year round data to see what the overall predicted shash curves look like 
 # ------------------------------------------------------------------
 
-config = utils.get_config("exp010")
+config = utils.get_config("exp012")
 seed = config["seed_list"][0]
 
 torch.manual_seed(seed)
@@ -62,6 +62,7 @@ print(f"xarray version = {xr.__version__}")
 print(f"pytorch version = {torch.__version__}")
 
 # https://github.com/victoresque/pytorch-template/tree/master
+
 
 # ---------------- Data Processing ----------------------------------
 
@@ -92,17 +93,20 @@ data = ClimateData(
 # d_test_xr = xr.Dataset(d_test_dict)
 
 # # # Saving training data as NetCDF
-s_dict_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_train_" + str(config["databuilder"]["input_years"][0]) + "-" + str(config["databuilder"]["input_years"][1]) + ".nc"
+# s_dict_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_train_" + str(config["databuilder"]["input_years"][0]) + "-" + str(config["databuilder"]["input_years"][1]) + ".nc"
+s_dict_trainfn = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp010_d_train_1850-2014.nc'
 # d_train_xr.to_netcdf(s_dict_trainfn)
 # print("Saved Training Data as NetCDF")
 
 # # # Saving validation data as NetCDF
-s_dict_valfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_val_" + str(config["databuilder"]["input_years"][0]) + "-" + str(config["databuilder"]["input_years"][1]) + ".nc"
+# s_dict_valfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_val_" + str(config["databuilder"]["input_years"][0]) + "-" + str(config["databuilder"]["input_years"][1]) + ".nc"
+s_dict_valfn = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp010_d_val_1850-2014.nc'
 # d_val_xr.to_netcdf(s_dict_valfn)
 # print("Saved Validation Data as NetCDF")
 
 # # # Saving testing data as NetCDF
-s_dict_testfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_test" + str(config["databuilder"]["input_years"][0]) + "-" + str(config["databuilder"]["input_years"][1]) + ".nc"
+# s_dict_testfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_test" + str(config["databuilder"]["input_years"][0]) + "-" + str(config["databuilder"]["input_years"][1]) + ".nc"
+s_dict_testfn = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp010_d_test1850-2014.nc'
 # d_test_xr.to_netcdf(s_dict_testfn)
 # print("Saved Testing Data as NetCDF")
 
@@ -129,19 +133,29 @@ test_dat = xr.open_dataset(s_dict_testfn)
 # --------------- Perform Data Loader Manipulations BEFORE DataLoader Class (?) ----------
 
 train_dat_trimmed = universaldataloader(train_dat, config, target_only = False, repackage = True)
+trimmed_trainfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "train_dat.nc"
+train_dat_trimmed.to_netcdf(trimmed_trainfn)
+print(f"Data saved to {trimmed_trainfn}")
+
 val_dat_trimmed = universaldataloader(val_dat, config, target_only = False, repackage = True)
+trimmed_valfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "val_dat.nc"
+val_dat_trimmed.to_netcdf(trimmed_valfn)
+print(f"Data saved to {trimmed_valfn}")
+
 test_dat_trimmed = universaldataloader(test_dat, config, target_only = False, repackage = True)
+trimmed_testfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "test_dat.nc"
+test_dat_trimmed.to_netcdf(trimmed_testfn)
+print(f"Data saved to {trimmed_testfn}")
 
 # # ----------- Model Training ----------------------------------
 
 # Setup the Data
-trainset = data_loader.CustomData(train_dat_trimmed, config)
-valset = data_loader.CustomData(val_dat_trimmed, config)
-testset = data_loader.CustomData(test_dat_trimmed, config)
+trainset = data_loader.CustomData(trimmed_trainfn, config)
+valset = data_loader.CustomData(trimmed_valfn, config)
+testset = data_loader.CustomData(trimmed_testfn, config)
 # trainset = data_loader.CustomData(s_dict_trainfn, config)
 # valset = data_loader.CustomData(s_dict_valfn, config)
 # testset = data_loader.CustomData(s_dict_testfn, config)
-
 
 
 train_loader = torch.utils.data.DataLoader(
