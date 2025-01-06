@@ -507,7 +507,7 @@ def multi_input_data_organizer(config, fn1, fn2, fn3, MJO=False, ENSO = False, o
             dims=["time", "variables"],  # Specify the dimensions
             coords={
                 "time": d_train_target['y'].coords["time"],  # Use the 'time' from 'y'
-                "variables": ["RMM1", "RMM2", "ENSO"] 
+                "variables": ["ENSO", "RMM1", "RMM2"] 
             },
             attrs = {"description" : "Input dataset with time metadata from target precip netcdf"}
         )

@@ -44,9 +44,14 @@ def identify_nino_phases(nino34_index, config, threshold=0.4, window=6, lagtime 
             # Mark neutral for all other periods
             phase_array[i:i + window, 2] = 1
 
+    # open original training dataset: 
+    train_ds = filemethods.get_netcdf_da(str(config['perlmutter_data_dir']) + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+    train_ds = train_ds.sel(time = slice("1850", "2014"))
+    # train_ds = train_ds.sel(time = slice("str(config["databuilder"]["input_years"][0]"), str(config["databuilder"]["input_years"][1])))
+
     days_in_month = [28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 31] 
     days_in_month_array = np.tile(days_in_month, 165) # repeat days in month pattern to match SST data
-    index_array_daily = np.full([60225, 3], np.nan, dtype=float)
+    index_array_daily = np.full([len(train_ds.time), 3], np.nan, dtype=float)
 
     current_day = 0
     # Interpolate each column of 'ones' and 'zeros' from monthly to daily according to the 355-no leap calendar
@@ -57,10 +62,6 @@ def identify_nino_phases(nino34_index, config, threshold=0.4, window=6, lagtime 
             current_day += days_in_month_array[row]
 
     # save index array daily as an xarray dataset with a time component (same as the original dataset)
-    # open original dataset: 
-    train_ds = filemethods.get_netcdf_da(str(config['perlmutter_data_dir']) + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-    train_ds = train_ds.sel(time = slice(str(config["databuilder"]["input_years"][0]), str(config["databuilder"]["input_years"][1])))
-
     # Assign daily index array the same time coordinate from the original dataset
     index_array_dailyXR = xr.DataArray(
         index_array_daily, 

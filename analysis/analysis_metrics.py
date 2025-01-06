@@ -109,7 +109,7 @@ def discard_plot(networkoutput, target, crps_scores, crps_climatology_scores, co
     ax1.plot(percentiles, avg_crps, color=color)
     ax1.tick_params(axis='y', labelcolor=color)
     ax1.axhline(y=crps_climatology_scores.mean(), color='grey', linestyle='--', label='CRPS Mean Climatology')
-    ax1.set_ylim([1.05, 1.205])
+    # ax1.set_ylim([1.05, 1.205])
     ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
     # legend
     ax1.legend(loc = 'lower left')

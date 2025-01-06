@@ -126,6 +126,13 @@ class TorchModel(BaseModel):
             config["hiddens_block_act"],
             in_features=config["hiddens_block_in"], )
 
+            if "tau" in config.get("freeze_id", []):
+                self.rescale_tau = RescaleLayer(torch.tensor(0.0), torch.tensor(0.0))
+            else:
+                self.rescale_tau = RescaleLayer(torch.tensor(1.0), torch.tensor(0.0))
+
+        elif self.config["type"] == "basicnn":  
+            self.rescale_tau = RescaleLayer(torch.tensor(0.0), torch.tensor(1.0))
 
         if target_mean is None:
             self.target_mean = torch.tensor(0.0)
@@ -155,18 +162,11 @@ class TorchModel(BaseModel):
         # Rescaling layers
         self.rescale_mu = RescaleLayer(self.target_std, self.target_mean)
         self.rescale_sigma = RescaleLayer(torch.tensor(1.0), torch.log(self.target_std))
-        # self.rescale_tau = RescaleLayer(torch.tensor(0.0), torch.tensor(1.0))
 
         if "gamma" in config.get("freeze_id", []):
             self.rescale_gamma = RescaleLayer(torch.tensor(0.0), torch.tensor(0.0))
         else: 
             self.rescale_gamma = RescaleLayer(torch.tensor(1.0), torch.tensor(0.0))
-
-        if "tau" in config.get("freeze_id", []):
-            self.rescale_tau = RescaleLayer(torch.tensor(0.0), torch.tensor(0.0))
-        else:
-            self.rescale_tau = RescaleLayer(torch.tensor(1.0), torch.tensor(0.0))
-
 
         # Output layers
         self.output_mu = torch.nn.Linear(

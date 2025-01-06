@@ -80,121 +80,121 @@ data = ClimateData(
 
 # ----PROCESS E3SM DATA----------------------------------------------
 
-d_train, d_val, d_test = data.fetch_data()
+# d_train, d_val, d_test = data.fetch_data()
 
-print(d_train['y'].shape)
-target_savename1 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_train_TARGET_1850-2014.pkl"
-with gzip.open(target_savename1, "wb") as fp:
-    pickle.dump(d_train, fp)
+# print(d_train['y'].shape)
+# target_savename1 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_train_TARGET_1850-2014.pkl"
+# with gzip.open(target_savename1, "wb") as fp:
+#     pickle.dump(d_train, fp)
 
-target_savename2 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_val_TARGET_1850-2014.pkl"
-with gzip.open(target_savename2, "wb") as fp:
-    pickle.dump(d_val, fp)
+# target_savename2 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_val_TARGET_1850-2014.pkl"
+# with gzip.open(target_savename2, "wb") as fp:
+#     pickle.dump(d_val, fp)
 
-target_savename3 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_test_TARGET_1850-2014.pkl"
-with gzip.open(target_savename3, "wb") as fp:
-    pickle.dump(d_test, fp)
+# target_savename3 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_test_TARGET_1850-2014.pkl"
+# with gzip.open(target_savename3, "wb") as fp:
+#     pickle.dump(d_test, fp)
 
-s_dict_train, s_dict_val, s_dict_test = multi_input_data_organizer(config, target_savename1, target_savename2, target_savename3, MJO = True, ENSO = True, other = False)
+# s_dict_train, s_dict_val, s_dict_test = multi_input_data_organizer(config, target_savename1, target_savename2, target_savename3, MJO = True, ENSO = True, other = False)
 
-# confirm metadata is stored for both input and target
-print(f" s_dict_train INPUT time {s_dict_train['x'].time}")
-print(f" s_dict_train TARGET time {s_dict_train['y'].time}")
+# # confirm metadata is stored for both input and target
+# print(f" s_dict_train INPUT time {s_dict_train['x'].time}")
+# print(f" s_dict_train TARGET time {s_dict_train['y'].time}")
 
-# confirm input structure: 
-print(f"input shape: {s_dict_train['x'].shape}")
+# # confirm input structure: 
+# print(f"input shape: {s_dict_train['x'].shape}")
 
 # --- SAVE FULL INPUT DATA---------
 
 s_dict_savename1 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_train.pkl"
-with gzip.open(s_dict_savename1, "wb") as fp:
-    pickle.dump(s_dict_train, fp)
+# with gzip.open(s_dict_savename1, "wb") as fp:
+    # pickle.dump(s_dict_train, fp)
 
 s_dict_savename2 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_val.pkl"
-with gzip.open(s_dict_savename2, "wb") as fp:
-    pickle.dump(s_dict_val, fp)
+# with gzip.open(s_dict_savename2, "wb") as fp:
+    # pickle.dump(s_dict_val, fp)
 
 s_dict_savename3 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_test.pkl"
-with gzip.open(s_dict_savename3, "wb") as fp:
-    pickle.dump(s_dict_test, fp)
+# with gzip.open(s_dict_savename3, "wb") as fp:
+    # pickle.dump(s_dict_test, fp)
 
 # ------- TRIM INPUT DATA ---------
-train_dat_trimmed = universaldataloader(s_dict_savename1, config, target_only = False, repackage = True)
+# train_dat_trimmed = universaldataloader(s_dict_savename1, config, target_only = False, repackage = True)
 trimmed_trainfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "train_dat.nc"
-train_dat_trimmed.to_netcdf(trimmed_trainfn)
-print(f"Data saved to {trimmed_trainfn}")
+# train_dat_trimmed.to_netcdf(trimmed_trainfn)
+# print(f"Data saved to {trimmed_trainfn}")
 
-val_dat_trimmed = universaldataloader(s_dict_savename2, config, target_only = False, repackage = True)
+# val_dat_trimmed = universaldataloader(s_dict_savename2, config, target_only = False, repackage = True)
 trimmed_valfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "val_dat.nc"
-val_dat_trimmed.to_netcdf(trimmed_valfn)
-print(f"Data saved to {trimmed_valfn}")
+# val_dat_trimmed.to_netcdf(trimmed_valfn)
+# print(f"Data saved to {trimmed_valfn}")
 
-test_dat_trimmed = universaldataloader(s_dict_savename3, config, target_only = False, repackage = True)
+# test_dat_trimmed = universaldataloader(s_dict_savename3, config, target_only = False, repackage = True)
 trimmed_testfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "test_dat.nc"
-test_dat_trimmed.to_netcdf(trimmed_testfn)
-print(f"Data saved to {trimmed_testfn}")
+# test_dat_trimmed.to_netcdf(trimmed_testfn)
+# print(f"Data saved to {trimmed_testfn}")
 
 # ---OPEN DATA---------------------------------------------
 
-train_dat = open_data_file(trimmed_trainfn)
-val_dat = open_data_file(trimmed_valfn)
-test_dat = open_data_file(trimmed_testfn)
+# train_dat = open_data_file(trimmed_trainfn)
+# val_dat = open_data_file(trimmed_valfn)
+# test_dat = open_data_file(trimmed_testfn)
 
-# Confirm data looks correct: 
-print(f"Train_dat inputs: {train_dat['x'][-24:].values}")
-print(f"val_dat target: {val_dat['y'][-24:].values}")
+# # Confirm data looks correct: 
+# print(f"Train_dat inputs: {train_dat['x'][-24:].values}")
+# print(f"val_dat target: {val_dat['y'][-24:].values}")
 
 # --- Setup the Data for Training ---------------------------------------------
-lagtime = config["databuilder"]["lagtime"] 
-smoothing_length = config["databuilder"]["averaging_length"]
+# lagtime = config["databuilder"]["lagtime"] 
+# smoothing_length = config["databuilder"]["averaging_length"]
 
-trainset = data_loader.CustomData(trimmed_trainfn, config)
-valset = data_loader.CustomData(trimmed_valfn, config)
-testset = data_loader.CustomData(trimmed_testfn, config)
+# trainset = data_loader.CustomData(trimmed_trainfn, config)
+# valset = data_loader.CustomData(trimmed_valfn, config)
+# testset = data_loader.CustomData(trimmed_testfn, config)
 
-train_loader = torch.utils.data.DataLoader(
-    trainset,
-    batch_size=config["data_loader"]["batch_size"],
-    shuffle=True,
-    drop_last=False,
-)
+# train_loader = torch.utils.data.DataLoader(
+#     trainset,
+#     batch_size=config["data_loader"]["batch_size"],
+#     shuffle=True,
+#     drop_last=False,
+# )
 
-val_loader = torch.utils.data.DataLoader(
-    valset,
-    batch_size=config["data_loader"]["batch_size"],
-    shuffle=False,
-    drop_last=False,
-)
+# val_loader = torch.utils.data.DataLoader(
+#     valset,
+#     batch_size=config["data_loader"]["batch_size"],
+#     shuffle=False,
+#     drop_last=False,
+# )
 
 # --- Setup the Model ----------------------------------------------------
 
-model = TorchModel(
-    config=config["arch"],
-    target_mean=trainset.target.mean(axis=0),
-    target_std=trainset.target.std(axis=0),
-)
-std_mean = {"trainset_target_mean": trainset.target.mean(axis=0), "trainset_target_std": trainset.target.std(axis=0)}
+# model = TorchModel(
+#     config=config["arch"],
+#     target_mean=trainset.target.mean(axis=0),
+#     target_std=trainset.target.std(axis=0),
+# )
+# std_mean = {"trainset_target_mean": trainset.target.mean(axis=0), "trainset_target_std": trainset.target.std(axis=0)}
 
-model.freeze_layers(freeze_id="tau")
-optimizer = getattr(torch.optim, config["optimizer"]["type"])(
-    model.parameters(), **config["optimizer"]["args"]
-)
-criterion = getattr(module_loss, config["criterion"])()
-metric_funcs = [getattr(module_metric, met) for met in config["metrics"]]
+# model.freeze_layers(freeze_id="tau")
+# optimizer = getattr(torch.optim, config["optimizer"]["type"])(
+#     model.parameters(), **config["optimizer"]["args"]
+# )
+# criterion = getattr(module_loss, config["criterion"])()
+# metric_funcs = [getattr(module_metric, met) for met in config["metrics"]]
 
-# Build the trainer
-device = utils.prepare_device(config["device"])
-trainer = Trainer(
-    model,
-    criterion,
-    metric_funcs,
-    optimizer,
-    max_epochs=config["trainer"]["max_epochs"],
-    data_loader=train_loader,
-    validation_data_loader=val_loader,
-    device=device,
-    config=config,
-)
+# # Build the trainer
+# device = utils.prepare_device(config["device"])
+# trainer = Trainer(
+#     model,
+#     criterion,
+#     metric_funcs,
+#     optimizer,
+#     max_epochs=config["trainer"]["max_epochs"],
+#     data_loader=train_loader,
+#     validation_data_loader=val_loader,
+#     device=device,
+#     config=config,
+# )
 
 # # # Visualize the model
 # torchinfo.summary(
@@ -204,16 +204,16 @@ trainer = Trainer(
 #     col_names=("input_size", "output_size", "num_params"),
 # )
 
-# TRAIN THE MODEL
-model.to(device)
-trainer.fit()
+# # TRAIN THE MODEL
+# model.to(device)
+# trainer.fit()
 
-# Save the Model
-path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + ".pth"
-torch.save({
-            "model_state_dict" : model.state_dict(),
-            "training_std_mean" : std_mean,
-             }, path)
+# # Save the Model
+# path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + ".pth"
+# torch.save({
+#             "model_state_dict" : model.state_dict(),
+#             "training_std_mean" : std_mean,
+#              }, path)
 
 
 # # Load the Model
@@ -253,7 +253,7 @@ torch.save({
 # plt.tight_layout()
 # plt.savefig(config["perlmutter_figure_dir"] + str(config["expname"]) + "/" + str(config["expname"]) + "training_metrics.png", format = 'png', dpi = 200) 
 
-# # ------------------------------ Model Inference ----------------------------------
+# ------------------------------ Model Inference ----------------------------------
 
 # with torch.inference_mode():
 #     print(device)
@@ -265,108 +265,108 @@ torch.save({
 # model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + '_network_SHASH_parameters.pkl'
 # analysis_metrics.save_pickle(output, model_output)
 
-# # ------------------------------ Evaluate Network Predictions ----------------------------------
+# ------------------------------ Evaluate Network Predictions ----------------------------------
 
-# lagtime = config["databuilder"]["lagtime"] 
-# smoothing_length = config["databuilder"]["averaging_length"]  
-# selected_months = config["databuilder"]["target_months"]
-# front_cutoff = config["databuilder"]["front_cutoff"] 
-# back_cutoff = config["databuilder"]["back_cutoff"] 
+lagtime = config["databuilder"]["lagtime"] 
+smoothing_length = config["databuilder"]["averaging_length"]  
+selected_months = config["databuilder"]["target_months"]
+front_cutoff = config["databuilder"]["front_cutoff"] 
+back_cutoff = config["databuilder"]["back_cutoff"] 
 
-# # -------------------------------------------------------------------
+# -------------------------------------------------------------------
 
-# # Open Model Outputs
-# model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + '_network_SHASH_parameters.pkl'
-# output = analysis_metrics.load_pickle(model_output)
-# print(f"output shape: {output.shape}")
+# Open Model Outputs
+model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + '_network_SHASH_parameters.pkl'
+output = analysis_metrics.load_pickle(model_output)
+print(f"output shape: {output.shape}")
 
-# # Open Target Data
-# target = universaldataloader(s_dict_savename3, config, target_only = True, repackage = False)
-# print(f"UDL target shape: {target.shape}")
+# Open Target Data
+target = universaldataloader(s_dict_savename3, config, target_only = True, repackage = False)
+print(f"UDL target shape: {target.shape}")
 
-# # Open Climatology Data: TRAINING DATA
-# climatology_filename = s_dict_savename1
-# climatology = universaldataloader(climatology_filename, config, target_only = True, repackage = False)
-# print(f"UDL climatology shape {climatology.shape}")
+# Open Climatology Data: TRAINING DATA
+climatology_filename = s_dict_savename1
+climatology = universaldataloader(climatology_filename, config, target_only = True, repackage = False)
+print(f"UDL climatology shape {climatology.shape}")
 
-# # Compare SHASH predictions to climatology histogram
-# x = np.arange(-10, 12, 0.01)
+# Compare SHASH predictions to climatology histogram
+x = np.arange(-10, 12, 0.01)
 
-# p = calc_climatology.deriveclimatology(output, climatology, x, number_of_samples=50, config=config, climate_data = False)
+p = calc_climatology.deriveclimatology(output, climatology, x, number_of_samples=50, config=config, climate_data = False)
 
-# # # # ----------------------------- CRPS ----------------------------------
-# x_wide = np.arange(-15, 15, 0.01)
+# # # ----------------------------- CRPS ----------------------------------
+x_wide = np.arange(-15, 15, 0.01)
 
-# # # Comput CRPS for climatology
-# # CRPS_climatology = CRPS.calculateCRPS(output, target, x_wide, config, climatology)
+# Comput CRPS for climatology
+CRPS_climatology = CRPS.calculateCRPS(output, target, x_wide, config, climatology)
 
-# # # Compute CRPS for all predictions 
-# # CRPS_network = CRPS.calculateCRPS(output, target, x_wide, config, climatology = None)
+# Compute CRPS for all predictions 
+CRPS_network = CRPS.calculateCRPS(output, target, x_wide, config, climatology = None)
 
-# # analysis_metrics.save_pickle(CRPS_climatology, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "CRPS_climatology_values.pkl")
-# # analysis_metrics.save_pickle(CRPS_network, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "CRPS_network_values.pkl")
+analysis_metrics.save_pickle(CRPS_climatology, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "CRPS_climatology_values.pkl")
+analysis_metrics.save_pickle(CRPS_network, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "CRPS_network_values.pkl")
 
-# CRPS_climatology = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "CRPS_climatology_values.pkl")
-# CRPS_network = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "CRPS_network_values.pkl")
+CRPS_climatology = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "CRPS_climatology_values.pkl")
+CRPS_network = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "CRPS_network_values.pkl")
 
-# # Compare CRPS scores for climatology vs predictions (Is network better than climatology on average?)
-# CRPS.CRPScompare(CRPS_network, CRPS_climatology, config)
+# Compare CRPS scores for climatology vs predictions (Is network better than climatology on average?)
+CRPS.CRPScompare(CRPS_network, CRPS_climatology, config)
 
 # # ----------------------------- ENSO -------------------------------------------
 
-# # Calculate ENSO Indices from Monthly ENSO Data (Po-Lun): 
-# monthlyENSO = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/ENSO_ne30pg2_HighRes/nino.member0201.nc')
-# Nino34 = monthlyENSO.nino34
-# # select a slice of only certain years
-# Nino34 = Nino34.sel(time=slice ( str(config["databuilder"]["input_years"][0]) + '-01-01', str(config["databuilder"]["input_years"][1]) + '-12-31'))
-# Nino34 = Nino34.values
+# Calculate ENSO Indices from Monthly ENSO Data (Po-Lun): 
+monthlyENSO = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/ENSO_ne30pg2_HighRes/nino.member0201.nc')
+Nino34 = monthlyENSO.nino34
+# select a slice of only certain years
+Nino34 = Nino34.sel(time=slice ( str(config["databuilder"]["input_years"][0]) + '-01-01', str(config["databuilder"]["input_years"][1]) + '-12-31'))
+Nino34 = Nino34.values
 
-# enso_indices_daily = ENSO_indices_calculator.identify_nino_phases(Nino34, config, threshold=0.4, window=6, lagtime = lagtime, smoothing_length = smoothing_length)
+enso_indices_daily = ENSO_indices_calculator.identify_nino_phases(Nino34, config, threshold=0.4, window=6, lagtime = lagtime, smoothing_length = smoothing_length)
 
-# # Separate CRPS scores by ENSO phases 
-# elnino, lanina, neutral, CRPS_elnino, CRPS_lanina, CRPS_neutral = analysis.ENSO_indices_calculator.ENSO_CRPS(enso_indices_daily, CRPS_network, climatology, x, output, config)
+# Separate CRPS scores by ENSO phases 
+elnino, lanina, neutral, CRPS_elnino, CRPS_lanina, CRPS_neutral = analysis.ENSO_indices_calculator.ENSO_CRPS(enso_indices_daily, CRPS_network, climatology, x, output, config)
 
-# # Compare Distributions? 
-# p = calc_climatology.deriveclimatology(output, climatology, x, number_of_samples=50, config=config, climate_data = False)
+# Compare Distributions? 
+p = calc_climatology.deriveclimatology(output, climatology, x, number_of_samples=50, config=config, climate_data = False)
 
-# # Calculate precipitation anomalies during each ENSO Phase + Plot -----------------
+# Calculate precipitation anomalies during each ENSO Phase + Plot -----------------
 
-# # Open raw target data
-# nc_file = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc')
-# prect_global = nc_file.PRECT.sel(time = slice(str(config["databuilder"]["input_years"][0]) + '-01-01', str(config["databuilder"]["input_years"][1])))
+# Open raw target data
+nc_file = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc')
+prect_global = nc_file.PRECT.sel(time = slice(str(config["databuilder"]["input_years"][0]) + '-01-01', str(config["databuilder"]["input_years"][1])))
 
-# min_lat, max_lat = config["databuilder"]["target_region"][:2]
-# min_lon, max_lon = config["databuilder"]["target_region"][2:]
+min_lat, max_lat = config["databuilder"]["target_region"][:2]
+min_lon, max_lon = config["databuilder"]["target_region"][2:]
 
-# if isinstance(prect_global, xr.DataArray):
-#     mask_lon = (prect_global.lon >= min_lon) & (prect_global.lon <= max_lon)
-#     mask_lat = (prect_global.lat >= min_lat) & (prect_global.lat <= max_lat)
-#     prect_regional = prect_global.where(mask_lon & mask_lat, drop=True)
+if isinstance(prect_global, xr.DataArray):
+    mask_lon = (prect_global.lon >= min_lon) & (prect_global.lon <= max_lon)
+    mask_lat = (prect_global.lat >= min_lat) & (prect_global.lat <= max_lat)
+    prect_regional = prect_global.where(mask_lon & mask_lat, drop=True)
 
-# # average around seattle region 
-# prect_regional = prect_regional.mean(dim=['lat', 'lon'])
+# average around seattle region 
+prect_regional = prect_regional.mean(dim=['lat', 'lon'])
 
-# target_raw = universaldataloader(prect_regional, config, target_only = True, repackage = False)
+target_raw = universaldataloader(prect_regional, config, target_only = True, repackage = False)
 
-# print(target_raw.shape)
-# # [lagtime:]
-# # prect_regional = prect_regional[smoothing_length:]
-# # front_nans = config["databuilder"]["front_cutoff"]
-# # back_nans = config["databuilder"]["back_cutoff"]
-# # # Cut raw dataset according to data-loader methods: front/back nans
-# # target_raw = target_raw[front_nans : -(back_nans -1)]
+print(target_raw.shape)
+# [lagtime:]
+# prect_regional = prect_regional[smoothing_length:]
+# front_nans = config["databuilder"]["front_cutoff"]
+# back_nans = config["databuilder"]["back_cutoff"]
+# # Cut raw dataset according to data-loader methods: front/back nans
+# target_raw = target_raw[front_nans : -(back_nans -1)]
 
-# target_raw = target_raw * 86400 * 1000  # Convert to mm/day
+target_raw = target_raw * 86400 * 1000  # Convert to mm/day
 
-# print(f"mean raw target: {np.mean(target_raw)}")
-# print(f"median raw target: {np.median(target_raw)}")
-# print(f"std raw target: {np.std(target_raw)}")
+print(f"mean raw target: {np.mean(target_raw)}")
+print(f"median raw target: {np.median(target_raw)}")
+print(f"std raw target: {np.std(target_raw)}")
 
-# # Discard plot of CRPS vs IQR Percentile, CRPS vs Anomalies & true precip
-# sample_index = analysis_metrics.discard_plot(output, target_raw, CRPS_network, CRPS_climatology, config, target_type = 'raw')
-# sample_index = analysis_metrics.discard_plot(output, target, CRPS_network, CRPS_climatology, config, target_type = 'anomalous')
+# Discard plot of CRPS vs IQR Percentile, CRPS vs Anomalies & true precip
+sample_index = analysis_metrics.discard_plot(output, target_raw, CRPS_network, CRPS_climatology, config, target_type = 'raw')
+sample_index = analysis_metrics.discard_plot(output, target, CRPS_network, CRPS_climatology, config, target_type = 'anomalous')
 
-# anomalies_by_ENSO_phase = analysis_metrics.anomalies_by_ENSO_phase(elnino, lanina, neutral, target, target_raw, sample_index, config)
+anomalies_by_ENSO_phase = analysis_metrics.anomalies_by_ENSO_phase(elnino, lanina, neutral, target, target_raw, sample_index, config)
 
 # # Spread-Skill Ratio
 # # spread_skill_plot = analysis_metrics.spread_skill(output, target, config)

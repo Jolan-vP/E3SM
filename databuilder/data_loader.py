@@ -33,14 +33,14 @@ class CustomData(torch.utils.data.Dataset):
         self.input = dict_data["x"].values
         self.target= dict_data["y"].values
 
-        # normalize all data at once: 
-        i_std = np.std(self.input, axis = 0)
-        t_std = np.std(self.target, axis = 0)
-        i_mean = np.mean(self.input, axis = 0)
-        t_mean = np.mean(self.target, axis = 0)
+        # # normalize all data at once: 
+        # i_std = np.std(self.input, axis = 0)
+        # t_std = np.std(self.target, axis = 0)
+        # i_mean = np.mean(self.input, axis = 0)
+        # t_mean = np.mean(self.target, axis = 0)
         
-        self.input = (self.input - i_mean) / i_std
-        self.target = (self.target - t_mean) / t_std
+        # self.input = (self.input - i_mean) / i_std
+        # self.target = (self.target - t_mean) / t_std
 
         assert not np.any(np.isnan(self.input))
         assert not np.any(np.isnan(self.target))
@@ -106,8 +106,8 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
 
     else: 
         # assume that if it is not a dictionary passed, then only a target is passed with no inputs
-        target = target[front_nans : -back_nans]
-        target = data[lagtime:]
+        target = data[front_nans : -back_nans]
+        target = target[lagtime:]
 
     # use assigned target and input variables as inputs for filter months function to select target months
     if target_only is False: 

@@ -24,7 +24,7 @@
         
         "input_vars": ["PRECT", "TS"],
         "network_inputs": ["PRECT", "TS"],
-        "input_years": [1850, 1854],
+        "input_years": [1850, 2014],
         "input_region": "None",
         "input_mask": ["None"],
         "ensembles": ["ens1", "ens2", "ens3"],

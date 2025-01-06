@@ -208,27 +208,27 @@ model.to(device)
 trainer.fit()
 
 # Save the Model
-# path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
-# torch.save({
-#             "model_state_dict" : model.state_dict(),
-#             "training_std_mean" : std_mean,
-#              }, path)
+path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
+torch.save({
+            "model_state_dict" : model.state_dict(),
+            "training_std_mean" : std_mean,
+             }, path)
 
 # Load the Model
-# path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
+path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
 
-# load_model_dict = torch.load(path)
+load_model_dict = torch.load(path)
 
-# state_dict = load_model_dict["model_state_dict"]
-# training_std_mean = load_model_dict["training_std_mean"]
+state_dict = load_model_dict["model_state_dict"]
+training_std_mean = load_model_dict["training_std_mean"]
 
-# model = TorchModel(
-#     config=config["arch"],
-#     target_mean=training_std_mean["trainset_target_mean"],
-#     target_std=training_std_mean["trainset_target_std"],
-# )
+model = TorchModel(
+    config=config["arch"],
+    target_mean=training_std_mean["trainset_target_mean"],
+    target_std=training_std_mean["trainset_target_std"],
+)
 
-# model.load_state_dict(state_dict)
+model.load_state_dict(state_dict)
 model.eval()
 
 # Evaluate Training Metrics
