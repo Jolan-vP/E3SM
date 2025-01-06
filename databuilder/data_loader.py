@@ -19,6 +19,7 @@ from utils.utils import filter_months
 import calendar
 from datetime import date, timedelta
 import matplotlib as plt
+from databuilder.sampleclass import SampleDict
 
 class CustomData(torch.utils.data.Dataset):
     """
@@ -26,47 +27,21 @@ class CustomData(torch.utils.data.Dataset):
     """
 
     def __init__(self, data_file, config):
-        # # config = config["databuilder"]
-        # lagtime = config["databuilder"]["lagtime"]
-        # smoothing_length = config["databuilder"]["averaging_length"]
-        # selected_months = config["databuilder"]["target_months"]
-        # input_years = config["databuilder"]["input_years"]
-        # front_nans = config["databuilder"]["front_cutoff"]
-        # back_nans = config["databuilder"]["back_cutoff"]
-
+    
         dict_data = open_data_file(data_file)
 
-        # # If there are leading or ending nans, cut the inputs evenly so there are no longer nans
-        # trimmed_data = {key: value[front_nans : -back_nans] for key, value in dict_data.items() }
-     
-        # # Cut data to ensure proper lag & alignment: 
-        # # Remove Lag-length BACK nans from Input
-        # input = trimmed_data["x"][:-lagtime]
-        
-        # # Remove Lag-length FRONT nans from Target
-        # target = trimmed_data["y"][lagtime:]
-   
-        # if selected_months is not None: 
-        #     input_filtered, target_filtered = filter_months(selected_months, lagtime, input = input, target = target)
-        # else: 
-        #     print("Using input and target data from all year round")
-
-        # # # Check to make sure data has been properly filtered! 
-        # # input_filtered_times = input_filtered.time.values
-        # # fn = str(config["perlmutter_figure_dir"]) + str(config["expname"]) + "/filtered_input_times_CHECK.pkl"
-        # # with gzip.open(fn, "wb") as fp:
-        # #     pickle.dump(input_filtered_times, fp)
-
-        # # Remove Smoothing-length FRONT nans from BOTH Input and Target
-        # input = input_filtered[smoothing_length:]
-        # target = target_filtered[smoothing_length:]
-
-        # input, target = universaldataloader(data_file, config, target_only = False)
-
-        # Ensure that the inputs and targets are now numpy arrays not xarray objects for the model
         self.input = dict_data["x"].values
         self.target= dict_data["y"].values
-    
+
+        # normalize all data at once: 
+        i_std = np.std(self.input, axis = 0)
+        t_std = np.std(self.target, axis = 0)
+        i_mean = np.mean(self.input, axis = 0)
+        t_mean = np.mean(self.target, axis = 0)
+        
+        self.input = (self.input - i_mean) / i_std
+        self.target = (self.target - t_mean) / t_std
+
         assert not np.any(np.isnan(self.input))
         assert not np.any(np.isnan(self.target))
 
@@ -81,8 +56,9 @@ class CustomData(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
 
-        input = self.input[idx, ...]
-
+        input = torch.tensor(self.input[idx, ...])
+        # input = self.input[idx, ...]
+        
         target = self.target[idx]
         
         return (
@@ -103,9 +79,6 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
     # print(type(data))
     # print(data['x'].shape)
     # print(data['y'].shape)
-
-    input_vars = config_db["input_vars"]
-    target_vars = config_db["target_var"]
 
     # assign nan-less and lagged input and target variables: 
     if isinstance(data, xr.Dataset):
@@ -139,27 +112,37 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
     # use assigned target and input variables as inputs for filter months function to select target months
     if target_only is False: 
         if selected_months != "None": 
+            print(f"Filtering by months: {selected_months}")
             input_filtered, target_filtered = filter_months(selected_months, lagtime, input = input, target = target)
+            print(f"input filtered shape: {input_filtered.shape}")
+            print(f"target filtered shape: {target_filtered.shape}")
         else: 
             print("Using input and target data from all year round")
             input_filtered = input
             target_filtered = target
 
         # Remove Smoothing-length FRONT nans from BOTH Input and Target
-        input = input_filtered[smoothing_length:]
-        target = target_filtered[smoothing_length:]
+        input_mod_final = input_filtered[smoothing_length:]
+        target_mod_final = target_filtered[smoothing_length:]
 
         if repackage == False:
             return input, target 
         
         else: 
-
-            # data_dict = {'x':input, 'y': target}
-            # return data_dict
-            data_dict = xr.Dataset({
-            "x": (["time", "lat", "lon", "channel"], input.data),  # Adjust dimensions
-            "y": (["time"], target.data),
-            })
+            if len(data['x'].shape)  == 4: 
+                data_dict = xr.Dataset({
+                    "x": (["time", "lat", "lon", "channel"], input_mod_final.data),  
+                    "y": (["time"], target_mod_final.data),
+                    })
+            elif len(data['x'].shape) == 2: 
+                data_dict = xr.Dataset({
+                    "x": (["time", "channel"], input_mod_final.data),  
+                    "y": (["time"], target_mod_final.data),
+                    })
+            else: 
+                print("Input data shape is not expected. Must be either Map or Simple Inputs")
+                raise ValueError
+            
             return data_dict
     
     elif target_only is True: 
@@ -174,8 +157,6 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
 
         return target
     
-
-
 
 
 # GARBAGE HEAP: -----------------------------------------

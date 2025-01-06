@@ -44,7 +44,7 @@ from databuilder.data_loader import universaldataloader
 # Run CNN with all year round data to see what the overall predicted shash curves look like 
 # ------------------------------------------------------------------
 
-config = utils.get_config("exp018")
+config = utils.get_config("exp019")
 seed = config["seed_list"][0]
 
 torch.manual_seed(seed)
@@ -150,6 +150,10 @@ print(f"Data saved to {trimmed_testfn}")
 trainset = data_loader.CustomData(trimmed_trainfn, config)
 valset = data_loader.CustomData(trimmed_valfn, config)
 testset = data_loader.CustomData(trimmed_testfn, config)
+# trainset = data_loader.CustomData(s_dict_trainfn, config)
+# valset = data_loader.CustomData(s_dict_valfn, config)
+# testset = data_loader.CustomData(s_dict_testfn, config)
+
 
 train_loader = torch.utils.data.DataLoader(
     trainset,
@@ -208,27 +212,27 @@ model.to(device)
 trainer.fit()
 
 # Save the Model
-# path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
-# torch.save({
-#             "model_state_dict" : model.state_dict(),
-#             "training_std_mean" : std_mean,
-#              }, path)
+path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
+torch.save({
+            "model_state_dict" : model.state_dict(),
+            "training_std_mean" : std_mean,
+             }, path)
 
 # Load the Model
-# path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
+path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
 
-# load_model_dict = torch.load(path)
+load_model_dict = torch.load(path)
 
-# state_dict = load_model_dict["model_state_dict"]
-# training_std_mean = load_model_dict["training_std_mean"]
+state_dict = load_model_dict["model_state_dict"]
+training_std_mean = load_model_dict["training_std_mean"]
 
-# model = TorchModel(
-#     config=config["arch"],
-#     target_mean=training_std_mean["trainset_target_mean"],
-#     target_std=training_std_mean["trainset_target_std"],
-# )
+model = TorchModel(
+    config=config["arch"],
+    target_mean=training_std_mean["trainset_target_mean"],
+    target_std=training_std_mean["trainset_target_std"],
+)
 
-# model.load_state_dict(state_dict)
+model.load_state_dict(state_dict)
 model.eval()
 
 # Evaluate Training Metrics
@@ -249,7 +253,7 @@ for i, m in enumerate(("loss", *config["metrics"])):
 plt.tight_layout()
 plt.savefig(config["perlmutter_figure_dir"] + str(config["expname"]) + "/" + str(config["expname"]) + "training_metrics.png", format = 'png', dpi = 200) 
 
-# # ------------------------------ Model Inference ----------------------------------
+# ------------------------------ Model Inference ----------------------------------
 
 with torch.inference_mode():
     print(device)

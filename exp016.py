@@ -32,6 +32,7 @@ import model.loss as module_loss
 import model.metric as module_metric
 from databuilder.data_generator import multi_input_data_organizer
 import databuilder.data_loader as data_loader
+from utils.filemethods import open_data_file
 from trainer.trainer import Trainer
 from model.build_model import TorchModel
 from base.base_model import BaseModel
@@ -81,6 +82,7 @@ data = ClimateData(
 
 d_train, d_val, d_test = data.fetch_data()
 
+print(d_train['y'].shape)
 target_savename1 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_train_TARGET_1850-2014.pkl"
 with gzip.open(target_savename1, "wb") as fp:
     pickle.dump(d_train, fp)
@@ -134,92 +136,84 @@ print(f"Data saved to {trimmed_testfn}")
 
 # ---OPEN DATA---------------------------------------------
 
-# with gzip.open(trimmed_trainfn, "rb") as obj1:
-#     train_dat = pickle.load(obj1)
-# obj1.close()
+train_dat = open_data_file(trimmed_trainfn)
+val_dat = open_data_file(trimmed_valfn)
+test_dat = open_data_file(trimmed_testfn)
 
-# with gzip.open(trimmed_valfn, "rb") as obj2:
-#     val_dat = pickle.load(obj2)
-# obj2.close()
-
-# with gzip.open(trimmed_testfn, "rb") as obj3:
-#     test_dat = pickle.load(obj3)
-# obj3.close()
-
-# # Confirm data looks correct: 
-# print(f"Train_dat inputs: {train_dat['x'][500:510].values}")
-# print(f"val_dat target: {val_dat['y'][500:510].values}")
+# Confirm data looks correct: 
+print(f"Train_dat inputs: {train_dat['x'][-24:].values}")
+print(f"val_dat target: {val_dat['y'][-24:].values}")
 
 # --- Setup the Data for Training ---------------------------------------------
-# lagtime = config["databuilder"]["lagtime"] 
-# smoothing_length = config["databuilder"]["averaging_length"]
+lagtime = config["databuilder"]["lagtime"] 
+smoothing_length = config["databuilder"]["averaging_length"]
 
-# trainset = data_loader.CustomData(s_dict_savename1, config)
-# valset = data_loader.CustomData(s_dict_savename2, config)
-# testset = data_loader.CustomData(s_dict_savename3, config)
+trainset = data_loader.CustomData(trimmed_trainfn, config)
+valset = data_loader.CustomData(trimmed_valfn, config)
+testset = data_loader.CustomData(trimmed_testfn, config)
 
-# train_loader = torch.utils.data.DataLoader(
-#     trainset,
-#     batch_size=config["data_loader"]["batch_size"],
-#     shuffle=True,
-#     drop_last=False,
-# )
+train_loader = torch.utils.data.DataLoader(
+    trainset,
+    batch_size=config["data_loader"]["batch_size"],
+    shuffle=True,
+    drop_last=False,
+)
 
-# val_loader = torch.utils.data.DataLoader(
-#     valset,
-#     batch_size=config["data_loader"]["batch_size"],
-#     shuffle=False,
-#     drop_last=False,
-# )
+val_loader = torch.utils.data.DataLoader(
+    valset,
+    batch_size=config["data_loader"]["batch_size"],
+    shuffle=False,
+    drop_last=False,
+)
 
 # --- Setup the Model ----------------------------------------------------
 
-# model = TorchModel(
-#     config=config["arch"],
-#     target_mean=trainset.target.mean(axis=0),
-#     target_std=trainset.target.std(axis=0),
-# )
-# std_mean = {"trainset_target_mean": trainset.target.mean(axis=0), "trainset_target_std": trainset.target.std(axis=0)}
+model = TorchModel(
+    config=config["arch"],
+    target_mean=trainset.target.mean(axis=0),
+    target_std=trainset.target.std(axis=0),
+)
+std_mean = {"trainset_target_mean": trainset.target.mean(axis=0), "trainset_target_std": trainset.target.std(axis=0)}
 
-# model.freeze_layers(freeze_id="tau")
-# optimizer = getattr(torch.optim, config["optimizer"]["type"])(
-#     model.parameters(), **config["optimizer"]["args"]
-# )
-# criterion = getattr(module_loss, config["criterion"])()
-# metric_funcs = [getattr(module_metric, met) for met in config["metrics"]]
+model.freeze_layers(freeze_id="tau")
+optimizer = getattr(torch.optim, config["optimizer"]["type"])(
+    model.parameters(), **config["optimizer"]["args"]
+)
+criterion = getattr(module_loss, config["criterion"])()
+metric_funcs = [getattr(module_metric, met) for met in config["metrics"]]
 
-# # Build the trainer
-# device = utils.prepare_device(config["device"])
-# trainer = Trainer(
+# Build the trainer
+device = utils.prepare_device(config["device"])
+trainer = Trainer(
+    model,
+    criterion,
+    metric_funcs,
+    optimizer,
+    max_epochs=config["trainer"]["max_epochs"],
+    data_loader=train_loader,
+    validation_data_loader=val_loader,
+    device=device,
+    config=config,
+)
+
+# # # Visualize the model
+# torchinfo.summary(
 #     model,
-#     criterion,
-#     metric_funcs,
-#     optimizer,
-#     max_epochs=config["trainer"]["max_epochs"],
-#     data_loader=train_loader,
-#     validation_data_loader=val_loader,
-#     device=device,
-#     config=config,
+#     [   trainset.input[: config["data_loader"]["batch_size"]].shape ],
+#     verbose=1,
+#     col_names=("input_size", "output_size", "num_params"),
 # )
 
-# # # # Visualize the model
-# # torchinfo.summary(
-# #     model,
-# #     [   trainset.input[: config["data_loader"]["batch_size"]].shape ],
-# #     verbose=1,
-# #     col_names=("input_size", "output_size", "num_params"),
-# # )
+# TRAIN THE MODEL
+model.to(device)
+trainer.fit()
 
-# # TRAIN THE MODEL
-# model.to(device)
-# trainer.fit()
-
-# # Save the Model
-# path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + ".pth"
-# torch.save({
-#             "model_state_dict" : model.state_dict(),
-#             "training_std_mean" : std_mean,
-#              }, path)
+# Save the Model
+path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + ".pth"
+torch.save({
+            "model_state_dict" : model.state_dict(),
+            "training_std_mean" : std_mean,
+             }, path)
 
 
 # # Load the Model

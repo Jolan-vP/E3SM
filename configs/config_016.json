@@ -1,4 +1,4 @@
-{"expname": "exp015",
+{"expname": "exp016",
     "device": "cpu",
     "seed_list": [7],
 
@@ -24,18 +24,18 @@
         
         "input_vars": ["PRECT", "TS"],
         "network_inputs": ["PRECT", "TS"],
-        "input_years": [1850, 2014],
+        "input_years": [1850, 1860],
         "input_region": "None",
         "input_mask": ["None"],
         "ensembles": ["ens1", "ens2", "ens3"],
         "ensemble_codes": ["0101", "0151", "0201"],
         "target_var": "PRECT",
         "target_region": [30.5, 34.5, 138.5, 213.5],
-        "target_months": [12, 1, 2],
+        "target_months": "None",
         "averaging_length": 7,
         "lagtime": 14, 
-        "front_cutoff": 14, 
-        "back_cutoff": 14, 
+        "front_cutoff": 121, 
+        "back_cutoff": 47, 
         "CRPS_tolerance": 1e-7
         
     }, 
@@ -74,7 +74,7 @@
     },
 
     "trainer": {
-        "max_epochs": 2000,
+        "max_epochs": 3000,
         "save_dir": "/Users/C830793391/Documents/Research/E3SM/saved/",
         "perlmutter_save_dir": "/pscratch/sd/p/plutzner/E3SM/saved/models",
         "early_stopping":{

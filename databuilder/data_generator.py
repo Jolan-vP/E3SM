@@ -27,6 +27,7 @@ import xarray as xr
 import pickle
 import gzip
 import utils
+import math
 import time
 import utils.filemethods as filemethods
 from databuilder.sampleclass import SampleDict
@@ -84,7 +85,7 @@ class ClimateData:
                 test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
         
         print(self.config["input_years"])
-        print(train_ds.time)
+
         train_ds = train_ds.sel(time = slice(str(self.config["input_years"][0]), str(self.config["input_years"][1])))
         validate_ds = validate_ds.sel(time = slice(str(self.config["input_years"][0]), str(self.config["input_years"][1])))
         test_ds = test_ds.sel(time = slice(str(self.config["input_years"][0]), str(self.config["input_years"][1])))
@@ -131,7 +132,7 @@ class ClimateData:
                     da = ds[var]
                     print("Isolating variables from Dataset")
 
-                    if var == "PRECT": ## CONVERTING PRECIP TO MM/DAY!
+                    if var == "PRECT" and int(math.floor(math.log10(da[10, 30, 120].values))) < - 5 : ## CONVERTING PRECIP TO MM/DAY!
                         da_copy = da.copy()
 
                         inc = 45 # 45 degree partitions in longitude to split up the data
@@ -145,7 +146,8 @@ class ClimateData:
                             mm_day = da_copy[:,:,start:end] * 10**3 * 86400
                             da[:, :, start:end] = mm_day
 
-                        print(f"da post incremental unit conversion: {da.values[500:505]}")
+                        assert -150 < da[10, 30, 120].values < 150
+                        # print(f"da post incremental unit conversion: {da[500:505].values}")
                     else:
                         pass
 
@@ -166,9 +168,9 @@ class ClimateData:
                 
                 f_dict[key] = ds[self.config["target_var"]]
                 
-                print(f"magnitude of target pre-unit conversion: {f_dict[key][500:505].values}")
+                # print(f"magnitude of target pre-unit conversion: {f_dict[key][500:505].values}")
                 
-                if self.config["target_var"] == "PRECT": # CONVERTING PRECIP TO MM/DAY! Must do this twice, one for input PRECT, one for Target PRECT
+                if self.config["target_var"] == "PRECT" and int(math.floor(math.log10(f_dict[key][10, 30, 120].values))) < - 5: # CONVERTING PRECIP TO MM/DAY!
                     da_copy = f_dict[key].copy()
                     
                     inc = 45 # 45 degree partitions in longitude to split up the data
@@ -182,7 +184,8 @@ class ClimateData:
                         mm_day = da_copy[:,:,start:end] * 10**3 * 86400
                         f_dict[key][:, :, start:end] = mm_day
 
-                print(f"magnitude of target post unit-conversion: {f_dict[key][500:505].values}") 
+                assert -150 < f_dict[key][10, 30, 120].values < 150
+                # print(f"magnitude of target post unit-conversion: {f_dict[key][500:505].values}") 
                 
                 # EXTRACT TARGET LOCATION
                 if len(self.config["target_region"]) == 2: # Specific city / lat lon location
@@ -397,39 +400,10 @@ def multi_input_data_organizer(config, fn1, fn2, fn3, MJO=False, ENSO = False, o
         test  {x: RMM1, RMM2, Nino34}, 
               {y: target}
     """
+    start_year = config["databuilder"]["input_years"][0]
+    end_year = config["databuilder"]["input_years"][1]
 
-    # MJO Principle Components --------------------------------------------
-    if MJO == True: 
-        print("Opening MJO PCs")
-        MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/MJOarray.leadnans.1850-2014.pkl'
-        with gzip.open(MJOsavename, "rb") as obj:
-            MJOarray = pickle.load(obj)
-        obj.close()
-    else:
-        pass
-        print(MJOarray)
-
-    # ENSO Indices / Temperature Time Series of Nino3.4 -------------------
-    if ENSO == True: 
-        print("Opening high-res Nino34 Data")
-        ninox_array = np.zeros([60225, 3])
-        for iens, ens in enumerate(config["databuilder"]["ensemble_codes"]):
-            fpath = config["perlmutter_data_dir"] + "presaved/ENSO_ne30pg2_HighRes/nino.member" + str(ens) + ".daily.nc"
-            ninox = filemethods.get_netcdf_da(fpath)
-            nino34 = ninox.nino34.values
-            # add 30 new days of nans to the beginning of the array such that the total array length is now 30 values longer:
-            nan_array = np.zeros(30)
-            ninox_array[:, iens] = np.concatenate((nan_array, nino34), axis = 0)
-        # print(ninox_array.shape)
-            # 30 values missing (first month) from 60225 total samples due to backward rolling average and monthly time step configuration
-            # By starting at index 31, the ninox array should begin on 0 days since 1850-01-01 rather than 31 days since 1850-01-01
-    else:
-        pass
-
-    # OTHER INPUT:  -------------------------------
-    # if other == True: 
-    #     print("Opening OTHER")
-   
+    
     # OPEN PREPROCESSED TARGET INPUT  ------------------------------- 
 
     print("Opening Seattle-area PRECIP target data for TRAINING")
@@ -443,15 +417,74 @@ def multi_input_data_organizer(config, fn1, fn2, fn3, MJO=False, ENSO = False, o
     print("Opening Seattle-area PRECIP target data for TESTING")
     with gzip.open(fn3, "rb") as obj:
         d_test_target = pickle.load(obj)
+
+    da_length = len(d_train_target['y'])
     
     # print(f"time training target data from processed pkl : {d_train_target['y'].time}")
 
+    # MJO Principle Components --------------------------------------------
+
+    if MJO == True: 
+        print("Opening MJO PCs")
+        MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/MJOarray.leadnans.1850-2014.pkl'
+        with gzip.open(MJOsavename, "rb") as obj:
+            MJOarray = pickle.load(obj)
+        obj.close()
+
+        if start_year == 1850:
+            # Due to EOF processing (by Po-Lun) the first four months of MJO dataset are NANS
+            nan_rows = MJOarray[:120]
+
+            # Filter rows based on input years
+            filtered_rows = MJOarray[120:][(MJOarray[120:, 4, 0] >= start_year) & (MJOarray[120:, 4, 0] <= end_year)]
+
+            # Combine NaN rows and filtered rows
+            filtered_MJOarray = np.vstack((nan_rows, filtered_rows))
+        else:
+            # Directly filter all rows by input years
+            filtered_MJOarray = MJOarray[(MJOarray[:, 4, 0] >= start_year) & (MJOarray[:, 4, 0] <= end_year)]
+
+        # Replace the original MJOarray with the filtered version
+        MJOarray = filtered_MJOarray
+
+        # Optional: Print the filtered array or its shape for verification
+        print(f"Filtered MJOarray shape: {MJOarray.shape}")
+    else:
+        pass
+
+    # ENSO Indices / Temperature Time Series of Nino3.4 -------------------
+    if ENSO == True: 
+        print("Opening high-res Nino34 Data")
+        ninox_array = np.zeros([da_length, 3])
+        for iens, ens in enumerate(config["databuilder"]["ensemble_codes"]):
+            fpath = config["perlmutter_data_dir"] + "presaved/ENSO_ne30pg2_HighRes/nino.member" + str(ens) + ".daily.nc"
+            ninox = filemethods.get_netcdf_da(fpath)
+            ninox = ninox.sel(time = slice(str(start_year), str(end_year)))
+            nino34 = ninox.nino34.values
+
+            if start_year ==1850: 
+                # add 30 new days of nans to the beginning of the array such that the total array length is now 30 values longer:
+                nan_array = np.zeros(31)
+                ninox_array[:, iens] = np.concatenate((nan_array, nino34), axis = 0)
+            else: 
+                ninox_array[:, iens] = nino34
+        print(f"filtered ninox_array shape: {ninox_array.shape}")
+            # 30 values missing (first month) from 60225 total samples due to backward rolling average and monthly time step configuration
+            # By starting at index 31, the ninox array should begin on 0 days since 1850-01-01 rather than 31 days since 1850-01-01
+    else:
+        pass
+
+    # OTHER INPUT:  -------------------------------
+    # if other == True: 
+    #     print("Opening OTHER")
+   
     # Create Input and Target Arrays ------------------------------------------------------------
     
     # NO LAGGING OCCURS IN THIS CODE
     print("Combining Input and target data")
 
-    inputda = np.zeros([60225, 3, 3])
+    inputda = np.zeros([da_length, 3, 3])
+
     target_dict = {0: d_train_target, 1: d_val_target, 2: d_test_target}
     
     for key, value in target_dict.items():

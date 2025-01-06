@@ -209,34 +209,36 @@ def filter_months(selected_months, lagtime, input=None, target=None):
         # Adjust input selection based on lagtime
         _, _, input_start_date, input_end_date = specifydates(selected_months, lagtime)
         
- 
-        print(input_start_date)
-        input_start_month = int(input_start_date[1:2])  # First two characters -> month
-        input_start_day = int(input_start_date[3:])    # Characters after '-' -> day
-        input_end_month = int(input_end_date[1:2])      # First two characters -> month
-        input_end_day = int(input_end_date[3:])    
+        input_start_month, input_start_day = map(int, input_start_date.split('-'))
+        input_end_month, input_end_day = map(int, input_end_date.split('-'))
 
         # FOR WHEN THE INPUT MONTHS ARE CONTAINED WITHIN ONE YEAR: 
         if is_consecutive(selected_months):
             print(f"Months are consecutive")
             input_condition = (
-            ((input.time.dt.month == input_start_month) & (input.time.dt.day >= input_start_day)) | 
-            ((input.time.dt.month == input_end_month) & (input.time.dt.day <= input_end_day)) | 
-            ((input.time.dt.month > input_start_month) & (input.time.dt.month < input_end_month))
+            ((input.time.dt.month == input_start_month) & (input.time.dt.day >= input_start_day)) |  # partial start month days
+            ((input.time.dt.month == input_end_month) & (input.time.dt.day <= input_end_day)) |      # partial end month days
+            ((input.time.dt.month > input_start_month) & (input.time.dt.month < input_end_month))    # months in between
             )
         else: # FOR WHEN THE INPUT MONTHS SPAN ACROSS JANUARY 1ST 
             print(f"Months span New Year")
             input_condition = (
             # Dates from input start month to end of the year
-            ((input.time.dt.month == input_start_month) & (input.time.dt.day >= input_start_day)) |
-            ((input.time.dt.month > input_start_month) & (input.time.dt.month <= 12)) |
+            ((input.time.dt.month == input_start_month) & (input.time.dt.day >= input_start_day)) | # should capture partial month of input start before target start
+            ((input.time.dt.month > input_start_month) & (input.time.dt.month <= 12)) | # should capture month of December
 
             # Dates from the start of the next year to the input end date
-            ((input.time.dt.month == input_end_month) & (input.time.dt.day <= input_end_day)) |
+            ((input.time.dt.month == input_end_month) & (input.time.dt.day <= input_end_day)) | # should capture 
             ((input.time.dt.month >= 1) & (input.time.dt.month < input_end_month))
             )
 
         input_filtered = input.sel(time = input_condition, drop=True)
+    
+        # selected_year = 1877
+        # dates_in_year = input_filtered.sel(time=input_filtered["time"].dt.year == selected_year)
+        # # Print the selected dates
+        # print(f"Selected dates from the year {selected_year}:")
+        # print(dates_in_year["time"].values)
 
         return input_filtered, target_filtered
 

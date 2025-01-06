@@ -75,7 +75,7 @@
     },
 
     "trainer": {
-        "max_epochs": 1,
+        "max_epochs": 10,
         "save_dir": "/Users/C830793391/Documents/Research/E3SM/saved/",
         "perlmutter_model_dir": "/pscratch/sd/p/plutzner/E3SM/saved/models",
         "early_stopping":{

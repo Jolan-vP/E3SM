@@ -268,32 +268,32 @@ analysis_metrics.save_pickle(output, model_output)
 
 # # # ------------------------------ Evaluate Network Predictions ----------------------------------
 
-# lagtime = config["databuilder"]["lagtime"] 
-# smoothing_length = config["databuilder"]["averaging_length"]  
-# selected_months = config["databuilder"]["target_months"]
-# front_cutoff = config["databuilder"]["front_cutoff"] 
-# back_cutoff = config["databuilder"]["back_cutoff"] 
+lagtime = config["databuilder"]["lagtime"] 
+smoothing_length = config["databuilder"]["averaging_length"]  
+selected_months = config["databuilder"]["target_months"]
+front_cutoff = config["databuilder"]["front_cutoff"] 
+back_cutoff = config["databuilder"]["back_cutoff"] 
 
-# # -------------------------------------------------------------------
+# -------------------------------------------------------------------
 
-# # Open Model Outputs
-# model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + '_network_SHASH_parameters.pkl'
-# output = analysis_metrics.load_pickle(model_output)
-# print(f"output shape: {output.shape}")
+# Open Model Outputs
+model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + '_network_SHASH_parameters.pkl'
+output = analysis_metrics.load_pickle(model_output)
+print(f"output shape: {output.shape}")
 
-# # Open Target Data
-# target = universaldataloader(s_dict_savename3, config, target_only = True)
-# print(f"UDL target shape: {target.shape}")
+# Open Target Data
+target = universaldataloader(s_dict_testfn, config, target_only = True)
+print(f"UDL target shape: {target.shape}")
 
-# # Open Climatology Data: TRAINING DATA
-# climatology_filename = s_dict_savename1
-# climatology = universaldataloader(climatology_filename, config, target_only = True)
-# print(f"UDL climatology shape {climatology.shape}")
+# Open Climatology Data: TRAINING DATA
+climatology_filename = s_dict_trainfn
+climatology = universaldataloader(climatology_filename, config, target_only = True)
+print(f"UDL climatology shape {climatology.shape}")
 
-# # Compare SHASH predictions to climatology histogram
-# x = np.arange(-10, 12, 0.01)
+# Compare SHASH predictions to climatology histogram
+x = np.arange(-10, 12, 0.01)
 
-# p = calc_climatology.deriveclimatology(output, climatology, x, number_of_samples=50, config=config, climate_data = False)
+p = calc_climatology.deriveclimatology(output, climatology, x, number_of_samples=50, config=config, climate_data = False)
 
 # # # # ----------------------------- CRPS ----------------------------------
 # x_wide = np.arange(-15, 15, 0.01)
