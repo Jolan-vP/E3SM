@@ -34,12 +34,12 @@ class CustomData(torch.utils.data.Dataset):
         self.target= dict_data["y"].values
 
         # # normalize all data at once: 
-        # i_std = np.std(self.input, axis = 0)
+        i_std = np.std(self.input, axis = 0)
         # t_std = np.std(self.target, axis = 0)
-        # i_mean = np.mean(self.input, axis = 0)
+        i_mean = np.mean(self.input, axis = 0)
         # t_mean = np.mean(self.target, axis = 0)
         
-        # self.input = (self.input - i_mean) / i_std
+        self.input = (self.input - i_mean) / i_std
         # self.target = (self.target - t_mean) / t_std
 
         assert not np.any(np.isnan(self.input))

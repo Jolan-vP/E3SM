@@ -9,7 +9,10 @@ import numpy as np
 from shash.shash_torch import Shash
 from utils import filemethods
 import xarray as xr
+import gzip
+import pickle
 from databuilder.data_loader import universaldataloader
+from analysis.analysis_metrics import save_pickle, load_pickle
 
 def identify_nino_phases(nino34_index, config, threshold=0.4, window=6, lagtime = None, smoothing_length = None):
     """
@@ -130,6 +133,15 @@ def ENSO_CRPS(enso_indices_daily, crps_scores, climatology, x_values, output, co
     CRPS_elnino = round(crps_scores[elnino].mean(), 5)
     CRPS_lanina = round(crps_scores[lanina].mean(), 5)
     CRPS_neutral = round(crps_scores[neutral].mean(), 5)
+
+    ENSO_dict = {
+        "elnino" : [elnino], 
+        "lanina" : [lanina], 
+        "neutral": [neutral], 
+        "CRPS":    [crps_scores]
+    }
+
+    save_pickle(ENSO_dict, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "ENSO_indices_CRPS.pkl")
 
     # Plot CRPS by ENSO index
     # create a subplot with three columns and one row

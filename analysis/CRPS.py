@@ -326,6 +326,8 @@ def CRPScompare(crps_scores, crps_climatology_scores, config):
     better_than_climatology = 100 * np.sum(crps_scores < crps_climatology_scores) / len(crps_scores)
     print(f"Proportion of forecast CRPS scores that are better than climatology: {round(better_than_climatology, 2)}%")
 
+    #TODO: How many scores are equal to climatology CRPS within a tolerance? 
+
     # Plot CRPS comparison Histogram:
     num_bins = 50
     fig, ax = plt.subplots(1, 1, figsize=(8, 6))
