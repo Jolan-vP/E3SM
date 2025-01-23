@@ -102,7 +102,8 @@ class ClimateData:
         self.d_train.concat(f_dict_train) 
         self.d_val.concat(f_dict_val) 
         self.d_test.concat(f_dict_test) 
-
+        print(f"shape of f_dict_train input: {f_dict_train['x'].shape}")
+        print(f"shape of f_dict_train target: {f_dict_train['y'].shape}")
 
     def _process_data(self, ds):
         '''
@@ -130,6 +131,7 @@ class ClimateData:
             for ivar, var in enumerate(self.config["input_vars"]):
                 if ivar == 0:
                     da = ds[var]
+                    print(f"shape of da: {da.shape}")
                     print("Isolating variables from Dataset")
 
                     if var == "PRECT" and int(math.floor(math.log10(da[10, 30, 120].values))) < - 5 : ## CONVERTING PRECIP TO MM/DAY!
@@ -222,6 +224,7 @@ class ClimateData:
                 f_dict[key] = self.rolling_ave(f_dict[key]) # first six values are now nans due to 7-day rolling mean    
                 
                 print("completed processing target")
+                print(f"shape of target is: {f_dict[key].shape}")
             else: 
                 if self.target_only == True:
                     pass
@@ -242,9 +245,6 @@ class ClimateData:
                         ## ROLLING AVERAGE 
                         f_dict[key] = self.rolling_ave(f_dict[key])
 
-                        ## LAG ADJUSTMENT OF INPUT: 
-                        f_dict[key] = f_dict[key][0 : -self.config["lagtime"], ...]
-
                     else:
                         # LOAD f_dict dictionary with unprocessed channels of 'da'
                         f_dict[key] = da 
@@ -264,11 +264,9 @@ class ClimateData:
 
                         ## ROLLING AVERAGE 
                         f_dict[key] = self.rolling_ave(f_dict[key])
-
-                        ## LAG ADJUSTMENT OF INPUT: 
-                        f_dict[key] = f_dict[key][0 : -self.config["lagtime"], ...]
                     
-                    # Confirmed smoothed, detrended, deseasonalized, lag-adjusted anomalies of PRECT and TS
+                    print(f"shape of input is : {f_dict[key].shape}")
+                    # Confirmed smoothed, detrended, deseasonalized, anomalies of PRECT and TS
             
         return f_dict
     

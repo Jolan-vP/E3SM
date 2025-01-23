@@ -78,10 +78,6 @@ def identify_nino_phases(nino34_index, config, threshold=0.4, window=6, lagtime 
 
     # filter indices by target months, cut leads/lags, smoothing length, etc. 
     filtered_daily_indicesXR = universaldataloader(index_array_dailyXR, config, target_only = True) 
-    # # Chop front and back according to neural network input size AND NUMBER OF FRONT AND BACK NANS: 
-    # index_array_daily = index_array_daily[config["databuilder"]["front_cutoff"] : -config["databuilder"]["back_cutoff"]]
-    # index_array_daily = index_array_daily[:-lagtime, :]
-    # index_array_daily = index_array_daily[smoothing_length:]
 
     # Multiply the index_array_daily by the row number to recover the index of each day
     non_zero_indices = np.full_like(filtered_daily_indicesXR, np.nan)

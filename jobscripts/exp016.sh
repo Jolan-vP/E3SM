@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH --job-name=exp016processing
+#SBATCH --job-name=exp016PROCESSING
 #SBATCH -N 1
 #SBATCH -C cpu
-#SBATCH -q debug
+#SBATCH -q regular
 #SBATCH --mail-user=j.vonplutzner@colostate.edu
 #SBATCH --mail-type=ALL
 #SBATCH -t 03:30:00

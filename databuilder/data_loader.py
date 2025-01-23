@@ -37,6 +37,7 @@ class CustomData(torch.utils.data.Dataset):
         i_std = np.std(self.input, axis = 0)
         # t_std = np.std(self.target, axis = 0)
         i_mean = np.mean(self.input, axis = 0)
+        #TODO: check that numpy takes mean/std of variables separately 
         # t_mean = np.mean(self.target, axis = 0)
         
         self.input = (self.input - i_mean) / i_std
@@ -94,6 +95,9 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
         input = input_trimmed[:-lagtime]
         target = target_trimmed[lagtime:]
 
+        print(f"input shape post lag: {input.shape}")
+        print(f"target shape post lag: {target.shape}")
+
     elif isinstance(data, dict):
         # If there are leading or ending nans, cut the inputs evenly so there are no longer nans
         trimmed_data = {key: value[front_nans : -back_nans] for key, value in data.items() }
@@ -124,6 +128,9 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
         # Remove Smoothing-length FRONT nans from BOTH Input and Target
         input_mod_final = input_filtered[smoothing_length:]
         target_mod_final = target_filtered[smoothing_length:]
+        
+        # print(f"input_mod_final shape: {input_mod_final.shape}")
+        # print(f"target_mod_final shape: {target_mod_final.shape}")
 
         if repackage == False:
             return input, target 

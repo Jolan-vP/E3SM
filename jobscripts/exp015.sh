@@ -1,19 +1,18 @@
 #!/bin/bash
 #SBATCH --job-name=exp015PROCESSING
-#SBATCH -N 1
+#SBATCH -N 2
 #SBATCH -C cpu
-#SBATCH -q debug
+#SBATCH -q regular
 #SBATCH --mail-user=j.vonplutzner@colostate.edu
 #SBATCH --mail-type=ALL
-#SBATCH -t 03:00:00
+#SBATCH -t 3:30:0
 #SBATCH -A m4620
-#SBATCH --mem=64G
 
 module load python
 conda activate env-torch
 cd /pscratch/sd/p/plutzner/E3SM 
 
 #run the application:
-srun -n 1 -c 256 --cpu_bind=cores python -u /pscratch/sd/p/plutzner/E3SM/exp015.py
+srun -n 2 -c 128 --cpu_bind=cores python -u /pscratch/sd/p/plutzner/E3SM/exp015.py
 
 echo “PROGRAM COMPLETE”
