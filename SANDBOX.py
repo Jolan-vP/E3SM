@@ -44,6 +44,7 @@ from utils.utils import filter_months
 import analysis
 from analysis import CRPS
 from analysis import ENSO_indices_calculator
+from analysis.calc_climatology import precip_regime
 
 print(f"python version = {sys.version}")
 print(f"numpy version = {np.__version__}")
@@ -53,7 +54,7 @@ print(f"pytorch version = {torch.__version__}")
 # https://github.com/victoresque/pytorch-template/tree/master
 
 # ----CONFIG AND CLASS SETUP----------------------------------------------
-config = utils.get_config("exp025")
+config = utils.get_config("exp023")
 print(config["expname"])
 seed = config["seed_list"][0]
 
@@ -142,15 +143,15 @@ trimmed_testfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_tr
 
 # ---OPEN DATA---------------------------------------------
 
-train_dat = open_data_file(trimmed_trainfn)
-val_dat = open_data_file(trimmed_valfn)
-test_dat = open_data_file(trimmed_testfn)
+# train_dat = open_data_file(trimmed_trainfn)
+# val_dat = open_data_file(trimmed_valfn)
+# test_dat = open_data_file(trimmed_testfn)
 
 # # Confirm data looks correct: 
 # print(f"Train_dat inputs: {train_dat['x'][-24:].values}")
 # print(f"val_dat target: {val_dat['y'][-24:].values}")
 
-# --- Setup the Data for Training ---------------------------------------------
+# # --- Setup the Data for Training ---------------------------------------------
 # lagtime = config["databuilder"]["lagtime"] 
 # smoothing_length = config["databuilder"]["averaging_length"]
 
@@ -259,17 +260,16 @@ test_dat = open_data_file(trimmed_testfn)
 # plt.tight_layout()
 # plt.savefig(config["perlmutter_figure_dir"] + str(config["expname"]) + "/" + str(config["expname"]) + "training_metrics.png", format = 'png', dpi = 200) 
 
-# # ------------------------------ Model Inference ----------------------------------
+# # # ------------------------------ Model Inference ----------------------------------
 
 # with torch.inference_mode():
 #     print(device)
 #     output = model.predict(dataset=testset, batch_size=128, device=device) # The output is the batched SHASH distribution parameters
 
-# print(output[:20]) # look at a small sample of the output data
-
 # # Save Model Outputs
 # model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + '_network_SHASH_parameters.pkl'
 # analysis_metrics.save_pickle(output, model_output)
+# print(output[:20]) # look at a small sample of the output data
 
 # ------------------------------ Evaluate Network Predictions ----------------------------------
 
@@ -286,6 +286,7 @@ model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '
 output = analysis_metrics.load_pickle(model_output)
 print(f"output shape: {output.shape}")
 
+
 # Open Target Data
 test_inputs = open_data_file(trimmed_testfn)
 target = test_inputs['y']
@@ -299,73 +300,86 @@ print(f"UDL climatology shape {climatology.shape}")
 # Compare SHASH predictions to climatology histogram
 x = np.arange(-10, 12, 0.01)
 
-p = calc_climatology.deriveclimatology(output, climatology, x, number_of_samples=50, config=config, climate_data = False)
+# p = calc_climatology.deriveclimatology(output, climatology, x, number_of_samples=50, config=config, climate_data = False)
 
 # # # # ----------------------------- CRPS ----------------------------------
-x_wide = np.arange(-25, 25, 0.01)
+# x_wide = np.arange(-25, 25, 0.01)
 
-# Comput CRPS for climatology
-CRPS_climatology = CRPS.calculateCRPS(output, target, x_wide, config, climatology)
+# # Comput CRPS for climatology
+# CRPS_climatology = CRPS.calculateCRPS(output, target, x_wide, config, climatology)
 
-# Compute CRPS for all predictions 
-CRPS_network = CRPS.calculateCRPS(output, target, x_wide, config, climatology = None)
+# # Compute CRPS for all predictions 
+# CRPS_network = CRPS.calculateCRPS(output, target, x_wide, config, climatology = None)
 
-analysis_metrics.save_pickle(CRPS_climatology, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_climatology_values.pkl")
-analysis_metrics.save_pickle(CRPS_network, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_network_values.pkl")
+# analysis_metrics.save_pickle(CRPS_climatology, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_climatology_values.pkl")
+# analysis_metrics.save_pickle(CRPS_network, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_network_values.pkl")
 
 CRPS_climatology = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_climatology_values.pkl")
 CRPS_network = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_network_values.pkl")
 
-# Compare CRPS scores for climatology vs predictions (Is network better than climatology on average?)
-CRPS.CRPScompare(CRPS_network, CRPS_climatology, config)
+# # Compare CRPS scores for climatology vs predictions (Is network better than climatology on average?)
+# CRPS.CRPScompare(CRPS_network, CRPS_climatology, config)
 
 # # ----------------------------- ENSO -------------------------------------------
 
 # Calculate ENSO Indices from Monthly ENSO Data (Po-Lun): 
-monthlyENSO = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/ENSO_ne30pg2_HighRes/nino.member0201.nc')
-Nino34 = monthlyENSO.nino34
-# select a slice of only certain years
-Nino34 = Nino34.sel(time=slice ( str(config["databuilder"]["input_years"][0]) + '-01-01', str(config["databuilder"]["input_years"][1]) + '-12-31'))
-Nino34 = Nino34.values
+# monthlyENSO = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/ENSO_ne30pg2_HighRes/nino.member0201.nc')
+# Nino34 = monthlyENSO.nino34
+# # select a slice of only certain years
+# Nino34 = Nino34.sel(time=slice ( str(config["databuilder"]["input_years"][0]) + '-01-01', str(config["databuilder"]["input_years"][1]) + '-12-31'))
+# Nino34 = Nino34.values
 
-enso_indices_daily = ENSO_indices_calculator.identify_nino_phases(Nino34, config, threshold=0.4, window=6, lagtime = lagtime, smoothing_length = smoothing_length)
+# enso_indices_daily = ENSO_indices_calculator.identify_nino_phases(Nino34, config, threshold=0.4, window=6, lagtime = lagtime, smoothing_length = smoothing_length)
 
-# Separate CRPS scores by ENSO phases 
-elnino, lanina, neutral, CRPS_elnino, CRPS_lanina, CRPS_neutral = analysis.ENSO_indices_calculator.ENSO_CRPS(enso_indices_daily, CRPS_network, climatology, x, output, config)
+# # Separate CRPS scores by ENSO phases 
+# elnino, lanina, neutral, CRPS_elnino, CRPS_lanina, CRPS_neutral = analysis.ENSO_indices_calculator.ENSO_CRPS(enso_indices_daily, CRPS_network, climatology, x, output, config)
 
-# Compare Distributions? 
-p = calc_climatology.deriveclimatology(output, climatology, x, number_of_samples=50, config=config, climate_data = False)
+# # Compare Distributions? 
+# p = calc_climatology.deriveclimatology(output, climatology, x, number_of_samples=50, config=config, climate_data = False)
 
-# Calculate precipitation anomalies during each ENSO Phase + Plot -----------------
+# # Calculate precipitation anomalies during each ENSO Phase + Plot -----------------
 
-# Open raw target data
-nc_file = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc')
-prect_global = nc_file.PRECT.sel(time = slice(str(config["databuilder"]["input_years"][0]) + '-01-01', str(config["databuilder"]["input_years"][1])))
+# Open raw TESTING target data
+# nc_file = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc')
+# prect_global = nc_file.PRECT.sel(time = slice(str(config["databuilder"]["input_years"][0]) + '-01-01', str(config["databuilder"]["input_years"][1])))
 
-min_lat, max_lat = config["databuilder"]["target_region"][:2]
-min_lon, max_lon = config["databuilder"]["target_region"][2:]
+# min_lat, max_lat = config["databuilder"]["target_region"][:2]
+# min_lon, max_lon = config["databuilder"]["target_region"][2:]
 
-if isinstance(prect_global, xr.DataArray):
-    mask_lon = (prect_global.lon >= min_lon) & (prect_global.lon <= max_lon)
-    mask_lat = (prect_global.lat >= min_lat) & (prect_global.lat <= max_lat)
-    prect_regional = prect_global.where(mask_lon & mask_lat, drop=True)
+# if isinstance(prect_global, xr.DataArray):
+#     mask_lon = (prect_global.lon >= min_lon) & (prect_global.lon <= max_lon)
+#     mask_lat = (prect_global.lat >= min_lat) & (prect_global.lat <= max_lat)
+#     prect_regional = prect_global.where(mask_lon & mask_lat, drop=True)
 
-# average around seattle region 
-prect_regional = prect_regional.mean(dim=['lat', 'lon'])
+# # average around seattle region 
+# prect_regional = prect_regional.mean(dim=['lat', 'lon'])
 
-target_raw = universaldataloader(prect_regional, config, target_only = True, repackage = False)
+# target_raw = universaldataloader(prect_regional, config, target_only = True, repackage = False)
 
-target_raw = target_raw * 86400 * 1000  # Convert to mm/day
+# target_raw = target_raw * 86400 * 1000  # Convert to mm/day
 
-print(f"mean raw target: {np.mean(target_raw)}")
-print(f"median raw target: {np.median(target_raw)}")
-print(f"std raw target: {np.std(target_raw)}")
+# analysis_metrics.save_pickle(target_raw, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_target_raw.pkl")
 
-# Discard plot of CRPS vs IQR Percentile, CRPS vs Anomalies & true precip
+target_raw = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_target_raw.pkl")
+# # print(f"mean raw target: {np.mean(target_raw)}")
+# # print(f"median raw target: {np.median(target_raw)}")
+# # print(f"std raw target: {np.std(target_raw)}")
+
+# if isinstance(target, xr.DataArray) and 'time' in target.coords:
+#     print(target.time.dt.month)
+# else:
+#     print("target is not a DataArray or does not have a 'time' coordinate")
+    
+# # Discard plot of CRPS vs IQR Percentile, CRPS vs Anomalies & true precip
 sample_index = analysis_metrics.discard_plot(output, target_raw, CRPS_network, CRPS_climatology, config, target_type = 'raw')
-sample_index = analysis_metrics.discard_plot(output, target, CRPS_network, CRPS_climatology, config, target_type = 'anomalous')
+# sample_index = analysis_metrics.discard_plot(output, target, CRPS_network, CRPS_climatology, config, target_type = 'anomalous')
 
-anomalies_by_ENSO_phase = analysis_metrics.anomalies_by_ENSO_phase(elnino, lanina, neutral, target, target_raw, sample_index, config)
+# anomalies_by_ENSO_phase = analysis_metrics.anomalies_by_ENSO_phase(elnino, lanina, neutral, target, target_raw, sample_index, config)
+
+# Calculate precip regime for raw target input data
+# Open raw INPUT target data
+# nc_file = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc')
+# precip_regime(nc_file, config)
 
 # # Spread-Skill Ratio
 # # spread_skill_plot = analysis_metrics.spread_skill(output, target, config)

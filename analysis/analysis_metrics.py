@@ -39,6 +39,7 @@ from model.metric import iqr_basic
 from shash.shash_torch import Shash
 import torch
 import xarray as xr
+import matplotlib as mpl
 
 def save_pickle(variable, filename):
     with gzip.open(filename, "wb") as fp:
@@ -93,13 +94,27 @@ def discard_plot(networkoutput, target, crps_scores, crps_climatology_scores, co
 
     avg_crps = []
     avg_target = []
+    months = np.arange(1, 13)
     sample_index = np.zeros((len(target), len(percentiles)))
+    month_per_percentilebin = np.zeros((len(target), len(percentiles)))
+    dry_month_percentilebin = np.zeros_like(month_per_percentilebin)
+    dry_months = [4, 5, 6, 7, 8, 9]
+
     for ip, p in enumerate(percentiles):
         avg_crps.append(np.mean(crps_scores[iqr < np.percentile(iqr, p)]))
         avg_target.append(np.mean(target[iqr < np.percentile(iqr, p)]))
         # capture the index (out of total) for all the samples in each bin
         indices = np.where(iqr < np.percentile(iqr, p))[0]
         sample_index[:len(indices), ip] = indices
+
+        # identify the month of the year for each sample based on sample index and target date.time
+        month_per_percentilebin[:len(indices), ip] = target.time.dt.month[indices]
+        # keep only the values that are in dry months 
+        mask = np.isin(month_per_percentilebin[:len(indices), ip], dry_months)
+        dry_month_percentilebin[:len(indices), ip][mask] = month_per_percentilebin[:len(indices), ip][mask]
+
+    save_pickle(dry_month_percentilebin, str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/DRYmonth_per_percentilebin.pkl')
+    # save_pickle(month_per_percentilebin, str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/month_per_percentilebin.pkl')
 
     color = 'tab:blue'
     fig, ax1 = plt.subplots()
@@ -109,17 +124,33 @@ def discard_plot(networkoutput, target, crps_scores, crps_climatology_scores, co
     ax1.plot(percentiles, avg_crps, color=color)
     ax1.tick_params(axis='y', labelcolor=color)
     ax1.axhline(y=crps_climatology_scores.mean(), color='grey', linestyle='--', label='CRPS Mean Climatology')
-    # ax1.set_ylim([1.05, 1.205])
+    min = np.nanmin(avg_crps) - .08
+    max = np.nanmax(avg_crps) + .1
+    ax1.set_ylim([min, max])
     ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
-    # legend
-    ax1.legend(loc = 'lower left')
+    
+    # Establish Month of Year Axis 
+    ax3 = ax1.twinx()
+    ax3.spines.right.set_position(("axes", 1.2))
+    ax3.set(ylim=(0.1, 12.9))
+    ax3.set_ylabel('Month of the Year', color='black')
+    colors = ['#5ca1e1','#f49b62', '#f49b62', '#5ca1e1']
+    cmap = mpl.colors.ListedColormap(colors)
 
+    # Filter and plot each column separately
+    for ip in [99, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20, 15, 10, 5, 0]:
+        last_index = np.where(dry_month_percentilebin[:, ip] == 0)[0][0]
+        tiled_percentiles = np.tile(percentiles, (len(dry_month_percentilebin), 1))
+        # ax3.scatter(tiled_percentiles[:last_index, ip], month_per_percentilebin[:last_index, ip], c=month_per_percentilebin[:last_index, ip], cmap=cmap, s = 0.4)
+        ax3.scatter(tiled_percentiles[:, ip], dry_month_percentilebin[:, ip], c='grey', s = 0.4)
+
+    ax1.legend(loc = 'upper right')
+    
     if target_type == 'anomalous':
         color = 'tab:olive'
         ax2.set_ylabel('Average Target Anomalies (mm/day)', color=color)
         ax2.plot(percentiles, avg_target, color=color)
         ax2.tick_params(axis='y', labelcolor=color)
-
         plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/CRPS_IQR_DiscardPlot_anomalies.png', format='png', bbox_inches ='tight', dpi = 300)
 
     elif target_type == 'raw':
@@ -130,6 +161,8 @@ def discard_plot(networkoutput, target, crps_scores, crps_climatology_scores, co
         plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/CRPS_IQR_DiscardPlot_true_precip.png', format='png', bbox_inches ='tight', dpi = 300)
 
     return sample_index
+
+
 
 def anomalies_by_ENSO_phase(elnino, lanina, neutral, target, target_raw, sample_index, config):
     # Scatter Compare: 

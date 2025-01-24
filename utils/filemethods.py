@@ -33,3 +33,4 @@ def open_data_file(data_file):
         print(f"Data passed directly as {type(data)} rather than filename.")
 
     return data
+

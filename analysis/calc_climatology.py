@@ -7,7 +7,7 @@ deriveclimatology()
 standardize_data()
 make_hist()
 calc_cdf()
-
+precipitation_regimes()
 
 Classes
 ---------
@@ -29,6 +29,7 @@ from glob import glob
 import random
 import shash.shash_torch
 from shash.shash_torch import Shash
+from databuilder.data_loader import universaldataloader
 import pickle 
 import gzip
 
@@ -109,3 +110,64 @@ def calc_cdf(norm_data, deviation_val):
 
 
 
+
+
+
+
+def precip_regime(data, config): 
+    """
+    - pass data in as variable
+    - should be from training target data
+    """
+
+    prect_global = data.PRECT.sel(time = slice(str(config["databuilder"]["input_years"][0]) + '-01-01', str(config["databuilder"]["input_years"][1])))
+
+    min_lat, max_lat = config["databuilder"]["target_region"][:2]
+    min_lon, max_lon = config["databuilder"]["target_region"][2:]
+
+    if isinstance(prect_global, xr.DataArray):
+        mask_lon = (prect_global.lon >= min_lon) & (prect_global.lon <= max_lon)
+        mask_lat = (prect_global.lat >= min_lat) & (prect_global.lat <= max_lat)
+        prect_regional = prect_global.where(mask_lon & mask_lat, drop=True)
+
+    # average around seattle region 
+    prect_regional = prect_regional.mean(dim=['lat', 'lon'])
+
+    target_raw = universaldataloader(prect_regional, config, target_only = True, repackage = False)
+
+    training_target_raw = target_raw * 86400 * 1000  # Convert to mm/day
+
+    # divide precip data into months: 
+    max_size = max((training_target_raw.time.dt.month == i).sum().item() for i in range(1, 13))
+    monthly_precip = np.full((12, max_size), np.nan)
+
+    ave_monthly_precip = np.full(12, np.nan)
+
+    for i in range(1, 13):  # Months are 1-12
+        month_data = training_target_raw.sel(time=training_target_raw.time.dt.month == i)
+        if month_data.values.size == 0: 
+            print(f"No data for month {i}")
+            continue
+        else:
+            monthly_precip[i-1, :month_data.values.size] = month_data.values
+        
+        ave_monthly_precip[i-1] = np.nanmean(monthly_precip[i-1])
+
+    median = round(np.nanmedian(ave_monthly_precip), 2)
+    mean = round(np.nanmean(ave_monthly_precip), 2)
+    # create histogram of raw precipitation data by month of year: 
+    plt.figure()
+    months = np.arange(1, 13)
+    month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    plt.bar(months, ave_monthly_precip, color = '#3b528b')
+    plt.xticks(months, month_names)
+    plt.axhline(median, color = '#aa2395', linestyle = ':', label = f"Median = {median}")
+    plt.axhline(mean, color = '#ff7f0e', linestyle = ':', label = f"Mean = {mean}")
+    plt.legend()
+    plt.ylabel("Average Precipitation (mm/day)")
+    plt.savefig('/pscratch/sd/p/plutzner/E3SM/saved/figures/exp025/precipitation_by_month.png', format='png', bbox_inches ='tight', dpi = 300)
+
+    plt.show()
+    
+    print(f"Median monthly precip: {np.nanmedian(ave_monthly_precip)}")
+    print(f"Mean monthly precip: {np.nanmean(ave_monthly_precip)}")

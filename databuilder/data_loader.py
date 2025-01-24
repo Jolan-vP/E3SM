@@ -37,7 +37,6 @@ class CustomData(torch.utils.data.Dataset):
         i_std = np.std(self.input, axis = 0)
         # t_std = np.std(self.target, axis = 0)
         i_mean = np.mean(self.input, axis = 0)
-        #TODO: check that numpy takes mean/std of variables separately 
         # t_mean = np.mean(self.target, axis = 0)
         
         self.input = (self.input - i_mean) / i_std
