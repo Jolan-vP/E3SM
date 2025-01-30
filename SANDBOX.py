@@ -300,7 +300,7 @@ print(f"UDL climatology shape {climatology.shape}")
 # Compare SHASH predictions to climatology histogram
 x = np.arange(-10, 12, 0.01)
 
-# p = calc_climatology.deriveclimatology(output, climatology, x, number_of_samples=50, config=config, climate_data = False)
+p = calc_climatology.deriveclimatology(output, climatology, x, number_of_samples=50, config=config, climate_data = False)
 
 # # # # ----------------------------- CRPS ----------------------------------
 # x_wide = np.arange(-25, 25, 0.01)
@@ -324,6 +324,7 @@ CRPS_network = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"])
 
 # Calculate ENSO Indices from Monthly ENSO Data (Po-Lun): 
 # monthlyENSO = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/ENSO_ne30pg2_HighRes/nino.member0201.nc')
+# monthlyENSO = xr.open_dataset(str(config["perlmutter_data_dir"]) + 'presaved/ENSO_ne30pg2_HighRes/nino.member0201.nc')
 # Nino34 = monthlyENSO.nino34
 # # select a slice of only certain years
 # Nino34 = Nino34.sel(time=slice ( str(config["databuilder"]["input_years"][0]) + '-01-01', str(config["databuilder"]["input_years"][1]) + '-12-31'))
@@ -331,7 +332,7 @@ CRPS_network = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"])
 
 # enso_indices_daily = ENSO_indices_calculator.identify_nino_phases(Nino34, config, threshold=0.4, window=6, lagtime = lagtime, smoothing_length = smoothing_length)
 
-# # Separate CRPS scores by ENSO phases 
+# # # Separate CRPS scores by ENSO phases 
 # elnino, lanina, neutral, CRPS_elnino, CRPS_lanina, CRPS_neutral = analysis.ENSO_indices_calculator.ENSO_CRPS(enso_indices_daily, CRPS_network, climatology, x, output, config)
 
 # # Compare Distributions? 
@@ -364,17 +365,39 @@ target_raw = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) +
 # # print(f"mean raw target: {np.mean(target_raw)}")
 # # print(f"median raw target: {np.median(target_raw)}")
 # # print(f"std raw target: {np.std(target_raw)}")
-
-# if isinstance(target, xr.DataArray) and 'time' in target.coords:
-#     print(target.time.dt.month)
-# else:
-#     print("target is not a DataArray or does not have a 'time' coordinate")
     
 # # Discard plot of CRPS vs IQR Percentile, CRPS vs Anomalies & true precip
-sample_index = analysis_metrics.discard_plot(output, target_raw, CRPS_network, CRPS_climatology, config, target_type = 'raw')
-# sample_index = analysis_metrics.discard_plot(output, target, CRPS_network, CRPS_climatology, config, target_type = 'anomalous')
+sample_index_confident, dry_month_indices_confident = analysis_metrics.discard_plot(output, target_raw, CRPS_network, CRPS_climatology, config, target_type = 'raw', analyze_months = True, most_confident= True)
+sample_index_unconfident, dry_month_indices_unconfident = analysis_metrics.discard_plot(output, target_raw, CRPS_network, CRPS_climatology, config, target_type = 'raw', analyze_months = True, most_confident= False)
+# sample_index_confident = analysis_metrics.discard_plot(output, target, CRPS_network, CRPS_climatology, config, target_type = 'anomalous', analyze_months = False, most_confident= True)
 
-# anomalies_by_ENSO_phase = analysis_metrics.anomalies_by_ENSO_phase(elnino, lanina, neutral, target, target_raw, sample_index, config)
+# anomalies_by_ENSO_phase = analysis_metrics.anomalies_by_ENSO_phase(elnino, lanina, neutral, target, target_raw, sample_index, config, keyword = 'all_data')
+# anomalies_by_ENSO_phaseDRY = analysis_metrics.anomalies_by_ENSO_phase(elnino, lanina, neutral, target, target_raw, dry_month_indices, config, keyword = 'dry_months')
+
+# DRY MONTH ANALYSIS: 
+top_percentage = 5
+analysis_metrics.subsetanalysis_SHASH_ENSO(dry_month_indices_confident, output, climatology, target, target_raw, config, x, percentage= top_percentage, subset_keyword = 'Dry_Months')
+
+# open testing input data: 
+testing_input = open_data_file(trimmed_testfn)
+testing_input = testing_input['x']
+print(testing_input.shape)
+
+# open most and least confident sample data; 
+dry_confident_indices = open_data_file('/Users/C830793391/Documents/Research/E3SM/saved/output/exp023/DRYmonth_indices_narrow.pkl')
+dry_unconfident_indices = open_data_file('/Users/C830793391/Documents/Research/E3SM/saved/output/exp023/DRYmonth_indices_wide.pkl')
+
+# identify the most and least confident samples by percentage and quantity:
+dry_5confident_indices = dry_confident_indices[:, 100 - top_percentage]
+idry_5confident = dry_5confident_indices[dry_5confident_indices != 0].astype(int)
+
+# find the column in dry_unconfident_indices that contains the same number of indices as dry_5confident_indices
+indice_column_qty = np.count_nonzero(dry_unconfident_indices, axis = 0)
+column_number = np.where(indice_column_qty >= len(idry_5confident))[0][0]
+idry_5unconfident = dry_unconfident_indices[:, column_number] 
+idry_5unconfident = idry_5unconfident[idry_5unconfident != 0].astype(int)
+
+analysis_metrics.compositemapping(idry_5confident, idry_5unconfident, testing_input, config, keyword1 = '5% Most Confident', keyword2 = '5% Least Confident')
 
 # Calculate precip regime for raw target input data
 # Open raw INPUT target data

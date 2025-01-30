@@ -48,7 +48,8 @@ def identify_nino_phases(nino34_index, config, threshold=0.4, window=6, lagtime 
             phase_array[i:i + window, 2] = 1
 
     # open original training dataset: 
-    train_ds = filemethods.get_netcdf_da(str(config['perlmutter_data_dir']) + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+    # train_ds = filemethods.get_netcdf_da(str(config['perlmutter_data_dir']) + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+    train_ds = filemethods.get_netcdf_da(str(config['perlmutter_data_dir']) + "ens1/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
     train_ds = train_ds.sel(time = slice("1850", "2014"))
     # train_ds = train_ds.sel(time = slice("str(config["databuilder"]["input_years"][0]"), str(config["databuilder"]["input_years"][1])))
 
