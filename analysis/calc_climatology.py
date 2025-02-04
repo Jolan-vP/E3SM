@@ -32,10 +32,12 @@ from shash.shash_torch import Shash
 from databuilder.data_loader import universaldataloader
 import pickle 
 import gzip
+from model.metric import iqr_basic
+from analysis.analysis_metrics import maximum_difference
 
 
 
-def deriveclimatology(output, target, x_values, number_of_samples, config, climate_data=False):
+def deriveclimatology(output, target, number_of_samples, config, climate_data=False):
     """
     Input: Filename for climate data, SHASH parameters for sample
     Output: probability density distribution for given data and shash curve
@@ -52,13 +54,15 @@ def deriveclimatology(output, target, x_values, number_of_samples, config, clima
 
     print(f"Climatologial Mean = {np.mean(climatology)}")
 
-    np.random.seed(config["seed_list"][0])
-    rand_samps = np.random.choice(len(output), number_of_samples)
+    extreme_samps = maximum_difference(output, required_samples= number_of_samples, tau_frozen=True)
 
-    dist = Shash(output[rand_samps])
+    dist = Shash(extreme_samps)
+
+    x_values = np.linspace(np.min(climatology) - 2, np.max(climatology), 1000)
+
     p = dist.prob(x_values).numpy()
 
-    plt.figure(figsize=(8, 4), dpi=200)
+    plt.figure(figsize=(8, 5), dpi=200)
     plt.hist(
         climatology, x_values, density=True, color="silver", alpha=0.75, label="climatology"
     )
@@ -70,7 +74,7 @@ def deriveclimatology(output, target, x_values, number_of_samples, config, clima
     # plt.axvline(valset[:len(output)], color='r', linestyle='dashed', linewidth=1)
     plt.legend()
     plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + '_predictions_w_climatology.png', format='png', bbox_inches ='tight', dpi = 300)
-    plt.xlim([-10, 12])
+    # plt.xlim([-10, 12])
     # plt.show(block = False)
 
     

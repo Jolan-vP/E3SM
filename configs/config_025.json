@@ -2,17 +2,31 @@
     "device": "cpu",
     "seed_list": [7],
 
-    "data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved",
-    "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/",
-    "perlmutter_inputs_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",
+    "data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",
+    "perlmutter_data_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/",
+    "perlmutter_inputs_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/",
     "local_inputs_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/",
-    "figure_dir": "/Users/C830793391/Documents/Research/E3SM/saved/figures",
-    "perlmutter_figure_dir": "/pscratch/sd/p/plutzner/E3SM/saved/figures/",
-    "model_dir": "/Users/C830793391/Documents/Research/E3SM/saved/models",
-    "perlmutter_model_dir": "/pscratch/sd/p/plutzner/E3SM/saved/models/",
-    "output_dir": "/Users/C830793391/Documents/Research/E3SM/saved/output",
-    "perlmutter_output_dir": "/pscratch/sd/p/plutzner/E3SM/saved/output/", 
+    "figure_dir": "/Users/C830793391/Documents/Research/E3SM/saved/figures/",
+    "perlmutter_figure_dir": "/Users/C830793391/Documents/Research/E3SM/saved/figures/",
+    "model_dir": "/Users/C830793391/Documents/Research/E3SM/saved/models/",
+    "perlmutter_model_dir": "/Users/C830793391/Documents/Research/E3SM/saved/models/",
+    "output_dir": "/Users/C830793391/Documents/Research/E3SM/saved/output/",
+    "perlmutter_output_dir": "/Users/C830793391/Documents/Research/E3SM/saved/output/", 
     "fig_dpi": 300,
+
+    "other_dirs": {
+        "data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved",
+        "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/",
+        "perlmutter_inputs_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",
+        "local_inputs_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/",
+        "figure_dir": "/Users/C830793391/Documents/Research/E3SM/saved/figures",
+        "perlmutter_figure_dir": "/pscratch/sd/p/plutzner/E3SM/saved/figures/",
+        "model_dir": "/Users/C830793391/Documents/Research/E3SM/saved/models",
+        "perlmutter_model_dir": "/pscratch/sd/p/plutzner/E3SM/saved/models/",
+        "output_dir": "/Users/C830793391/Documents/Research/E3SM/saved/output",
+        "perlmutter_output_dir": "/pscratch/sd/p/plutzner/E3SM/saved/output/", 
+        "fig_dpi": 300
+    }, 
 
     "metrics": [
         "custom_mae", "iqr_capture", "sign_test"

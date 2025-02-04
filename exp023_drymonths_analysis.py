@@ -54,7 +54,7 @@ print(f"pytorch version = {torch.__version__}")
 # https://github.com/victoresque/pytorch-template/tree/master
 
 # ----CONFIG AND CLASS SETUP----------------------------------------------
-config = utils.get_config("exp026")
+config = utils.get_config("exp023")
 print(config["expname"])
 seed = config["seed_list"][0]
 
@@ -143,9 +143,9 @@ trimmed_testfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_tr
 
 # ---OPEN DATA---------------------------------------------
 
-train_dat = open_data_file(trimmed_trainfn)
-val_dat = open_data_file(trimmed_valfn)
-test_dat = open_data_file(trimmed_testfn)
+# train_dat = open_data_file(trimmed_trainfn)
+# val_dat = open_data_file(trimmed_valfn)
+# test_dat = open_data_file(trimmed_testfn)
 
 # # Confirm data looks correct: 
 # print(f"Train_dat inputs: {train_dat['x'][-24:].values}")
@@ -155,9 +155,9 @@ test_dat = open_data_file(trimmed_testfn)
 # lagtime = config["databuilder"]["lagtime"] 
 # smoothing_length = config["databuilder"]["averaging_length"]
 
-# trainset = data_loader.CustomData(trimmed_trainfn, config, is_train = True)
-# valset = data_loader.CustomData(trimmed_valfn, config, is_train = False)
-# testset = data_loader.CustomData(trimmed_testfn, config, is_train = False)
+# trainset = data_loader.CustomData(trimmed_trainfn, config)
+# valset = data_loader.CustomData(trimmed_valfn, config)
+# testset = data_loader.CustomData(trimmed_testfn, config)
 
 # train_loader = torch.utils.data.DataLoader(
 #     trainset,
@@ -170,10 +170,10 @@ test_dat = open_data_file(trimmed_testfn)
 #     valset,
 #     batch_size=config["data_loader"]["batch_size"],
 #     shuffle=False,
-#     drop_last=False,
+#     drop_last=False,#TODO: add standardization from training not validation 
 # )
 
-# # # --- Setup the Model ----------------------------------------------------
+# # --- Setup the Model ----------------------------------------------------
 
 # model = TorchModel(
 #     config=config["arch"],
@@ -298,12 +298,12 @@ climatology = train_inputs['y']
 print(f"UDL climatology shape {climatology.shape}")
 
 # Compare SHASH predictions to climatology histogram
+x = np.arange(-10, 12, 0.01)
 
-p = calc_climatology.deriveclimatology(output, climatology, number_of_samples=50, config=config, climate_data = False)
+p = calc_climatology.deriveclimatology(output, climatology, x, number_of_samples=50, config=config, climate_data = False)
 
-# # ----------------------------- CRPS ----------------------------------
-x = np.linspace(-10, 12, 1000)
-x_wide = np.arange(-25, 25, 0.01)
+# # # # ----------------------------- CRPS ----------------------------------
+# x_wide = np.arange(-25, 25, 0.01)
 
 # # Comput CRPS for climatology
 # CRPS_climatology = CRPS.calculateCRPS(output, target, x_wide, config, climatology)
@@ -317,74 +317,87 @@ x_wide = np.arange(-25, 25, 0.01)
 CRPS_climatology = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_climatology_values.pkl")
 CRPS_network = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_network_values.pkl")
 
-# Compare CRPS scores for climatology vs predictions (Is network better than climatology on average?)
-CRPS.CRPScompare(CRPS_network, CRPS_climatology, config)
+# # Compare CRPS scores for climatology vs predictions (Is network better than climatology on average?)
+# CRPS.CRPScompare(CRPS_network, CRPS_climatology, config)
 
-# ----------------------------- ENSO -------------------------------------------
+# # ----------------------------- ENSO -------------------------------------------
 
 # Calculate ENSO Indices from Monthly ENSO Data (Po-Lun): 
 # monthlyENSO = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/ENSO_ne30pg2_HighRes/nino.member0201.nc')
-monthlyENSO = xr.open_dataset(str(config["perlmutter_data_dir"]) + 'presaved/ENSO_ne30pg2_HighRes/nino.member0201.nc')
-Nino34 = monthlyENSO.nino34
-# select a slice of only certain years
-Nino34 = Nino34.sel(time=slice ( str(config["databuilder"]["input_years"][0]) + '-01-01', str(config["databuilder"]["input_years"][1]) + '-12-31'))
-Nino34 = Nino34.values
+# monthlyENSO = xr.open_dataset(str(config["perlmutter_data_dir"]) + 'presaved/ENSO_ne30pg2_HighRes/nino.member0201.nc')
+# Nino34 = monthlyENSO.nino34
+# # select a slice of only certain years
+# Nino34 = Nino34.sel(time=slice ( str(config["databuilder"]["input_years"][0]) + '-01-01', str(config["databuilder"]["input_years"][1]) + '-12-31'))
+# Nino34 = Nino34.values
 
-enso_indices_daily = ENSO_indices_calculator.identify_nino_phases(Nino34, config, threshold=0.4, window=6, lagtime = lagtime, smoothing_length = smoothing_length)
+# enso_indices_daily = ENSO_indices_calculator.identify_nino_phases(Nino34, config, threshold=0.4, window=6, lagtime = lagtime, smoothing_length = smoothing_length)
 
-# # Separate CRPS scores by ENSO phases 
-elnino, lanina, neutral, CRPS_elnino, CRPS_lanina, CRPS_neutral = analysis.ENSO_indices_calculator.ENSO_CRPS(enso_indices_daily, CRPS_network, climatology, x, output, config)
+# # # Separate CRPS scores by ENSO phases 
+# elnino, lanina, neutral, CRPS_elnino, CRPS_lanina, CRPS_neutral = analysis.ENSO_indices_calculator.ENSO_CRPS(enso_indices_daily, CRPS_network, climatology, x, output, config)
 
-# Compare Distributions? 
-p = calc_climatology.deriveclimatology(output, climatology, number_of_samples=30, config=config, climate_data = False)
+# # Compare Distributions? 
+# p = calc_climatology.deriveclimatology(output, climatology, x, number_of_samples=50, config=config, climate_data = False)
 
-# Calculate precipitation anomalies during each ENSO Phase + Plot -----------------
+# # Calculate precipitation anomalies during each ENSO Phase + Plot -----------------
 
 # Open raw TESTING target data
-nc_file = xr.open_dataset('/Users/C830793391/BIG_DATA/E3SM_Data/ens3/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc')
 # nc_file = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc')
-prect_global = nc_file.PRECT.sel(time = slice(str(config["databuilder"]["input_years"][0]) + '-01-01', str(config["databuilder"]["input_years"][1])))
+# prect_global = nc_file.PRECT.sel(time = slice(str(config["databuilder"]["input_years"][0]) + '-01-01', str(config["databuilder"]["input_years"][1])))
 
-min_lat, max_lat = config["databuilder"]["target_region"][:2]
-min_lon, max_lon = config["databuilder"]["target_region"][2:]
+# min_lat, max_lat = config["databuilder"]["target_region"][:2]
+# min_lon, max_lon = config["databuilder"]["target_region"][2:]
 
-if isinstance(prect_global, xr.DataArray):
-    mask_lon = (prect_global.lon >= min_lon) & (prect_global.lon <= max_lon)
-    mask_lat = (prect_global.lat >= min_lat) & (prect_global.lat <= max_lat)
-    prect_regional = prect_global.where(mask_lon & mask_lat, drop=True)
+# if isinstance(prect_global, xr.DataArray):
+#     mask_lon = (prect_global.lon >= min_lon) & (prect_global.lon <= max_lon)
+#     mask_lat = (prect_global.lat >= min_lat) & (prect_global.lat <= max_lat)
+#     prect_regional = prect_global.where(mask_lon & mask_lat, drop=True)
 
-# average around seattle region 
-prect_regional = prect_regional.mean(dim=['lat', 'lon'])
+# # average around seattle region 
+# prect_regional = prect_regional.mean(dim=['lat', 'lon'])
 
-target_raw = universaldataloader(prect_regional, config, target_only = True, repackage = False)
+# target_raw = universaldataloader(prect_regional, config, target_only = True, repackage = False)
 
-target_raw = target_raw * 86400 * 1000  # Convert to mm/day
+# target_raw = target_raw * 86400 * 1000  # Convert to mm/day
 
-analysis_metrics.save_pickle(target_raw, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_target_raw.pkl")
+# analysis_metrics.save_pickle(target_raw, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_target_raw.pkl")
 
 target_raw = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_target_raw.pkl")
-# print(f"mean raw target: {np.mean(target_raw)}")
-# print(f"median raw target: {np.median(target_raw)}")
-# print(f"std raw target: {np.std(target_raw)}")
+# # print(f"mean raw target: {np.mean(target_raw)}")
+# # print(f"median raw target: {np.median(target_raw)}")
+# # print(f"std raw target: {np.std(target_raw)}")
     
-# Discard plot of CRPS vs IQR Percentile, CRPS vs Anomalies & true precip
-sample_index_raw = analysis_metrics.discard_plot(output, target_raw, CRPS_network, CRPS_climatology, config, target_type = 'raw', analyze_months = False, most_confident= True)
-sample_index_anoms = analysis_metrics.discard_plot(output, target, CRPS_network, CRPS_climatology, config, target_type = 'anomalous', analyze_months = False, most_confident= True)
+# # Discard plot of CRPS vs IQR Percentile, CRPS vs Anomalies & true precip
+sample_index_confident, dry_month_indices_confident = analysis_metrics.discard_plot(output, target_raw, CRPS_network, CRPS_climatology, config, target_type = 'raw', analyze_months = True, most_confident= True)
+sample_index_unconfident, dry_month_indices_unconfident = analysis_metrics.discard_plot(output, target_raw, CRPS_network, CRPS_climatology, config, target_type = 'raw', analyze_months = True, most_confident= False)
+# sample_index_confident = analysis_metrics.discard_plot(output, target, CRPS_network, CRPS_climatology, config, target_type = 'anomalous', analyze_months = False, most_confident= True)
 
-
-anomalies_by_ENSO_phase = analysis_metrics.anomalies_by_ENSO_phase(elnino, lanina, neutral, target, target_raw, sample_index_raw, config, keyword = 'MJJAS')
-# anomalies_by_ENSO_phase_confident = analysis_metrics.anomalies_by_ENSO_phase(elnino, lanina, neutral, target, target_raw, dry_month_indices, config, keyword = 'dry_months')
+# anomalies_by_ENSO_phase = analysis_metrics.anomalies_by_ENSO_phase(elnino, lanina, neutral, target, target_raw, sample_index, config, keyword = 'all_data')
+# anomalies_by_ENSO_phaseDRY = analysis_metrics.anomalies_by_ENSO_phase(elnino, lanina, neutral, target, target_raw, dry_month_indices, config, keyword = 'dry_months')
 
 # DRY MONTH ANALYSIS: 
-top_percentage = 20
-analysis_metrics.subsetanalysis_SHASH_ENSO(sample_index_anoms, output, climatology, target, target_raw, config, x, percentage= top_percentage, subset_keyword = 'MJJAS Inputs')
+top_percentage = 5
+analysis_metrics.subsetanalysis_SHASH_ENSO(dry_month_indices_confident, output, climatology, target, target_raw, config, x, percentage= top_percentage, subset_keyword = 'Dry_Months')
 
 # open testing input data: 
-# testing_input = open_data_file(trimmed_testfn)
-# testing_input = testing_input['x']
+testing_input = open_data_file(trimmed_testfn)
+testing_input = testing_input['x']
+print(testing_input.shape)
 
+# open most and least confident sample data; 
+dry_confident_indices = open_data_file('/Users/C830793391/Documents/Research/E3SM/saved/output/exp023/DRYmonth_indices_narrow.pkl')
+dry_unconfident_indices = open_data_file('/Users/C830793391/Documents/Research/E3SM/saved/output/exp023/DRYmonth_indices_wide.pkl')
 
-# analysis_metrics.compositemapping(idry_5confident, idry_5unconfident, testing_input, config, keyword1 = '5% Most Confident', keyword2 = '5% Least Confident')
+# identify the most and least confident samples by percentage and quantity:
+dry_5confident_indices = dry_confident_indices[:, 100 - top_percentage]
+idry_5confident = dry_5confident_indices[dry_5confident_indices != 0].astype(int)
+
+# find the column in dry_unconfident_indices that contains the same number of indices as dry_5confident_indices
+indice_column_qty = np.count_nonzero(dry_unconfident_indices, axis = 0)
+column_number = np.where(indice_column_qty >= len(idry_5confident))[0][0]
+idry_5unconfident = dry_unconfident_indices[:, column_number] 
+idry_5unconfident = idry_5unconfident[idry_5unconfident != 0].astype(int)
+
+analysis_metrics.compositemapping(idry_5confident, idry_5unconfident, testing_input, config, keyword1 = '5% Most Confident', keyword2 = '5% Least Confident')
 
 # Calculate precip regime for raw target input data
 # Open raw INPUT target data
@@ -404,3 +417,5 @@ analysis_metrics.subsetanalysis_SHASH_ENSO(sample_index_anoms, output, climatolo
 # # # select a slice of only certain years
 # # Nino34 = Nino34.sel(time=slice ( str(config["databuilder"]["input_years"][0]) + '-01-01', str(config["databuilder"]["input_years"][1]) + '-12-31'))
 # # Nino34 = Nino34.values
+
+

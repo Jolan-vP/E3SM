@@ -20,28 +20,36 @@ import calendar
 from datetime import date, timedelta
 import matplotlib as plt
 from databuilder.sampleclass import SampleDict
+import analysis.analysis_metrics as am
 
 class CustomData(torch.utils.data.Dataset):
     """
     Custom dataset for data in dictionaries.
     """
 
-    def __init__(self, data_file, config):
+    def __init__(self, data_file, config, is_train = False):
     
         dict_data = open_data_file(data_file)
 
         self.input = dict_data["x"].values
         self.target= dict_data["y"].values
 
-        # # normalize all data at once: 
-        i_std = np.std(self.input, axis = 0)
-        # t_std = np.std(self.target, axis = 0)
-        i_mean = np.mean(self.input, axis = 0)
-        # t_mean = np.mean(self.target, axis = 0)
-        
-        self.input = (self.input - i_mean) / i_std
-        # self.target = (self.target - t_mean) / t_std
+        # Normalize data using TRAINING stats: 
+        if is_train == True:
+            i_std = np.std(self.input, axis = 0)
+            i_mean = np.mean(self.input, axis = 0)
+            stats = {
+                'input_std': i_std,
+                'input_mean': i_mean
+            }
+            am.save_pickle(stats, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/train_stats.pkl")
+            print("Saved training stats")
+        else: 
+            stats = open_data_file(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/train_stats.pkl")
+            i_std = stats['input_std']
+            i_mean = stats['input_mean']
 
+        self.input = (self.input - i_mean) / i_std
         assert not np.any(np.isnan(self.input))
         assert not np.any(np.isnan(self.target))
 

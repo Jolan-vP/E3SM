@@ -323,8 +323,8 @@ def CRPScompare(crps_scores, crps_climatology_scores, config):
     # print(f"Length of CRPS scores: {len(crps_scores)}")
     # print(f"Length of CRPS climatology scores: {len(crps_climatology_scores)}")
 
-    better_than_climatology = 100 * np.sum(crps_scores < crps_climatology_scores) / len(crps_scores)
-    print(f"Proportion of forecast CRPS scores that are better than climatology: {round(better_than_climatology, 2)}%")
+    better_than_climatology = round((100 * np.sum(crps_scores < crps_climatology_scores) / len(crps_scores)), 2) 
+    print(f"Proportion of forecast CRPS scores that are better than climatology: {better_than_climatology}%")
 
     #TODO: How many scores are equal to climatology CRPS within a tolerance? 
 
@@ -339,6 +339,16 @@ def CRPScompare(crps_scores, crps_climatology_scores, config):
     ax.legend(markerscale = 9)
     plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + "/CRPS_comparative_histogram.png", format='png', bbox_inches ='tight', dpi = 300)
 
+    ## TODO: PLOT histogram of CRPS score distribution with climatoloy CRPS average line as axvline
+    plt.figure(figsize=(6, 4))
+    plt.scatter(np.linspace(0, len(crps_scores), len(crps_scores)), crps_scores, s = 0.3, color = '#6d186e', label = f'{better_than_climatology}% of Sample CRPS > Mean Climatological CRPS')
+    plt.xlabel('Time (Samples in Chronological Order)')
+    plt.ylabel('CRPS Score')
+    plt.axhline(y = np.mean(crps_climatology_scores), color = '#2c728e', linewidth = 1.3, label = 'Climatology CRPS Average')
+    plt.legend()
+    plt.ylim([0, max(crps_scores) + 2])
+    plt.tight_layout()
+    plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/CRPS_score_time_series_all_sampes.png', format = 'png', dpi = 300)
     # return CRPS_forecast, CRPS_climatology
 
 
@@ -387,10 +397,5 @@ def calculateCRPS(output, target, x, config, climatology = None):
         CRPS = np.zeros(len(target))
         for i in range(len(target)):
             CRPS[i] = _crps_single(target[i], cdf, cdf_array[:,i], x, xmin = bounds[i,0], xmax= bounds[i,1], tol=tol)
-
-        plt.figure()
-        plt.plot(CRPS)
-        plt.xlabel('Time (Samples in Chronological Order)')
-        plt.ylabel('CRPS Score')
-        plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/CRPS_score_time_series_all_sampes.png', format = 'png', dpi = 300)   
+   
         return CRPS

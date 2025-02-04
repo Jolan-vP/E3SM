@@ -158,7 +158,7 @@ def discard_plot(networkoutput, target, crps_scores, crps_climatology_scores, co
         ax2.plot(percentiles, avg_target, color=color)
         ax2.tick_params(axis='y', labelcolor=color)
         if most_confident == True:
-            plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/CRPS_narrowIQR_DiscardPlot_anomalies.png', format='png', bbox_inches ='tight', dpi = 300)
+            plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/CRPS_narrowIQR_DiscardPlot_raw.png', format='png', bbox_inches ='tight', dpi = 300)
         else: 
             plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/CRPS_wideIQR_DiscardPlot_true_precip.png', format='png', bbox_inches ='tight', dpi = 300)
     
@@ -305,15 +305,31 @@ def subsetanalysis_SHASH_ENSO(sample_index, shash_params, climatology, target, t
     # remove zeros from subset_indices
     subset_indices = subset_indices[subset_indices != 0].astype(int)
     
+    # Calculate relative ratio of ENSO phases relative to all samples
+    elnino_ratio = elnino.shape[1] / crps_scores.shape[0]
+    lanina_ratio = lanina.shape[1] / crps_scores.shape[0]
+    neutral_ratio = neutral.shape[1] / crps_scores.shape[0]
+
     # identify enso phases of each sample in the subset
     sub_elnino = elnino[np.isin(elnino, subset_indices)]
     sub_lanina = lanina[np.isin(lanina, subset_indices)]
     sub_neutral = neutral[np.isin(neutral, subset_indices)]
-    
-    plt.figure()
-    plt.bar(['El Nino', 'La Nina', 'Neutral'], [len(sub_elnino), len(sub_lanina), len(sub_neutral)])
+
+    sub_elnino_ratio = len(sub_elnino) / len(subset_indices)
+    sub_lanina_ratio = len(sub_lanina) / len(subset_indices)
+    sub_neutral_ratio = len(sub_neutral) / len(subset_indices)
+    max_ratio = max(sub_elnino_ratio, sub_lanina_ratio, sub_neutral_ratio)
+
+    plt.figure(figsize = (5, 6))
+    plt.bar(['El Nino', 'La Nina', 'Neutral'], [sub_elnino_ratio, sub_lanina_ratio, sub_neutral_ratio], color = ['#23888e', '#23888e', '#23888e'])
+    plt.axhline(y=elnino_ratio, color='k',  xmin = 0.05, xmax = 0.30 , linestyle='--', linewidth=1.5, label='Ratio of ENSO Phase in All Samples')
+    plt.axhline(y=lanina_ratio, color='k',  xmin = 0.37, xmax = .631, linestyle='--', linewidth=1.5)
+    plt.axhline(y=neutral_ratio, color='k', xmin = .70, xmax = 0.95,  linestyle='--', linewidth=1.5)
     plt.xlabel('ENSO Phase')
     plt.ylabel('Frequency')
+    plt.ylim([0, max_ratio + 0.075])
+    plt.title(f'ENSO Phase Distribution for {str(subset_keyword)} Top {str(percentage)}% Confident Samples')
+    plt.legend()
     plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + str(subset_keyword) +  str(percentage) +'percent_ENSO_phase_distribution.png', format='png', bbox_inches ='tight', dpi = 300)
 
     # Print average target value per ENSO phase
@@ -349,7 +365,7 @@ def subsetanalysis_SHASH_ENSO(sample_index, shash_params, climatology, target, t
     plt.plot(x_values, pdf, linewidth = 0.5 ) #label = samples
     plt.xlabel("precipitation anomaly (mm/day)")
     plt.ylabel("probability density")
-    plt.title("DRY MONTH Sample SHASH Curves -" + str(config["expname"]) +  str(percentage) + '%')
+    plt.title('Top' + str(percentage) + '% Most Confident SHASH Curves -' + str(config["expname"]) )
     # plt.axvline(valset[:len(output)], color='r', linestyle='dashed', linewidth=1)
     plt.legend()
     plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + str(subset_keyword) +  str(percentage) +'percent_SHASHs_w_climatology.png', format='png', bbox_inches ='tight', dpi = 300)
@@ -414,4 +430,35 @@ def compositemapping(indices1, indices2, mapinputs, config, keyword1 = None, key
     cbar2.set_label('Temperature Anomalies \n (deg C)')
 
     # fig.tight_layout()
-    plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/dry_month_composite_maps_5percent_wide_narrow.png', format='png', bbox_inches ='tight', dpi = 300)
+    plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/MJJAS_composite_maps.png', format='png', bbox_inches ='tight', dpi = 300)
+
+
+
+def maximum_difference(shash_parameters, required_samples = 50, tau_frozen = True):
+    # Calculate the which samples are most different from one another based on shash parameters
+    # Return the number of samples based on the required_samples input
+    # shash_parameters is a 2D array of shash parameters for each sample
+    # required_samples is the number of samples to return
+
+    # Return the required_samples/3 samples with highest and lowest mu (shash_parameters[:, 0])
+    mu_indices = np.argsort(shash_parameters[:, 0])
+    mu_indices = np.concatenate((mu_indices[:required_samples//3], mu_indices[-required_samples//3:]))
+
+    # Return the required_samples/3 samples with highest and lowest sigma (shash_parameters[:, 1])
+    sigma_indices = np.argsort(shash_parameters[:, 1])
+    sigma_indices = np.concatenate((sigma_indices[:required_samples//3], sigma_indices[-required_samples//3:]))
+
+    # Return the required_samples/3 samples with highest and lowest gamma (shash_parameters[:, 2])
+    gamma_indices = np.argsort(shash_parameters[:, 2])
+    gamma_indices = np.concatenate((gamma_indices[:required_samples//3], gamma_indices[-required_samples//3:]))
+            
+    if not tau_frozen:
+        # Return the required_samples/3 samples with highest and lowest tau (shash_parameters[:, 2])
+        tau_indices = np.argsort(shash_parameters[:, 3])
+        tau_indices = np.concatenate((tau_indices[:required_samples//3], tau_indices[-required_samples//3:]))
+
+        all_indices = np.concatenate((mu_indices, sigma_indices, gamma_indices, tau_indices))
+    else:
+        all_indices = np.concatenate((mu_indices, sigma_indices, gamma_indices))
+    
+    return shash_parameters[all_indices]
