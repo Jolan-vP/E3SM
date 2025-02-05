@@ -31,6 +31,10 @@ import math
 import time
 import utils.filemethods as filemethods
 from databuilder.sampleclass import SampleDict
+import cartopy.crs as ccrs  
+import cartopy.feature as cfeature
+from cartopy.crs import PlateCarree
+
 
 # -----------------------------------------------------
 
@@ -75,14 +79,17 @@ class ClimateData:
             if ens == "ens1":   
                 # train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
                 train_ds = filemethods.get_netcdf_da(self.data_dir +  "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+                # train_ds = filemethods.get_netcdf_da(self.data_dir +  "/input_vars.v2.LR.historical_0101.eam.h1.1850-1860.nc")
 
             if ens == "ens2":
                 # validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
                 validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
+                # validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-1860.nc")
 
             elif ens == "ens3":
                 # test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
                 test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
+                # test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-1860.nc")
         
         print(self.config["input_years"])
 
@@ -196,21 +203,44 @@ class ClimateData:
                     targetlon = self.config["target_region"][1]
                     f_dict[key] = f_dict[key].sel(lat = targetlat, lon = targetlon, method = 'nearest')
                 
-                elif len(self.config["target_region"]) == 4: # Generalized region of interest (lat-lon box)
+                elif len(self.config["target_region"]) == 4 : # Generalized region of interest (lat-lon box)
                     print("Target region is a box region. Calculating regional average")
                     min_lat, max_lat = self.config["target_region"][:2]
                     min_lon, max_lon = self.config["target_region"][2:]
-    
+                    # Convert longitudes from -180 to 180 range to 0 to 360 range
+                    if min_lon < 0:
+                        min_lon += 360
+                    if max_lon < 0:
+                        max_lon += 360
+
                     if isinstance(f_dict[key], xr.DataArray):
                         mask_lon = (f_dict[key].lon >= min_lon) & (f_dict[key].lon <= max_lon)
                         mask_lat = (f_dict[key].lat >= min_lat) & (f_dict[key].lat <= max_lat)
-                        # print(f"mask_lat = {mask_lat}")
-                        # print(f"mask_lon = {mask_lon}")
                         data_masked = f_dict[key].where(mask_lon & mask_lat, drop=True)
-                        f_dict[key] = data_masked.mean(['lat', 'lon'])
+                
+                        if self.config["target_mask"] == "land":
+                            mask = xr.open_dataset(self.data_dir + "/landfrac.bilin.nc")["LANDFRAC"][0, :, :]
+                            data_masked = data_masked.where(mask > 0.5)
+                            print("Masking land, Plotting for confirmation: \n")
+                            data_masked = data_masked.dropna(dim="time", how="all")
+                            
+                            fig, ax = plt.subplots(1, 1, figsize=(8, 6), subplot_kw={'projection': ccrs.PlateCarree()})
+                            ax.add_feature(cfeature.BORDERS, linewidth=0.5, edgecolor='black')
+                            ax.add_feature(cfeature.STATES, linewidth=0.5, edgecolor='black')
+                            data_masked_oneday = data_masked.sel(time = '1855-01-01')
+                            data_masked_oneday.plot(ax=ax, transform=ccrs.PlateCarree(), cmap='viridis_r')
+                            ax.set_xticks(np.arange(-180, 181, 4), crs=ccrs.PlateCarree())
+                            ax.set_yticks(np.arange(-90, 91, 2), crs=ccrs.PlateCarree())
+                            ax.set_ylim([36.5, 58.5])
+                            ax.set_xlim([-135, -112])
+                            plt.tight_layout()
+                            plt.show()
+                            plt.savefig(self.figure_dir + str(self.expname) + "/" + str(self.expname) + "_target_masked.png", dpi=200)
 
-                    else:
-                        raise NotImplementedError("data must be xarray")
+
+                        f_dict[key] = data_masked.mean(['lat', 'lon'])
+                else:
+                    raise NotImplementedError("data must be xarray")
 
                 # REMOVE SEASONAL CYCLE 
                 print("removing seasonal cycle")
@@ -221,7 +251,7 @@ class ClimateData:
 
                 # ROLLING AVERAGE
                 print("rolling average")
-                f_dict[key] = self.rolling_ave(f_dict[key]) # first six values are now nans due to 7-day rolling mean    
+                f_dict[key] = self.rolling_ave(f_dict[key]) # first 13 values are now nans due to 14-day rolling mean    
                 
                 print("completed processing target")
                 print(f"shape of target is: {f_dict[key].shape}")
