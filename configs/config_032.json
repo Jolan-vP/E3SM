@@ -1,4 +1,4 @@
-{"expname": "exp028",
+{"expname": "exp032",
     "device": "cpu",
     "seed_list": [7],
 
@@ -12,7 +12,7 @@
     "perlmutter_model_dir": "/pscratch/sd/p/plutzner/E3SM/saved/models/",
     "output_dir": "/Users/C830793391/Documents/Research/E3SM/saved/output",
     "perlmutter_output_dir": "/pscratch/sd/p/plutzner/E3SM/saved/output/", 
-    "fig_dpi": 300, 
+    "fig_dpi": 300,
 
     "other_dirs": {
         "data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",
@@ -26,7 +26,8 @@
         "output_dir": "/Users/C830793391/Documents/Research/E3SM/saved/output/",
         "perlmutter_output_dir": "/Users/C830793391/Documents/Research/E3SM/saved/output/", 
         "fig_dpi": 300
-    }, 
+    }
+    ,
 
     "metrics": [
         "custom_mae", "iqr_capture", "sign_test"
@@ -47,7 +48,7 @@
         "target_var": "PRECT",
         "target_region": [38.5, 54.5, -133.5, -120.5],
         "target_months": [10, 11, 12, 1, 2, 3],
-        "averaging_length": 7,
+        "averaging_length": 14,
         "lagtime": 14, 
         "front_cutoff": 14, 
         "back_cutoff": 14, 
@@ -71,32 +72,35 @@
         "kernel_size": [3, 3],
         "cnn_act": ["ReLU", "ReLU"],
 
-        "hiddens_block": [10, 10],
+        "hiddens_block": [20, 20],
         "hiddens_block_in": [141120],
         "hiddens_block_act": ["ReLU"],
-        "hiddens_block_out": 10,
+        "hiddens_block_out": 20,
 
-        "hiddens_final_in": 10,
+        "hiddens_final_in": 20,
         "hiddens_final_out": 4,
         "hiddens_final_act": "ReLU", 
 
-        "dropout": 0.20
+
+        "dropout": 0.25
     }, 
 
     "optimizer": {
-        "type": "ASGD",
+        "type": "SGD",
         "args": {
-            "lr": 0.00001,
+            "lr": 0.000001,
             "weight_decay": 0.0
         }
     },
 
     "trainer": {
-        "max_epochs": 120,
+        "max_epochs": 100,
+        "save_dir": "/Users/C830793391/Documents/Research/E3SM/saved/",
+        "perlmutter_model_dir": "/pscratch/sd/p/plutzner/E3SM/saved/models",
         "early_stopping":{
             "args":{
-                "patience": 50,
-                "min_delta": 0.00001
+                "patience": 5,
+                "min_delta": 0.000001
             }
         }
     }

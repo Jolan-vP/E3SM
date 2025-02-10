@@ -109,8 +109,8 @@ class ClimateData:
         self.d_train.concat(f_dict_train) 
         self.d_val.concat(f_dict_val) 
         self.d_test.concat(f_dict_test) 
-        print(f"shape of f_dict_train input: {f_dict_train['x'].shape}")
-        print(f"shape of f_dict_train target: {f_dict_train['y'].shape}")
+        # print(f"shape of f_dict_train input: {f_dict_train['x'].shape}")
+        # print(f"shape of f_dict_train target: {f_dict_train['y'].shape}")
 
     def _process_data(self, ds):
         '''
@@ -196,6 +196,18 @@ class ClimateData:
                 assert -150 < f_dict[key][10, 30, 120].values < 150
                 # print(f"magnitude of target post unit-conversion: {f_dict[key][500:505].values}") 
                 
+                # fig, ax = plt.subplots(1, 1, figsize=(8, 6), subplot_kw={'projection': ccrs.PlateCarree()})
+                # ax.add_feature(cfeature.BORDERS, linewidth=0.5, edgecolor='black')
+                # ax.add_feature(cfeature.STATES, linewidth=0.5, edgecolor='black')
+                # one_day = f_dict[key][10, ...]
+                # one_day.plot(ax=ax, transform=ccrs.PlateCarree(), cmap='viridis_r')
+                # ax.set_xticks(np.arange(-180, 181, 30), crs=ccrs.PlateCarree())
+                # ax.set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree())
+                # plt.tight_layout()
+                # plt.show()
+                # plt.savefig(self.figure_dir + str(self.expname) + "/" + str(self.expname) + "_target_masked_prelandmask.png", dpi=200)
+
+
                 # EXTRACT TARGET LOCATION
                 if len(self.config["target_region"]) == 2: # Specific city / lat lon location
                     print("Target region is a single grid point")
@@ -207,38 +219,46 @@ class ClimateData:
                     print("Target region is a box region. Calculating regional average")
                     min_lat, max_lat = self.config["target_region"][:2]
                     min_lon, max_lon = self.config["target_region"][2:]
+
                     # Convert longitudes from -180 to 180 range to 0 to 360 range
                     if min_lon < 0:
                         min_lon += 360
                     if max_lon < 0:
                         max_lon += 360
-
+        
                     if isinstance(f_dict[key], xr.DataArray):
                         mask_lon = (f_dict[key].lon >= min_lon) & (f_dict[key].lon <= max_lon)
                         mask_lat = (f_dict[key].lat >= min_lat) & (f_dict[key].lat <= max_lat)
+
                         data_masked = f_dict[key].where(mask_lon & mask_lat, drop=True)
                 
                         if self.config["target_mask"] == "land":
                             mask = xr.open_dataset(self.data_dir + "/landfrac.bilin.nc")["LANDFRAC"][0, :, :]
                             data_masked = data_masked.where(mask > 0.5)
+                            print(f"shape of data_masked: {data_masked.shape}")
                             print("Masking land, Plotting for confirmation: \n")
-                            data_masked = data_masked.dropna(dim="time", how="all")
-                            
-                            fig, ax = plt.subplots(1, 1, figsize=(8, 6), subplot_kw={'projection': ccrs.PlateCarree()})
-                            ax.add_feature(cfeature.BORDERS, linewidth=0.5, edgecolor='black')
-                            ax.add_feature(cfeature.STATES, linewidth=0.5, edgecolor='black')
-                            data_masked_oneday = data_masked.sel(time = '1855-01-01')
-                            data_masked_oneday.plot(ax=ax, transform=ccrs.PlateCarree(), cmap='viridis_r')
-                            ax.set_xticks(np.arange(-180, 181, 4), crs=ccrs.PlateCarree())
-                            ax.set_yticks(np.arange(-90, 91, 2), crs=ccrs.PlateCarree())
-                            ax.set_ylim([36.5, 58.5])
-                            ax.set_xlim([-135, -112])
-                            plt.tight_layout()
-                            plt.show()
-                            plt.savefig(self.figure_dir + str(self.expname) + "/" + str(self.expname) + "_target_masked.png", dpi=200)
+                            # data_masked = data_masked.dropna(dim="time", how="all")
+                            # print(f"shape of data_masked after dropping nans: {data_masked.shape}")
+                        else: 
+                            pass
 
+                        print(data_masked[10, ...])
+                        fig, ax = plt.subplots(1, 1, figsize=(8, 6), subplot_kw={'projection': ccrs.PlateCarree()})
+                        ax.add_feature(cfeature.BORDERS, linewidth=0.3, edgecolor='black')
+                        ax.add_feature(cfeature.STATES, linewidth=0.3, edgecolor='black')
+                        ax.add_feature(cfeature.COASTLINE, linewidth=0.3, edgecolor='black')
+                        data_masked_oneday = data_masked[10, ...]
+                        data_masked_oneday.plot(ax=ax, transform=ccrs.PlateCarree(), cmap='viridis_r')
+                        ax.set_xticks(np.arange(-180, 181, 4), crs=ccrs.PlateCarree())
+                        ax.set_yticks(np.arange(-90, 91, 4), crs=ccrs.PlateCarree())
+                        ax.set_ylim([36.5, 58.5])
+                        ax.set_xlim([-135, -110])
+                        plt.tight_layout()
+                        plt.show()
+                        plt.savefig(self.figure_dir + str(self.expname) + "/" + str(self.expname) + "_target_masked.png", dpi=300)
 
                         f_dict[key] = data_masked.mean(['lat', 'lon'])
+
                 else:
                     raise NotImplementedError("data must be xarray")
 

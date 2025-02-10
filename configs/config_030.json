@@ -1,4 +1,4 @@
-{"expname": "exp028",
+{"expname": "exp030",
     "device": "cpu",
     "seed_list": [7],
 
@@ -47,7 +47,7 @@
         "target_var": "PRECT",
         "target_region": [38.5, 54.5, -133.5, -120.5],
         "target_months": [10, 11, 12, 1, 2, 3],
-        "averaging_length": 7,
+        "averaging_length": 14,
         "lagtime": 14, 
         "front_cutoff": 14, 
         "back_cutoff": 14, 
@@ -68,7 +68,7 @@
         "freeze_id" : ["tau"],
         "circular_padding": [15, 15, 0, 0],
         "filters" : [32, 32], 
-        "kernel_size": [3, 3],
+        "kernel_size": [7, 5],
         "cnn_act": ["ReLU", "ReLU"],
 
         "hiddens_block": [10, 10],
@@ -80,23 +80,23 @@
         "hiddens_final_out": 4,
         "hiddens_final_act": "ReLU", 
 
-        "dropout": 0.20
+        "dropout": 0.10
     }, 
 
     "optimizer": {
-        "type": "ASGD",
+        "type": "SGD",
         "args": {
-            "lr": 0.00001,
+            "lr": 0.000001,
             "weight_decay": 0.0
         }
     },
 
     "trainer": {
-        "max_epochs": 120,
+        "max_epochs": 35,
         "early_stopping":{
             "args":{
-                "patience": 50,
-                "min_delta": 0.00001
+                "patience": 10,
+                "min_delta": 0.0001
             }
         }
     }

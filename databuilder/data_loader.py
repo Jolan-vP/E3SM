@@ -27,7 +27,7 @@ class CustomData(torch.utils.data.Dataset):
     Custom dataset for data in dictionaries.
     """
 
-    def __init__(self, data_file, config, is_train = False):
+    def __init__(self, data_file, config, which_set = None):
     
         dict_data = open_data_file(data_file)
 
@@ -35,7 +35,7 @@ class CustomData(torch.utils.data.Dataset):
         self.target= dict_data["y"].values
 
         # Normalize data using TRAINING stats: 
-        if is_train == True:
+        if which_set == "training":
             i_std = np.std(self.input, axis = 0)
             i_mean = np.mean(self.input, axis = 0)
             stats = {
@@ -44,12 +44,24 @@ class CustomData(torch.utils.data.Dataset):
             }
             am.save_pickle(stats, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/train_stats.pkl")
             print("Saved training stats")
-        else: 
+
+            self.input = (self.input - i_mean) / i_std
+
+        elif which_set == "validation": 
             stats = open_data_file(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/train_stats.pkl")
             i_std = stats['input_std']
             i_mean = stats['input_mean']
 
-        self.input = (self.input - i_mean) / i_std
+            # self.input = self.input[::3]
+            # self.target = self.target[::3]
+
+        elif which_set == "testing":
+            stats = open_data_file(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/train_stats.pkl")
+            i_std = stats['input_std']
+            i_mean = stats['input_mean']
+
+            self.input = (self.input - i_mean) / i_std
+
         assert not np.any(np.isnan(self.input))
         assert not np.any(np.isnan(self.target))
 
@@ -64,8 +76,7 @@ class CustomData(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
 
-        input = torch.tensor(self.input[idx, ...])
-        # input = self.input[idx, ...]
+        input = self.input[idx, ...]
         
         target = self.target[idx]
         
@@ -136,6 +147,7 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
         input_mod_final = input_filtered[smoothing_length:]
         target_mod_final = target_filtered[smoothing_length:]
         
+        print(f" input_mod_final time: {input_mod_final.time}")
         # print(f"input_mod_final shape: {input_mod_final.shape}")
         # print(f"target_mod_final shape: {target_mod_final.shape}")
 

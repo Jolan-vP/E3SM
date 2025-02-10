@@ -1,4 +1,4 @@
-{"expname": "exp028",
+{"expname": "exp029",
     "device": "cpu",
     "seed_list": [7],
 
@@ -47,7 +47,7 @@
         "target_var": "PRECT",
         "target_region": [38.5, 54.5, -133.5, -120.5],
         "target_months": [10, 11, 12, 1, 2, 3],
-        "averaging_length": 7,
+        "averaging_length": 14,
         "lagtime": 14, 
         "front_cutoff": 14, 
         "back_cutoff": 14, 
@@ -80,7 +80,7 @@
         "hiddens_final_out": 4,
         "hiddens_final_act": "ReLU", 
 
-        "dropout": 0.20
+        "dropout": 0.10
     }, 
 
     "optimizer": {
@@ -95,8 +95,8 @@
         "max_epochs": 120,
         "early_stopping":{
             "args":{
-                "patience": 50,
-                "min_delta": 0.00001
+                "patience": 8,
+                "min_delta": 0.0
             }
         }
     }

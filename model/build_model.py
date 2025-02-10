@@ -15,6 +15,7 @@ import torch
 import numpy as np
 from base.base_model import BaseModel
 import torch.nn.functional as F
+import torch.nn as nn
 
 
 def conv_couplet(in_channels, out_channels, act_fun, kernel_size, **kwargs):
@@ -131,6 +132,9 @@ class TorchModel(BaseModel):
             else:
                 self.rescale_tau = RescaleLayer(torch.tensor(1.0), torch.tensor(0.0))
 
+            # Dropout Layer
+            self.dropout = nn.Dropout(p=config["dropout"])
+
         elif self.config["type"] == "basicnn":  
             self.rescale_tau = RescaleLayer(torch.tensor(0.0), torch.tensor(1.0))
 
@@ -209,7 +213,6 @@ class TorchModel(BaseModel):
         elif self.config["type"] == "cnn":
 
             # Configure Channel Dimension to be in position 1
-            # x = torch.permute(input, [2, 0, 1])
             x = torch.permute(input, [0, 3, 1, 2])
             
             # x = self.pad_lons(input)
@@ -217,6 +220,8 @@ class TorchModel(BaseModel):
             x = self.conv_block(x)
             x = self.flat(x)
 
+            x = self.dropout(x)
+            
             # mu layers:
             x_mu = self.denseblock_mu(x)
             mu_out = self.output_mu(x_mu)

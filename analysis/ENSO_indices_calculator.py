@@ -13,6 +13,11 @@ import gzip
 import pickle
 from databuilder.data_loader import universaldataloader
 from analysis.analysis_metrics import save_pickle, load_pickle
+import cartopy
+from cartopy.crs import PlateCarree
+import cartopy.feature as cfeature
+import cartopy.crs as ccrs
+import cftime
 
 def identify_nino_phases(nino34_index, config, threshold=0.4, window=6, lagtime = None, smoothing_length = None):
     """
@@ -48,8 +53,8 @@ def identify_nino_phases(nino34_index, config, threshold=0.4, window=6, lagtime 
             phase_array[i:i + window, 2] = 1
 
     # open original training dataset: 
-    # train_ds = filemethods.get_netcdf_da(str(config['perlmutter_data_dir']) + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-    train_ds = filemethods.get_netcdf_da(str(config['perlmutter_data_dir']) + "ens1/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+    train_ds = filemethods.get_netcdf_da(str(config['perlmutter_data_dir']) + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+    # train_ds = filemethods.get_netcdf_da(str(config['perlmutter_data_dir']) + "ens1/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
     train_ds = train_ds.sel(time = slice("1850", "2014"))
     # train_ds = train_ds.sel(time = slice("str(config["databuilder"]["input_years"][0]"), str(config["databuilder"]["input_years"][1])))
 
@@ -215,3 +220,149 @@ def ENSO_CRPS(enso_indices_daily, crps_scores, climatology, x_values, output, co
     # plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/CRPS_vs_ENSO_Phases_' + str(config["expname"]) + '.png', format='png', bbox_inches ='tight', dpi = 300)
 
     return elnino, lanina, neutral, CRPS_elnino, CRPS_lanina, CRPS_neutral
+
+
+def idealENSOphases(nino34index, ens2, ens = None, percentile = None, numberofeachphase = None, plotfn = None):
+    """
+    Function to find the dates corresponding to 'idealized' ENSO phases. Track dates by keeping xarray time coordinate
+    """
+    threshold = 0.4  # Threshold for El Niño/La Niña classification
+    window = 6  # 6 months consecutively 
+
+
+    # Mask out dates if there are fewer than 6 consecutive values in a row 
+    # Loop through the Nino3.4 index using a sliding window
+    n = len(nino34index)
+    threshold_mask = np.zeros(n, dtype=int)
+    for i in range(n - window + 1):
+        window_slice = nino34index[i:i + window]
+        if np.all(window_slice > threshold) or np.all(window_slice < -threshold):
+            threshold_mask[i:i + window] = 1
+
+    # Apply threshold_mask to nino34 index: 
+    nino34_threshold_masked = np.ma.masked_where(threshold_mask == 0, nino34index)
+
+    # Replace masked values with zero
+    nino34_filled = nino34_threshold_masked.filled(0)
+
+    # Convert the filled array back to an xarray DataArray
+    nino34_filled_xr = xr.DataArray(nino34_filled, coords=nino34index.coords, dims=nino34index.dims)
+
+    # Now there are lots of values separated by masked values
+    # For every block of consecutive values, find the maximum value in that block 
+    # store the values as an xarray with the same time coordinate as the original dataset
+
+    current_block = []
+    max_values = []
+    max_dates = []
+   # Iterate through each index in the range of n
+    for i in range(n):
+        if threshold_mask[i] == 1:
+            # If threshold_mask is 1, add the current value to the current block
+            current_block.append((nino34_filled_xr[i], nino34index.time.values[i]))
+        else:
+            if current_block:
+                # Filter values within the block that are greater than 2 or less than -2
+                filtered_block = [(value, date) for value, date in current_block if value > 2 or value < -2]
+                if filtered_block:
+                    # If the filtered block is not empty, calculate the max value and record the date
+                    max_value, max_date = max(filtered_block, key=lambda x: np.abs(x[0]))
+                    max_values.append(max_value)
+                    max_dates.append(max_date)
+                # Reset the current block for the next contiguous block
+                current_block = []
+
+    # Handle the case where the last block extends to the end of the array
+    if current_block:
+        filtered_block = [(value, date) for value, date in current_block if value > 2 or value < -2]
+        if filtered_block:
+            max_value, max_date = max(filtered_block, key=lambda x: np.abs(x[0]))
+            max_values.append(max_value)
+            max_dates.append(max_date)
+
+    # Find the 10th and 90th percentile values of those maximum values and return their corresponding dates
+    max_values = np.array(max_values)
+    max_dates = np.array(max_dates)
+
+    filtered_zero_values = []
+    filtered_zero_dates = []
+
+    # Iterate through each index in the range of n
+    for i in range(n):
+        value = nino34_filled_xr[i]
+        date = nino34index.time.values[i]
+        # Filter values that are between -0.05 and 0.05
+        if -0.05 < value < 0.05:
+            filtered_zero_values.append(value)
+            filtered_zero_dates.append(date)
+
+    # Convert lists to numpy arrays
+    filtered_values = np.array(filtered_zero_values)
+    filtered_dates = np.array(filtered_zero_dates)
+
+    print(f"Number of filtered dates: {len(filtered_zero_dates)}")
+
+    # plot these zero dates as scatter points over the total nino34 index time series
+    x_times = nino34index.time
+     
+    plt.figure(figsize=(12, 7), dpi=200)
+    plt.plot(x_times, nino34index, color = '#26828e', label = 'Nino 3.4 Index MASKED')
+    plt.scatter(filtered_zero_dates, filtered_zero_values, color='r', s = 12)
+    plt.savefig(plotfn + 'ENSO_total_index_w_zeros_' + str(ens) + '.png', format='png', bbox_inches ='tight', dpi = 200)
+
+
+    # General Index Time Series Plot -------------------------------------
+
+    # plt.figure(figsize=(12, 7), dpi=200)
+    # plt.plot(x_times, nino34index, color = '#26828e', label = 'Nino 3.4 Index MASKED')
+    # plt.scatter(max_dates, max_values, color='r', s = 12)
+    # # add labels of each dates for each point (without time values)
+    # for i, txt in enumerate(max_dates):
+    #     plt.annotate(txt.strftime('%Y-%m-%d'), (max_dates[i], max_values[i]), fontsize=8)
+    # plt.title(f"{str(ens)} : Nino 3.4 Index with Events Greater than 2.0")
+    # plt.show()
+    # plt.savefig(plotfn + 'ENSO_total_index_time_series_' + str(ens) + '.png', format='png', bbox_inches ='tight', dpi = 200)
+
+    # Scatter Plot ----------------------------------------------------
+    x_times = nino34index.time
+
+    plt.figure(figsize=(12, 7), dpi=200)
+    plt.plot(x_times, nino34_threshold_masked, color = '#26828e', label = 'Nino 3.4 Index MASKED')
+    plt.scatter(max_dates, max_values, color='r', s = 12)
+    # add labels of each dates for each point (without time values)
+    for i, txt in enumerate(max_dates):
+        plt.annotate(txt.strftime('%Y-%m-%d'), (max_dates[i], max_values[i]), fontsize=8)
+    plt.title(f"{str(ens)} : Nino 3.4 Index with Events Greater than 2.0")
+    plt.show()
+    plt.savefig(plotfn + 'ENSO_index_' + str(ens) + '.png', format='png', bbox_inches ='tight', dpi = 200)
+
+    # Map Plots -------------------------------------------------------
+    print(type(ens2))
+    print(ens2.time)
+
+    date_to_select1 = cftime.DatetimeNoLeap(1927, 2, 1)
+
+    # Plot TS for 1927-02-01 ENS2 : EL NINO
+    ens2_ELNINO = ens2.sel(time = date_to_select1, method = 'nearest')
+
+    fig, ax = plt.subplots(1, 1, figsize=(6, 4), subplot_kw={'projection': ccrs.PlateCarree()}, dpi=200)
+    ens2_ELNINO.plot(ax=ax, transform=ccrs.PlateCarree(), cmap='coolwarm', add_colorbar=False)
+    ax.coastlines()
+    ax.tick_params(axis='both', labelsize=8)
+    ax.set_xticks(np.arange(-180, 181, 30), crs=ccrs.PlateCarree())
+    ax.set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree())
+    ax.add_feature(cfeature.BORDERS, linewidth=0.5, edgecolor='black')
+    plt.savefig(plotfn + 'ENSO_index_' + str(ens) + 'ELNINO_1927-02-01.png', format='png', bbox_inches ='tight', dpi = 200)
+
+    # Plot TS for 1943-12-01 ENS2 : LA NINA
+    date_to_select2 = cftime.DatetimeNoLeap(1943, 12, 1)
+    ens2_LANINA = ens2.sel(time = date_to_select2, method = 'nearest')
+
+    fig, ax = plt.subplots(1, 1, figsize=(6, 4), subplot_kw={'projection': ccrs.PlateCarree()}, dpi=200)
+    ens2_LANINA.plot(ax=ax, transform=ccrs.PlateCarree(), cmap='coolwarm', add_colorbar=False)
+    ax.coastlines()
+    ax.tick_params(axis='both', labelsize=8)
+    ax.set_xticks(np.arange(-180, 181, 30), crs=ccrs.PlateCarree())
+    ax.set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree())
+    ax.add_feature(cfeature.BORDERS, linewidth=0.5, edgecolor='black')
+    plt.savefig(plotfn + 'ENSO_index_' + str(ens) + 'LANINA_1927-02-01.png', format='png', bbox_inches ='tight', dpi = 200)

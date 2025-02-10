@@ -57,7 +57,7 @@ class BaseTrainer:
             *["val_" + m.__name__ for m in self.metric_funcs],
         )
 
-    def fit(self):
+    def fit(self, std_mean):
         """
         Full training logic
         """
@@ -73,6 +73,15 @@ class BaseTrainer:
             self.log.update("epoch", epoch)
             for key in self.batch_log.history:
                 self.log.update(key, self.batch_log.history[key])
+
+            # Every 3 epochs save best model every three epochs
+            if epoch % 3 == 0:
+                path = str(self.config["perlmutter_model_dir"]) + str(self.config["expname"]) + ".pth"
+                torch.save({
+                            "model_state_dict" : self.model.state_dict(),
+                            "training_std_mean" : std_mean,
+                            }, path)
+
 
             # early stopping
             if self.early_stopper.check_early_stop(epoch, self.log.history["val_loss"][epoch], self.model, outputs):
