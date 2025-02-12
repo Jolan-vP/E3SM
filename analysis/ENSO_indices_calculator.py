@@ -297,8 +297,8 @@ def idealENSOphases(nino34index, ens2, ens = None, percentile = None, numberofea
             filtered_zero_dates.append(date)
 
     # Convert lists to numpy arrays
-    filtered_values = np.array(filtered_zero_values)
-    filtered_dates = np.array(filtered_zero_dates)
+    filtered_zero_values = np.array(filtered_zero_values)
+    filtered_zero_dates = np.array(filtered_zero_dates)
 
     print(f"Number of filtered dates: {len(filtered_zero_dates)}")
 
@@ -307,7 +307,7 @@ def idealENSOphases(nino34index, ens2, ens = None, percentile = None, numberofea
      
     plt.figure(figsize=(12, 7), dpi=200)
     plt.plot(x_times, nino34index, color = '#26828e', label = 'Nino 3.4 Index MASKED')
-    plt.scatter(filtered_zero_dates, filtered_zero_values, color='r', s = 12)
+    plt.scatter(filtered_zero_dates, filtered_zero_values, color='r', s = 7)
     plt.savefig(plotfn + 'ENSO_total_index_w_zeros_' + str(ens) + '.png', format='png', bbox_inches ='tight', dpi = 200)
 
 
@@ -333,6 +333,8 @@ def idealENSOphases(nino34index, ens2, ens = None, percentile = None, numberofea
     for i, txt in enumerate(max_dates):
         plt.annotate(txt.strftime('%Y-%m-%d'), (max_dates[i], max_values[i]), fontsize=8)
     plt.title(f"{str(ens)} : Nino 3.4 Index with Events Greater than 2.0")
+    plt.ylabel('Nino 3.4 Index')
+    plt.xlabel('Time')
     plt.show()
     plt.savefig(plotfn + 'ENSO_index_' + str(ens) + '.png', format='png', bbox_inches ='tight', dpi = 200)
 

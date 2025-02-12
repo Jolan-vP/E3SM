@@ -203,13 +203,13 @@ def anomalies_by_ENSO_phase(elnino, lanina, neutral, target, target_raw, sample_
 
     plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/scatter_ENSO_phases' + str(keyword) + '.png', format='png', bbox_inches ='tight', dpi = 300)
 
-    print(f"Mean Anomaly during El Nino: {np.round(target[elnino].mean(), 4)}")
-    print(f"Mean Anomaly during La Nina: {np.round(target[lanina].mean(), 4)}")
-    print(f"Mean Anomaly during Neutral: {np.round(target[neutral].mean(), 4)}")
+    print(f"Mean Anomaly during El Nino: {np.round(target[elnino].mean().item(), 4)}")
+    print(f"Mean Anomaly during La Nina: {np.round(target[lanina].mean().item(), 4)}")
+    print(f"Mean Anomaly during Neutral: {np.round(target[neutral].mean().item(), 4)}")
 
-    print(f"Mean True Amount during El Nino: {np.round(target_raw[elnino].mean(), 4)}")
-    print(f"Mean True Amount during La Nina: {np.round(target_raw[lanina].mean(), 4)}")
-    print(f"Mean True Amount during Neutral: {np.round(target_raw[neutral].mean(), 4)}")
+    print(f"Mean True Amount during El Nino: {np.round(target_raw[elnino].mean().item(), 4)}")
+    print(f"Mean True Amount during La Nina: {np.round(target_raw[lanina].mean().item(), 4)}")
+    print(f"Mean True Amount during Neutral: {np.round(target_raw[neutral].mean().item(), 4)}")
 
     print(f"Percent of La Nina events out of total: {np.round((lanina.shape[0]/target.shape[0])*100, 2)}%")
     print(f"Percent of El Nino events out of total: {np.round((elnino.shape[0]/target.shape[0])*100, 2)}%")

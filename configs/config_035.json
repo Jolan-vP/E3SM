@@ -1,4 +1,4 @@
-{"expname": "exp032",
+{"expname": "exp035",
     "device": "cpu",
     "seed_list": [7],
 
@@ -60,7 +60,7 @@
 
         "data_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/", 
         "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",
-        "batch_size": 32
+        "batch_size": 128
     }, 
 
     "arch": {
@@ -68,12 +68,12 @@
         "n_inputchannel": 2,
         "freeze_id" : ["tau"],
         "circular_padding": [15, 15, 0, 0],
-        "filters" : [32, 32], 
-        "kernel_size": [3, 3],
-        "cnn_act": ["ReLU", "ReLU"],
+        "filters" : [32, 32, 32], 
+        "kernel_size": [7, 5, 3],
+        "cnn_act": ["ReLU", "ReLU", "ReLU"],
 
         "hiddens_block": [20, 20],
-        "hiddens_block_in": [141120],
+        "hiddens_block_in": [36064],
         "hiddens_block_act": ["ReLU"],
         "hiddens_block_out": 20,
 
@@ -82,13 +82,13 @@
         "hiddens_final_act": "ReLU", 
 
 
-        "dropout": 0.25
+        "dropout": 0.15
     }, 
 
     "optimizer": {
-        "type": "SGD",
+        "type": "Adam",
         "args": {
-            "lr": 0.000001,
+            "lr": 0.0001,
             "weight_decay": 0.0
         }
     },
@@ -100,7 +100,7 @@
         "early_stopping":{
             "args":{
                 "patience": 15,
-                "min_delta": 0.0000001
+                "min_delta": 0.00000001
             }
         }
     }

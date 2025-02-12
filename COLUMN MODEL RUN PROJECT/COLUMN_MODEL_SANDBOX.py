@@ -58,7 +58,7 @@ nino34_ens2 = ENSO_ens2['nino34']
 nino34_ens3 = ENSO_ens3['nino34']
 
 # open ens2 input data
-ens2_input_data = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp029_d_train.pkl')
+ens2_input_data = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp029_d_val.pkl')
 ens2_TS = ens2_input_data['x'][..., 1]
 
 # saveplot = '/pscratch/sd/p/plutzner/E3SM/COLUMN MODEL RUN PROJECT/ENSO_index_ens1.png'

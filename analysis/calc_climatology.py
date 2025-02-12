@@ -52,7 +52,7 @@ def deriveclimatology(output, target, number_of_samples, config, climate_data=Fa
     else:
         climatology = target
 
-    print(f"Climatologial Mean = {np.mean(climatology)}")
+    print(f"Climatological Mean = {np.mean(climatology).item()}")
 
     extreme_samps = maximum_difference(output, required_samples= number_of_samples, tau_frozen=True)
 
