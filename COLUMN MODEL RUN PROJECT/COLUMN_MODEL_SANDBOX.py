@@ -49,23 +49,23 @@ print(f"pytorch version = {torch.__version__}")
 # ------------------------------------------------------------
 # Determine Ideal ENSO Phases for Column Model Runs: 
 
-ENSO_ens1 = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/ENSO_ne30pg2_HighRes/nino.member0101.nc')
+# ENSO_ens1 = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/ENSO_ne30pg2_HighRes/nino.member0101.nc')
 ENSO_ens2 = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/ENSO_ne30pg2_HighRes/nino.member0151.nc')
-ENSO_ens3 = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/ENSO_ne30pg2_HighRes/nino.member0201.nc')
+# ENSO_ens3 = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/ENSO_ne30pg2_HighRes/nino.member0201.nc')
 
-nino34_ens1 = ENSO_ens1['nino34']
+# nino34_ens1 = ENSO_ens1['nino34']
 nino34_ens2 = ENSO_ens2['nino34']
-nino34_ens3 = ENSO_ens3['nino34']
+# nino34_ens3 = ENSO_ens3['nino34']
 
-# open ens2 input data
-ens2_input_data = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp029_d_val.pkl')
-ens2_TS = ens2_input_data['x'][..., 1]
+# # open ens2 input data
+# ens2_input_data = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp029_d_val.pkl')
+# ens2_TS = ens2_input_data['x'][..., 1]
 
 # saveplot = '/pscratch/sd/p/plutzner/E3SM/COLUMN MODEL RUN PROJECT/ENSO_index_ens1.png'
 # idealENSOphases(nino34_ens1, ens = 'ens1', percentile = 70, numberofeachphase= 1, plotfn = saveplot )
 
 saveplot = '/pscratch/sd/p/plutzner/E3SM/COLUMN MODEL RUN PROJECT/'
-idealENSOphases(nino34_ens2, ens2_TS, ens = 'ens2', percentile = 70, numberofeachphase= 1, plotfn = saveplot )
+idealENSOphases(nino34_ens2, ens = 'ens2', percentile = 70, numberofeachphase= 1, plotfn = saveplot )
 
 # saveplot = '/pscratch/sd/p/plutzner/E3SM/COLUMN MODEL RUN PROJECT/ENSO_index_ens3.png'
 # idealENSOphases(nino34_ens3, ens = 'ens3', percentile = 70, numberofeachphase= 1, plotfn = saveplot )

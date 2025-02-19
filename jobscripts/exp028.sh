@@ -1,20 +1,22 @@
 #!/bin/bash
 #SBATCH --job-name=exp028_Training
-#SBATCH -N 4
-#SBATCH --ntasks=128
-#SBATCH --cpus-per-task=1
+#SBATCH -N 1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=256
 #SBATCH -C cpu
 #SBATCH -q regular
 #SBATCH --mail-user=j.vonplutzner@colostate.edu
 #SBATCH --mail-type=ALL
-#SBATCH -t 02:30:00
+#SBATCH -t 8:15:00
 #SBATCH -A m4620
 
+cd /pscratch/sd/p/plutzner/E3SM
 module load python
 conda activate env-torch
-cd /pscratch/sd/p/plutzner/E3SM
+
+echo “STARTING PROGRAM”
 
 #run the application:
-srun SANDBOX.py
+srun -n 1 -c 256 -u --cpu-bind=cores python -u SANDBOX.py
 
 echo “PROGRAM COMPLETE”

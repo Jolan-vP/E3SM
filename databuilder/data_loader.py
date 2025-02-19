@@ -160,6 +160,11 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
                     "x": (["time", "lat", "lon", "channel"], input_mod_final.data),  
                     "y": (["time"], target_mod_final.data),
                     })
+            if len(data['x'].shape)  == 3: 
+                data_dict = xr.Dataset({
+                    "x": (["time", "lat", "lon"], input_mod_final.data),  
+                    "y": (["time"], target_mod_final.data),
+                    })
             elif len(data['x'].shape) == 2: 
                 data_dict = xr.Dataset({
                     "x": (["time", "channel"], input_mod_final.data),  
