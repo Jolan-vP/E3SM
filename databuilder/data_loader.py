@@ -71,6 +71,12 @@ class CustomData(torch.utils.data.Dataset):
         print(f"Input shape: {self.input.shape}")
         print(f"Target shape: {self.target.shape}")
 
+        # SHUFFLE TARGET DATA : 
+        if config["data_loader"]["shuffle_target"] == "True":
+            print("Shuffling target data")
+            np.random.seed(config["seed_list"][0])
+            np.random.shuffle(self.target)
+
     def __len__(self):
         return len(self.target)
 

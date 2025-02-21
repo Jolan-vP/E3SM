@@ -326,20 +326,22 @@ def CRPScompare(crps_scores, crps_climatology_scores, config):
     better_than_climatology = round((100 * np.sum(crps_scores < crps_climatology_scores) / len(crps_scores)), 2) 
     print(f"Proportion of forecast CRPS scores that are better than climatology: {better_than_climatology}%")
 
-    #TODO: How many scores are equal to climatology CRPS within a tolerance? 
-
     # Plot CRPS comparison Histogram:
     num_bins = 50
+    min_value = 0
+    max_value = 8
+    bin_edges = np.linspace(min_value, max_value, num_bins)
+
     fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-    ax.hist(crps_scores, bins = num_bins, alpha = 0.4, color ='#26828e', label = f'Forecast CRPS Average: {CRPS_forecast} ')
-    ax.hist(crps_climatology_scores,bins = num_bins, alpha = 0.4, color ='#f5a962', label = f'Climatology CRPS Average: {CRPS_climatology} ')
+    ax.hist(crps_scores, bins = bin_edges, alpha = 0.4, color ='#26828e', label = f'Forecast CRPS Average: {CRPS_forecast} ')
+    ax.hist(crps_climatology_scores, bins = bin_edges, alpha = 0.4, color ='#f5a962', label = f'Climatology CRPS Average: {CRPS_climatology} ')
     ax.set_title("CRPS Comparison")
     ax.set_xlabel("CRPS Score")
     ax.set_ylabel("Frequency")
     ax.legend(markerscale = 9)
     plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + "/CRPS_comparative_histogram.png", format='png', bbox_inches ='tight', dpi = 300)
 
-    ## TODO: PLOT histogram of CRPS score distribution with climatoloy CRPS average line as axvline
+    # Plot CRPS as scattered time series of all samples: 
     plt.figure(figsize=(6, 4))
     plt.scatter(np.linspace(0, len(crps_scores), len(crps_scores)), crps_scores, s = 0.3, color = '#6d186e', label = f'{better_than_climatology}% of Sample CRPS > Mean Climatological CRPS')
     plt.xlabel('Time (Samples in Chronological Order)')

@@ -88,14 +88,15 @@ def climatologyCDF(target, x, climatology_var = None):
     return climatology_array, climatology_pdf
 
 
-def discard_plot(networkoutput, target, crps_scores, crps_climatology_scores, config, target_type = 'anomalous', analyze_months = True, most_confident = True):
+def IQRdiscard_plot(networkoutput, target, crps_scores, crps_climatology_scores, config, target_type = 'anomalous', analyze_months = True, most_confident = True):
     if most_confident == True:
         keyword = 'narrow'
     else: 
         keyword = 'wide'
+
     # iqr capture relies on SHASH output parameters (mu, sigma, tau, gamma) and the SHASH class
     iqr = iqr_basic(networkoutput)
-    percentiles = np.linspace(100, 0, 101)
+    percentiles = np.linspace(100, 0, 21)
 
     avg_crps = []
     avg_target = []
@@ -188,6 +189,61 @@ def discard_plot(networkoutput, target, crps_scores, crps_climatology_scores, co
     else: 
         
         return sample_index
+
+
+def target_discardplot(target, CNNcrps_scores, NNcrps_scores, crps_climatology_scores, config, target_type = 'anomalous'):
+    
+    percentiles = np.linspace(100, 0, 21)
+
+    avg_crpsCNN = []
+    avg_crpsNN = []
+    avg_crpsClimo = []
+    avg_target = []
+
+    sample_index = np.zeros((len(target), len(percentiles)))
+
+    for ip, p in enumerate(percentiles):
+        # for each percentile, calculate average CRPS score in the bin, binned by corresponding target value
+        avg_crpsCNN.append(np.mean(CNNcrps_scores[target >= np.percentile(target, p)]))
+        avg_crpsNN.append(np.mean(NNcrps_scores[target >= np.percentile(target, p)]))
+        avg_crpsClimo.append(np.mean(crps_climatology_scores[target >= np.percentile(target, p)]))
+        avg_target.append(np.mean(target[target >= np.percentile(target, p)]))
+        # capture the index (out of total) for all the samples in each bin
+        indices = np.where(target >= np.percentile(target, p))[0]
+        sample_index[:len(indices), ip] = indices
+
+    colors = ['#fca50a', '#bc3754', '#6a176e', '#420a68']
+    fig, ax1 = plt.subplots()
+    plt.gca().invert_xaxis()
+    ax1.set_ylabel('Average CRPS')
+    ax1.set_xlabel('Percentile of Target Magnitude \n (% Data Remaining)')
+    ax1.plot(percentiles, avg_crpsCNN, color=colors[0], label = 'CNN')
+    ax1.plot(percentiles, avg_crpsNN,  color=colors[1], label = 'Simple NN') 
+    ax1.plot(percentiles, avg_crpsClimo, color=colors[2], label = 'Climatology')
+
+    ax1.tick_params(axis='y')
+    ax1.axhline(y=crps_climatology_scores.mean(), color='grey', linestyle='--', label='CRPS Mean Climatology')
+    min = np.nanmin(avg_crpsCNN) - .08
+    max = np.nanmax(avg_crpsClimo) + .1
+    ax1.set_ylim([min, max])
+    
+    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+    
+    if target_type == 'anomalous':
+        color = 'tab:olive'
+        ax2.set_ylabel('Average Target Anomalies (mm/day)', color=color[3])
+        ax2.plot(percentiles, avg_target, color=color[3], linestyle = '.', label = 'Target Anomalies')
+        ax2.tick_params(axis='y', labelcolor=color[3])
+        plt.legend()
+        plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/CRPS_TargMag_DiscardPlot_anomalies.png', format='png', bbox_inches ='tight', dpi = 300)
+
+    elif target_type == 'raw':
+        color = 'tab:olive'
+        ax2.set_ylabel('Raw Target Values (mm/day)', color=color[3])
+        ax2.plot(percentiles, avg_target, color=color[3], linestyle = '.', label = 'True Target Magnitudes')
+        ax2.tick_params(axis='y', labelcolor=color[3])
+        plt.legend()
+        plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/CRPS_TargMag_DiscardPlot_raw.png', format='png', bbox_inches ='tight', dpi = 300)
 
 
 def anomalies_by_ENSO_phase(elnino, lanina, neutral, target, target_raw, sample_index, config, keyword = None):

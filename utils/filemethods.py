@@ -10,6 +10,8 @@ save_pred_obs(pred_vector, filename)
 import xarray as xr
 import pickle
 import gzip
+import numpy as np
+import pandas as pd
 
 def get_netcdf_da(filename):
     ds = xr.open_dataset(filename)
@@ -27,6 +29,11 @@ def open_data_file(data_file):
             # Open the file as a NetCDF dataset using xarray
             data = xr.open_dataset(data_file)
             print(f"Opened NetCDF file: {data_file}")
+        elif data_file.endswith(".txt"):
+            # Open the file as a text file
+            with open(data_file, "r") as fp:
+                data = pd.read_csv(fp, sep='\s+', header=0)
+            print(f"Opened text file as Pandas DF: {data_file}")
     else:
         #assume datafile is a passed variable
         data = data_file

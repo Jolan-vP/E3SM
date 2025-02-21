@@ -2,6 +2,7 @@
     "device": "cpu",
     "seed_list": [7],
 
+    "input_data": "exp042",
     "data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved",
     "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/",
     "perlmutter_inputs_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",
@@ -36,7 +37,7 @@
     "criterion": "ShashNLL",
 
     "databuilder": {
-        
+        "network_type": "simple",
         "input_vars": ["PRECT", "TS"],
         "network_inputs": ["PRECT", "TS"],
         "input_years": [1850, 2014],
@@ -57,7 +58,7 @@
     }, 
 
     "data_loader": {
-
+        "shuffle_target": "False",
         "data_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/", 
         "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",
         "batch_size": 128

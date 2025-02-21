@@ -18,6 +18,7 @@ from cartopy.crs import PlateCarree
 import cartopy.feature as cfeature
 import cartopy.crs as ccrs
 import cftime
+import pandas as pd
 from datetime import datetime
 
 def identify_nino_phases(nino34_index, config, threshold=0.4, window=6, lagtime = None, smoothing_length = None):
@@ -225,65 +226,67 @@ def ENSO_CRPS(enso_indices_daily, crps_scores, climatology, x_values, output, co
 
 def idealENSOphases(nino34index, ens = None, percentile = None, numberofeachphase = None, plotfn = None):
     """
-    Function to find the dates corresponding to 'idealized' ENSO phases. Track dates by keeping xarray time coordinate
+    Function to find the dates corresponding to 'idealized' ENSO phases for OBSERVATIONAL Nino 3.4 index.
     """
-#     threshold = 0.4  # Threshold for El Niño/La Niña classification
-#     window = 6  # 6 months consecutively 
+    threshold = 0.4  # Threshold for El Niño/La Niña classification
+    window = 6  # 6 months consecutively 
 
     n = len(nino34index)
 
-#     # Mask out dates if there are fewer than 6 consecutive values in a row 
-#     # Loop through the Nino3.4 index using a sliding window
-#     threshold_mask = np.zeros(n, dtype=int)
-#     for i in range(n - window + 1):
-#         window_slice = nino34index[i:i + window]
-#         if np.all(window_slice > threshold) or np.all(window_slice < -threshold):
-#             threshold_mask[i:i + window] = 1
+    # Mask out dates if there are fewer than 6 consecutive values in a row 
+    # Loop through the Nino3.4 index using a sliding window
+    threshold_mask = np.zeros(n, dtype=int)
+    for i in range(n - window + 1):
+        window_slice = nino34index[i:i + window]
+        if np.all(window_slice > threshold) or np.all(window_slice < -threshold):
+            threshold_mask[i:i + window] = 1
 
-#     # Apply threshold_mask to nino34 index: 
-#     nino34_threshold_masked = np.ma.masked_where(threshold_mask == 0, nino34index)
+    # Apply threshold_mask to nino34 index: 
+    nino34_threshold_masked = np.ma.masked_where(threshold_mask == 0, nino34index)
 
-#     # Replace masked values with zero
-#     nino34_filled = nino34_threshold_masked.filled(0)
+    # Replace masked values with zero
+    nino34_filled = nino34_threshold_masked.filled(0)
 
-#     # Convert the filled array back to an xarray DataArray
-#     nino34_filled_xr = xr.DataArray(nino34_filled, coords=nino34index.coords, dims=nino34index.dims)
+    # Convert the filled array back to an xarray DataArray
+    nino34_filled_xr = xr.DataArray(nino34_filled, coords=nino34index.coords, dims=nino34index.dims)
 
-#     # Now there are lots of values separated by masked values
-#     # For every block of consecutive values, find the maximum value in that block 
-#     # store the values as an xarray with the same time coordinate as the original dataset
+    # Now there are lots of values separated by masked values
+    # For every block of consecutive values, find the maximum value in that block 
+    # store the values as an xarray with the same time coordinate as the original dataset
 
-#     current_block = []
-#     max_values = []
-#     max_dates = []
-#    # Iterate through each index in the range of n
-#     for i in range(n):
-#         if threshold_mask[i] == 1:
-#             # If threshold_mask is 1, add the current value to the current block
-#             current_block.append((nino34_filled_xr[i], nino34index.time.values[i]))
-#         else:
-#             if current_block:
-#                 # Filter values within the block that are greater than 2 or less than -2
-#                 filtered_block = [(value, date) for value, date in current_block if value > 2 or value < -2]
-#                 if filtered_block:
-#                     # If the filtered block is not empty, calculate the max value and record the date
-#                     max_value, max_date = max(filtered_block, key=lambda x: np.abs(x[0]))
-#                     max_values.append(max_value)
-#                     max_dates.append(max_date)
-#                 # Reset the current block for the next contiguous block
-#                 current_block = []
+    current_block = []
+    max_values = []
+    max_dates = []
+   # Iterate through each index in the range of n
+    for i in range(n):
+        if threshold_mask[i] == 1:
+            # If threshold_mask is 1, add the current value to the current block
+            current_block.append((nino34_filled_xr[i], nino34index.time.values[i]))
+        else:
+            if current_block:
+                # Filter values within the block that are greater than 2 or less than -2
+                filtered_block = [(value, date) for value, date in current_block if value > 2 or value < -2]
+                if filtered_block:
+                    # If the filtered block is not empty, calculate the max value and record the date
+                    max_value, max_date = max(filtered_block, key=lambda x: np.abs(x[0]))
+                    max_values.append(max_value)
+                    max_dates.append(max_date)
+                # Reset the current block for the next contiguous block
+                current_block = []
 
-#     # Handle the case where the last block extends to the end of the array
-#     if current_block:
-#         filtered_block = [(value, date) for value, date in current_block if value > 2 or value < -2]
-#         if filtered_block:
-#             max_value, max_date = max(filtered_block, key=lambda x: np.abs(x[0]))
-#             max_values.append(max_value)
-#             max_dates.append(max_date)
+    # Handle the case where the last block extends to the end of the array
+    if current_block:
+        filtered_block = [(value, date) for value, date in current_block if value > 2 or value < -2]
+        if filtered_block:
+            max_value, max_date = max(filtered_block, key=lambda x: np.abs(x[0]))
+            max_values.append(max_value)
+            max_dates.append(max_date)
 
-#     # Find the 10th and 90th percentile values of those maximum values and return their corresponding dates
-#     max_values = np.array(max_values)
-#     max_dates = np.array(max_dates)
+    # Find the 10th and 90th percentile values of those maximum values and return their corresponding dates
+    max_values = np.array(max_values)
+    max_dates = np.array(max_dates)
+
+    ## FIND NEUTRAL PHASES: ---------------------------------------------------------------------------------
 
     filtered_neutral_values = []
     filtered_neutral_dates = []
@@ -292,7 +295,7 @@ def idealENSOphases(nino34index, ens = None, percentile = None, numberofeachphas
     current_block_dates_neutral = []
     current_block_values_neutral = []
     for i in range(n):
-        if nino34index[i] > -0.3 and nino34index[i] < 0.3:
+        if nino34index[i] > -0.2 and nino34index[i] < 0.2:
             current_block_dates_neutral.append(nino34index.time.values[i])
             current_block_values_neutral.append(nino34index[i].values)
         else:
@@ -305,36 +308,42 @@ def idealENSOphases(nino34index, ens = None, percentile = None, numberofeachphas
         filtered_neutral_dates.append(current_block_dates_neutral)
         filtered_neutral_values.append(current_block_values_neutral)
 
-    print(f"The longest block of consecutive dates with Nino 3.4 index between -0.3 and 0.3 is {max(map(len, filtered_neutral_dates))} dates long.")
-    print(f"The top 5 longest blocks of consecutive dates with Nino 3.4 index between -0.3 and 0.3 are {sorted(map(len, filtered_neutral_dates), reverse=True)[:5]} dates long.")
+        # Convert cftime.DatetimeNoLeap and numpy.datetime64 objects to datetime objects
+    def convert_to_datetime(date):
+        if isinstance(date, cftime.DatetimeNoLeap):
+            return datetime(date.year, date.month, date.day)
+        elif isinstance(date, np.datetime64):
+            return pd.to_datetime(date).to_pydatetime().replace(hour=0, minute=0, second=0, microsecond=0)
+        return date
+
+    number_of_blocks = 5
+    # Convert dates in filtered_neutral_dates to datetime objects
+    filtered_neutral_dates = [[convert_to_datetime(date) for date in block] for block in filtered_neutral_dates]
+
+    print(f"The longest block of consecutive dates with Nino 3.4 index between -0.2 and 0.2 is {max(map(len, filtered_neutral_dates))} dates long.")
+    print(f"The top 5 longest blocks of consecutive dates with Nino 3.4 index between -0.2 and 0.2 are {sorted(map(len, filtered_neutral_dates), reverse=True)[:number_of_blocks]} dates long.")
     
     # Save these top five blocks of dates in a variable
-    consecutive_neutral_dates = sorted(filtered_neutral_dates, key=len, reverse=True)[:5]
+    consecutive_neutral_dates = sorted(filtered_neutral_dates, key=len, reverse=True)[:number_of_blocks]
     
-    # filtered_neutral_values = np.array(filtered_neutral_values)
-    # print(filtered_neutral_values)
-    # print(type(filtered_neutral_values))
 
-    # # Print the filtered neutral values
-    # for i, block in enumerate(filtered_neutral_values):
-    #     print(f"Block {i + 1} values: {block}")
-
-    print(f"The dates for all the top 5 longest blocks of consecutive dates with Nino 3.4 index between -0.3 and 0.3 are:")
-    for i, block in enumerate(sorted(filtered_neutral_dates, key=len, reverse=True)[:5]):
+    print(f"The dates for all the top 5 longest blocks of consecutive dates with Nino 3.4 index between -0.2 and 0.2 are:")
+    for i, block in enumerate(sorted(filtered_neutral_dates, key=len, reverse=True)[:number_of_blocks]):
         print(f"Block {i + 1}: {block[0]} to {block[-1]}")
 
-    print(f"ALL of the actual values of the Nino 3.4 index for the top 5 longest blocks of consecutive dates with Nino 3.4 index between -0.3 and 0.3 are:")
-    for i, block in enumerate(sorted(filtered_neutral_values, key=len, reverse=True)[:5]):
+    print(f"ALL of the actual values of the Nino 3.4 index for the top 5 longest blocks of consecutive dates with Nino 3.4 index between -0.2 and 0.2 are:")
+    for i, block in enumerate(sorted(filtered_neutral_values, key=len, reverse=True)[:number_of_blocks]):
         print(f"Block {i + 1}: {np.array(block)} \n")
         # print(f"Block {i + 1}: {block[0]} to {block[-1]}")
 
-    # Convert cftime.DatetimeNoLeap objects to datetime objects
-    def convert_to_datetime(date):
-        if isinstance(date, cftime.DatetimeNoLeap):
-            return datetime(date.year, date.month, date.day, date.hour, date.minute, date.second)
-        return date
+    # # Convert cftime.DatetimeNoLeap objects to datetime objects
+    # def convert_to_datetime(date):
+    #     if isinstance(date, cftime.DatetimeNoLeap):
+    #         return datetime(date.year, date.month, date.day, date.hour, date.minute, date.second)
+    #     return date
 
     consecutive_neutral_dates = [np.array([convert_to_datetime(date) for date in block]) for block in consecutive_neutral_dates]
+    flat_consecutive_neutral_dates = np.concatenate(consecutive_neutral_dates)
 
     # plot these zero dates as scatter points over the total nino34 index time series
     x_times = nino34index.time
@@ -344,30 +353,34 @@ def idealENSOphases(nino34index, ens = None, percentile = None, numberofeachphas
     # plt.scatter(consecutive_neutral_dates, np.zeros(len(consecutive_neutral_dates)), color='r', s = 12)
     # plt.savefig(plotfn + 'ENSO_total_index_w_zeros_' + str(ens) + '.png', format='png', bbox_inches ='tight', dpi = 200)
 
-    plt.figure(figsize=(12, 7), dpi=200)
-    plt.plot(x_times, nino34index, color='#26828e', label='Nino 3.4 Index MASKED')
-    plt.scatter(consecutive_neutral_dates, np.zeros(len(consecutive_neutral_dates)), color='r', s=12)
-    plt.title(f"{str(ens)} : Nino 3.4 Index with Values Between -0.3 and 0.3")
+    plt.figure(figsize=(8, 5), dpi=200)
+    plt.plot(x_times, nino34index, color='#26828e')
+    plt.scatter(flat_consecutive_neutral_dates, np.zeros(len(flat_consecutive_neutral_dates)), color='r', s=12, label = 'Consecutive Months of -0.2 < Index < 0.2')
+    plt.title(f"{str(ens)} : Nino 3.4 Index - Consecutive Neutral-Phase Months")
+    plt.ylabel('Nino 3.4 Index')
     plt.legend()
     plt.savefig(plotfn + 'ENSO_total_index_w_zeros_' + str(ens) + '.png', format='png', bbox_inches='tight', dpi=200)
-    plt.show()
+    # plt.show()
     
     # Scatter Plot ----------------------------------------------------
     x_times = nino34index.time
 
-    # plt.figure(figsize=(12, 7), dpi=200)
-    # plt.plot(x_times, nino34_threshold_masked, color = '#26828e', label = 'Nino 3.4 Index MASKED')
-    # plt.scatter(max_dates, max_values, color='r', s = 12)
-    # # add labels of each dates for each point (without time values)
-    # for i, txt in enumerate(max_dates):
-    #     plt.annotate(txt.strftime('%Y-%m-%d'), (max_dates[i], max_values[i]), fontsize=8)
-    # plt.title(f"{str(ens)} : Nino 3.4 Index with Events Greater than 2.0")
-    # plt.ylabel('Nino 3.4 Index')
-    # plt.xlabel('Time')
-    # plt.show()
-    # plt.savefig(plotfn + 'ENSO_index_' + str(ens) + '.png', format='png', bbox_inches ='tight', dpi = 200)
+    plt.figure(figsize=(8, 5), dpi=200)
+    plt.plot(x_times, nino34_threshold_masked, color = '#26828e', label = 'Nino 3.4 Index MASKED')
+    plt.scatter(max_dates, max_values, color='r', s = 12)
 
-    # Map Plots -------------------------------------------------------
+    # Convert max_dates to datetime before annotating
+    max_dates = [convert_to_datetime(date) for date in max_dates]
+    # add labels of each dates for each point (without time values)
+    for i, txt in enumerate(max_dates):
+        plt.annotate(pd.to_datetime(txt).strftime('%Y-%m-%d'), (max_dates[i], max_values[i]), fontsize=10)
+    plt.title(f"{str(ens)} : Nino 3.4 Index with Events Greater than 2.0")
+    plt.ylabel('Nino 3.4 Index')
+    plt.xlabel('Time')
+    # plt.show()
+    plt.savefig(plotfn + 'ENSO_index_' + str(ens) + '.png', format='png', bbox_inches ='tight', dpi = 200)
+
+    # Map Plots for E3SM DATA -------------------------------------------------------
     # print(type(ens2))
     # print(ens2.time)
 
