@@ -212,16 +212,10 @@ class TorchModel(BaseModel):
 
         elif self.config["type"] == "cnn":
 
-            # Configure Channel Dimension to be in position 1
-            if input.shape == 4:
-                x = torch.permute(input, [0, 3, 1, 2])
-                x = F.pad(x, (self.pad_lons), mode = 'circular')
-            else: 
-                x = F.pad(input, [15, 15], mode = 'circular')
-                print(x.shape)
+            x = torch.permute(input, [0, 3, 1, 2])
+            x = F.pad(x, (self.pad_lons), mode = 'circular')
             
             # x = self.pad_lons(input)
-            print(x.shape)
             
             x = self.conv_block(x)
             x = self.flat(x)

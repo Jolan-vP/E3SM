@@ -70,13 +70,14 @@
 *.nc
 
 # Byte-compiled / optimized / DLL files
-__pycache__/
+*__pycache__/
 
 # Unit test / coverage reports
 *.pytest_cache/
 
 # Jupyter Notebook
 *.ipynb_checkpoints
+*.pyc
 *.pyc
 
 # pickle
@@ -90,3 +91,7 @@ __pycache__/
 
 # Output
 *.out
+
+#tar files
+*.tar
+base/__pycache__/base_trainer.cpython-310.pyc

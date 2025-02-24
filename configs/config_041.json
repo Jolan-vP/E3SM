@@ -2,6 +2,7 @@
     "device": "cpu",
     "seed_list": [7],
 
+    "input_data": "exp041",
     "data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved",
     "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/",
     "perlmutter_inputs_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",

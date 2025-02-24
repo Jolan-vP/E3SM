@@ -1,4 +1,4 @@
-{"expname": "exp050",
+{"expname": "exp052",
     "device": "cpu",
     "seed_list": [52],
 
@@ -23,7 +23,6 @@
 
     "databuilder": {
         
-        "network_type": "simple",
         "input_vars": "None",
         "network_inputs": ["RMM1", "RMM2", "Nino34"],
         "input_years": [1850, 2014],

@@ -1,7 +1,8 @@
-{"expname": "exp043",
+{"expname": "exp057",
     "device": "cpu",
-    "seed_list": [7],
+    "seed_list": [57],
 
+    "input_data": "exp042",
     "data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved",
     "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/",
     "perlmutter_inputs_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",
@@ -36,8 +37,9 @@
     "criterion": "ShashNLL",
 
     "databuilder": {
-        "input_vars": ["PRECT"],
-        "network_inputs": ["PRECT"],
+    
+        "input_vars": ["PRECT", "TS"],
+        "network_inputs": ["PRECT", "TS"],
         "input_years": [1850, 2014],
         "input_region": "None",
         "input_mask": ["None"],
@@ -56,7 +58,7 @@
     }, 
 
     "data_loader": {
-
+        "shuffle_target": "False",
         "data_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/", 
         "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",
         "batch_size": 128

@@ -23,7 +23,6 @@
 
     "databuilder": {
         
-        "network_type": "simple",
         "input_vars": "None",
         "network_inputs": ["RMM1", "RMM2", "Nino34"],
         "input_years": [1850, 2014],

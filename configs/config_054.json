@@ -1,6 +1,6 @@
-{"expname": "exp050",
+{"expname": "exp054",
     "device": "cpu",
-    "seed_list": [50],
+    "seed_list": [54],
 
     "input_data": "exp036",
     "data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved",
@@ -22,7 +22,7 @@
     "criterion": "ShashNLL",
 
     "databuilder": {
-
+        
         "input_vars": "None",
         "network_inputs": ["RMM1", "RMM2", "Nino34"],
         "input_years": [1850, 2014],

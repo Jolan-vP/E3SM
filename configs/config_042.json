@@ -37,7 +37,7 @@
     "criterion": "ShashNLL",
 
     "databuilder": {
-        "network_type": "simple",
+    
         "input_vars": ["PRECT", "TS"],
         "network_inputs": ["PRECT", "TS"],
         "input_years": [1850, 2014],

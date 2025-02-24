@@ -12,6 +12,7 @@ import pickle
 import gzip
 import numpy as np
 import pandas as pd
+import os
 
 def get_netcdf_da(filename):
     ds = xr.open_dataset(filename)
@@ -40,4 +41,18 @@ def open_data_file(data_file):
         print(f"Data passed directly as {type(data)} rather than filename.")
 
     return data
+
+def create_folder(folder_name):
+    """Creates a new folder with the given name.
+
+    Args:
+        folder_name: The name of the folder to create.
+    """
+    try:
+        os.mkdir(folder_name)
+        print(f"Folder '{folder_name}' created successfully.")
+    except FileExistsError:
+        print(f"Folder '{folder_name}' already exists.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 

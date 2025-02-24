@@ -28,7 +28,7 @@ class CustomData(torch.utils.data.Dataset):
     """
 
     def __init__(self, data_file, config, which_set = None):
-    
+     
         dict_data = open_data_file(data_file)
 
         self.input = dict_data["x"].values
