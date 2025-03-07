@@ -58,7 +58,7 @@
     }, 
 
     "data_loader": {
-        "shuffle_target": "False",
+        "shuffle_target": "True",
         "data_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/", 
         "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",
         "batch_size": 128

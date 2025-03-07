@@ -34,6 +34,7 @@ from databuilder.sampleclass import SampleDict
 import cartopy.crs as ccrs  
 import cartopy.feature as cfeature
 from cartopy.crs import PlateCarree
+from analysis.analysis_metrics import save_pickle
 
 
 # -----------------------------------------------------
@@ -566,3 +567,14 @@ def multi_input_data_organizer(config, fn1, fn2, fn3, MJO=False, ENSO = False, o
     # print(f"s_dict_train input time coordinate: {s_dict_train['x'].time}")
     # print(f"s_dict_train target time coordinate: {s_dict_train['y'].time}")
     return s_dict_train, s_dict_val, s_dict_test
+
+
+
+
+def uniform_dist(lowerbound, upperbound, n, expname, config):
+    dist = np.random.uniform(lowerbound, upperbound, n)
+    
+    # Save distribution to file
+    save_pickle(dist, config["perlmutter_output_dir"] + str(expname) + "uniform_dist.pkl")
+
+    return dist

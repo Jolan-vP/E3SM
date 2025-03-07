@@ -77,6 +77,8 @@ class CustomData(torch.utils.data.Dataset):
             np.random.seed(config["seed_list"][0])
             np.random.shuffle(self.target)
 
+        print(f"target vals: {self.target[:10]}")
+
     def __len__(self):
         return len(self.target)
 
