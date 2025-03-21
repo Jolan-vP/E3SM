@@ -80,17 +80,17 @@ class ClimateData:
             if ens == "ens1":   
                 # train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
                 train_ds = filemethods.get_netcdf_da(self.data_dir +  "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-                # train_ds = filemethods.get_netcdf_da(self.data_dir +  "/input_vars.v2.LR.historical_0101.eam.h1.1850-1860.nc")
+                # train_ds = filemethods.get_netcdf_da(self.data_dir +  "/Z500.v2.LR.historical_0101.eam.h1.1850-2014.nc")
 
             if ens == "ens2":
                 # validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
                 validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
-                # validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-1860.nc")
+                # validate_ds = filemethods.get_netcdf_da(self.data_dir + "/Z500.v2.LR.historical_0151.eam.h1.1850-2014.nc")
 
             elif ens == "ens3":
                 # test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
                 test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
-                # test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-1860.nc")
+                # test_ds = filemethods.get_netcdf_da(self.data_dir + "Z500.v2.LR.historical_0201.eam.h1.1850-2014.nc")
         
         print(self.config["input_years"])
 
@@ -173,7 +173,7 @@ class ClimateData:
 
         # For each input variable or data entity you would like to process: 
         for ikey, key in enumerate(f_dict):
-            if key == "y":
+            if key == "y" and self.config["target_var"] != "None":
                 print("Processing target output")
                 
                 f_dict[key] = ds[self.config["target_var"]]
@@ -194,7 +194,7 @@ class ClimateData:
                         mm_day = da_copy[:,:,start:end] * 10**3 * 86400
                         f_dict[key][:, :, start:end] = mm_day
 
-                assert -150 < f_dict[key][10, 30, 120].values < 150
+                    assert -150 < f_dict[key][10, 30, 120].values < 150
                 # print(f"magnitude of target post unit-conversion: {f_dict[key][500:505].values}") 
                 
                 # fig, ax = plt.subplots(1, 1, figsize=(8, 6), subplot_kw={'projection': ccrs.PlateCarree()})

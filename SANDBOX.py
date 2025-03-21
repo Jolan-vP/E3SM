@@ -58,7 +58,7 @@ print(f"pytorch version = {torch.__version__}")
 # https://github.com/victoresque/pytorch-template/tree/master
 
 # ----CONFIG AND CLASS SETUP----------------------------------------------
-config = utils.get_config("exp042")
+config = utils.get_config("exp070")
 print(config["expname"])
 seed = config["seed_list"][0]
 
@@ -89,179 +89,178 @@ data = ClimateData(
     verbose=False
 )
 
-# # Create directories for the experiment
-# output_folder_name = str(config["perlmutter_output_dir"]) + str(config["expname"])
-# figure_folder_name = str(config["perlmutter_figure_dir"]) + str(config["expname"])
+# Create directories for the experiment
+output_folder_name = str(config["perlmutter_output_dir"]) + str(config["expname"])
+figure_folder_name = str(config["perlmutter_figure_dir"]) + str(config["expname"])
 
-# create_folder(output_folder_name)
-# create_folder(figure_folder_name)
+create_folder(output_folder_name)
+create_folder(figure_folder_name)
 
-# # ---- DATA PROCESSING ----------------------------------------------------------------
-# # Check if input data is being processed from scratch or if it is being loaded from a previous experiment
+# ---- DATA PROCESSING ----------------------------------------------------------------
+# Check if input data is being processed from scratch or if it is being loaded from a previous experiment
 
-# if config["input_data"] == "None": # Then input data must be processed FROM SCRATCH
-#     print("Processing input data from scratch")
+if config["input_data"] == "None": # Then input data must be processed FROM SCRATCH
+    print("Processing input data from scratch")
 
-#     print("CHECK WHETHER TARGET_ONLY IS TRUE OR FALSE")
-#     d_train, d_val, d_test = data.fetch_data()
+    d_train, d_val, d_test = data.fetch_data()
 
-#     # # # ---- FOR SIMPLE INPUTS ONLY : ----------------------------------------------
-#     if config["databuilder"]["network_type"] == "simple":
-#         print(d_train['y'].shape)
-#         target_savename1 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_train_TARGET_1850-2014.pkl"
-#         with gzip.open(target_savename1, "wb") as fp:
-#             pickle.dump(d_train, fp)
+    # # # ---- FOR SIMPLE INPUTS ONLY : ----------------------------------------------
+    if config["databuilder"]["network_type"] == "simple":
+        print(d_train['y'].shape)
+        target_savename1 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_train_TARGET_1850-2014.pkl"
+        with gzip.open(target_savename1, "wb") as fp:
+            pickle.dump(d_train, fp)
 
-#         target_savename2 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_val_TARGET_1850-2014.pkl"
-#         with gzip.open(target_savename2, "wb") as fp:
-#             pickle.dump(d_val, fp)
+        target_savename2 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_val_TARGET_1850-2014.pkl"
+        with gzip.open(target_savename2, "wb") as fp:
+            pickle.dump(d_val, fp)
 
-#         target_savename3 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_test_TARGET_1850-2014.pkl"
-#         with gzip.open(target_savename3, "wb") as fp:
-#             pickle.dump(d_test, fp)
+        target_savename3 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_test_TARGET_1850-2014.pkl"
+        with gzip.open(target_savename3, "wb") as fp:
+            pickle.dump(d_test, fp)
 
-#         d_train, d_val, d_test = multi_input_data_organizer(config, target_savename1, target_savename2, target_savename3, MJO = True, ENSO = True, other = False)
+        d_train, d_val, d_test = multi_input_data_organizer(config, target_savename1, target_savename2, target_savename3, MJO = True, ENSO = True, other = False)
 
-#         # confirm metadata is stored for both input and target
-#         print(f" s_dict_train INPUT time {d_train['x'].time}")
-#         print(f" s_dict_train TARGET time {d_train['y'].time}")
+        # confirm metadata is stored for both input and target
+        print(f" s_dict_train INPUT time {d_train['x'].time}")
+        print(f" s_dict_train TARGET time {d_train['y'].time}")
 
-#         # confirm input structure: 
-#         print(f"input shape: {d_train['x'].shape}")
-#     else: 
-#         pass
+        # confirm input structure: 
+        print(f"input shape: {d_train['x'].shape}")
+    else: 
+        pass
 
-#     # Save full input data for the experiment: ----------------------------------
-#     s_dict_savename1 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_train.pkl"
-#     s_dict_savename2 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_val.pkl"
-#     s_dict_savename3 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_test.pkl"
+    # Save full input data for the experiment: ----------------------------------
+    s_dict_savename1 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_train.pkl"
+    s_dict_savename2 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_val.pkl"
+    s_dict_savename3 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_test.pkl"
 
-#     with gzip.open(s_dict_savename1, "wb") as fp:
-#         pickle.dump(d_train, fp)
+    with gzip.open(s_dict_savename1, "wb") as fp:
+        pickle.dump(d_train, fp)
 
-#     with gzip.open(s_dict_savename2, "wb") as fp:
-#         pickle.dump(d_val, fp)
+    with gzip.open(s_dict_savename2, "wb") as fp:
+        pickle.dump(d_val, fp)
 
-#     with gzip.open(s_dict_savename3, "wb") as fp:
-#         pickle.dump(d_test, fp)
+    with gzip.open(s_dict_savename3, "wb") as fp:
+        pickle.dump(d_test, fp)
 
-#     # Trim input data: Lead/lag, month selection ----------------------------------
-#     trimmed_trainfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "train_dat.nc"
-#     trimmed_valfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "val_dat.nc"
-#     trimmed_testfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "test_dat.nc"
+    # Trim input data: Lead/lag, month selection ----------------------------------
+    trimmed_trainfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "train_dat.nc"
+    trimmed_valfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "val_dat.nc"
+    trimmed_testfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "test_dat.nc"
 
-#     train_dat_trimmed = universaldataloader(s_dict_savename1, config, target_only = False, repackage = True)
-#     train_dat_trimmed.to_netcdf(trimmed_trainfn)
-#     print(f"Data saved to {trimmed_trainfn}")
+    train_dat_trimmed = universaldataloader(s_dict_savename1, config, target_only = False, repackage = True)
+    train_dat_trimmed.to_netcdf(trimmed_trainfn)
+    print(f"Data saved to {trimmed_trainfn}")
 
-#     val_dat_trimmed = universaldataloader(s_dict_savename2, config, target_only = False, repackage = True)
-#     val_dat_trimmed.to_netcdf(trimmed_valfn)
-#     print(f"Data saved to {trimmed_valfn}")
+    val_dat_trimmed = universaldataloader(s_dict_savename2, config, target_only = False, repackage = True)
+    val_dat_trimmed.to_netcdf(trimmed_valfn)
+    print(f"Data saved to {trimmed_valfn}")
 
-#     test_dat_trimmed = universaldataloader(s_dict_savename3, config, target_only = False, repackage = True)
-#     test_dat_trimmed.to_netcdf(trimmed_testfn)
-#     print(f"Data saved to {trimmed_testfn}")
+    test_dat_trimmed = universaldataloader(s_dict_savename3, config, target_only = False, repackage = True)
+    test_dat_trimmed.to_netcdf(trimmed_testfn)
+    print(f"Data saved to {trimmed_testfn}")
 
-# elif "exp" in config["input_data"]: 
-#     input_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "train_dat.nc"
-#     input_valfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "val_dat.nc"
-#     input_testfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "test_dat.nc"
+elif "exp" in config["input_data"]: 
+    input_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "train_dat.nc"
+    input_valfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "val_dat.nc"
+    input_testfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "test_dat.nc"
     
-# # --- Setup the Data for Training ---------------------------------------------
-# lagtime = config["databuilder"]["lagtime"] 
-# smoothing_length = config["databuilder"]["averaging_length"]
+# --- Setup the Data for Training ---------------------------------------------
+lagtime = config["databuilder"]["lagtime"] 
+smoothing_length = config["databuilder"]["averaging_length"]
 
-# trainset = data_loader.CustomData(input_trainfn, config, which_set = 'training')
-# valset = data_loader.CustomData(input_valfn, config, which_set = 'validation')
-# testset = data_loader.CustomData(input_testfn, config, which_set = 'testing')
+trainset = data_loader.CustomData(input_trainfn, config, which_set = 'training')
+valset = data_loader.CustomData(input_valfn, config, which_set = 'validation')
+testset = data_loader.CustomData(input_testfn, config, which_set = 'testing')
 
-# train_loader = torch.utils.data.DataLoader(
-#     trainset,
-#     batch_size=config["data_loader"]["batch_size"],
-#     shuffle=True,
-#     drop_last=False
-# )
+train_loader = torch.utils.data.DataLoader(
+    trainset,
+    batch_size=config["data_loader"]["batch_size"],
+    shuffle=True,
+    drop_last=False
+)
 
-# val_loader = torch.utils.data.DataLoader(
-#     valset,
-#     batch_size=config["data_loader"]["batch_size"],
-#     shuffle=False,
-#     drop_last=False
-# )
+val_loader = torch.utils.data.DataLoader(
+    valset,
+    batch_size=config["data_loader"]["batch_size"],
+    shuffle=False,
+    drop_last=False
+)
 
-# # # --- Setup the Model ----------------------------------------------------
+# # --- Setup the Model ----------------------------------------------------
 
-# # Check if model already exists: 
-# if os.path.exists(str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'):
-#     print("Model already exists")
-#     response = input("Would you like to load the model? (yes) \n or retrain from epoch 0 (no): ")
+# Check if model already exists: 
+if os.path.exists(str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'):
+    print("Model already exists")
+    response = input("Would you like to load the model? (yes) \n or retrain from epoch 0 (no): ")
 
-#     if response == "yes":
-#         path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
-#         load_model_dict = torch.load(path)
-#         state_dict = load_model_dict["model_state_dict"]
-#         std_mean = load_model_dict["training_std_mean"]
-#         model = TorchModel(
-#             config=config["arch"],
-#             target_mean=std_mean["trainset_target_mean"],
-#             target_std=std_mean["trainset_target_std"],
-#         )
-#         model.load_state_dict(state_dict)
+    if response == "yes":
+        path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
+        load_model_dict = torch.load(path)
+        state_dict = load_model_dict["model_state_dict"]
+        std_mean = load_model_dict["training_std_mean"]
+        model = TorchModel(
+            config=config["arch"],
+            target_mean=std_mean["trainset_target_mean"],
+            target_std=std_mean["trainset_target_std"],
+        )
+        model.load_state_dict(state_dict)
 
-#     elif response == "no": # Model is being run from epoch 0 for the first time: 
-#         model = TorchModel(
-#             config=config["arch"],
-#             target_mean=trainset.target.mean(axis=0),
-#             target_std=trainset.target.std(axis=0),
-#         )
-#         std_mean = {"trainset_target_mean": trainset.target.mean(axis=0), "trainset_target_std": trainset.target.std(axis=0)}
-# else: 
-#     model = TorchModel(
-#             config=config["arch"],
-#             target_mean=trainset.target.mean(axis=0),
-#             target_std=trainset.target.std(axis=0),
-#         )
-#     std_mean = {"trainset_target_mean": trainset.target.mean(axis=0), "trainset_target_std": trainset.target.std(axis=0)}
+    elif response == "no": # Model is being run from epoch 0 for the first time: 
+        model = TorchModel(
+            config=config["arch"],
+            target_mean=trainset.target.mean(axis=0),
+            target_std=trainset.target.std(axis=0),
+        )
+        std_mean = {"trainset_target_mean": trainset.target.mean(axis=0), "trainset_target_std": trainset.target.std(axis=0)}
+else: 
+    model = TorchModel(
+            config=config["arch"],
+            target_mean=trainset.target.mean(axis=0),
+            target_std=trainset.target.std(axis=0),
+        )
+    std_mean = {"trainset_target_mean": trainset.target.mean(axis=0), "trainset_target_std": trainset.target.std(axis=0)}
 
-# # model.freeze_layers(freeze_id="tau")
-# optimizer = getattr(torch.optim, config["optimizer"]["type"])(
-#     model.parameters(), **config["optimizer"]["args"]
-# )
-# criterion = getattr(module_loss, config["criterion"])()
-# metric_funcs = [getattr(module_metric, met) for met in config["metrics"]]
+# model.freeze_layers(freeze_id="tau")
+optimizer = getattr(torch.optim, config["optimizer"]["type"])(
+    model.parameters(), **config["optimizer"]["args"]
+)
+criterion = getattr(module_loss, config["criterion"])()
+metric_funcs = [getattr(module_metric, met) for met in config["metrics"]]
 
-# # Build the trainer
+# Build the trainer
 device = utils.prepare_device(config["device"])
-# trainer = Trainer(
-#     model,
-#     criterion,
-#     metric_funcs,
-#     optimizer,
-#     max_epochs=config["trainer"]["max_epochs"],
-#     data_loader=train_loader,
-#     validation_data_loader=val_loader,
-#     device=device,
-#     config=config,
-# )
+trainer = Trainer(
+    model,
+    criterion,
+    metric_funcs,
+    optimizer,
+    max_epochs=config["trainer"]["max_epochs"],
+    data_loader=train_loader,
+    validation_data_loader=val_loader,
+    device=device,
+    config=config,
+)
 
-# # # Visualize the model
-# torchinfo.summary(
-#     model,
-#     [   trainset.input[: config["data_loader"]["batch_size"]].shape ],
-#     verbose=1,
-#     col_names=("input_size", "output_size", "num_params"),
-# )
+# # Visualize the model
+torchinfo.summary(
+    model,
+    [   trainset.input[: config["data_loader"]["batch_size"]].shape ],
+    verbose=1,
+    col_names=("input_size", "output_size", "num_params"),
+)
 
-# # TRAIN THE MODEL
-# model.to(device)
-# trainer.fit(std_mean)
+# TRAIN THE MODEL
+model.to(device)
+trainer.fit(std_mean)
 
-# # Save the Model
-# path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + ".pth"
-# torch.save({
-#             "model_state_dict" : model.state_dict(),
-#             "training_std_mean" : std_mean,
-#              }, path)
+# Save the Model
+path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + ".pth"
+torch.save({
+            "model_state_dict" : model.state_dict(),
+            "training_std_mean" : std_mean,
+             }, path)
 
 # Load the Model
 path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
@@ -280,36 +279,36 @@ model = TorchModel(
 model.load_state_dict(state_dict)
 model.eval()
 
-# # Evaluate Training Metrics
-# print(trainer.log.history.keys())
+# Evaluate Training Metrics
+print(trainer.log.history.keys())
 
-# print(trainer.log.history.keys())
+print(trainer.log.history.keys())
 
-# plt.figure(figsize=(20, 4))
-# for i, m in enumerate(("loss", *config["metrics"])):
-#     plt.subplot(1, 4, i + 1)
-#     plt.plot(trainer.log.history["epoch"], trainer.log.history[m], label=m)
-#     plt.plot(
-#         trainer.log.history["epoch"], trainer.log.history["val_" + m], label="val_" + m
-#     )
-#     plt.axvline(
-#        x=trainer.early_stopper.best_epoch, linestyle="--", color="k", linewidth=0.75
-#     )
-#     plt.title(m)
-#     plt.legend()
-# plt.tight_layout()
-# plt.savefig(config["perlmutter_figure_dir"] + str(config["expname"]) + "/" + str(config["expname"]) + "training_metrics.png", format = 'png', dpi = 200) 
+plt.figure(figsize=(20, 4))
+for i, m in enumerate(("loss", *config["metrics"])):
+    plt.subplot(1, 4, i + 1)
+    plt.plot(trainer.log.history["epoch"], trainer.log.history[m], label=m)
+    plt.plot(
+        trainer.log.history["epoch"], trainer.log.history["val_" + m], label="val_" + m
+    )
+    plt.axvline(
+       x=trainer.early_stopper.best_epoch, linestyle="--", color="k", linewidth=0.75
+    )
+    plt.title(m)
+    plt.legend()
+plt.tight_layout()
+plt.savefig(config["perlmutter_figure_dir"] + str(config["expname"]) + "/" + str(config["expname"]) + "training_metrics.png", format = 'png', dpi = 200) 
 
-# # # ------------------------------ Model Inference ----------------------------------
+# # ------------------------------ Model Inference ----------------------------------
 
-# with torch.inference_mode():
-#     print(device)
-#     output = model.predict(dataset=testset, batch_size=128, device=device) # The output is the batched SHASH distribution parameters
+with torch.inference_mode():
+    print(device)
+    output = model.predict(dataset=testset, batch_size=128, device=device) # The output is the batched SHASH distribution parameters
 
-# # Save Model Outputs
-# model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + '_network_SHASH_parameters.pkl'
-# analysis_metrics.save_pickle(output, model_output)
-# print(output[:20]) # look at a small sample of the output data
+# Save Model Outputs
+model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + '_network_SHASH_parameters.pkl'
+analysis_metrics.save_pickle(output, model_output)
+print(output[:20]) # look at a small sample of the output data
 
 # ------------------------------ Evaluate Network Predictions ----------------------------------
 input_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "train_dat.nc"
@@ -342,24 +341,24 @@ print(f"UDL climatology shape {climatology.shape}")
 # Compare SHASH predictions to climatology histogram
 # p = calc_climatology.deriveclimatology(output, climatology, number_of_samples=50, config=config, climate_data = False)
 
-# # ----------------------------- CRPS ----------------------------------
+# # ----------------------------- CRPS --------------------------------------------
 x = np.linspace(-10, 12, 1000)
 x_wide = np.arange(-25, 25, 0.01)
 
-# # Compute CRPS for climatology
-# CRPS_climatology = CRPS.calculateCRPS(output, target, x_wide, config, climatology)
+# Compute CRPS for climatology
+CRPS_climatology = CRPS.calculateCRPS(output, target, x_wide, config, climatology)
 
-# # Compute CRPS for all predictions 
-# CRPS_network = CRPS.calculateCRPS(output, target, x_wide, config, climatology = None)
+# Compute CRPS for all predictions 
+CRPS_network = CRPS.calculateCRPS(output, target, x_wide, config, climatology = None)
 
-# analysis_metrics.save_pickle(CRPS_climatology, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_climatology_values.pkl")
-# analysis_metrics.save_pickle(CRPS_network, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_network_values.pkl")
+analysis_metrics.save_pickle(CRPS_climatology, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_climatology_values.pkl")
+analysis_metrics.save_pickle(CRPS_network, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_network_values.pkl")
 
 CRPS_climatology = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_climatology_values.pkl")
 CRPS_network = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_network_values.pkl")
 
 # Compare CRPS scores for climatology vs predictions (Is network better than climatology on average?)
-# CRPS.CRPScompare(CRPS_network, CRPS_climatology, config)
+CRPS.CRPScompare(CRPS_network, CRPS_climatology, config)
 
 # # # ----------------------------- ENSO -------------------------------------------
 
@@ -382,40 +381,42 @@ p = calc_climatology.deriveclimatology(output, climatology, number_of_samples=30
 # Calculate precipitation anomalies during each ENSO Phase + Plot -----------------
 
 # Open raw TESTING target data
-# nc_file = xr.open_dataset('/Users/C830793391/BIG_DATA/E3SM_Data/ens3/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc')
-# nc_file = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc')
-# prect_global = nc_file.PRECT.sel(time = slice(str(config["databuilder"]["input_years"][0]) + '-01-01', str(config["databuilder"]["input_years"][1])))
+nc_file = xr.open_dataset('/Users/C830793391/BIG_DATA/E3SM_Data/ens3/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc')
+nc_file = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc')
+prect_global = nc_file.PRECT.sel(time = slice(str(config["databuilder"]["input_years"][0]) + '-01-01', str(config["databuilder"]["input_years"][1])))
 
-# min_lat, max_lat = config["databuilder"]["target_region"][:2]
-# min_lon, max_lon = config["databuilder"]["target_region"][2:]
+min_lat, max_lat = config["databuilder"]["target_region"][:2]
+min_lon, max_lon = config["databuilder"]["target_region"][2:]
 
-# # Convert longitudes from -180 to 180 range to 0 to 360 range
-# if min_lon < 0:
-#     min_lon += 360
-# if max_lon < 0:
-#     max_lon += 360
+# Convert longitudes from -180 to 180 range to 0 to 360 range
+if min_lon < 0:
+    min_lon += 360
+if max_lon < 0:
+    max_lon += 360
 
-# if isinstance(prect_global, xr.DataArray):
-#     mask_lon = (prect_global.lon >= min_lon) & (prect_global.lon <= max_lon)
-#     mask_lat = (prect_global.lat >= min_lat) & (prect_global.lat <= max_lat)
-#     prect_regional = prect_global.where(mask_lon & mask_lat, drop=True)
+if isinstance(prect_global, xr.DataArray):
+    mask_lon = (prect_global.lon >= min_lon) & (prect_global.lon <= max_lon)
+    mask_lat = (prect_global.lat >= min_lat) & (prect_global.lat <= max_lat)
+    prect_regional = prect_global.where(mask_lon & mask_lat, drop=True)
 
-# # average around target region
-# prect_regional = prect_regional.mean(dim=['lat', 'lon'])
-# target_raw = universaldataloader(prect_regional, config, target_only = True, repackage = False)
-# target_raw = target_raw * 86400 * 1000  # Convert to mm/day
+# average around target region
+prect_regional = prect_regional.mean(dim=['lat', 'lon'])
+target_raw = universaldataloader(prect_regional, config, target_only = True, repackage = False)
+target_raw = target_raw * 86400 * 1000  # Convert to mm/day
 
-# analysis_metrics.save_pickle(target_raw, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_target_raw.pkl")
+analysis_metrics.save_pickle(target_raw, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_target_raw.pkl")
 target_raw = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_target_raw.pkl")
     
 # DISCARD PLOTS: --------------------------------------------------------------------------------------------
-# Discard plot of CRPS vs IQR Percentile, CRPS vs Anomalies & true precip
-sample_index_raw = analysis_metrics.IQRdiscard_plot(output, target_raw, CRPS_network, CRPS_climatology, config, target_type = 'raw', analyze_months = False, most_confident= True)
-sample_index_anoms = analysis_metrics.IQRdiscard_plot(output, target, CRPS_network, CRPS_climatology, config, target_type = 'anomalous', analyze_months = False, most_confident= True)
+# Discard plot of CRPS vs IQR Percentile for INCREASING CONFIDENCE, CRPS vs Anomalies & true precip
+sample_index_increasingconf_raw = analysis_metrics.IQRdiscard_plot(output, target_raw, CRPS_network, CRPS_climatology, config, target_type = 'raw', analyze_months = False, most_confident= True)
+sample_index_increasingconf_anoms = analysis_metrics.IQRdiscard_plot(output, target, CRPS_network, CRPS_climatology, config, target_type = 'anomalous', analyze_months = False, most_confident= True)
+# Discard plot of CRPS vs IQR Percentile for DECREASING CONFIDENCE
+sample_index_decreasingconf_anoms = analysis_metrics.IQRdiscard_plot(output, target, CRPS_network, CRPS_climatology, config, target_type = 'anomalous', analyze_months = False, most_confident= False)
 
 if config["arch"]["type"] == "basicnn":
     crps_SNN = CRPS_network
-    CNN_expname = "exp042" # CHOOSE
+    CNN_expname = "exp070" # CHOOSE
     crps_CNN = open_data_file(str(config["perlmutter_output_dir"]) + str(CNN_expname) + '/' + CNN_expname + '_CRPS_network_values.pkl')
     CNN_inputs = open_data_file(str(config["perlmutter_inputs_dir"]) + str(CNN_expname) + "_trimmed_" + "test_dat.nc")
     CNN_target = CNN_inputs['y']
@@ -429,65 +430,117 @@ else:
     CNN_target = target
 
 # Discard plot of CRPS vs Target Magnitude; CNN, Simple NN, Climo
-# analysis_metrics.target_discardplot(CNN_target, SNN_target, crps_CNN, crps_SNN, CRPS_climatology, config, target_type = 'anomalous')
-# analysis_metrics.target_discardplot(target_raw, SNN_target, crps_SNN, crps_SNN, CRPS_climatology, config, target_type = 'raw')
+analysis_metrics.target_discardplot(CNN_target, SNN_target, crps_CNN, crps_SNN, CRPS_climatology, config, target_type = 'anomalous')
+analysis_metrics.target_discardplot(target_raw, SNN_target, crps_SNN, crps_SNN, CRPS_climatology, config, target_type = 'raw')
 
-# Analysis of Best Predictions --------------------------------------------------------------------------------
+# ANALYSIS OF BEST PREDICTIONS --------------------------------------------------------------------------------
+## Analysis of Comparatively Better CRPS Predictions  
 
-# anomalies_by_ENSO_phase = analysis_metrics.anomalies_by_ENSO_phase(elnino, lanina, neutral, target, target_raw, sample_index_raw, config, keyword = 'All Samples')
+# Isolate the MOST confident of these low CRPS predictions from 'sample_index_anoms'
+percentile = 30 # 30% most confident predictions 
+percentile_index = int(sample_index_increasingconf_anoms.shape[1] - ((percentile/100) * sample_index_increasingconf_anoms.shape[1]))
+IQR_subset_highconf = sample_index_increasingconf_anoms[:, percentile_index]
 
-# Isolate indices of sample CRPS that are ALL lower than the LOWEST climatological CRPS value
-lowestCRPSindices = np.array(np.where(CRPS_network < min(CRPS_climatology))).T
-lowestCRPSindices = lowestCRPSindices[:, 0]
-analysis_metrics.subsetanalysis_SHASH_ENSO(lowestCRPSindices, output, climatology, target, target_raw, config, x, subset_keyword = 'Lowest CRPS')
+# Isolate the LEAST confident of low CRPS predictions from 'sample_index_anoms'
+percentile = 30 # 30% most confident predictions
+percentile_index = int(sample_index_decreasingconf_anoms.shape[1] - ((percentile/100) * sample_index_decreasingconf_anoms.shape[1]))
+IQR_subset_lowconf = sample_index_decreasingconf_anoms[:, percentile_index]
 
-# Isolate the most confident of these low CRPS predictions from 'sample_index_anoms'
-percentile = 30 # 5% most confident predictions 
-percentile_index = int(sample_index_anoms.shape[1] - ((percentile/100) * sample_index_anoms.shape[1]))
-IQR_subset = sample_index_anoms[:, percentile_index]
-
-# Select only those indices that are in both the lowest CRPS and the most confident IQR
-lowestCRPS_confident = np.intersect1d(lowestCRPSindices, IQR_subset).astype(int)
-
-sub_elnino, sub_lanina, sub_neutral = analysis_metrics.subsetanalysis_SHASH_ENSO(lowestCRPS_confident, output, climatology, target, target_raw, config, x, subset_keyword = 'Lowest CRPS High Confidence')
-
-## Composite Maps - Anomalies by ENSO Phase for LOWEST Most Confident CRPS Predictions
+# ## Composite Maps - Anomalies by ENSO Phase for LOWEST Most Confident CRPS Predictions
 input_test_maps = open_data_file(input_testfn)
 input_test_maps = input_test_maps['x']
-print(f"input_test_maps : {input_test_maps}")
-analysis_metrics.compositemapping(sub_elnino, input_test_maps, config, keyword= "Low CRPS High Conf El Nino")
-
-
-## Analysis of Comparatively Better CRPS Predictions (Larger Sample Pool) -------------------------------------
 
 # Look at predictions with CRPS that are just comparatively lower than climatological CRPS on a sample-by-sample basis
 comparatively_low_CRPS = np.where(CRPS_network < CRPS_climatology)[0]
-comp_low_CRPS_confident = np.intersect1d(comparatively_low_CRPS, IQR_subset).astype(int)
+comp_low_CRPS_confident = np.intersect1d(comparatively_low_CRPS, IQR_subset_highconf).astype(int)
 print(f"Number of Comparatively low CRPS High Conf Samples: {comp_low_CRPS_confident.shape}")
+
+lowCRPS_lowconfident = np.intersect1d(comparatively_low_CRPS, IQR_subset_lowconf).astype(int)
+print(f"Number of Comparatively low CRPS Low Conf Samples: {lowCRPS_lowconfident.shape}")
 
 sub_elnino, sub_lanina, sub_neutral = analysis_metrics.subsetanalysis_SHASH_ENSO(comp_low_CRPS_confident, output, climatology, target, target_raw, config, x, subset_keyword = 'Comparatively Low CRPS') 
 
-## Composite Maps - Anomalies by ENSO Phase for Comparatively Low, Confident CRPS Predictions
+# ## Composite Maps - Anomalies by ENSO Phase for Comparatively Low, Confident CRPS Predictions
 print(f"Number of Comparatively Low CRPS High Conf El Nino Samples: {sub_elnino.shape}")
 analysis_metrics.compositemapping(sub_elnino, input_test_maps, config, keyword= "Comparatively Low CRPS High Conf El Nino")
+analysis_metrics.compositemapping(sub_lanina, input_test_maps, config, keyword= "Comparatively Low CRPS High Conf La Nina")
 
+# Composite Maps - All anomalies (El Nino, La Nina, Neutral) for Comparatively Low, Confident CRPS Predictions
+analysis_metrics.compositemapping(comp_low_CRPS_confident, input_test_maps, config, keyword= "Comparatively Low CRPS High Conf All")
+
+# ## Composite Maps with Z500 Geopotential Height: 
+# Z500_test_data = open_data_file(str(config["perlmutter_data_dir"]) + '/pscratch/sd/p/plutzner/E3SM/bigdata/Z500_trimmed_processed_anomalies.v2.LR.historical_0201.eam.h1.1850-2014.nc')
+# Z500_test_data = Z500_test_data['x']
+# Z500_complowCRPS_highconf = Z500_test_data.sel(time = Z500_test_data.time[comp_low_CRPS_confident])
+
+# Low CRPS, High Confidence SHASH Predictions:
+lowCRPS_highconf_params = output[comp_low_CRPS_confident, ...]
+analysis_metrics.plotSHASH(lowCRPS_highconf_params, climatology, config, keyword = "ComparativelyLowCRPS_HighConf")
+
+# Low CRPS, Low Confidence SHASH Predictions:
+lowCRPS_lowconf_params = output[lowCRPS_lowconfident, ...]
+analysis_metrics.plotSHASH(lowCRPS_lowconf_params, climatology, config, keyword = "ComparativelyLowCRPS_LowConf")
 
 ## XAI - CAPTUM  ----------------------------------------------------------------------------------------------
 # -------------------------------------------------------------------------------------------------------------
-# Open input testset and ensure that it is in tensor form
-input_test_maps = open_data_file(input_testfn)
-input_test_maps = input_test_maps['x']
-input_test_maps = torch.tensor(input_test_maps, dtype=torch.float32).to(device)
+# output_column = 1 # SIGMA IS SHASH PARAMETER OF INTEREST FOR XAI 
 
-# Open target testset and ensure that it is in tensor form
-target = torch.tensor(target, dtype=torch.float32).to(device)
+# # Open input testset and ensure that it is in tensor form
+# input_test_maps = open_data_file(input_testfn)
+# input_test_maps = input_test_maps['x'].values
+# print(f"input_test_maps shape : {input_test_maps.shape}")
 
+# input_test_maps_P = torch.tensor(input_test_maps, dtype=torch.float32).to(device)
 
-# Compute the average attributions
-avg_attributions = average_attributions(model, input_test_maps, target, sub_elnino, device, method="integrated_gradients")
+# # # Compute the average attributions
+# # print("Computing Average Attributions - IG")
+# # avg_attributions_IG = average_attributions(model, input_test_maps, sub_elnino, device, output_column, config, method="integrated_gradients")
+# # print("Computing Average Attributions - DL")
+# # avg_attributions_DL = average_attributions(model, input_test_maps, sub_elnino, device, output_column, config, method="deeplift")
+# # print("Computing Average Attributions - S")
+# # avg_attributions_S = average_attributions(model, input_test_maps, sub_elnino, device, output_column, config, method="saliency")
+# # print(f"Average Attributions Shape: {avg_attributions_IG.shape}")
 
-# Visualize the average attributions for the first input map in the list
-visualize_average_attributions(avg_attributions, input_test_maps[sub_elnino[0]])
+# # Load the average attributions
+# avg_attributions_IG = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/average_attributions_integrated_gradients.pkl')
+# avg_attributions_DL = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/average_attributions_deeplift.pkl')
+# avg_attributions_S = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/average_attributions_saliency.pkl')
+
+# # Split the attributions by channel
+# avg_attributions_P_IG = avg_attributions_IG[..., 0]  # Precipitation channel
+# avg_attributions_TS_IG = avg_attributions_IG[..., 1]  # Temperature channel
+
+# avg_attributions_P_DL = avg_attributions_DL[..., 0]  # Precipitation channel
+# avg_attributions_TS_DL = avg_attributions_DL[..., 1]  # Temperature channel
+
+# avg_attributions_P_S = avg_attributions_S[..., 0]  # Precipitation channel
+# avg_attributions_TS_S = avg_attributions_S[..., 1]  # Temperature channel
+
+# # Visualize the average attributions for each channel
+# # EL NINO --------
+# # average input map for given indices: 
+# ave_input_test_map_elnino_P = np.mean(input_test_maps[sub_elnino, ..., 0], axis=0)
+# ave_input_test_map_elnino_TS = np.mean(input_test_maps[sub_elnino, ..., 1], axis=0)
+
+# visualize_average_attributions(avg_attributions_P_IG, ave_input_test_map_elnino_P, config, keyword='El Nino Precip Anomalies - Integrated Gradients')
+# visualize_average_attributions(avg_attributions_TS_IG, ave_input_test_map_elnino_TS, config, keyword='El Nino Skin Temp Anomalies - Integrated Gradients')
+
+# visualize_average_attributions(avg_attributions_P_DL, ave_input_test_map_elnino_P, config, keyword='El Nino Precip Anomalies - DeepLift')
+# visualize_average_attributions(avg_attributions_TS_DL, ave_input_test_map_elnino_TS, config, keyword='El Nino Skin Temp Anomalies - DeepLift')
+
+# visualize_average_attributions(avg_attributions_P_S, ave_input_test_map_elnino_P, config, keyword='El Nino Precip Anomalies - Saliency')
+# visualize_average_attributions(avg_attributions_TS_S, ave_input_test_map_elnino_TS, config, keyword='El Nino Skin Temp Anomalies - Saliency')
+
+# # LA NINA --------
+# ave_input_test_map_lanina_P = np.mean(input_test_maps[sub_lanina, ..., 0], axis=0)
+# ave_input_test_map_lanina_TS = np.mean(input_test_maps[sub_lanina, ..., 1], axis=0)
+
+# visualize_average_attributions(avg_attributions_P_IG, ave_input_test_map_lanina_P, config, keyword='La Nina Precip Anomalies - Integrated Gradients')
+# visualize_average_attributions(avg_attributions_TS_IG, ave_input_test_map_lanina_TS, config, keyword='La Nina Skin Temp Anomalies - Integrated Gradients')
+
+# Z500 Geopotential Height ------
+# ave_input_test_map_elnino_Z500 = np.mean(Z500_complowCRPS_highconf[sub_elnino, ...], axis=0)
+# visualize_average_attributions(None, ave_input_test_map_elnino_Z500, config, keyword='El Nino Z500 Anomalies')
 
 
 

@@ -167,16 +167,28 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
                 data_dict = xr.Dataset({
                     "x": (["time", "lat", "lon", "channel"], input_mod_final.data),  
                     "y": (["time"], target_mod_final.data),
+                    }, coords = {
+                        "time": input_mod_final.time,
+                        "lat": input_mod_final.lat,
+                        "lon": input_mod_final.lon,
+                        "channel": input_mod_final.channel
                     })
             if len(data['x'].shape)  == 3: 
                 data_dict = xr.Dataset({
                     "x": (["time", "lat", "lon"], input_mod_final.data),  
                     "y": (["time"], target_mod_final.data),
+                    }, coords = {
+                        "time": input_mod_final.time,
+                        "lat": input_mod_final.lat,
+                        "lon": input_mod_final.lon,
                     })
             elif len(data['x'].shape) == 2: 
                 data_dict = xr.Dataset({
                     "x": (["time", "channel"], input_mod_final.data),  
                     "y": (["time"], target_mod_final.data),
+                    }, coords = {
+                        "time": input_mod_final.time,
+                        "channel": input_mod_final.channel
                     })
             else: 
                 print("Input data shape is not expected. Must be either Map or Simple Inputs")

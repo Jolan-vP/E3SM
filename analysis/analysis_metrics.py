@@ -486,13 +486,13 @@ def compositemapping(indices, mapinputs, config, keyword = None):
     plt.figure()
     fig, ax = plt.subplots(2, 1, figsize=(16, 9),  subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
 
-    cf1 = ax[0].pcolormesh(lons, lats, icomposite_prect, cmap='BrBG', transform=ccrs.PlateCarree(), vmin = -7, vmax = 7 )
+    cf1 = ax[0].pcolormesh(lons, lats, icomposite_prect, cmap='BrBG', transform=ccrs.PlateCarree(), vmin = -1, vmax = 1 )
     ax[0].set_title(f'Precipitation Composite Map \n {keyword} Predictions')
     ax[0].coastlines()
     ax[0].set_xticks(np.arange(-180, 181, 60), crs=ccrs.PlateCarree())
     ax[0].set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree())
 
-    cf2 = ax[1].pcolormesh(lons, lats, icomposite_ts, cmap='RdBu_r', transform=ccrs.PlateCarree(), vmin = -4, vmax = 4 )
+    cf2 = ax[1].pcolormesh(lons, lats, icomposite_ts, cmap='RdBu_r', transform=ccrs.PlateCarree(), vmin = -1, vmax = 1 )
     ax[1].set_title(f'Temperature Composite Map \n {keyword} Predictions')
     ax[1].coastlines()
     ax[1].set_xticks(np.arange(-180, 181, 60), crs=ccrs.PlateCarree())
@@ -540,3 +540,29 @@ def maximum_difference(shash_parameters, required_samples = 50, tau_frozen = Tru
     return shash_parameters[all_indices]
 
 
+def plotSHASH(shash_parameters, climatology, config, keyword = None): 
+    """
+    Input: Filename for climate data, SHASH parameters for sample
+    Output: probability density distribution for given data and shash curves
+    """
+    imp.reload(shash.shash_torch)
+
+    dist = Shash(shash_parameters)
+
+    x_values = np.linspace(np.min(climatology) - 2, np.max(climatology), 1000)
+
+    p = dist.prob(x_values).numpy()
+
+    plt.figure(figsize=(8, 5), dpi=200)
+    plt.hist(
+        climatology, x_values, density=True, color="silver", alpha=0.75, label="climatology"
+    )
+
+    plt.plot(x_values, p, linewidth = 0.5 ) #label = samples
+    plt.xlabel("precipitation anomaly (mm/day)")
+    plt.ylabel("probability density")
+    plt.title("Network Shash Prediction -" + str(config["expname"]))
+    plt.legend()
+    plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + '_' + str(keyword) + '_SHASH_w_climatology.png', format='png', bbox_inches ='tight', dpi = 300)
+
+    return p
