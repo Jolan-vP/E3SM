@@ -156,6 +156,7 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
         target_mod_final = target_filtered[smoothing_length:]
         
         print(f" input_mod_final time: {input_mod_final.time}")
+        print(f" target_mod_final time: {target_mod_final.time}")
         # print(f"input_mod_final shape: {input_mod_final.shape}")
         # print(f"target_mod_final shape: {target_mod_final.shape}")
 
@@ -163,35 +164,37 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
             return input, target 
         
         else: 
-            if len(data['x'].shape)  == 4: 
+            print("Repackaging data into xarray dataset")
+            if len(input_mod_final.shape) == 4: 
                 data_dict = xr.Dataset({
                     "x": (["time", "lat", "lon", "channel"], input_mod_final.data),  
                     "y": (["time"], target_mod_final.data),
                     }, coords = {
-                        "time": input_mod_final.time,
-                        "lat": input_mod_final.lat,
-                        "lon": input_mod_final.lon,
-                        "channel": input_mod_final.channel
+                        "time": input_mod_final.coords["time"],
+                        "lat": input_mod_final.coords["lat"],
+                        "lon": input_mod_final.coords["lon"],
+                        "channel": input_mod_final.coords["channel"]
                     })
-            if len(data['x'].shape)  == 3: 
+            elif len(input_mod_final.shape) == 3: 
                 data_dict = xr.Dataset({
                     "x": (["time", "lat", "lon"], input_mod_final.data),  
                     "y": (["time"], target_mod_final.data),
                     }, coords = {
-                        "time": input_mod_final.time,
-                        "lat": input_mod_final.lat,
-                        "lon": input_mod_final.lon,
+                        "time": input_mod_final.coords["time"],
+                        "lat": input_mod_final.coords["lat"],
+                        "lon": input_mod_final.coords["lon"],
                     })
-            elif len(data['x'].shape) == 2: 
+            elif len(input_mod_final.shape) == 2: 
                 data_dict = xr.Dataset({
                     "x": (["time", "channel"], input_mod_final.data),  
                     "y": (["time"], target_mod_final.data),
                     }, coords = {
-                        "time": input_mod_final.time,
-                        "channel": input_mod_final.channel
+                        "time": input_mod_final.coords["time"],
+                        "channel": input_mod_final.coords["channel"]
                     })
             else: 
-                print("Input data shape is not expected. Must be either Map or Simple Inputs")
+                print("Data shape is not expected. Must be either Map or Simple Inputs")
+
                 raise ValueError
             
             return data_dict

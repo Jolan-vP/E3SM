@@ -71,11 +71,11 @@ data = ClimateData(
 
 # ---- DATA PROCESSING ----------------------------------------------------------------
 
-# d_train, d_val, d_test = data.fetch_data()
+d_train, d_val, d_test = data.fetch_data()
 
-# # check data output
-# print(d_train)
-# print(d_train['y'].shape)
+# check data output
+print(f" dtrain x shape = {d_train['x'].shape}")
+print(f" dtrain y shape = {d_train['y'].shape}")
 # print(d_train['y'])
 
 s_dict_savename1 = config["perlmutter_data_dir"] + "Z500_processed_anomalies.v2.LR.historical_0101.eam.h1.1850-2014.pkl"
@@ -83,9 +83,9 @@ s_dict_savename2 = config["perlmutter_data_dir"] + "Z500_processed_anomalies.v2.
 s_dict_savename3 = config["perlmutter_data_dir"] + "Z500_processed_anomalies.v2.LR.historical_0201.eam.h1.1850-2014.pkl"
 
 # save the data as pickle: 
-# analysis_metrics.save_pickle(d_train, s_dict_savename1)
-# analysis_metrics.save_pickle(d_val, s_dict_savename2)
-# analysis_metrics.save_pickle(d_test, s_dict_savename3)
+analysis_metrics.save_pickle(d_train, s_dict_savename1)
+analysis_metrics.save_pickle(d_val, s_dict_savename2)
+analysis_metrics.save_pickle(d_test, s_dict_savename3)
 
 # open processed data files:
 Z500_train = analysis_metrics.load_pickle(s_dict_savename1)

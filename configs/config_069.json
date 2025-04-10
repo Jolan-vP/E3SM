@@ -44,13 +44,13 @@
         "target_mask": "land",
         "ensembles": ["ens1", "ens2", "ens3"],
         "ensemble_codes": ["0101", "0151", "0201"],
-        "target_var": "None",
+        "target_var": "Z500",
         "target_region": [38.5, 54.5, -133.5, -120.5],
         "target_months": [10, 11, 12, 1, 2, 3],
         "averaging_length": 14,
         "lagtime": 14, 
-        "front_cutoff": 21, 
-        "back_cutoff": 21, 
+        "front_cutoff": 14, 
+        "back_cutoff": 14, 
         "CRPS_tolerance": 1e-7
         
     }, 
