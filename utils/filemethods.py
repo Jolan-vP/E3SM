@@ -25,20 +25,20 @@ def open_data_file(data_file):
             # Open the file using gzip and pickle
             with gzip.open(data_file, "rb") as fp:
                 data = pickle.load(fp)
-            print(f"Opened pickle file: {data_file}")
+            # print(f"Opened pickle file: {data_file}")
         elif data_file.endswith(".nc"):
             # Open the file as a NetCDF dataset using xarray
             data = xr.open_dataset(data_file)
-            print(f"Opened NetCDF file: {data_file}")
+            # print(f"Opened NetCDF file: {data_file}")
         elif data_file.endswith(".txt"):
             # Open the file as a text file
             with open(data_file, "r") as fp:
                 data = pd.read_csv(fp, sep='\s+', header=0)
-            print(f"Opened text file as Pandas DF: {data_file}")
+            # print(f"Opened text file as Pandas DF: {data_file}")
     else:
         #assume datafile is a passed variable
         data = data_file
-        print(f"Data passed directly as {type(data)} rather than filename.")
+        # print(f"Data passed directly as {type(data)} rather than filename.")
 
     return data
 

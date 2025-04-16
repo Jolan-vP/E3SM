@@ -105,7 +105,7 @@ def identify_nino_phases(nino34_index, config, threshold=0.4, window=6, lagtime 
 
 
 
-def ENSO_CRPS(enso_indices_daily, crps_scores, climatology, x_values, output, config): 
+def ENSO_CRPS(enso_indices_daily, crps_scores, climatology, x_values, output, target, config): 
     # Isolate non-zero indices for each ENSO phase
     # Calculate index of first non-zero value when counting from back to front
     nino_indices = np.where(enso_indices_daily[:,0] != 0)[0]
@@ -221,7 +221,12 @@ def ENSO_CRPS(enso_indices_daily, crps_scores, climatology, x_values, output, co
 
     # plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/CRPS_vs_ENSO_Phases_' + str(config["expname"]) + '.png', format='png', bbox_inches ='tight', dpi = 300)
 
-    return elnino, lanina, neutral, CRPS_elnino, CRPS_lanina, CRPS_neutral
+    # Convert indices to datetime xarray object using climatology time coordinate: 
+    elnino_dates = target.time[elnino]
+    lanina_dates = target.time[lanina]
+    neutral_dates = target.time[neutral]
+
+    return elnino_dates, lanina_dates, neutral_dates, CRPS_elnino, CRPS_lanina, CRPS_neutral
 
 
 def idealENSOphases(nino34index, ens = None, percentile = None, numberofeachphase = None, plotfn = None):
