@@ -128,26 +128,55 @@ def IQRdiscard_plot(networkoutput, target, crps_scores, crps_climatology_scores,
     avg_target = []
     avg_iqr = []
     sample_index = np.zeros((len(selected_target), len(percentiles)))
-    
+
+    # Sort by IQR
+    iqr_sorted_indices = np.argsort(iqr)
+    print(f"iqr_sorted_indices: {iqr_sorted_indices[:25]}")
+    iqr_sorted = iqr[iqr_sorted_indices]
+    # target_sorted = selected_target[iqr_sorted_indices]
+    # crps_sorted = crps_network[iqr_sorted_indices]
+
     for ip, p in enumerate(percentiles):
-        if most_confident == True:
+        # percentage of samples to keep for each round of the loop
+        num_to_keep = int(len(iqr_sorted) * p / 100)
+
+        if most_confident:
             confidence_label = " increasing_confidence"
-            avg_crps.append(np.mean(crps_network[iqr < np.percentile(iqr, p)]))
-            avg_target.append(np.mean(selected_target[iqr < np.percentile(iqr, p)]))
-            # capture the index (out of total) for all the samples in each bin
-            indices = np.where(iqr < np.percentile(iqr, p))[0]
-            avg_iqr.append(np.mean(iqr[iqr < np.percentile(iqr, p)]))
-
-        elif most_confident == False:
+            indices = iqr_sorted_indices[:num_to_keep]
+        else:
             confidence_label = " decreasing_confidence"
-            avg_crps.append(np.mean(crps_network[iqr >= np.percentile(iqr, p)]))
-            avg_target.append(np.mean(selected_target[iqr >= np.percentile(iqr, p)]))
-            # capture the index (out of total) for all the samples in each bin
-            indices = np.where(iqr >= np.percentile(iqr, p))[0]
-            avg_iqr.append(np.mean(iqr[iqr >= np.percentile(iqr, p)]))
-            # print(f"Low-confidence indices for percentile {p}: {indices}")
+            indices = iqr_sorted_indices[-num_to_keep:]
 
-        sample_index[:len(indices), ip] = indices
+        if len(indices) == 0:
+            avg_crps.append(np.nan)
+            avg_target.append(np.nan)
+            avg_iqr.append(np.nan)
+        else:
+            avg_crps.append(np.mean(crps_network[indices]))
+            avg_target.append(np.mean(selected_target[indices]))
+            avg_iqr.append(np.mean(iqr[indices]))
+            sample_index[:len(indices), ip] = indices
+
+
+    # for ip, p in enumerate(percentiles):
+    #     if most_confident == True:
+    #         confidence_label = " increasing_confidence"
+    #         avg_crps.append(np.mean(crps_network[iqr < np.percentile(iqr, p)]))
+    #         avg_target.append(np.mean(selected_target[iqr < np.percentile(iqr, p)]))
+    #         # capture the index (out of total) for all the samples in each bin
+    #         indices = np.where(iqr < np.percentile(iqr, p))[0]
+    #         avg_iqr.append(np.mean(iqr[iqr < np.percentile(iqr, p)]))
+
+    #     elif most_confident == False:
+    #         confidence_label = " decreasing_confidence"
+    #         avg_crps.append(np.mean(crps_network[iqr >= np.percentile(iqr, p)]))
+    #         avg_target.append(np.mean(selected_target[iqr >= np.percentile(iqr, p)]))
+    #         # capture the index (out of total) for all the samples in each bin
+    #         indices = np.where(iqr >= np.percentile(iqr, p))[0]
+    #         avg_iqr.append(np.mean(iqr[iqr >= np.percentile(iqr, p)]))
+    #         # print(f"Low-confidence indices for percentile {p}: {indices}")
+
+        # sample_index[:len(indices), ip] = indices
 
     plt.figure()
     plt.plot(percentiles, avg_iqr, color='tab:orange', label='IQR')
@@ -197,7 +226,56 @@ def IQRdiscard_plot(networkoutput, target, crps_scores, crps_climatology_scores,
             plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + "/" + str(keyword) + '_CRPS_wideIQR_DiscardPlot_raw.png', format='png', bbox_inches ='tight', dpi = 300)
             plt.close()
         
-    return sample_index
+    return sample_index, percentiles, avg_crps
+
+def IQRdiscard_combined(percentile_dict, crps_dict, crps_climatology, config, keyword = None):
+
+    plt.figure(figsize=(8, 6))
+    plt.gca().invert_xaxis()  # high confidence = low IQR = right side of plot
+
+    plt.plot(percentile_dict['EN'], crps_dict['EN'], label='El Niño', color='#c77f08')
+    plt.plot(percentile_dict['LN'], crps_dict['LN'], label='La Niña', color='#5b9da4')
+    plt.plot(percentile_dict['NE'], crps_dict['NE'], label='Neutral', color='#c2ab85')
+
+    plt.axhline(y=crps_climatology.mean(), color='grey', linestyle='--', label='CRPS Climatology Mean')
+    plt.xlabel('IQR Percentile (% Data Remaining)')
+    plt.ylabel('Average CRPS')
+    plt.title('Increasing Confidence CRPS Discard Plot (All Phases)')
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + '_CRPS_IQR_DiscardPlot_ENSOcombined.png', format='png', bbox_inches ='tight', dpi = 300)
+
+def IQR_success_discard_plot(shash_output, network_CRPS, climatology_CRPS, config, keyword= None):
+    # IQR discard plot
+    iqr = iqr_basic(shash_output)
+    percentiles = np.linspace(100, 0, 21)
+
+    avg_success_ratio = []
+    avg_iqr = []
+
+    for ip, p in enumerate(percentiles):
+        # percentage of samples to keep for each round of the loop
+        num_to_keep = int(len(iqr) * p / 100)
+        indices = np.argsort(iqr)[:num_to_keep]
+
+        if len(indices) == 0:
+            avg_success_ratio.append(np.nan)
+            avg_iqr.append(np.nan)
+        else:
+            success_ratio = np.sum(network_CRPS[indices] < climatology_CRPS[indices]) / len(indices)
+            avg_success_ratio.append(success_ratio)
+            avg_iqr.append(np.mean(iqr[indices]))
+
+    plt.figure()
+    plt.gca().invert_xaxis()  # high confidence = low IQR = right side of plot
+    plt.plot(percentiles, avg_success_ratio, color='tab:blue')
+    # plt.axhline(y=climatology_CRPS.mean(), color='grey', linestyle='--', label='CRPS Climatology Mean')
+    plt.xlabel('IQR Percentile (% Data Remaining)')
+    plt.ylabel('Proportion of Samples with Lower Network CRPS')
+    plt.ylim([0.5, 0.7])
+    plt.title('Increasing Confidence Success Ratio Discard Plot')
+    # plt.legend(loc = 'upper right')
+    plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + '_SuccessRatio_IQR_DiscardPlot.png', format='png', bbox_inches ='tight', dpi = 300) 
 
 
 def target_discardplot(targetCNN, targetSNN, CNNcrps_scores, NNcrps_scores, crps_climatology_scores, config, target_type = 'anomalous', keyword = None):
@@ -1392,10 +1470,12 @@ def mjo_subsetindices(grouped_phases, mapinputs, target, ninodates1, ninodates2,
                         std_mapinputs = phase_mapinputs.std(dim='time')
 
                         plot_data = mean_mapinputs / std_mapinputs
-                        norm_label = "normalized"
+                        norm_label = " normalized"
+                        cbar_label = "Normalized " + var + " Anomalies (sigma)"
                     else:
                         plot_data = phase_mapinputs.mean(dim='time')
-                        norm_label = "anomalies"
+                        norm_label = " anomalies"
+                        cbar_label = var + " Anomalies"
 
                     # # Calculate the mean of the selected map inputs
                     # mean_mapinputs = phase_mapinputs.mean(dim='time')
@@ -1427,10 +1507,10 @@ def mjo_subsetindices(grouped_phases, mapinputs, target, ninodates1, ninodates2,
 
                     # Add colorbar
                     cbar = fig.colorbar(cf, ax=ax[grouping, enso_column], orientation='vertical', fraction=0.02, pad=0.04, aspect=20, shrink=0.8)
-                    cbar.set_label(f'Normalized {var} \n Anomalies (sigma)')
+                    cbar.set_label(str(cbar_label))
 
                     plt.tight_layout()
 
             plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + 
-                '_ENSO_Conditioned_MJO_composite_maps_' + str(var) + str(norm_label) +'.png', format='png', bbox_inches ='tight', dpi = 300)
+                '_ENSO_Conditioned_MJO_composite_maps_' + str(var) + str(norm_label) +'.png', format='png', bbox_inches ='tight', dpi = 200)
             plt.close(fig)
