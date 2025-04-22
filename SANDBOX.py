@@ -59,7 +59,7 @@ print(f"pytorch version = {torch.__version__}")
 # https://github.com/victoresque/pytorch-template/tree/master
 
 # ----CONFIG AND CLASS SETUP----------------------------------------------
-config = utils.get_config("exp042")
+config = utils.get_config("exp071")
 print(config["expname"])
 seed = config["seed_list"][0]
 
@@ -75,9 +75,9 @@ imp.reload(data_generator)
 imp.reload(data_loader)
 
 if config["arch"]["type"] == "basicnn":
-    target_treatment = "True"
+    target_treatment = True
 else:
-    target_treatment = "False"
+    target_treatment = False
 
 data = ClimateData(
     config["databuilder"], 
@@ -100,76 +100,77 @@ create_folder(figure_folder_name)
 # ---- DATA PROCESSING ----------------------------------------------------------------
 # Check if input data is being processed from scratch or if it is being loaded from a previous experiment
 
-if config["input_data"] == "None": # Then input data must be processed FROM SCRATCH
-    # print("Processing input data from scratch")
+# if config["input_data"] == "None": # Then input data must be processed FROM SCRATCH
+#     print("Processing input data from scratch")
+#     print(f"This is a {config['arch']['type']} model")
 
-    # d_train, d_val, d_test = data.fetch_data()
+#     d_train, d_val, d_test = data.fetch_data()
 
-    # # ---- FOR SIMPLE INPUTS ONLY : ----------------------------------------------
-    # if config["arch"]["type"] == "basicnn":
-    #     print(d_train['y'].shape)
-    #     target_savename1 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_train_TARGET_1850-2014.pkl"
-    #     with gzip.open(target_savename1, "wb") as fp:
-    #         pickle.dump(d_train, fp)
+#     # ---- FOR SIMPLE INPUTS ONLY : ----------------------------------------------
+#     if config["arch"]["type"] == "basicnn":
+#         print(d_train['y'].shape)
+#         target_savename1 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_train_TARGET_1850-2014.pkl"
+#         with gzip.open(target_savename1, "wb") as fp:
+#             pickle.dump(d_train, fp)
 
-    #     target_savename2 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_val_TARGET_1850-2014.pkl"
-    #     with gzip.open(target_savename2, "wb") as fp:
-    #         pickle.dump(d_val, fp)
+#         target_savename2 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_val_TARGET_1850-2014.pkl"
+#         with gzip.open(target_savename2, "wb") as fp:
+#             pickle.dump(d_val, fp)
 
-    #     target_savename3 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_test_TARGET_1850-2014.pkl"
-    #     with gzip.open(target_savename3, "wb") as fp:
-    #         pickle.dump(d_test, fp)
+#         target_savename3 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_test_TARGET_1850-2014.pkl"
+#         with gzip.open(target_savename3, "wb") as fp:
+#             pickle.dump(d_test, fp)
 
-    #     d_train, d_val, d_test = multi_input_data_organizer(config, target_savename1, target_savename2, target_savename3, MJO = True, ENSO = True, other = False)
+#         d_train, d_val, d_test = multi_input_data_organizer(config, target_savename1, target_savename2, target_savename3, MJO = True, ENSO = True, other = False)
 
-        # # confirm metadata is stored for both input and target
-        # print(f" s_dict_train INPUT time {d_train['x'].time}")
-        # print(f" s_dict_train TARGET time {d_train['y'].time}")
+#         # confirm metadata is stored for both input and target
+#         print(f" s_dict_train INPUT time {d_train['x'].time}")
+#         print(f" s_dict_train TARGET time {d_train['y'].time}")
 
-        # # confirm input structure: 
-    #     # print(f"input shape: {d_train['x'].shape}")
-    # else: 
-    #     pass
+#         # confirm input structure: 
+#         print(f"input shape: {d_train['x'].shape}")
+#     else: 
+#         pass
 
-    # Save full input data for the experiment: ----------------------------------
-    s_dict_savename1 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_train.pkl"
-    s_dict_savename2 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_val.pkl"
-    s_dict_savename3 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_test.pkl"
+#     # Save full input data for the experiment: ----------------------------------
+#     s_dict_savename1 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_train.pkl"
+#     s_dict_savename2 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_val.pkl"
+#     s_dict_savename3 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_test.pkl"
 
-    # with gzip.open(s_dict_savename1, "wb") as fp:
-    #     pickle.dump(d_train, fp)
+#     with gzip.open(s_dict_savename1, "wb") as fp:
+#         pickle.dump(d_train, fp)
 
-    # with gzip.open(s_dict_savename2, "wb") as fp:
-    #     pickle.dump(d_val, fp)
+#     with gzip.open(s_dict_savename2, "wb") as fp:
+#         pickle.dump(d_val, fp)
 
-    # with gzip.open(s_dict_savename3, "wb") as fp:
-    #     pickle.dump(d_test, fp)
+#     with gzip.open(s_dict_savename3, "wb") as fp:
+#         pickle.dump(d_test, fp)
 
-    # Trim input data: Lead/lag, month selection ----------------------------------
-    trimmed_trainfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "train_dat.nc"
-    trimmed_valfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "val_dat.nc"
-    trimmed_testfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "test_dat.nc"
+#     # Trim input data: Lead/lag, month selection ----------------------------------
+#     trimmed_trainfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "train_dat.nc"
+#     trimmed_valfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "val_dat.nc"
+#     trimmed_testfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "test_dat.nc"
 
-    # train_dat_trimmed = universaldataloader(s_dict_savename1, config, target_only = False, repackage = True)
-    # train_dat_trimmed.to_netcdf(trimmed_trainfn)
-    # print(f"Data saved to {trimmed_trainfn}")
+#     train_dat_trimmed = universaldataloader(s_dict_savename1, config, target_only = False, repackage = True)
+#     train_dat_trimmed.to_netcdf(trimmed_trainfn)
+#     print(f"Data saved to {trimmed_trainfn}")
 
-    # val_dat_trimmed = universaldataloader(s_dict_savename2, config, target_only = False, repackage = True)
-    # val_dat_trimmed.to_netcdf(trimmed_valfn)
-    # print(f"Data saved to {trimmed_valfn}")
+#     val_dat_trimmed = universaldataloader(s_dict_savename2, config, target_only = False, repackage = True)
+#     val_dat_trimmed.to_netcdf(trimmed_valfn)
+#     print(f"Data saved to {trimmed_valfn}")
 
-    # test_dat_trimmed = universaldataloader(s_dict_savename3, config, target_only = False, repackage = True)
-    # test_dat_trimmed.to_netcdf(trimmed_testfn)
-    # print(f"Data saved to {trimmed_testfn}")
+#     test_dat_trimmed = universaldataloader(s_dict_savename3, config, target_only = False, repackage = True)
+#     test_dat_trimmed.to_netcdf(trimmed_testfn)
+#     print(f"Data saved to {trimmed_testfn}")
 
-elif "exp" in config["input_data"]: 
-    trimmed_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "train_dat.nc"
-    trimmed_valfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "val_dat.nc"
-    trimmed_testfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "test_dat.nc"
+# elif "exp" in config["input_data"]: 
+#     trimmed_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "train_dat.nc"
+#     trimmed_valfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "val_dat.nc"
+#     trimmed_testfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "test_dat.nc"
     
-# --- Setup the Data for Training ---------------------------------------------
-lagtime = config["databuilder"]["lagtime"] 
-smoothing_length = config["databuilder"]["averaging_length"]
+# # # --- Setup the Data for Training ---------------------------------------------
+# lagtime = config["databuilder"]["lagtime"] 
+# smoothing_length = config["databuilder"]["averaging_length"]
 
 # trainset = data_loader.CustomData(trimmed_trainfn, config, which_set = 'training')
 # valset = data_loader.CustomData(trimmed_valfn, config, which_set = 'validation')
@@ -223,7 +224,7 @@ smoothing_length = config["databuilder"]["averaging_length"]
 #         )
 #     std_mean = {"trainset_target_mean": trainset.target.mean(axis=0), "trainset_target_std": trainset.target.std(axis=0)}
 
-# # model.freeze_layers(freeze_id="tau")
+# model.freeze_layers(freeze_id="None")
 # optimizer = getattr(torch.optim, config["optimizer"]["type"])(
 #     model.parameters(), **config["optimizer"]["args"]
 # )
@@ -311,13 +312,12 @@ smoothing_length = config["databuilder"]["averaging_length"]
 # analysis_metrics.save_pickle(output, model_output)
 # print(output[:20]) # look at a small sample of the output data
 
-# ------------------------------ Evaluate Network Predictions ----------------------------------
+# # ------------------------------ Evaluate Network Predictions ----------------------------------
 if config["input_data"] != "None": 
     input_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "train_dat.nc"
     input_valfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "val_dat.nc"
     input_testfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "test_dat.nc"
 else: 
-
     input_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_trimmed_" + "train_dat.nc"
     input_valfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_trimmed_" + "val_dat.nc"
     input_testfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_trimmed_" + "test_dat.nc"
@@ -328,7 +328,7 @@ selected_months = config["databuilder"]["target_months"]
 front_cutoff = config["databuilder"]["front_cutoff"] 
 back_cutoff = config["databuilder"]["back_cutoff"] 
 
-## -------------------------------------------------------------------
+# ## -------------------------------------------------------------------------------------------------
 
 # Open Model Outputs
 model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + '_network_SHASH_parameters.pkl'
@@ -345,12 +345,12 @@ train_inputs = open_data_file(input_trainfn)
 climatology = train_inputs['y']
 print(f"UDL climatology shape {climatology.shape}")
 
-# Compare SHASH predictions to climatology histogram
+# # Compare SHASH predictions to climatology histogram
 # p = calc_climatology.deriveclimatology(output, climatology, number_of_samples=50, config=config, climate_data = False)
 
-# # ----------------------------- CRPS --------------------------------------------
+# # # ----------------------------- CRPS ----------------------------------------------------------------
 x = np.linspace(-10, 12, 1000)
-x_wide = np.arange(-25, 25, 0.01)
+# x_wide = np.arange(-25, 25, 0.01)
 
 # # Compute CRPS for climatology
 # CRPS_climatology = CRPS.calculateCRPS(output, target, x_wide, config, climatology)
@@ -364,32 +364,34 @@ x_wide = np.arange(-25, 25, 0.01)
 CRPS_climatology = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_climatology_values.pkl")
 CRPS_network = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_network_values.pkl")
 
-# Compare CRPS scores for climatology vs predictions (Is network better than climatology on average?)
+# # Compare CRPS scores for climatology vs predictions (Is network better than climatology on average?)
 # CRPS.CRPScompare(CRPS_network, CRPS_climatology, config)
 
-# # # ----------------------------- ENSO -------------------------------------------
-
+# # # ----------------------------- ENSO ----------------------------------------------------------------
 # Calculate ENSO Indices from Monthly ENSO Data (Po-Lun): 
 # monthlyENSO = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/ENSO_ne30pg2_HighRes/nino.member0201.nc')
-# # monthlyENSO = xr.open_dataset(str(config["perlmutter_data_dir"]) + 'presaved/ENSO_ne30pg2_HighRes/nino.member0201.nc')
+# monthlyENSO = xr.open_dataset(str(config["perlmutter_data_dir"]) + 'presaved/ENSO_ne30pg2_HighRes/nino.member0201.nc')
 # Nino34 = monthlyENSO.nino34
 # # select a slice of only certain years
 # Nino34 = Nino34.sel(time=slice ( str(config["databuilder"]["input_years"][0]) + '-01-01', str(config["databuilder"]["input_years"][1]) + '-12-31'))
 # Nino34 = Nino34.values
 
-# # Calculate enso indices for daily data based on EVALUATION DAY
-# enso_indices_daily = ENSO_indices_calculator.identify_nino_phases(Nino34, config, threshold=0.4, window=6, lagtime = lagtime, smoothing_length = smoothing_length)
+# analysis_metrics.save_pickle(Nino34, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/Nino34.pkl")
+Nino34 = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/Nino34.pkl")
 
-# # # Separate CRPS scores by ENSO phases 
-# elnino_dates, lanina_dates, neutral_dates, CRPS_elnino, CRPS_lanina, CRPS_neutral = analysis.ENSO_indices_calculator.ENSO_CRPS(
-#     enso_indices_daily, CRPS_network, climatology, x, output, target, config)
+# Calculate enso indices for daily data based on EVALUATION DAY
+enso_indices_daily = ENSO_indices_calculator.identify_nino_phases(Nino34, config, threshold=0.4, window=6, lagtime = lagtime, smoothing_length = smoothing_length)
+
+# Separate CRPS scores by ENSO phases 
+elnino_dates, lanina_dates, neutral_dates, CRPS_elnino, CRPS_lanina, CRPS_neutral = analysis.ENSO_indices_calculator.ENSO_CRPS(
+    enso_indices_daily, CRPS_network, climatology, x, output, target, config)
 
 # # Compare Distributions? 
 # p = calc_climatology.deriveclimatology(output, climatology, number_of_samples=30, config=config, climate_data = False)
 
-# Calculate precipitation anomalies during each ENSO Phase + Plot -----------------
+# Calculate precipitation anomalies during each ENSO Phase + Plot -----------------------------------------
 
-# # Open raw TESTING target data
+# Open raw TESTING target data
 # nc_file = xr.open_dataset('/Users/C830793391/BIG_DATA/E3SM_Data/ens3/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc')
 # nc_file = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc')
 # prect_global = nc_file.PRECT.sel(time = slice(str(config["databuilder"]["input_years"][0]) + '-01-01', str(config["databuilder"]["input_years"][1])))
@@ -414,28 +416,29 @@ CRPS_network = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"])
 # target_raw = target_raw * 86400 * 1000  # Convert to mm/day
 
 # analysis_metrics.save_pickle(target_raw, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_target_raw.pkl")
-target_raw = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_target_raw.pkl")
+# target_raw = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_target_raw.pkl")
     
 # DISCARD PLOTS: --------------------------------------------------------------------------------------------
 # Discard plot of CRPS vs IQR Percentile for INCREASING CONFIDENCE, CRPS vs Anomalies & true precip
-# sample_index_increasingconf_raw = analysis_metrics.IQRdiscard_plot(output, target_raw, CRPS_network, CRPS_climatology, config, target_type = 'raw', keyword = 'All Samples', analyze_months = False, most_confident= True)
 # sample_index_increasingconf_anoms, inconf_perc, inconf_crps = analysis_metrics.IQRdiscard_plot(
 #     output, target, CRPS_network, CRPS_climatology, target.time, config, target_type = 'anomalous', keyword = 'All Samples', analyze_months = False, most_confident= True)
+# # sample_index_increasingconf_raw = analysis_metrics.IQRdiscard_plot(output, target_raw, CRPS_network, CRPS_climatology, config, target_type = 'raw', keyword = 'All Samples', analyze_months = False, most_confident= True)
 # print(f"shape of sample index : {sample_index_increasingconf_anoms.shape}")
+
 # # # Discard plot of CRPS vs IQR Percentile for DECREASING CONFIDENCE
 # sample_index_decreasingconf_anoms, deconf_perc, deconf_crps = analysis_metrics.IQRdiscard_plot(
 #     output, target, CRPS_network, CRPS_climatology, target.time, config, target_type = 'anomalous', keyword = 'All Samples', analyze_months = False, most_confident= False)
 
 # if config["arch"]["type"] == "basicnn":
 #     crps_SNN = CRPS_network
-#     CNN_expname = "exp070" # CHOOSE
+#     CNN_expname = "exp042" # CHOOSE
 #     crps_CNN = open_data_file(str(config["perlmutter_output_dir"]) + str(CNN_expname) + '/' + CNN_expname + '_CRPS_network_values.pkl')
 #     CNN_inputs = open_data_file(str(config["perlmutter_inputs_dir"]) + str(CNN_expname) + "_trimmed_" + "test_dat.nc")
 #     CNN_target = CNN_inputs['y']
 #     SNN_target = target
 # else:
 #     crps_CNN = CRPS_network
-#     SNN_expname = "exp036" # CHOOSE
+#     SNN_expname = "exp071" # CHOOSE
 #     crps_SNN = open_data_file(str(config["perlmutter_output_dir"]) + str(SNN_expname) + '/' + SNN_expname + '_CRPS_network_values.pkl')
 #     SNN_inputs = open_data_file(str(config["perlmutter_inputs_dir"]) + str(SNN_expname) + "_trimmed_" + "test_dat.nc")
 #     SNN_target = SNN_inputs['y']
@@ -448,24 +451,26 @@ target_raw = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) +
 # ANALYSIS OF BEST PREDICTIONS --------------------------------------------------------------------------------
 ## Analysis of Comparatively Better CRPS Predictions  
 
+# Composite Maps - Anomalies by ENSO Phase for LOWEST Most Confident CRPS Predictions
+input_test_maps = open_data_file(input_testfn)
+input_test_maps = input_test_maps['x']
+
 # # Isolate the MOST confident of these low CRPS predictions from 'sample_index_anoms'
 # percent = 30 
 # percentile = 100 - percent # 30% most confident predictions 
-# percentile_index = int(sample_index_increasingconf_anoms.shape[1] - ((percentile/100) * sample_index_increasingconf_anoms.shape[1]))
-# IQR_subset_highconf = sample_index_increasingconf_anoms[:, percentile_index]
+# percentile_index_high = int(sample_index_increasingconf_anoms.shape[1] - ((percentile/100) * sample_index_increasingconf_anoms.shape[1]))
+# IQR_subset_highconf = sample_index_increasingconf_anoms[:, percentile_index_high][sample_index_increasingconf_anoms[..., percentile_index_high] != 0].astype(int)
+# IQR_subset_highconf_dates = target.time.isel(time = IQR_subset_highconf)
 
 # # Isolate the LEAST confident of low CRPS predictions from 'sample_index_anoms'
-# percentile_index = int(sample_index_decreasingconf_anoms.shape[1] - ((percentile/100) * sample_index_decreasingconf_anoms.shape[1]))
-# IQR_subset_lowconf = sample_index_decreasingconf_anoms[:, percentile_index]
-
-# # ## Composite Maps - Anomalies by ENSO Phase for LOWEST Most Confident CRPS Predictions
-# input_test_maps = open_data_file(input_testfn)
-# input_test_maps = input_test_maps['x']
+# percentile_index_low = int(sample_index_decreasingconf_anoms.shape[1] - ((percentile/100) * sample_index_decreasingconf_anoms.shape[1]))
+# IQR_subset_lowconf = sample_index_decreasingconf_anoms[:, percentile_index_low][sample_index_decreasingconf_anoms[..., percentile_index_low] != 0].astype(int)
+# IQR_subset_lowconf_dates = target.time.isel(time = IQR_subset_lowconf)
 
 # # # Look at predictions with CRPS that are just comparatively lower than climatological CRPS on a sample-by-sample basis
 # comparatively_low_CRPS = np.where(CRPS_network < CRPS_climatology)[0]
 # lowCRPS_highconfident = np.intersect1d(comparatively_low_CRPS, IQR_subset_highconf).astype(int)
-# print(f"Number of Comparatively low CRPS High Conf Samples: {lowCRPS_highconfident.shape}")
+# # print(f"Number of Comparatively low CRPS High Conf Samples: {lowCRPS_highconfident.shape}")
 
 # lowCRPS_lowconfident = np.intersect1d(comparatively_low_CRPS, IQR_subset_lowconf).astype(int)
 # print(f"Number of Comparatively low CRPS Low Conf Samples: {lowCRPS_lowconfident.shape}")
@@ -476,10 +481,10 @@ target_raw = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) +
 # analysis_metrics.compositemapping(sub_elnino_dates, input_test_maps, config, keyword= "Comparatively Low CRPS High Conf El Nino Norm")
 # analysis_metrics.compositemapping(sub_lanina_dates, input_test_maps, config, keyword= "Comparatively Low CRPS High Conf La Nina Norm")
 
-# # Composite Maps - All anomalies (El Nino, La Nina, Neutral) for Comparatively Low, Confident CRPS Predictions
+# # Composite Maps - All anomalies for Comparatively Low, Confident CRPS Predictions
 # analysis_metrics.compositemapping(lowCRPS_highconfident, input_test_maps, config, keyword= "Comparatively Low CRPS High Conf Norm All")
 
-# # Low CRPS, High Confidence SHASH Predictions:
+# Low CRPS, High Confidence SHASH Predictions:
 # lowCRPS_highconf_params = output[lowCRPS_highconfident, ...]
 # analysis_metrics.plotSHASH(lowCRPS_highconf_params, climatology, config, keyword = "ComparativelyLowCRPS_HighConf")
 
@@ -487,70 +492,45 @@ target_raw = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) +
 # lowCRPS_lowconf_params = output[lowCRPS_lowconfident, ...]
 # analysis_metrics.plotSHASH(lowCRPS_lowconf_params, climatology, config, keyword = "ComparativelyLowCRPS_LowConf")
 
-# Composite Maps - Conditioned on ENSO Phase Low and High Confidence Samples -----------------------------------
+# Composite Maps - **CONDITIONED ON CONFIDENCE** enso phase samples -----------------------------------
 
+# EL NINO - High Confidence
+# high_conf_EN_dates = elnino_dates[elnino_dates.isin(IQR_subset_highconf_dates)]
+# # EL NINO - Low Confidence
+# low_conf_EN_dates = elnino_dates[elnino_dates.isin(IQR_subset_lowconf_dates)]
 
-# # EL NINO - High Confidence
-# sample_index_increasingconf_anoms_EN, inconf_percEN, inconf_crpsEN = analysis_metrics.IQRdiscard_plot(output, target, CRPS_network, CRPS_climatology, elnino_dates,
-#                                                                         config, target_type = 'anomalous', keyword = 'El_Nino', analyze_months = False, most_confident= True)
-# percentile = 30 # 30% most/least confident predictions
-# percentile_index_EN = int(sample_index_increasingconf_anoms_EN.shape[1] - ((percentile/100) * sample_index_increasingconf_anoms_EN.shape[1]))
-# IQR_subset_highconf_EN = sample_index_increasingconf_anoms_EN[..., percentile_index_EN]
-
-# # # EL NINO - Low Confidence
-# sample_index_decreasingconf_anoms_EN, deconf_percEN, deconf_crpsEN = analysis_metrics.IQRdiscard_plot(output, target, CRPS_network, CRPS_climatology, elnino_dates, 
-#                                                                         config, target_type = 'anomalous', keyword = 'El_Nino', analyze_months = False, most_confident= False)
-# percentile_index_EN = int(sample_index_decreasingconf_anoms_EN.shape[1] - ((percentile/100) * sample_index_decreasingconf_anoms_EN.shape[1]))
-# IQR_subset_lowconf_EN = sample_index_decreasingconf_anoms_EN[..., percentile_index_EN]
-
-# analysis_metrics.differenceplot(IQR_subset_highconf_EN, IQR_subset_lowconf_EN, input_test_maps, CRPS_network, config, normalized = True, keyword= "El Nino High-Low Confidence Norm")
-# analysis_metrics.differenceplot(IQR_subset_highconf_EN, IQR_subset_lowconf_EN, input_test_maps, CRPS_network, config, normalized = False, keyword= "El Nino High-Low Confidence")
-
+# # analysis_metrics.differenceplot(high_conf_EN_dates, low_conf_EN_dates, input_test_maps, target, CRPS_network, config, normalized = True, keyword= "Confidence Conditioned El Nino High-Low Confidence Norm")
+# # analysis_metrics.differenceplot(high_conf_EN_dates, low_conf_EN_dates, input_test_maps, target, CRPS_network, config, normalized = False, keyword= "Confidence Conditioned El Nino High-Low Confidence")
 # # # LA NINA - High Confidence
-# sample_index_increasingconf_anoms_LN, inconf_percLN, inconf_crpsLN = analysis_metrics.IQRdiscard_plot(output, target, CRPS_network, CRPS_climatology, lanina_dates, 
-#                                                                         config, target_type = 'anomalous', keyword = 'La_Nina', analyze_months = False, most_confident= True)
-# percentile_index_LN = int(sample_index_increasingconf_anoms_LN.shape[1] - ((percentile/100) * sample_index_increasingconf_anoms_LN.shape[1]))
-# IQR_subset_highconf_LN = sample_index_increasingconf_anoms_LN[..., percentile_index_LN]
+# high_conf_LN_dates = lanina_dates[lanina_dates.isin(IQR_subset_highconf_dates)]
+# # LA NINA - Low Confidence
+# low_conf_LN_dates = lanina_dates[lanina_dates.isin(IQR_subset_lowconf_dates)]
 
-# # # LA NINA - Low Confidence
-# sample_index_decreasingconf_anoms_LN, deconf_percLN, deconf_crpsLN  = analysis_metrics.IQRdiscard_plot(output, target, CRPS_network, CRPS_climatology, lanina_dates,
-#                                                                         config, target_type = 'anomalous', keyword = 'La_Nina', analyze_months = False, most_confident= False)
-# percentile_index_LN = int(sample_index_decreasingconf_anoms_LN.shape[1] - ((percentile/100) * sample_index_decreasingconf_anoms_LN.shape[1]))
-# IQR_subset_lowconf_LN = sample_index_decreasingconf_anoms_LN[..., percentile_index_LN]
-
-# analysis_metrics.differenceplot(IQR_subset_highconf_LN, IQR_subset_lowconf_LN, input_test_maps, CRPS_network, config, normalized = True, keyword= "La Nina High-Low Confidence Norm")
-# analysis_metrics.differenceplot(IQR_subset_highconf_LN, IQR_subset_lowconf_LN, input_test_maps, CRPS_network, config, normalized = False, keyword= "La Nina High-Low Confidence")
-
+# # analysis_metrics.differenceplot(high_conf_LN_dates, low_conf_LN_dates, input_test_maps, target, CRPS_network, config, normalized = True, keyword= "Confidence Conditioned La Nina High-Low Confidence Norm")
+# # analysis_metrics.differenceplot(high_conf_LN_dates, low_conf_LN_dates, input_test_maps, target, CRPS_network, config, normalized = False, keyword= "Confidence Conditioned La Nina High-Low Confidence")
 # # # Neutral - High Confidence
-# sample_index_increasingconf_anoms_NE, inconf_percNE, inconf_crpsNE = analysis_metrics.IQRdiscard_plot(output, target, CRPS_network, CRPS_climatology, neutral_dates, config, target_type = 'anomalous', 
-#                                                                         keyword = 'Neutral', analyze_months = False, most_confident= True)
-# percentile_index_NE = int(sample_index_increasingconf_anoms_NE.shape[1] - ((percentile/100) * sample_index_increasingconf_anoms_NE.shape[1]))
-# IQR_subset_highconf_NE = sample_index_increasingconf_anoms_NE[..., percentile_index_NE]
+# high_conf_NE_dates = neutral_dates[neutral_dates.isin(IQR_subset_highconf_dates)]
+# # Neutral - Low Confidence
+# low_conf_NE_dates = neutral_dates[neutral_dates.isin(IQR_subset_lowconf_dates)]
 
-# # # Neutral - Low Confidence
-# sample_index_decreasingconf_anoms_NE, deconf_percNE, deconf_crpsNE = analysis_metrics.IQRdiscard_plot(output, target, CRPS_network, CRPS_climatology, neutral_dates, config, target_type = 'anomalous', 
-#                                                                         keyword = 'Neutral', analyze_months = False, most_confident= False)
-# percentile_index_NE = int(sample_index_decreasingconf_anoms_NE.shape[1] - ((percentile/100) * sample_index_decreasingconf_anoms_NE.shape[1]))
-# IQR_subset_lowconf_NE = sample_index_decreasingconf_anoms_NE[..., percentile_index_NE]
-
-# analysis_metrics.differenceplot(IQR_subset_highconf_NE, IQR_subset_lowconf_NE, input_test_maps, CRPS_network, config, normalized = True, keyword= "Neutral High-Low Confidence Norm")
-# analysis_metrics.differenceplot(IQR_subset_highconf_NE, IQR_subset_lowconf_NE, input_test_maps, CRPS_network, config, normalized = False, keyword= "Neutral High-Low Confidence")
+# analysis_metrics.differenceplot(high_conf_NE_dates, low_conf_NE_dates, input_test_maps, target, CRPS_network, config, normalized = True, keyword= "Confidence Conditioned Neutral High-Low Confidence Norm")
+# analysis_metrics.differenceplot(high_conf_NE_dates, low_conf_NE_dates, input_test_maps, target, CRPS_network, config, normalized = False, keyword= "Confidence Conditioned Neutral High-Low Confidence")
 
 
-# ## Combined Phase Discard Plot: 
+# ## Combined Phase Discard Plot: -------------------------------------------------------------------------
+# sample_index_increasingconf_anoms_EN, inconf_percEN, inconf_crpsEN = analysis_metrics.IQRdiscard_plot(output, target, CRPS_network, CRPS_climatology, elnino_dates, 
+                                                                        # config, target_type = 'anomalous', keyword = 'Conditioned on El_Nino', analyze_months = False, most_confident= True)
+# sample_index_increasingconf_anoms_LN, inconf_percLN, inconf_crpsLN = analysis_metrics.IQRdiscard_plot(output, target, CRPS_network, CRPS_climatology, lanina_dates, 
+                                                                        # config, target_type = 'anomalous', keyword = 'Conditioned on La_Nina', analyze_months = False, most_confident= True)
+# sample_index_increasingconf_anoms_NE, inconf_percNE, inconf_crpsNE = analysis_metrics.IQRdiscard_plot(output, target, CRPS_network, CRPS_climatology, neutral_dates, 
+                                                                        # config, target_type = 'anomalous', keyword = 'Conditioned on Neutral', analyze_months = False, most_confident= True)
+
 # percentile_dict = {"EN": inconf_percEN, "LN": inconf_percLN, "NE": inconf_percNE}
 # crps_dict = {"EN": inconf_crpsEN, "LN": inconf_crpsLN, "NE": inconf_crpsNE}
 # analysis_metrics.IQRdiscard_combined(percentile_dict, crps_dict, CRPS_climatology, config, keyword = None)
 
-# print(f"IQR_subset_highconf_EN: {IQR_subset_highconf_EN[:10]}")
-# print(f"IQR_subset_lowconf_EN: {IQR_subset_lowconf_EN[:10]}")
-# print(f"IQR_subset_highconf_LN: {IQR_subset_highconf_LN[:10]}")
-# print(f"IQR_subset_lowconf_LN: {IQR_subset_lowconf_LN[:10]}")
-# print(f"IQR_subset_highconf_NE: {IQR_subset_highconf_NE[:10]}")
-# print(f"IQR_subset_lowconf_NE: {IQR_subset_lowconf_NE[:10]}")
-
-
-# # Composite Maps with Z500 Geopotential Height: 
+# Z500 ANALYSIS Z500 Z500 Z500 ----------------------------------------------------------------------------
+# Composite Maps with Z500 Geopotential Height: 
 # Z500_test_data = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/Z500_trimmed_processed_anomalies.v2.LR.historical_0201.eam.h1.1850-2014.nc')
 # Z500_test_data = Z500_test_data['x']
 # analysis_metrics.compositemapping(lowCRPS_highconfident, Z500_test_data, config, keyword= "Comparatively Low CRPS High Conf Z500 All")
@@ -561,35 +541,39 @@ target_raw = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) +
 # analysis_metrics.differenceplot(lowCRPS_highconfident, lowCRPS_lowconfident, Z500_test_data, CRPS_network, config, normalized = True, keyword= "Comparatively Low CRPS High-Low Confidence Z500 Norm")
 # analysis_metrics.differenceplot(lowCRPS_highconfident, lowCRPS_lowconfident, Z500_test_data, CRPS_network, config, normalized = False, keyword= "Comparatively Low CRPS High-Low Confidence Z500")
 
-# MJO Phase Analysis: BOOSTRAPPING ----------------------------------------------------------------------------
-# phase_subsets = {
-#     1: [2, 3, 4, 5], 
-#     2: [6, 7, 8, 1]}
+# analysis_metrics.differenceplot(high_conf_EN_dates, low_conf_EN_dates, Z500_test_data, target, CRPS_network, config, normalized = True, keyword= "Z500 Confidence Conditioned El Nino High-Low Confidence Norm")
+# analysis_metrics.differenceplot(high_conf_EN_dates, low_conf_EN_dates, Z500_test_data, target, CRPS_network, config, normalized = False, keyword= "Z500 Confidence Conditioned El Nino High-Low Confidence")
 
-# MJO_subset = analysis_metrics.mjo_subsetindices(
-#     phase_subsets, input_test_maps, target, elnino_dates, lanina_dates, neutral_dates, CRPS_network, config, keyword = '2-5_6-1')
+# analysis_metrics.differenceplot(high_conf_LN_dates, low_conf_LN_dates, Z500_test_data, target, CRPS_network, config, normalized = True, keyword= "Z500 Confidence Conditioned La Nina High-Low Confidence Norm")
+# analysis_metrics.differenceplot(high_conf_LN_dates, low_conf_LN_dates, Z500_test_data, target, CRPS_network, config, normalized = False, keyword= "Z500 Confidence Conditioned La Nina High-Low Confidence")
+
+# analysis_metrics.differenceplot(high_conf_NE_dates, low_conf_NE_dates, Z500_test_data, target, CRPS_network, config, normalized = True, keyword= "Z500 Confidence Conditioned Neutral High-Low Confidence Norm")
+# analysis_metrics.differenceplot(high_conf_NE_dates, low_conf_NE_dates, Z500_test_data, target, CRPS_network, config, normalized = False, keyword= "Z500 Confidence Conditioned Neutral High-Low Confidence")
+
+# MJO Phase Analysis: BOOSTRAPPING ----------------------------------------------------------------------------
+phase_subsets = {
+    1: [2, 3, 4, 5], 
+    2: [6, 7, 8, 1]}
+MJO_phase_timestamps = analysis_metrics.mjo_subsetindices(
+    phase_subsets, input_test_maps, target, elnino_dates, lanina_dates, neutral_dates, CRPS_network, config, keyword = '2-5_6-1')
 
 # phase_subsets = {
 #     1: [3, 4, 5, 6], 
 #     2: [7, 8, 1, 2]}
-
 # MJO_subset = analysis_metrics.mjo_subsetindices(
 #     phase_subsets, input_test_maps, target, elnino_dates, lanina_dates, neutral_dates, CRPS_network, config, keyword = '3-6_7-2')
 
 # phase_subsets = {
 #     1: [4, 5, 6, 7], 
 #     2: [8, 1, 2, 3]}
-
 # MJO_subset = analysis_metrics.mjo_subsetindices(
 #     phase_subsets, input_test_maps, target, elnino_dates, lanina_dates, neutral_dates, CRPS_network, config, keyword = '4-7_8-3')
 
 # phase_subsets = {
 #     1: [5, 6, 7, 8], 
 #     2: [1, 2, 3, 4]}
-
 # MJO_subset = analysis_metrics.mjo_subsetindices(
 #     phase_subsets, input_test_maps, target, elnino_dates, lanina_dates, neutral_dates, CRPS_network, config, keyword = '5-8_1-4')
-
 
 ## PRECIP EXCEEDANCE THRESHOLD: ------------------------------------------------------------------------------
 # precip_thresh = 95
@@ -602,16 +586,17 @@ target_raw = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) +
 #     output, target, CRPS_network, CRPS_climatology, extreme_precip_dates, config, target_type = 'anomalous', keyword = 'All Samples', analyze_months = False, most_confident= True)
 
 # Success ratio discard plot
-analysis_metrics.IQR_success_discard_plot(output, CRPS_network, CRPS_climatology, config, keyword = None)
+# analysis_metrics.IQR_success_discard_plot(output, CRPS_network, CRPS_climatology, config, keyword = None)
 
 
 # ENSO / MJO Tile Plots ! -------------------------------------------------------------------------------------
-
-# MJO_subset = analysis_metrics.mjo_subsetindices(
-#     phase_subsets, input_test_maps, target, elnino, lanina, neutral, CRPS_network, config, keyword = 'All_samples')
-
+MJO_phase_timestamps = analysis_metrics.load_pickle("/pscratch/sd/p/plutzner/E3SM/saved/output/exp042/2-5_6-1_MJOphase_dates.pkl")
+analysis_metrics.tiled_phase_analysis(MJO_phase_timestamps, elnino_dates, lanina_dates, neutral_dates, CRPS_network, target, config, keyword = 'ENSO-MJO Tiled Phase Analysis')
 
 
+## COUNT + CONFIDENCE PLOTS : ENSO Comparison ----------------------------------------------------------------
+# histogram of IQR width binned for each ENSO phase
+# IQR_EN, IQR_LN, IQR_NE = analysis_metrics.countplot_IQR(output, target, elnino_dates, lanina_dates, neutral_dates, config, keyword = 'All_samples')
 
 
 ## XAI - CAPTUM  ----------------------------------------------------------------------------------------------
@@ -687,7 +672,56 @@ analysis_metrics.IQR_success_discard_plot(output, CRPS_network, CRPS_climatology
 # nc_file = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc')
 # precip_regime(nc_file, config)
 
-# GARBAGE LAND: ------------------------------------------------------------------------------------------------------------------
+# GARBAGE LAND: -----------------------------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------------------------------- 
+
 
 # # Spread-Skill Ratio
 # # spread_skill_plot = analysis_metrics.spread_skill(output, target, config)
+
+
+# Composite Maps - **CONDITIONED ON ENSO** Phase Low and High Confidence Samples -----------------------------------
+
+# # EL NINO - High Confidence
+
+# percentile_index_EN = int(sample_index_increasingconf_anoms_EN.shape[1] - ((percentile/100) * sample_index_increasingconf_anoms_EN.shape[1]))
+# IQR_subset_highconf_EN = sample_index_increasingconf_anoms_EN[..., percentile_index_EN][sample_index_increasingconf_anoms_EN[..., percentile_index_EN] != 0]
+
+# # # EL NINO - Low Confidence
+# sample_index_decreasingconf_anoms_EN, deconf_percEN, deconf_crpsEN = analysis_metrics.IQRdiscard_plot(output, target, CRPS_network, CRPS_climatology, elnino_dates, 
+#                                                                         config, target_type = 'anomalous', keyword = 'Conditioned on El_Nino', analyze_months = False, most_confident= False)
+# percentile_index_EN = int(sample_index_decreasingconf_anoms_EN.shape[1] - ((percentile/100) * sample_index_decreasingconf_anoms_EN.shape[1]))
+# IQR_subset_lowconf_EN = sample_index_decreasingconf_anoms_EN[..., percentile_index_EN][sample_index_decreasingconf_anoms_EN[..., percentile_index_EN] != 0]
+
+# analysis_metrics.differenceplot(IQR_subset_highconf_EN, IQR_subset_lowconf_EN, input_test_maps, CRPS_network, config, normalized = True, keyword= "ENSO Conditioned El Nino High-Low Confidence Norm")
+# analysis_metrics.differenceplot(IQR_subset_highconf_EN, IQR_subset_lowconf_EN, input_test_maps, CRPS_network, config, normalized = False, keyword= "ENSO Conditioned El Nino High-Low Confidence")
+
+# # # LA NINA - High Confidence
+# sample_index_increasingconf_anoms_LN, inconf_percLN, inconf_crpsLN = analysis_metrics.IQRdiscard_plot(output, target, CRPS_network, CRPS_climatology, lanina_dates, 
+#                                                                         config, target_type = 'anomalous', keyword = 'Conditioned on La_Nina', analyze_months = False, most_confident= True)
+# percentile_index_LN = int(sample_index_increasingconf_anoms_LN.shape[1] - ((percentile/100) * sample_index_increasingconf_anoms_LN.shape[1]))
+# IQR_subset_highconf_LN = sample_index_increasingconf_anoms_LN[..., percentile_index_LN][sample_index_increasingconf_anoms_LN[..., percentile_index_LN] != 0]
+
+# # # LA NINA - Low Confidence
+# sample_index_decreasingconf_anoms_LN, deconf_percLN, deconf_crpsLN  = analysis_metrics.IQRdiscard_plot(output, target, CRPS_network, CRPS_climatology, lanina_dates,
+#                                                                         config, target_type = 'anomalous', keyword = 'Conditioned on La_Nina', analyze_months = False, most_confident= False)
+# percentile_index_LN = int(sample_index_decreasingconf_anoms_LN.shape[1] - ((percentile/100) * sample_index_decreasingconf_anoms_LN.shape[1]))
+# IQR_subset_lowconf_LN = sample_index_decreasingconf_anoms_LN[..., percentile_index_LN][sample_index_decreasingconf_anoms_LN[..., percentile_index_LN] != 0]
+
+# analysis_metrics.differenceplot(IQR_subset_highconf_LN, IQR_subset_lowconf_LN, input_test_maps, CRPS_network, config, normalized = True, keyword= "ENSO Conditioned La Nina High-Low Confidence Norm")
+# analysis_metrics.differenceplot(IQR_subset_highconf_LN, IQR_subset_lowconf_LN, input_test_maps, CRPS_network, config, normalized = False, keyword= "ENSO Conditioned La Nina High-Low Confidence")
+
+# # # Neutral - High Confidence
+# sample_index_increasingconf_anoms_NE, inconf_percNE, inconf_crpsNE = analysis_metrics.IQRdiscard_plot(output, target, CRPS_network, CRPS_climatology, neutral_dates, config, target_type = 'anomalous', 
+#                                                                         keyword = 'Neutral', analyze_months = False, most_confident= True)
+# percentile_index_NE = int(sample_index_increasingconf_anoms_NE.shape[1] - ((percentile/100) * sample_index_increasingconf_anoms_NE.shape[1]))
+# IQR_subset_highconf_NE = sample_index_increasingconf_anoms_NE[..., percentile_index_NE][sample_index_increasingconf_anoms_NE[..., percentile_index_NE] != 0]
+
+# # # Neutral - Low Confidence
+# sample_index_decreasingconf_anoms_NE, deconf_percNE, deconf_crpsNE = analysis_metrics.IQRdiscard_plot(output, target, CRPS_network, CRPS_climatology, neutral_dates, config, target_type = 'anomalous', 
+#                                                                         keyword = 'Neutral', analyze_months = False, most_confident= False)
+# percentile_index_NE = int(sample_index_decreasingconf_anoms_NE.shape[1] - ((percentile/100) * sample_index_decreasingconf_anoms_NE.shape[1]))
+# IQR_subset_lowconf_NE = sample_index_decreasingconf_anoms_NE[..., percentile_index_NE][sample_index_decreasingconf_anoms_NE[..., percentile_index_NE] != 0]
+
+# analysis_metrics.differenceplot(IQR_subset_highconf_NE, IQR_subset_lowconf_NE, input_test_maps, CRPS_network, config, normalized = True, keyword= "ENSO Conditioned Neutral High-Low Confidence Norm")
+# analysis_metrics.differenceplot(IQR_subset_highconf_NE, IQR_subset_lowconf_NE, input_test_maps, CRPS_network, config, normalized = False, keyword= "ENSO Conditioned Neutral High-Low Confidence")

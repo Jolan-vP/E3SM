@@ -79,18 +79,18 @@ class ClimateData:
                 print(ens)
             if ens == "ens1":   
                 # train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-                # train_ds = filemethods.get_netcdf_da(self.data_dir +  "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-                train_ds = filemethods.get_netcdf_da(self.data_dir +  "/Z500.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+                train_ds = filemethods.get_netcdf_da(self.data_dir +  "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+                # train_ds = filemethods.get_netcdf_da(self.data_dir +  "/Z500.v2.LR.historical_0101.eam.h1.1850-2014.nc")
 
             if ens == "ens2":
                 # validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
-                # validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
-                validate_ds = filemethods.get_netcdf_da(self.data_dir + "/Z500.v2.LR.historical_0151.eam.h1.1850-2014.nc")
+                validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
+                # validate_ds = filemethods.get_netcdf_da(self.data_dir + "/Z500.v2.LR.historical_0151.eam.h1.1850-2014.nc")
 
             elif ens == "ens3":
                 # test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
-                # test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
-                test_ds = filemethods.get_netcdf_da(self.data_dir + "Z500.v2.LR.historical_0201.eam.h1.1850-2014.nc")
+                test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
+                # test_ds = filemethods.get_netcdf_da(self.data_dir + "Z500.v2.LR.historical_0201.eam.h1.1850-2014.nc")
         
         print(self.config["input_years"])
 
@@ -277,7 +277,8 @@ class ClimateData:
                 print("completed processing target")
                 print(f"shape of target is: {f_dict[key].shape}")
             else: 
-                if self.target_only == True:
+                if self.target_only is True:
+                    print("Target only is true, skipping input processing")
                     pass
                 else:
                     print("Processing inputs")
@@ -553,10 +554,10 @@ def multi_input_data_organizer(config, fn1, fn2, fn3, MJO=False, ENSO = False, o
     for idict, s_dict in enumerate(input_dicts):
         s_dict["x"] = xr.DataArray(
             inputda[:, :, idict], 
-            dims=["time", "variables"],  # Specify the dimensions
+            dims=["time", "channel"],  # Specify the dimensions
             coords={
                 "time": d_train_target['y'].coords["time"],  # Use the 'time' from 'y'
-                "variables": ["ENSO", "RMM1", "RMM2"] 
+                "channel": ["ENSO", "RMM1", "RMM2"] 
             },
             attrs = {"description" : "Input dataset with time metadata from target precip netcdf"}
         )

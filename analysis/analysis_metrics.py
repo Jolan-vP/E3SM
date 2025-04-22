@@ -105,15 +105,10 @@ def IQRdiscard_plot(networkoutput, target, crps_scores, crps_climatology_scores,
 
         all_timestamps = target.time.values
         selected_timestamps = dates.values
-
         time_indices = np.nonzero(np.isin(all_timestamps, selected_timestamps))[0]
-
-        print(f"time indices: {time_indices}")
         selected_networkoutput = networkoutput[time_indices]
         crps_network = crps_scores[time_indices]
         crps_climo = crps_climatology_scores[time_indices]
-        print(f"dates: {dates[:5]}")
-        print(f"dates indices: {time_indices[:5]}")
     else: 
         selected_networkoutput = networkoutput
         selected_target = target
@@ -131,7 +126,6 @@ def IQRdiscard_plot(networkoutput, target, crps_scores, crps_climatology_scores,
 
     # Sort by IQR
     iqr_sorted_indices = np.argsort(iqr)
-    print(f"iqr_sorted_indices: {iqr_sorted_indices[:25]}")
     iqr_sorted = iqr[iqr_sorted_indices]
     # target_sorted = selected_target[iqr_sorted_indices]
     # crps_sorted = crps_network[iqr_sorted_indices]
@@ -206,11 +200,9 @@ def IQRdiscard_plot(networkoutput, target, crps_scores, crps_climatology_scores,
         ax2.tick_params(axis='y', labelcolor=color)
         if most_confident == True:
             plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + '_CRPS_narrowIQR_DiscardPlot_anomalies.png', format='png', bbox_inches ='tight', dpi = 300)
-            print(f'path: {str(config["perlmutter_figure_dir"]) + str(config["expname"]) + "/" + str(keyword) + "_CRPS_narrowIQR_DiscardPlot_anomalies.png"}')
             plt.close()
         else: 
             plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + '_CRPS_wideIQR_DiscardPlot_anomalies.png', format='png', bbox_inches ='tight', dpi = 300)
-            print(f'path : {str(config["perlmutter_figure_dir"]) + str(config["expname"]) + "/" + str(keyword) + "_CRPS_wideIQR_DiscardPlot_anomalies.png"}')
             plt.close()
 
     elif target_type == 'raw':
@@ -220,7 +212,6 @@ def IQRdiscard_plot(networkoutput, target, crps_scores, crps_climatology_scores,
         ax2.tick_params(axis='y', labelcolor=color)
         if most_confident == True:
             plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + '_CRPS_narrowIQR_DiscardPlot_raw.png', format='png', bbox_inches ='tight', dpi = 300)
-            print(f'path: {str(config["perlmutter_figure_dir"]) + str(config["expname"]) + "/" + str(keyword) + "_CRPS_narrowIQR_DiscardPlot_raw.png"}')
             plt.close()
         else: 
             plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + "/" + str(keyword) + '_CRPS_wideIQR_DiscardPlot_raw.png', format='png', bbox_inches ='tight', dpi = 300)
@@ -273,7 +264,7 @@ def IQR_success_discard_plot(shash_output, network_CRPS, climatology_CRPS, confi
     plt.xlabel('IQR Percentile (% Data Remaining)')
     plt.ylabel('Proportion of Samples with Lower Network CRPS')
     plt.ylim([0.5, 0.7])
-    plt.title('Increasing Confidence Success Ratio Discard Plot')
+    plt.title('Increasing Confidence Success Ratio Discard Plot -' + str(config["expname"]))
     # plt.legend(loc = 'upper right')
     plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + '_SuccessRatio_IQR_DiscardPlot.png', format='png', bbox_inches ='tight', dpi = 300) 
 
@@ -678,23 +669,20 @@ def compositemapping(indices, mapinputs, config, keyword = None):
         plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + '_composite_maps.png', format='png', bbox_inches ='tight', dpi = 300)
         plt.close()
 
-def differenceplot(indices1, indices2, mapinputs, crps_network, config, normalized = False, keyword = None):
+def differenceplot(dates1, dates2, mapinputs, target, crps_network, config, normalized = False, keyword = None):
     """
     Take in two sets of indices, and create a difference map based on the two indices sets
     mapinputs is the input map data for all samples 
     """
-    if len(mapinputs.shape) == 3: # Time, Lat, Lon 
-        # Ensure indices are arrays of integers
-        indices1array = np.array(indices1, dtype=int)
-        indices2array = np.array(indices2, dtype=int)
+    if len(mapinputs.shape) == 3: # Time, Lat, Lon      
 
         if normalized == True:
             # Normalize maps by std of each grid point before time averaging
-            icomposite1_std = mapinputs.isel(time=indices1array).std(dim='time')
-            icomposite2_std = mapinputs.isel(time=indices2array).std(dim='time')
+            icomposite1_std = mapinputs.sel(time=dates1).std(dim='time')
+            icomposite2_std = mapinputs.sel(time=dates2).std(dim='time')
 
-            icomposite1 = mapinputs.isel(time=indices1array).mean(dim='time')  
-            icomposite2 = mapinputs.isel(time=indices2array).mean(dim='time')  
+            icomposite1 = mapinputs.sel(time=dates1).mean(dim='time')  
+            icomposite2 = mapinputs.sel(time=dates2).mean(dim='time')  
 
             # Normalize by dividing by std at each gridpoint
             icomposite1 = icomposite1 / icomposite1_std
@@ -704,20 +692,24 @@ def differenceplot(indices1, indices2, mapinputs, crps_network, config, normaliz
 
             title_label = 'Normalized Anomalies (sigma)'
         else: 
-            icomposite1 = mapinputs.isel(time=indices1array).mean(dim='time')  
-            icomposite2 = mapinputs.isel(time=indices2array).mean(dim='time')  
+            icomposite1 = mapinputs.sel(time=dates1).mean(dim='time')  
+            icomposite2 = mapinputs.sel(time=dates2).mean(dim='time')  
 
             diff = icomposite1 - icomposite2
 
             title_label = 'Anomalies'
 
         # Calculate CRPS per grouping: 
-        icomp1_crps = np.mean(crps_network[indices1array])
-        icomp2_crps = np.mean(crps_network[indices2array])
+        # using mapinputs.time, create integer indices of dates1 and dates2
+        indices1 = np.where(target.time.isin(dates1))[0]
+        indices2 = np.where(target.time.isin(dates2))[0]
+
+        icomp1_crps = np.mean(crps_network[indices1])
+        icomp2_crps = np.mean(crps_network[indices2])
 
         plt.figure()
-        plt.hist(crps_network[indices1array], bins = 20, density = False, alpha = 0.5, label = f'High Confidence[{len(indices1array)}]')
-        plt.hist(crps_network[indices2array], bins = 20, density = False, alpha = 0.5, label = f'Low Confidence[{len(indices2array)}]')
+        plt.hist(crps_network[indices1], bins = 20, density = False, alpha = 0.5, label = f'High Confidence[{len(dates1)}]')
+        plt.hist(crps_network[indices2], bins = 20, density = False, alpha = 0.5, label = f'Low Confidence[{len(dates2)}]')
         plt.xlabel('CRPS')
         plt.ylabel('Frequency')
         plt.title(f'Distribution of CRPS for {keyword} Samples')
@@ -745,16 +737,16 @@ def differenceplot(indices1, indices2, mapinputs, crps_network, config, normaliz
             ax[i].set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree())
             ax[1].legend(loc='lower left', markerscale = 22)
 
-        ax[0].set_title(f'Low CRPS High Confidence Predictions')
-        ax[1].set_title(f'Low CRPS Low Confidence Predictions')
+        ax[0].set_title(f'High Confidence Predictions')
+        ax[1].set_title(f'Low Confidence Predictions')
         ax[2].set_title(f'Difference Map Predictions')
 
         ax[0].text(
-            0.02, 0.02, f'Mean CRPS: {icomp1_crps:.3f}',
+            0.02, 0.02, f'Mean CRPS: {icomp1_crps:.3f} \n N = {len(dates1)}',
             transform=ax[0].transAxes, ha='left', va='bottom', fontsize=12, color='black'
         )
         ax[1].text(
-            0.02, 0.02, f'Mean CRPS: {icomp2_crps:.3f}',
+            0.02, 0.02, f'Mean CRPS: {icomp2_crps:.3f} \n N = {len(dates2)}',
             transform=ax[1].transAxes, ha='left', va='bottom', fontsize=12, color='black'
         )
 
@@ -768,23 +760,20 @@ def differenceplot(indices1, indices2, mapinputs, crps_network, config, normaliz
         plt.close(fig)  # Close the figure to avoid memory issues
 
     elif len(mapinputs.shape) == 4: # Time, Lat, Lon, Variables 
-        # Ensure indices are arrays of integers
-        indices1 = np.array(indices1, dtype=int)
-        indices2 = np.array(indices2, dtype=int)
 
         if normalized == True:
             # Normalize maps by std of each grid point before time averaging
-            icomposite_prect1_std = mapinputs[..., 0].isel(time=indices1).std(dim='time')
-            icomposite_ts1_std = mapinputs[..., 1].isel(time=indices1).std(dim='time')
+            icomposite_prect1_std = mapinputs[..., 0].sel(time=dates1).std(dim='time')
+            icomposite_ts1_std = mapinputs[..., 1].sel(time=dates1).std(dim='time')
 
-            icomposite_prect2_std = mapinputs[..., 0].isel(time=indices2).std(dim='time')
-            icomposite_ts2_std = mapinputs[..., 1].isel(time=indices2).std(dim='time')
+            icomposite_prect2_std = mapinputs[..., 0].sel(time=dates2).std(dim='time')
+            icomposite_ts2_std = mapinputs[..., 1].sel(time=dates2).std(dim='time')
 
-            icomposite_prect1 = mapinputs[..., 0].isel(time=indices1).mean(dim='time')  
-            icomposite_ts1 = mapinputs[..., 1].isel(time=indices1).mean(dim='time')  
+            icomposite_prect1 = mapinputs[..., 0].sel(time=dates1).mean(dim='time')  
+            icomposite_ts1 = mapinputs[..., 1].sel(time=dates1).mean(dim='time')  
 
-            icomposite_prect2 = mapinputs[..., 0].isel(time=indices2).mean(dim='time')  
-            icomposite_ts2 = mapinputs[..., 1].isel(time=indices2).mean(dim='time')  
+            icomposite_prect2 = mapinputs[..., 0].sel(time=dates2).mean(dim='time')  
+            icomposite_ts2 = mapinputs[..., 1].sel(time=dates2).mean(dim='time')  
 
             # Normalize by dividing by std at each gridpoint
             icomposite_prect1 = icomposite_prect1 / icomposite_prect1_std
@@ -797,24 +786,25 @@ def differenceplot(indices1, indices2, mapinputs, crps_network, config, normaliz
             
             title_label = 'Normalized'
         else: 
-            icomposite_prect1 = mapinputs[..., 0].isel(time=indices1).mean(dim='time')  
-            icomposite_ts1 = mapinputs[..., 1].isel(time=indices1).mean(dim='time')  
+            icomposite_prect1 = mapinputs[..., 0].sel(time=dates1).mean(dim='time')  
+            icomposite_ts1 = mapinputs[..., 1].sel(time=dates1).mean(dim='time')  
 
-            icomposite_prect2 = mapinputs[..., 0].isel(time=indices2).mean(dim='time')  
-            icomposite_ts2 = mapinputs[..., 1].isel(time=indices2).mean(dim='time')  
+            icomposite_prect2 = mapinputs[..., 0].sel(time=dates2).mean(dim='time')  
+            icomposite_ts2 = mapinputs[..., 1].sel(time=dates2).mean(dim='time')  
 
             prect_diff = icomposite_prect1 - icomposite_prect2
             ts_diff = icomposite_ts1 - icomposite_ts2
 
             title_label = ''
         # Isolate the first 7 characters of the keyword
-        keyword_phase = keyword[:7]
+        keyword_phase = keyword[22:30]
         
         plots_array_prect = [icomposite_prect1, icomposite_prect2, prect_diff]
         plots_array_skintemp = [icomposite_ts1, icomposite_ts2, ts_diff]
         plots_dict = {0: plots_array_prect, 1: plots_array_skintemp}
         label_dict = {"Precipitation": ("High Confidence", "Low Confidence", "(High-Low) Difference"), 
                   "Skin Temperature": ("High Confidence", "Low Confidence", "(High-Low) Difference")}
+        indices_len = [len(dates1), len(dates2)]
 
         # Calculate vmin and vmax for the first column in each row (centered around zero)
         row_0_first_col = plots_dict[0][0]  # [0, 0]
@@ -840,12 +830,15 @@ def differenceplot(indices1, indices2, mapinputs, crps_network, config, normaliz
         row_1_min *= scaling_factor
 
         # Calculate CRPS per grouping: 
+        # using mapinputs.time, create integer indices of dates1 and dates2
+        indices1 = np.where(target.time.isin(dates1))[0]
+        indices2 = np.where(target.time.isin(dates2))[0]
         icomp1_crps = np.mean(crps_network[indices1]) # high confidence
         icomp2_crps = np.mean(crps_network[indices2]) # low confidence
 
         plt.figure()
-        plt.hist(crps_network[indices1], bins = 20, density = False, alpha = 0.5, label = f'High Confidence [{len(indices1)}]')
-        plt.hist(crps_network[indices2], bins = 20, density = False, alpha = 0.5, label = f'Low Confidence [{len(indices1)}]')
+        plt.hist(crps_network[indices1], bins = 20, density = False, alpha = 0.5, label = f'High Confidence [{len(dates1)}]')
+        plt.hist(crps_network[indices2], bins = 20, density = False, alpha = 0.5, label = f'Low Confidence [{len(dates2)}]')
         plt.xlabel('CRPS')
         plt.ylabel('Frequency')
         plt.title(f'Distribution of CRPS for {keyword} Samples')
@@ -876,7 +869,7 @@ def differenceplot(indices1, indices2, mapinputs, crps_network, config, normaliz
                 ax[key, j].coastlines()
                 ax[key, j].set_xticks(np.arange(-180, 181, 60), crs=ccrs.PlateCarree())
                 ax[key, j].set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree())
-                ax[key, j].set_title(str(title_label) + f'{list(label_dict.keys())[key]} Anomalies \n {label_dict[list(label_dict.keys())[key]][j]} - {keyword_phase}')
+                ax[key, j].set_title(str(title_label) + ' ' + f'{list(label_dict.keys())[key]} Anomalies \n {label_dict[list(label_dict.keys())[key]][j]} - {keyword_phase}')
                 cbar1 = fig.colorbar(cf1, cmap=cmap_spec, ax=ax[key, j], orientation='vertical', fraction=0.02, pad=0.04, aspect=20, shrink=0.8)
                 cbar1.set_label(str(title_label) + ' Anomalies')
 
@@ -884,9 +877,10 @@ def differenceplot(indices1, indices2, mapinputs, crps_network, config, normaliz
                 if j < 2:  # Only add CRPS for the first two plots
                     crps_label = crps_dict[j]
                     ax[key, j].text(
-                        0.02, 0.02, f'Mean CRPS: {crps_label:.3f}',
+                        0.02, 0.03, f'Mean CRPS: {crps_label:.3f} \nN = {indices_len[j]}',
                         transform=ax[key, j].transAxes,
-                        ha='left', va='bottom', fontsize=12, color='black'
+                        ha='left', va='bottom', fontsize=10, color='black', 
+                        bbox=dict(facecolor='white', alpha=0.85, edgecolor='none', boxstyle='round,pad=0.2')
                     )
 
         plt.subplots_adjust(wspace=0.05, hspace=0.1)  
@@ -954,307 +948,217 @@ def plotSHASH(shash_parameters, climatology, config, keyword = None):
     plt.close()
     return p
 
-def tiled_phase_analysis(mapinputs, target, ninoindices1, ninoindices2, ninoindices3, network_crps, config, keyword = None): 
+def tiled_phase_analysis(MJO_phase_dates, EN_dates, LN_dates, NE_dates, evaluation_metric, target, config, keyword = None): 
     """
     Inputs: 
-    - Realtime Mulitvariate MJO Indices (time series of RMM1, RMM2, ... RMMn)
-    - Time Series Data (PRECT, TS)
+    - MJO Timestamps per phase
+    - ENSO Timestamps per phase
 
     Outputs: 
-    - Composite graphs of groupd phases for each variable (PRECT, TS..) based on EVALUATION DATE
-    
+    - Tiled plots of evalutation metrics
     """
-    # Load MJO Indices
-    MJOfilename = '/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_historical_0201_1850-2014.pkl'
-
-    # print(f"target time for mjo phases: {target.time}")
-
-    # Identify time stamps corresponding to each MJO phase
-
-    with open(MJOfilename, 'rb') as MJO_file:
-        MJOda = np.load(MJO_file, allow_pickle=True)
-        MJOda = np.asarray(MJOda)
-        # print(MJOda)
-
-    # Isolate MJO timestamps based on the -1, -2, and -3 columns of the dataarray
-    start_year = int(MJOda[0, -3])
-    start_month = int(MJOda[0, -2])
-    start_day = int(MJOda[0, -1])
-    start = datetime.datetime(start_year, start_month, start_day)
-    end_year = int(MJOda[-1, -3])
-    end_month = int(MJOda[-1, -2])
-    end_day = int(MJOda[-1, -1])
-    end = datetime.datetime(end_year, end_month, end_day)
-    time_array = pd.date_range(start = start, end = end, freq = 'D')
-
-    # Create phase number output array
-    phases = np.zeros(len(MJOda))
-    phaseqty = 9
-
-    # Identify which phase of MJO each data point is in
-    for samplecoord in range(0, len(MJOda[:, 2])):
-        RMM1 = MJOda[samplecoord, 2]
-        RMM2 = MJOda[samplecoord, 3]
-
-        if not math.isnan(RMM1):
-            dY = RMM2
-            dX = RMM1
-
-            angle_deg = np.rad2deg(np.arctan2(dY, dX))
-            if angle_deg < 0:
-                angle_deg = 360 - np.abs(angle_deg)
-
-            amplitude = np.sqrt(RMM1**2 + RMM2**2)
-            assert amplitude >= 0
-
-            if amplitude <= 1:
-                phases[samplecoord] = 0
-            elif angle_deg >= 0 and angle_deg < 45:
-                phases[samplecoord] = 5
-            elif angle_deg >= 45 and angle_deg < 90:
-                phases[samplecoord] = 6
-            elif angle_deg >= 90 and angle_deg < 135:
-                phases[samplecoord] = 7
-            elif angle_deg >= 135 and angle_deg < 180:
-                phases[samplecoord] = 8
-            elif angle_deg >= 180 and angle_deg < 225:
-                phases[samplecoord] = 1
-            elif angle_deg >= 225 and angle_deg < 270:
-                phases[samplecoord] = 2
-            elif angle_deg >= 270 and angle_deg < 315:
-                phases[samplecoord] = 3
-            elif angle_deg >= 315 and angle_deg <= 360:
-                phases[samplecoord] = 4
-            else:
-                print(f"angle: {angle_deg}, amplitude: {amplitude}")
-                raise ValueError("Sample does not fit into a phase (?)")
-
-    # Collect timestamps for each phase
-    phase_timestamps = {}
-    for phase in range(phaseqty):
-        collected_phase_indices = np.where(phases == phase)[0]
-        phase_timestamps[phase] = time_array[collected_phase_indices]  # Map indices to timestamps
-    
-    print(f"Phase Timestamps: {phase_timestamps}")
-
-    # Convert the list to a NumPy array
-    phases_concat = np.array(phases_concat, dtype=object)  # Use dtype=object for arrays of varying lengths
-    print(f"phases concat showing all phases? {phases_concat}")
-    
-    # Align time stamps of target data with those of the group MJO phases to identify the corresponding indices
-    # Isolate map inputs conditioned first on El Nino, La Nina, and Neutral: 
-    target_time_coord = target.time
-    EN_dates = target_time_coord.isel(time = ninoindices1)
-    LN_dates = target_time_coord.isel(time = ninoindices2)
-    N_dates = target_time_coord.isel(time = ninoindices3)
 
     # Convert CRPS scores to xarray.DataArray with time coordinates
-    crps_with_target_time = xr.DataArray(
-                data=network_crps,  
-                coords={"time": target_time_coord}, 
+    metric_with_target_time = xr.DataArray(
+                data=evaluation_metric,  
+                coords={"time": target.time}, 
                 dims=["time"])
 
-    # EN_crps_scores = crps_with_target_time.sel(time = EN_dates)
-    # LN_crps_scores = crps_with_target_time.sel(time = LN_dates)
-    # N_crps_scores = crps_with_target_time.sel(time = N_dates)
+    enso_dates_dict = {
+        "El Nino": EN_dates,
+        "La Nina": LN_dates,
+        "Neutral": NE_dates}
+    
+    evaluation_metric_matrix = np.zeros([len(MJO_phase_dates), len(enso_dates_dict)])
 
-    enso_inputsdict = {
-        'El Nino': (mapinputs.sel(time = EN_dates)),
-        'La Nina': (mapinputs.sel(time = LN_dates)), 
-        'Neutral': (mapinputs.sel(time = N_dates))
-    }
-    enso_to_index = {'El Nino': 0, 'La Nina': 1, 'Neutral': 2}
-
-    # Apply the indices to the map inputs to create a composite map
-    ## PRECT ##
-    data_dict_PRECT = {}
-
-    fig, ax = plt.subplots(9, len(enso_inputsdict), figsize = (22, 14), subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
-    for enso_phase, (maps, crps_scores) in enso_inputsdict.items():
-        for grouping, dates in enumerate(phases_concat):
-            # Find overlapping dates between dates and conditioned maps: 
-            # Convert numpy.datetime64 to cftime.DatetimeNoLeap
-            dates_converted = []
-            for date in dates:
-                timestamp = pd.Timestamp(date)
-                try:
-                    # Attempt to create a valid cftime.DatetimeNoLeap object
-                    dates_converted.append(cftime.DatetimeNoLeap(timestamp.year, timestamp.month, timestamp.day))
-                except ValueError:
-                    # Skip invalid dates (e.g., February 29 in non-leap years)
-                    # print(f"Skipping invalid date: {timestamp}")
-                    pass
-
-            overlapping_dates = np.intersect1d(maps.time, dates_converted)
-
-            # Select the corresponding map inputs for the current phase
-            phase_mapinputs = maps[..., 0].sel(time=overlapping_dates)
-
-            # if not np.array_equal(crps_scores.time.values, maps.time.values):
-            #     print("CRPS scores and maps have different time coordinates.")
-            # else:
-            #     print("CRPS scores and maps have the same time coordinates.")
+    for iMJO, MJOdates in enumerate(MJO_phase_dates):
+        for iENSO, (enso_phase_name, ENSOdates) in enumerate(enso_dates_dict.items()):
             
-            # Filter CRPS scores for the overlapping dates
-            crps_filtered = crps_scores.sel(time = overlapping_dates)
-            mean_crps = crps_filtered.mean()
+            print(f"MJO Dates: {MJOdates[iMJO]}")
+            print(f"iMJO: {iMJO}, iENSO: {iENSO}")
+            # print(f"ENSO Dates: {ENSOdates}")
+            # MJOdates_np = np.array(MJOdates).astype('datetime64[ns]')
+            # ENSOdates_np = np.array(ENSOdates).astype('datetime64[ns]')
+            # overlapping_dates = np.intersect1d(MJOdates_np, ENSOdates_np)
+            # overlapping_dates = np.intersect1d(MJOdates_np, ENSOdates_np)
 
-            # Calculate the mean of the selected map inputs
-            mean_mapinputs = phase_mapinputs.mean(dim='time')
-            std_mapinputs = phase_mapinputs.std(dim='time')
+            # # Convert all times to string for safe matching
+            # target_times_str = target.time.dt.strftime("%Y-%m-%d").values.astype(str)
+            # overlapping_dates_str = np.array(overlapping_dates).astype('datetime64[D]').astype(str)
 
-            norm_mapinputs = mean_mapinputs / std_mapinputs
+            # # Now intersect
+            # valid_dates_str = np.intersect1d(overlapping_dates_str, target_times_str)
 
-            # store normalized map inputs in the dictionary: 
-            data_dict_PRECT[(grouping, enso_phase)] = norm_mapinputs
+            # # Re-convert to original cftime objects from target
+            # valid_dates = [t for t, t_str in zip(target.time.values, target_times_str) if t_str in valid_dates_str]
+            # print("Valid Dates: ", valid_dates)
+            
+            # # Filter CRPS scores for the overlapping dates
+            # if len(valid_dates) > 0:
+            #     metric_filtered = metric_with_target_time.sel(time = valid_dates)
+            #     evaluation_metric_matrix[iMJO, iENSO] = metric_filtered.mean()
 
-            enso_column = enso_to_index[enso_phase]
-            # Plot the mean map inputs
-            cf = ax[grouping, enso_column].pcolormesh(norm_mapinputs.lon, norm_mapinputs.lat, norm_mapinputs, 
-                                                      cmap='BrBG', transform=ccrs.PlateCarree(), vmin = -1, vmax = 1)
-            ax[grouping, enso_column].set_title(f'{enso_phase} Mean Map Inputs \n MJO Phases {grouped_phases[grouping + 1]}')
-            ax[grouping, enso_column].coastlines()
-            ax[grouping, enso_column].set_xticks(np.arange(-180, 181, 60), crs=ccrs.PlateCarree())
-            ax[grouping, enso_column].set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree()) 
+    print(f"Evaluation Metric Matrix: {evaluation_metric_matrix}")
 
-             # Add mean CRPS as a label on the subplot
-            ax[grouping, enso_column].text(
-                0.02, 0.02, f'Mean CRPS: {mean_crps:.3f}',
-                transform=ax[grouping, enso_column].transAxes,
-                ha='left', va='bottom', fontsize=12, color='black'
-            )
+    fig, ax = plt.subplots(figsize = (6, 8))
+    y = np.arange(len(MJO_phase_dates) + 1)
+    x = np.arange(len(enso_dates_dict) + 1)
+    X, Y = np.meshgrid(x, y)
 
-            # Add colorbar
-            cbar = fig.colorbar(cf, ax=ax[grouping, enso_column], orientation='vertical', fraction=0.02, pad=0.04, aspect=20, shrink=0.8)
-            cbar.set_label('Normalized Precipitation \n Anomalies (sigma)')
+    cmap = 'viridis'
+    cf = ax.pcolormesh(evaluation_metric_matrix, cmap=cmap, 
+                        vmin = np.nanmin(evaluation_metric_matrix), 
+                        vmax = np.nanmax(evaluation_metric_matrix), 
+                        aspect = 'auto')
+    # cf = ax.imshow(evaluation_metric_matrix, cmap=cmap, 
+    #                     vmin = np.nanmin(evaluation_metric_matrix), 
+    #                     vmax = np.nanmax(evaluation_metric_matrix), 
+    #                     aspect = 'auto')
+    ax.set_xticks(x + 0.5)
+    ax.set_xticklabels(list(enso_dates_dict.keys()), rotation=45, ha='right')
+    ax.set_yticks(y + 0.5)
+    ax.set_yticklabels(list(MJO_phase_dates.keys()))
+    ax.set_title(f'ENSO and MJO Phase Analysis - {config["expname"]}')
+    ax.set_ylabel('MJO Phase')
+    ax.set_xlabel('ENSO Phase')
 
-            plt.tight_layout()
+    # ax.text(
+    #     0.02, 0.02, f'N = {len(overlapping_dates)}',
+    #     transform=ax.transAxes,
+    #     ha='left', va='bottom', fontsize=12, color='black', 
+    #     bbox=dict(facecolor='white', alpha=0.85, edgecolor='none', boxstyle='round,pad=0.2')
+    # )
 
-    plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + 
-                '_ENSO_Conditioned_MJO_composite_maps_PRECT.png', format='png', bbox_inches ='tight', dpi = 300)
-
-    ## DIFFERENCE MAPS: 
-    fig_diff, ax_diff = plt.subplots(1, 3, figsize=(22, 6), subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
-
-    for enso_phase in enso_inputsdict.keys():
-        top_row = data_dict_PRECT[(0, enso_phase)]  # Top row (grouping=0)
-        bottom_row = data_dict_PRECT[(1, enso_phase)]  # Bottom row (grouping=1)
-
-        # Compute the difference
-        diff = top_row - bottom_row
-
-        # Plot the difference
-        enso_column = enso_to_index[enso_phase]
-        cf_diff = ax_diff[enso_column].pcolormesh(
-            diff.lon, diff.lat, diff,
-            cmap='BrBG', transform=ccrs.PlateCarree(), vmin=-0.45, vmax=0.45
-        )
-        ax_diff[enso_column].set_title(f'{enso_phase} Difference (Top - Bottom)')
-        ax_diff[enso_column].coastlines()
-        ax_diff[enso_column].set_xticks(np.arange(-180, 181, 60), crs=ccrs.PlateCarree())
-        ax_diff[enso_column].set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree())
-
-        # Add colorbar
-        cbar_diff = fig_diff.colorbar(cf_diff, ax=ax_diff[enso_column], orientation='vertical', fraction=0.02, pad=0.04, aspect=20, shrink=0.8)
-        cbar_diff.set_label('Difference in Normalized Precipitation \n Anomalies (sigma)')
+    # Add colorbar
+    cbar = fig.colorbar(cf, ax=ax, orientation='vertical', fraction=0.02, pad=0.04, aspect=20, shrink=0.8)
+    cbar.set_label(f'{keyword}')
 
     plt.tight_layout()
 
-    # Save the difference plot figure
-    plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) +
-                '_ENSO_Conditioned_MJO_difference_maps_PRECT.png', format='png', bbox_inches='tight', dpi=300)
+    plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + '.png', format='png', bbox_inches ='tight', dpi = 200)
 
-    data_dict_TEMP = {}
+    # ## DIFFERENCE MAPS: 
+    # fig_diff, ax_diff = plt.subplots(1, 3, figsize=(22, 6), subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
 
-    fig, ax = plt.subplots(2, 3, figsize = (22, 14), subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
-    for enso_phase, (maps, crps_scores) in enso_inputsdict.items():
-        for grouping, dates in enumerate(phases_concat):
-            # Find overlapping dates between dates and conditioned maps: 
-            # Convert numpy.datetime64 to cftime.DatetimeNoLeap
-            dates_converted = []
-            for date in dates:
-                timestamp = pd.Timestamp(date)
-                try:
-                    # Attempt to create a valid cftime.DatetimeNoLeap object
-                    dates_converted.append(cftime.DatetimeNoLeap(timestamp.year, timestamp.month, timestamp.day))
-                except ValueError:
-                    # Skip invalid dates (e.g., February 29 in non-leap years)
-                    # print(f"Skipping invalid date: {timestamp}")
-                    pass
+    # for enso_phase in enso_inputsdict.keys():
+    #     top_row = data_dict_PRECT[(0, enso_phase)]  # Top row (grouping=0)
+    #     bottom_row = data_dict_PRECT[(1, enso_phase)]  # Bottom row (grouping=1)
 
-            overlapping_dates = np.intersect1d(maps.time, dates_converted)
+    #     # Compute the difference
+    #     diff = top_row - bottom_row
 
-            # Select the corresponding map inputs for the current phase
-            phase_mapinputs = maps[..., 1].sel(time=overlapping_dates)
+    #     # Plot the difference
+    #     enso_column = enso_to_index[enso_phase]
+    #     cf_diff = ax_diff[enso_column].pcolormesh(
+    #         diff.lon, diff.lat, diff,
+    #         cmap='BrBG', transform=ccrs.PlateCarree(), vmin=-0.45, vmax=0.45
+    #     )
+    #     ax_diff[enso_column].set_title(f'{enso_phase} Difference (Top - Bottom)')
+    #     ax_diff[enso_column].coastlines()
+    #     ax_diff[enso_column].set_xticks(np.arange(-180, 181, 60), crs=ccrs.PlateCarree())
+    #     ax_diff[enso_column].set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree())
 
-            # Filter CRPS scores for the overlapping dates
-            crps_filtered = crps_scores[np.isin(maps.time, overlapping_dates)]
-            mean_crps = crps_filtered.mean()
+    #     # Add colorbar
+    #     cbar_diff = fig_diff.colorbar(cf_diff, ax=ax_diff[enso_column], orientation='vertical', fraction=0.02, pad=0.04, aspect=20, shrink=0.8)
+    #     cbar_diff.set_label('Difference in Normalized Precipitation \n Anomalies (sigma)')
 
-            # Calculate the mean of the selected map inputs
-            mean_mapinputs = phase_mapinputs.mean(dim='time')
-            std_mapinputs = phase_mapinputs.std(dim='time')
+    # plt.tight_layout()
 
-            norm_mapinputs = mean_mapinputs / std_mapinputs
+    # # Save the difference plot figure
+    # plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) +
+    #             '_ENSO_Conditioned_MJO_difference_maps_PRECT.png', format='png', bbox_inches='tight', dpi=300)
 
-            # save normalized map inputs in the dictionary:
-            data_dict_TEMP[(grouping, enso_phase)] = norm_mapinputs
+    # data_dict_TEMP = {}
 
-            enso_column = enso_to_index[enso_phase]
-            # Plot the mean map inputs
-            cf = ax[grouping, enso_column].pcolormesh(norm_mapinputs.lon, norm_mapinputs.lat, norm_mapinputs, 
-                                                      cmap='RdBu_r', transform=ccrs.PlateCarree(), vmin = -2.5, vmax = 2.5)
-            ax[grouping, enso_column].set_title(f'{enso_phase} Mean Map Inputs \n MJO Phases {grouped_phases[grouping + 1]}')
-            ax[grouping, enso_column].coastlines()
-            ax[grouping, enso_column].set_xticks(np.arange(-180, 181, 60), crs=ccrs.PlateCarree())
-            ax[grouping, enso_column].set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree()) 
+    # fig, ax = plt.subplots(2, 3, figsize = (22, 14), subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
+    # for enso_phase, (maps, crps_scores) in enso_inputsdict.items():
+    #     for grouping, dates in enumerate(phases_concat):
+    #         # Find overlapping dates between dates and conditioned maps: 
+    #         # Convert numpy.datetime64 to cftime.DatetimeNoLeap
+    #         dates_converted = []
+    #         for date in dates:
+    #             timestamp = pd.Timestamp(date)
+    #             try:
+    #                 # Attempt to create a valid cftime.DatetimeNoLeap object
+    #                 dates_converted.append(cftime.DatetimeNoLeap(timestamp.year, timestamp.month, timestamp.day))
+    #             except ValueError:
+    #                 # Skip invalid dates (e.g., February 29 in non-leap years)
+    #                 # print(f"Skipping invalid date: {timestamp}")
+    #                 pass
 
-            # Add mean CRPS as a label on the subplot
-            ax[grouping, enso_column].text(
-                0.02, 0.02, f'Mean CRPS: {mean_crps:.3f}',
-                transform=ax[grouping, enso_column].transAxes,
-                ha='left', va='bottom', fontsize=12, color='black'
-            )
-            # Add colorbar
-            cbar = fig.colorbar(cf, ax=ax[grouping, enso_column], orientation='vertical', fraction=0.02, pad=0.04, aspect=20, shrink=0.8)
-            cbar.set_label('Normalized Temperature \n Anomalies (sigma)')
+    #         overlapping_dates = np.intersect1d(maps.time, dates_converted)
+
+    #         # Select the corresponding map inputs for the current phase
+    #         phase_mapinputs = maps[..., 1].sel(time=overlapping_dates)
+
+    #         # Filter CRPS scores for the overlapping dates
+    #         crps_filtered = crps_scores[np.isin(maps.time, overlapping_dates)]
+    #         mean_crps = crps_filtered.mean()
+
+    #         # Calculate the mean of the selected map inputs
+    #         mean_mapinputs = phase_mapinputs.mean(dim='time')
+    #         std_mapinputs = phase_mapinputs.std(dim='time')
+
+    #         norm_mapinputs = mean_mapinputs / std_mapinputs
+
+    #         # save normalized map inputs in the dictionary:
+    #         data_dict_TEMP[(grouping, enso_phase)] = norm_mapinputs
+
+    #         enso_column = enso_to_index[enso_phase]
+    #         # Plot the mean map inputs
+    #         cf = ax[grouping, enso_column].pcolormesh(norm_mapinputs.lon, norm_mapinputs.lat, norm_mapinputs, 
+    #                                                   cmap='RdBu_r', transform=ccrs.PlateCarree(), vmin = -2.5, vmax = 2.5)
+    #         ax[grouping, enso_column].set_title(f'{enso_phase} Mean Map Inputs \n MJO Phases {grouped_phases[grouping + 1]}')
+    #         ax[grouping, enso_column].coastlines()
+    #         ax[grouping, enso_column].set_xticks(np.arange(-180, 181, 60), crs=ccrs.PlateCarree())
+    #         ax[grouping, enso_column].set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree()) 
+
+    #         # Add mean CRPS as a label on the subplot
+    #         ax[grouping, enso_column].text(
+    #             0.02, 0.02, f'Mean CRPS: {mean_crps:.3f}',
+    #             transform=ax[grouping, enso_column].transAxes,
+    #             ha='left', va='bottom', fontsize=12, color='black'
+    #         )
+    #         # Add colorbar
+    #         cbar = fig.colorbar(cf, ax=ax[grouping, enso_column], orientation='vertical', fraction=0.02, pad=0.04, aspect=20, shrink=0.8)
+    #         cbar.set_label('Normalized Temperature \n Anomalies (sigma)')
             
-            plt.tight_layout()
+    #         plt.tight_layout()
 
-    plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) +
-                 '_ENSO_Conditioned_MJO_composite_maps_SkinTemp.png', format='png', bbox_inches ='tight', dpi = 300)
+    # plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) +
+    #              '_ENSO_Conditioned_MJO_composite_maps_SkinTemp.png', format='png', bbox_inches ='tight', dpi = 300)
 
 
-     ## DIFFERENCE MAPS: 
-    fig_diff, ax_diff = plt.subplots(1, 3, figsize=(22, 6), subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
+    #  ## DIFFERENCE MAPS: 
+    # fig_diff, ax_diff = plt.subplots(1, 3, figsize=(22, 6), subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
 
-    for enso_phase in enso_inputsdict.keys():
-        top_row = data_dict_TEMP[(0, enso_phase)]  # Top row (grouping=0)
-        bottom_row = data_dict_TEMP[(1, enso_phase)]  # Bottom row (grouping=1)
+    # for enso_phase in enso_inputsdict.keys():
+    #     top_row = data_dict_TEMP[(0, enso_phase)]  # Top row (grouping=0)
+    #     bottom_row = data_dict_TEMP[(1, enso_phase)]  # Bottom row (grouping=1)
 
-        # Compute the difference
-        diff = top_row - bottom_row
+    #     # Compute the difference
+    #     diff = top_row - bottom_row
 
-        # Plot the difference
-        enso_column = enso_to_index[enso_phase]
-        cf_diff = ax_diff[enso_column].pcolormesh(
-            diff.lon, diff.lat, diff,
-            cmap='RdBu_r', transform=ccrs.PlateCarree(), vmin=-0.45, vmax=0.45
-        )
-        ax_diff[enso_column].set_title(f'{enso_phase} Difference (Top - Bottom)')
-        ax_diff[enso_column].coastlines()
-        ax_diff[enso_column].set_xticks(np.arange(-180, 181, 60), crs=ccrs.PlateCarree())
-        ax_diff[enso_column].set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree())
+    #     # Plot the difference
+    #     enso_column = enso_to_index[enso_phase]
+    #     cf_diff = ax_diff[enso_column].pcolormesh(
+    #         diff.lon, diff.lat, diff,
+    #         cmap='RdBu_r', transform=ccrs.PlateCarree(), vmin=-0.45, vmax=0.45
+    #     )
+    #     ax_diff[enso_column].set_title(f'{enso_phase} Difference (Top - Bottom)')
+    #     ax_diff[enso_column].coastlines()
+    #     ax_diff[enso_column].set_xticks(np.arange(-180, 181, 60), crs=ccrs.PlateCarree())
+    #     ax_diff[enso_column].set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree())
 
-        # Add colorbar
-        cbar_diff = fig_diff.colorbar(cf_diff, ax=ax_diff[enso_column], orientation='vertical', fraction=0.02, pad=0.04, aspect=20, shrink=0.8)
-        cbar_diff.set_label('Difference in Normalized Skin Temperature \n Anomalies (sigma)')
+    #     # Add colorbar
+    #     cbar_diff = fig_diff.colorbar(cf_diff, ax=ax_diff[enso_column], orientation='vertical', fraction=0.02, pad=0.04, aspect=20, shrink=0.8)
+    #     cbar_diff.set_label('Difference in Normalized Skin Temperature \n Anomalies (sigma)')
 
-    plt.tight_layout()
+    # plt.tight_layout()
 
-    # Save the difference plot figure
-    plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) +
-                '_ENSO_Conditioned_MJO_difference_maps_TEMP.png', format='png', bbox_inches='tight', dpi=300)
+    # # Save the difference plot figure
+    # plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) +
+    #             '_ENSO_Conditioned_MJO_difference_maps_TEMP.png', format='png', bbox_inches='tight', dpi=300)
 
 
 def precip_exceedance_threshold(target, output, precip_thresh, CRPS_network, CRPS_climatology, config, keyword = None):
@@ -1399,8 +1303,12 @@ def mjo_subsetindices(grouped_phases, mapinputs, target, ninodates1, ninodates2,
     for phase in range(phaseqty):
         collected_phase_indices = np.where(phases == phase)[0]
         phase_timestamps[phase] = time_array[collected_phase_indices]  # Map indices to timestamps
-    
-    # print(f"Phase Timestamps: {phase_timestamps}")
+
+        # Convert timestamps to cftime.DatetimeNoLeap objects, handling February 29
+        phase_timestamps[phase] = [
+            cftime.DatetimeNoLeap(ts.year, ts.month, ts.day) 
+            for ts in phase_timestamps[phase] if not (ts.month == 2 and ts.day == 29)
+        ]
 
     phases_concat = []  # Use a list to dynamically store concatenated timestamps
     for key, value in grouped_phases.items():
@@ -1431,8 +1339,7 @@ def mjo_subsetindices(grouped_phases, mapinputs, target, ninodates1, ninodates2,
     enso_to_index = {'El Nino': 0, 'La Nina': 1, 'Neutral': 2}
 
     # Apply the indices to the map inputs to create a composite map
-    ## PRECT ##
-    data_dict_PRECT = {}
+    data_dict = {}
 
     var_dict = {0: 'Precipitation', 1: 'SkinTemp'}
     color_dict = {0: 'BrBG', 1: 'RdBu_r'}
@@ -1444,18 +1351,18 @@ def mjo_subsetindices(grouped_phases, mapinputs, target, ninodates1, ninodates2,
                 for grouping, dates in enumerate(phases_concat):
                     # Find overlapping dates between dates and conditioned maps: 
                     # Convert numpy.datetime64 to cftime.DatetimeNoLeap
-                    dates_converted = []
-                    for date in dates:
-                        timestamp = pd.Timestamp(date)
-                        try:
-                            # Attempt to create a valid cftime.DatetimeNoLeap object
-                            dates_converted.append(cftime.DatetimeNoLeap(timestamp.year, timestamp.month, timestamp.day))
-                        except ValueError:
-                            # Skip invalid dates (e.g., February 29 in non-leap years)
-                            # print(f"Skipping invalid date: {timestamp}")
-                            pass
+                    # dates_converted = []
+                    # for date in dates:
+                    #     timestamp = pd.Timestamp(date)
+                    #     try:
+                    #         # Attempt to create a valid cftime.DatetimeNoLeap object
+                    #         dates_converted.append(cftime.DatetimeNoLeap(timestamp.year, timestamp.month, timestamp.day))
+                    #     except ValueError:
+                    #         # Skip invalid dates (e.g., February 29 in non-leap years)
+                    #         # print(f"Skipping invalid date: {timestamp}")
+                    #         pass
 
-                    overlapping_dates = np.intersect1d(maps.time, dates_converted)
+                    overlapping_dates = np.intersect1d(maps.time, dates) #dates_converted
 
                     # Select the corresponding map inputs for the current phase
                     phase_mapinputs = maps[..., key].sel(time=overlapping_dates)
@@ -1477,6 +1384,7 @@ def mjo_subsetindices(grouped_phases, mapinputs, target, ninodates1, ninodates2,
                         norm_label = " anomalies"
                         cbar_label = var + " Anomalies"
 
+                    print(f"plot data: {plot_data}")
                     # # Calculate the mean of the selected map inputs
                     # mean_mapinputs = phase_mapinputs.mean(dim='time')
                     # std_mapinputs = phase_mapinputs.std(dim='time')
@@ -1484,7 +1392,7 @@ def mjo_subsetindices(grouped_phases, mapinputs, target, ninodates1, ninodates2,
                     # norm_mapinputs = mean_mapinputs / std_mapinputs
 
                     # store normalized map inputs in the dictionary: 
-                    data_dict_PRECT[(grouping, enso_phase)] = plot_data
+                    data_dict[(grouping, enso_phase)] = plot_data
 
                     enso_column = enso_to_index[enso_phase]
 
@@ -1500,9 +1408,10 @@ def mjo_subsetindices(grouped_phases, mapinputs, target, ninodates1, ninodates2,
 
                     # Add mean CRPS as a label on the subplot
                     ax[grouping, enso_column].text(
-                        0.02, 0.02, f'Mean CRPS: {mean_crps:.3f}',
+                        0.02, 0.03, f'Mean CRPS: {mean_crps:.3f} \nN = {len(overlapping_dates)}',
                         transform=ax[grouping, enso_column].transAxes,
-                        ha='left', va='bottom', fontsize=12, color='black'
+                        ha='left', va='bottom', fontsize=10, color='black', 
+                        bbox=dict(facecolor='white', alpha=0.85, edgecolor='none', boxstyle='round,pad=0.2')
                     )
 
                     # Add colorbar
@@ -1511,6 +1420,58 @@ def mjo_subsetindices(grouped_phases, mapinputs, target, ninodates1, ninodates2,
 
                     plt.tight_layout()
 
+
             plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + 
                 '_ENSO_Conditioned_MJO_composite_maps_' + str(var) + str(norm_label) +'.png', format='png', bbox_inches ='tight', dpi = 200)
             plt.close(fig)
+            
+            output_path = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(keyword) + '_MJOphase_dates.pkl'
+            with open(output_path, 'wb') as f:
+                pickle.dump(phase_timestamps, f)
+            
+            return phase_timestamps
+
+def countplot_IQR(ouptut, target, ensodates1, ensodates2, ensodates3, config, keyword = None):
+    """
+    Input: 
+    - shash_parameters: SHASH parameters for the samples
+    - ensodates1, ensodates2, ensodates3: Indices for El Nino, La Nina, and Neutral conditions
+    - config: Configuration dictionary containing paths and other settings
+    - keyword: Optional keyword for naming the output files
+
+    Output:
+    - Countplot of IQR values for El Nino, La Nina, and Neutral conditions
+    """
+
+    # Calculate IQR for each sample
+    iqr_values = iqr_basic(ouptut)
+
+    # generate indices for each enso phase
+    iEN = np.where(target.time.isin(ensodates1))[0] # El Nino
+    iLN = np.where(target.time.isin(ensodates2))[0] # La Nina
+    iNE = np.where(target.time.isin(ensodates3))[0] # Neutral
+
+    # separate IQR values by ENSO phase 
+    iqr_EN = iqr_values[iEN]
+    iqr_LN = iqr_values[iLN]
+    iqr_NE = iqr_values[iNE]
+
+    # minbin = np.min(iqr_values)
+    # maxbin = np.max(iqr_values)
+    minbin = 1.75
+    maxbin = 3.05
+    bins = np.linspace(minbin, maxbin, 50)
+    # Create a histogram of IQR values
+    fig, ax = plt.subplots(figsize=(10, 6), dpi=200)
+    ax.hist(iqr_EN, bins=bins, alpha=0.5, label='El Nino', color='#dc9219')
+    ax.hist(iqr_LN, bins=bins, alpha=0.5, label='La Nina', color='#5b9da4')
+    ax.hist(iqr_NE, bins=bins, alpha=0.25, label='Neutral', color='#c2ab85')
+    ax.set_xlabel('IQR of SHASH Parameters')
+    ax.set_ylabel('Count')
+    ax.set_ylim([0, 4500])
+    ax.set_title('Countplot of IQR Values for ENSO Phases')
+    ax.legend()
+    plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + 
+                str(keyword) + '_IQR_countplot.png', format='png', bbox_inches ='tight', dpi = 200)
+    plt.close(fig)
+    return iqr_EN, iqr_LN, iqr_NE
