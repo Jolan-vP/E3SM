@@ -971,6 +971,7 @@ def tiled_phase_analysis(MJO_phase_dates, EN_dates, LN_dates, NE_dates, evaluati
     
     evaluation_metric_matrix = np.zeros([len(MJO_phase_dates), len(enso_dates_dict)])
 
+
     for iMJO, MJOdates in enumerate(MJO_phase_dates):
         for iENSO, (enso_phase_name, ENSOdates) in enumerate(enso_dates_dict.items()):
             
@@ -1303,12 +1304,8 @@ def mjo_subsetindices(grouped_phases, mapinputs, target, ninodates1, ninodates2,
     for phase in range(phaseqty):
         collected_phase_indices = np.where(phases == phase)[0]
         phase_timestamps[phase] = time_array[collected_phase_indices]  # Map indices to timestamps
-
-        # Convert timestamps to cftime.DatetimeNoLeap objects, handling February 29
-        phase_timestamps[phase] = [
-            cftime.DatetimeNoLeap(ts.year, ts.month, ts.day) 
-            for ts in phase_timestamps[phase] if not (ts.month == 2 and ts.day == 29)
-        ]
+    
+    # print(f"Phase Timestamps: {phase_timestamps}")
 
     phases_concat = []  # Use a list to dynamically store concatenated timestamps
     for key, value in grouped_phases.items():
@@ -1344,25 +1341,30 @@ def mjo_subsetindices(grouped_phases, mapinputs, target, ninodates1, ninodates2,
     var_dict = {0: 'Precipitation', 1: 'SkinTemp'}
     color_dict = {0: 'BrBG', 1: 'RdBu_r'}
 
+    print(f"Map Inputs Shape: {mapinputs.shape}")
+    print(f"enso_inputsdict: {enso_inputsdict['El Nino'][0].shape}")
+
+
     for key, var in var_dict.items():
         for normalize in [False, True]:
             fig, ax = plt.subplots(2, 3, figsize = (22, 14), subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
             for enso_phase, (maps, crps_scores) in enso_inputsdict.items():
+                print(f"maps shape: {maps.shape}")
                 for grouping, dates in enumerate(phases_concat):
                     # Find overlapping dates between dates and conditioned maps: 
                     # Convert numpy.datetime64 to cftime.DatetimeNoLeap
-                    # dates_converted = []
-                    # for date in dates:
-                    #     timestamp = pd.Timestamp(date)
-                    #     try:
-                    #         # Attempt to create a valid cftime.DatetimeNoLeap object
-                    #         dates_converted.append(cftime.DatetimeNoLeap(timestamp.year, timestamp.month, timestamp.day))
-                    #     except ValueError:
-                    #         # Skip invalid dates (e.g., February 29 in non-leap years)
-                    #         # print(f"Skipping invalid date: {timestamp}")
-                    #         pass
+                    dates_converted = []
+                    for date in dates:
+                        timestamp = pd.Timestamp(date)
+                        try:
+                            # Attempt to create a valid cftime.DatetimeNoLeap object
+                            dates_converted.append(cftime.DatetimeNoLeap(timestamp.year, timestamp.month, timestamp.day))
+                        except ValueError:
+                            # Skip invalid dates (e.g., February 29 in non-leap years)
+                            # print(f"Skipping invalid date: {timestamp}")
+                            pass
 
-                    overlapping_dates = np.intersect1d(maps.time, dates) #dates_converted
+                    overlapping_dates = np.intersect1d(maps.time, dates_converted)
 
                     # Select the corresponding map inputs for the current phase
                     phase_mapinputs = maps[..., key].sel(time=overlapping_dates)
@@ -1384,7 +1386,6 @@ def mjo_subsetindices(grouped_phases, mapinputs, target, ninodates1, ninodates2,
                         norm_label = " anomalies"
                         cbar_label = var + " Anomalies"
 
-                    print(f"plot data: {plot_data}")
                     # # Calculate the mean of the selected map inputs
                     # mean_mapinputs = phase_mapinputs.mean(dim='time')
                     # std_mapinputs = phase_mapinputs.std(dim='time')
@@ -1425,9 +1426,12 @@ def mjo_subsetindices(grouped_phases, mapinputs, target, ninodates1, ninodates2,
                 '_ENSO_Conditioned_MJO_composite_maps_' + str(var) + str(norm_label) +'.png', format='png', bbox_inches ='tight', dpi = 200)
             plt.close(fig)
             
+            # Convert timestamps to strings for saving
+            phase_timestamps_str = {phase: [str(date) for date in dates] for phase, dates in phase_timestamps.items()}
+            
             output_path = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(keyword) + '_MJOphase_dates.pkl'
             with open(output_path, 'wb') as f:
-                pickle.dump(phase_timestamps, f)
+                pickle.dump(phase_timestamps_str, f)
             
             return phase_timestamps
 
