@@ -18,6 +18,9 @@ import pickle
 import gzip
 import scipy
 from scipy import stats
+from cftime import DatetimeNoLeap
+from datetime import datetime
+from sklearn.metrics import mean_squared_error
 #import matplotlib.colors as mcolorsxx
 
 # %load_ext autoreload
@@ -59,7 +62,7 @@ print(f"pytorch version = {torch.__version__}")
 # https://github.com/victoresque/pytorch-template/tree/master
 
 # ----CONFIG AND CLASS SETUP----------------------------------------------
-config = utils.get_config("exp071")
+config = utils.get_config("exp072")
 print(config["expname"])
 seed = config["seed_list"][0]
 
@@ -100,73 +103,73 @@ create_folder(figure_folder_name)
 # ---- DATA PROCESSING ----------------------------------------------------------------
 # Check if input data is being processed from scratch or if it is being loaded from a previous experiment
 
-# if config["input_data"] == "None": # Then input data must be processed FROM SCRATCH
-#     print("Processing input data from scratch")
-#     print(f"This is a {config['arch']['type']} model")
+if config["input_data"] == "None": # Then input data must be processed FROM SCRATCH
+    print("Processing input data from scratch")
+    print(f"This is a {config['arch']['type']} model")
 
-#     d_train, d_val, d_test = data.fetch_data()
+    d_train, d_val, d_test = data.fetch_data()
 
-#     # ---- FOR SIMPLE INPUTS ONLY : ----------------------------------------------
-#     if config["arch"]["type"] == "basicnn":
-#         print(d_train['y'].shape)
-#         target_savename1 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_train_TARGET_1850-2014.pkl"
-#         with gzip.open(target_savename1, "wb") as fp:
-#             pickle.dump(d_train, fp)
+    # ---- FOR SIMPLE INPUTS ONLY : ----------------------------------------------
+    if config["arch"]["type"] == "basicnn":
+        print(d_train['y'].shape)
+        target_savename1 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_train_TARGET_1850-2014.pkl"
+        with gzip.open(target_savename1, "wb") as fp:
+            pickle.dump(d_train, fp)
 
-#         target_savename2 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_val_TARGET_1850-2014.pkl"
-#         with gzip.open(target_savename2, "wb") as fp:
-#             pickle.dump(d_val, fp)
+        target_savename2 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_val_TARGET_1850-2014.pkl"
+        with gzip.open(target_savename2, "wb") as fp:
+            pickle.dump(d_val, fp)
 
-#         target_savename3 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_test_TARGET_1850-2014.pkl"
-#         with gzip.open(target_savename3, "wb") as fp:
-#             pickle.dump(d_test, fp)
+        target_savename3 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_test_TARGET_1850-2014.pkl"
+        with gzip.open(target_savename3, "wb") as fp:
+            pickle.dump(d_test, fp)
 
-#         d_train, d_val, d_test = multi_input_data_organizer(config, target_savename1, target_savename2, target_savename3, MJO = True, ENSO = True, other = False)
+        d_train, d_val, d_test = multi_input_data_organizer(config, target_savename1, target_savename2, target_savename3, MJO = True, ENSO = True, other = False)
 
-#         # confirm metadata is stored for both input and target
-#         print(f" s_dict_train INPUT time {d_train['x'].time}")
-#         print(f" s_dict_train TARGET time {d_train['y'].time}")
+        # confirm metadata is stored for both input and target
+        print(f" s_dict_train INPUT time {d_train['x'].time}")
+        print(f" s_dict_train TARGET time {d_train['y'].time}")
 
-#         # confirm input structure: 
-#         print(f"input shape: {d_train['x'].shape}")
-#     else: 
-#         pass
+        # confirm input structure: 
+        print(f"input shape: {d_train['x'].shape}")
+    else: 
+        pass
 
-#     # Save full input data for the experiment: ----------------------------------
-#     s_dict_savename1 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_train.pkl"
-#     s_dict_savename2 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_val.pkl"
-#     s_dict_savename3 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_test.pkl"
+    # Save full input data for the experiment: ----------------------------------
+    s_dict_savename1 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_train.pkl"
+    s_dict_savename2 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_val.pkl"
+    s_dict_savename3 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_test.pkl"
 
-#     with gzip.open(s_dict_savename1, "wb") as fp:
-#         pickle.dump(d_train, fp)
+    with gzip.open(s_dict_savename1, "wb") as fp:
+        pickle.dump(d_train, fp)
 
-#     with gzip.open(s_dict_savename2, "wb") as fp:
-#         pickle.dump(d_val, fp)
+    with gzip.open(s_dict_savename2, "wb") as fp:
+        pickle.dump(d_val, fp)
 
-#     with gzip.open(s_dict_savename3, "wb") as fp:
-#         pickle.dump(d_test, fp)
+    with gzip.open(s_dict_savename3, "wb") as fp:
+        pickle.dump(d_test, fp)
 
-#     # Trim input data: Lead/lag, month selection ----------------------------------
-#     trimmed_trainfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "train_dat.nc"
-#     trimmed_valfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "val_dat.nc"
-#     trimmed_testfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "test_dat.nc"
+    # Trim input data: Lead/lag, month selection ----------------------------------
+    trimmed_trainfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "train_dat.nc"
+    trimmed_valfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "val_dat.nc"
+    trimmed_testfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "test_dat.nc"
 
-#     train_dat_trimmed = universaldataloader(s_dict_savename1, config, target_only = False, repackage = True)
-#     train_dat_trimmed.to_netcdf(trimmed_trainfn)
-#     print(f"Data saved to {trimmed_trainfn}")
+    train_dat_trimmed = universaldataloader(s_dict_savename1, config, target_only = False, repackage = True)
+    train_dat_trimmed.to_netcdf(trimmed_trainfn)
+    print(f"Data saved to {trimmed_trainfn}")
 
-#     val_dat_trimmed = universaldataloader(s_dict_savename2, config, target_only = False, repackage = True)
-#     val_dat_trimmed.to_netcdf(trimmed_valfn)
-#     print(f"Data saved to {trimmed_valfn}")
+    val_dat_trimmed = universaldataloader(s_dict_savename2, config, target_only = False, repackage = True)
+    val_dat_trimmed.to_netcdf(trimmed_valfn)
+    print(f"Data saved to {trimmed_valfn}")
 
-#     test_dat_trimmed = universaldataloader(s_dict_savename3, config, target_only = False, repackage = True)
-#     test_dat_trimmed.to_netcdf(trimmed_testfn)
-#     print(f"Data saved to {trimmed_testfn}")
+    test_dat_trimmed = universaldataloader(s_dict_savename3, config, target_only = False, repackage = True)
+    test_dat_trimmed.to_netcdf(trimmed_testfn)
+    print(f"Data saved to {trimmed_testfn}")
 
-# elif "exp" in config["input_data"]: 
-#     trimmed_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "train_dat.nc"
-#     trimmed_valfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "val_dat.nc"
-#     trimmed_testfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "test_dat.nc"
+elif "exp" in config["input_data"]: 
+    trimmed_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "train_dat.nc"
+    trimmed_valfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "val_dat.nc"
+    trimmed_testfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "test_dat.nc"
     
 # # # --- Setup the Data for Training ---------------------------------------------
 # lagtime = config["databuilder"]["lagtime"] 
@@ -264,7 +267,7 @@ create_folder(figure_folder_name)
 #             "training_std_mean" : std_mean,
 #              }, path)
 
-# # Load the Model
+# Load the Model
 # path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
 
 # load_model_dict = torch.load(path)
@@ -313,43 +316,43 @@ create_folder(figure_folder_name)
 # print(output[:20]) # look at a small sample of the output data
 
 # # ------------------------------ Evaluate Network Predictions ----------------------------------
-if config["input_data"] != "None": 
-    input_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "train_dat.nc"
-    input_valfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "val_dat.nc"
-    input_testfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "test_dat.nc"
-else: 
-    input_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_trimmed_" + "train_dat.nc"
-    input_valfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_trimmed_" + "val_dat.nc"
-    input_testfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_trimmed_" + "test_dat.nc"
+# if config["input_data"] != "None": 
+#     input_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "train_dat.nc"
+#     input_valfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "val_dat.nc"
+#     input_testfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "test_dat.nc"
+# else: 
+#     input_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_trimmed_" + "train_dat.nc"
+#     input_valfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_trimmed_" + "val_dat.nc"
+#     input_testfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_trimmed_" + "test_dat.nc"
 
-lagtime = config["databuilder"]["lagtime"] 
-smoothing_length = config["databuilder"]["averaging_length"]  
-selected_months = config["databuilder"]["target_months"]
-front_cutoff = config["databuilder"]["front_cutoff"] 
-back_cutoff = config["databuilder"]["back_cutoff"] 
+# lagtime = config["databuilder"]["lagtime"] 
+# smoothing_length = config["databuilder"]["averaging_length"]  
+# selected_months = config["databuilder"]["target_months"]
+# front_cutoff = config["databuilder"]["front_cutoff"] 
+# back_cutoff = config["databuilder"]["back_cutoff"] 
 
-# ## -------------------------------------------------------------------------------------------------
+# # ## -------------------------------------------------------------------------------------------------
 
-# Open Model Outputs
-model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + '_network_SHASH_parameters.pkl'
-output = analysis_metrics.load_pickle(model_output)
-print(f"output shape: {output.shape}")
+# # Open Model Outputs
+# model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + '_network_SHASH_parameters.pkl'
+# output = analysis_metrics.load_pickle(model_output)
+# print(f"output shape: {output.shape}")
 
-# Open Target Data
-test_inputs = open_data_file(input_testfn)
-target = test_inputs['y']
-print(f"UDL target shape: {target.shape}")
+# # Open Target Data
+# test_inputs = open_data_file(input_testfn)
+# target = test_inputs['y']
+# print(f"UDL target shape: {target.shape}")
 
-# Open Climatology Data: TRAINING DATA
-train_inputs = open_data_file(input_trainfn)
-climatology = train_inputs['y']
-print(f"UDL climatology shape {climatology.shape}")
+# # Open Climatology Data: TRAINING DATA
+# train_inputs = open_data_file(input_trainfn)
+# climatology = train_inputs['y']
+# print(f"UDL climatology shape {climatology.shape}")
 
 # # Compare SHASH predictions to climatology histogram
 # p = calc_climatology.deriveclimatology(output, climatology, number_of_samples=50, config=config, climate_data = False)
 
 # # # ----------------------------- CRPS ----------------------------------------------------------------
-x = np.linspace(-10, 12, 1000)
+# x = np.linspace(-10, 12, 1000)
 # x_wide = np.arange(-25, 25, 0.01)
 
 # # Compute CRPS for climatology
@@ -361,8 +364,8 @@ x = np.linspace(-10, 12, 1000)
 # analysis_metrics.save_pickle(CRPS_climatology, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_climatology_values.pkl")
 # analysis_metrics.save_pickle(CRPS_network, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_network_values.pkl")
 
-CRPS_climatology = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_climatology_values.pkl")
-CRPS_network = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_network_values.pkl")
+# CRPS_climatology = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_climatology_values.pkl")
+# CRPS_network = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_network_values.pkl")
 
 # # Compare CRPS scores for climatology vs predictions (Is network better than climatology on average?)
 # CRPS.CRPScompare(CRPS_network, CRPS_climatology, config)
@@ -377,14 +380,14 @@ CRPS_network = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"])
 # Nino34 = Nino34.values
 
 # analysis_metrics.save_pickle(Nino34, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/Nino34.pkl")
-Nino34 = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/Nino34.pkl")
+# Nino34 = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/Nino34.pkl")
 
-# Calculate enso indices for daily data based on EVALUATION DAY
-enso_indices_daily = ENSO_indices_calculator.identify_nino_phases(Nino34, config, threshold=0.4, window=6, lagtime = lagtime, smoothing_length = smoothing_length)
+# # Calculate enso indices for daily data based on EVALUATION DAY
+# enso_indices_daily = ENSO_indices_calculator.identify_nino_phases(Nino34, config, threshold=0.4, window=6, lagtime = lagtime, smoothing_length = smoothing_length)
 
-# Separate CRPS scores by ENSO phases 
-elnino_dates, lanina_dates, neutral_dates, CRPS_elnino, CRPS_lanina, CRPS_neutral = analysis.ENSO_indices_calculator.ENSO_CRPS(
-    enso_indices_daily, CRPS_network, climatology, x, output, target, config)
+# # Separate CRPS scores by ENSO phases 
+# elnino_dates, lanina_dates, neutral_dates, CRPS_elnino, CRPS_lanina, CRPS_neutral = analysis.ENSO_indices_calculator.ENSO_CRPS(
+#     enso_indices_daily, CRPS_network, climatology, x, output, target, config)
 
 # # Compare Distributions? 
 # p = calc_climatology.deriveclimatology(output, climatology, number_of_samples=30, config=config, climate_data = False)
@@ -452,8 +455,8 @@ elnino_dates, lanina_dates, neutral_dates, CRPS_elnino, CRPS_lanina, CRPS_neutra
 ## Analysis of Comparatively Better CRPS Predictions  
 
 # Composite Maps - Anomalies by ENSO Phase for LOWEST Most Confident CRPS Predictions
-input_test_maps = open_data_file(input_testfn)
-input_test_maps = input_test_maps['x']
+# input_test_maps = open_data_file(input_testfn)
+# input_test_maps = input_test_maps['x']
 
 # # Isolate the MOST confident of these low CRPS predictions from 'sample_index_anoms'
 # percent = 30 
@@ -530,7 +533,7 @@ input_test_maps = input_test_maps['x']
 # analysis_metrics.IQRdiscard_combined(percentile_dict, crps_dict, CRPS_climatology, config, keyword = None)
 
 # Z500 ANALYSIS Z500 Z500 Z500 ----------------------------------------------------------------------------
-# Composite Maps with Z500 Geopotential Height: 
+# # Composite Maps with Z500 Geopotential Height: 
 # Z500_test_data = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/Z500_trimmed_processed_anomalies.v2.LR.historical_0201.eam.h1.1850-2014.nc')
 # Z500_test_data = Z500_test_data['x']
 # analysis_metrics.compositemapping(lowCRPS_highconfident, Z500_test_data, config, keyword= "Comparatively Low CRPS High Conf Z500 All")
@@ -550,12 +553,21 @@ input_test_maps = input_test_maps['x']
 # analysis_metrics.differenceplot(high_conf_NE_dates, low_conf_NE_dates, Z500_test_data, target, CRPS_network, config, normalized = True, keyword= "Z500 Confidence Conditioned Neutral High-Low Confidence Norm")
 # analysis_metrics.differenceplot(high_conf_NE_dates, low_conf_NE_dates, Z500_test_data, target, CRPS_network, config, normalized = False, keyword= "Z500 Confidence Conditioned Neutral High-Low Confidence")
 
+# Composite Maps: WHEN CNN IS BETTER THAN SNN: --------
+# load both CNN and SNN data: 
+# SNN_expname = "exp071"
+# CNN_expname = "exp042"
+# crps_threshold = 0.5
+# analysis_metrics.CNN_SNN_ComparativeComposites(CNN_expname, SNN_expname, crps_threshold, Z500_test_data, config, keyword = "Z500")
+
+
+
 # MJO Phase Analysis: BOOSTRAPPING ----------------------------------------------------------------------------
-phase_subsets = {
-    1: [2, 3, 4, 5], 
-    2: [6, 7, 8, 1]}
-MJO_phase_timestamps = analysis_metrics.mjo_subsetindices(
-    phase_subsets, input_test_maps, target, elnino_dates, lanina_dates, neutral_dates, CRPS_network, config, keyword = '2-5_6-1')
+# phase_subsets = {
+#     1: [2, 3, 4, 5], 
+#     2: [6, 7, 8, 1]}
+# MJO_phase_timestamps = analysis_metrics.mjo_subsetindices(
+#     phase_subsets, input_test_maps, target, elnino_dates, lanina_dates, neutral_dates, CRPS_network, config, keyword = '2-5_6-1')
 
 # phase_subsets = {
 #     1: [3, 4, 5, 6], 
@@ -590,9 +602,49 @@ MJO_phase_timestamps = analysis_metrics.mjo_subsetindices(
 
 
 # ENSO / MJO Tile Plots ! -------------------------------------------------------------------------------------
-MJO_phase_timestamps = analysis_metrics.load_pickle("/pscratch/sd/p/plutzner/E3SM/saved/output/exp042/2-5_6-1_MJOphase_dates.pkl")
-analysis_metrics.tiled_phase_analysis(MJO_phase_timestamps, elnino_dates, lanina_dates, neutral_dates, CRPS_network, target, config, keyword = 'ENSO-MJO Tiled Phase Analysis')
+# MJO_phase_timestamps = analysis_metrics.load_pickle("/pscratch/sd/p/plutzner/E3SM/saved/output/exp042/2-5_6-1_MJOphase_dates.pkl")
 
+# def safe_parse_date(datestr):
+#     try:
+#         dt = datetime.strptime(datestr, "%Y-%m-%d %H:%M:%S")
+#         if dt.month == 2 and dt.day == 29:
+#             return None  # Skip leap days for NoLeap calendar
+#         return DatetimeNoLeap(dt.year, dt.month, dt.day)
+#     except ValueError as e:
+#         print(f"Skipping invalid date: {datestr} ({e})")
+#         return None
+
+# MJO_phase_timestamps_converted = {}
+# for phase, datelist in MJO_phase_timestamps.items():
+#     converted = [safe_parse_date(date) for date in datelist]
+#     MJO_phase_timestamps_converted[phase] = [d for d in converted if d is not None]
+
+# MJO_phase_timestamps = MJO_phase_timestamps_converted
+
+# ## CRPS! And 3d array of dates corresponding to each phase combination
+# dates_array_by_phase = analysis_metrics.tiled_phase_analysis(MJO_phase_timestamps, elnino_dates, lanina_dates, neutral_dates, CRPS_network, target, config, keyword = 'CRPS')
+
+# ## SUCCESS RATIO!
+# success_ratio_all_samples = np.where(CRPS_network < CRPS_climatology, 1, 0)
+# print(f"Success Ratio All Samples: {success_ratio_all_samples.shape}")
+# analysis_metrics.tiled_phase_analysis(MJO_phase_timestamps, elnino_dates, lanina_dates, neutral_dates, success_ratio_all_samples, target, config, keyword = 'Success Ratio')
+
+# ## RMSE! 
+# # mean of SHASH for all output parameters: 
+# # Convert output columns to tensors
+# mu = torch.tensor(output[:, 0], dtype=torch.float32)
+# sigma = torch.tensor(output[:, 1], dtype=torch.float32)
+# gamma = torch.tensor(output[:, 2], dtype=torch.float32)
+# tau = torch.tensor(output[:, 3], dtype=torch.float32)  # Only if tau is included explicitly
+# output_tensor = torch.stack((mu, sigma, gamma, tau), dim=1)
+
+# # Instantiate Shash Class: 
+# shash_instance = Shash(output_tensor)
+# output_mean = shash_instance.mean()
+# output_mean_np = output_mean.detach().cpu().numpy()  # Convert to numpy array
+# print(f"output_mean shape: {output_mean_np.shape}")
+
+# analysis_metrics.tiled_phase_analysis(MJO_phase_timestamps, elnino_dates, lanina_dates, neutral_dates, output_mean_np, target, config, keyword = 'RMSE')
 
 ## COUNT + CONFIDENCE PLOTS : ENSO Comparison ----------------------------------------------------------------
 # histogram of IQR width binned for each ENSO phase
@@ -601,18 +653,42 @@ analysis_metrics.tiled_phase_analysis(MJO_phase_timestamps, elnino_dates, lanina
 
 ## XAI - CAPTUM  ----------------------------------------------------------------------------------------------
 # -------------------------------------------------------------------------------------------------------------
-# output_column = 1 # SIGMA IS SHASH PARAMETER OF INTEREST FOR XAI 
+# Use 3D array of dates_array_by_phase to generate XAI plots for specific phase combinations (according to their dates)
 
 # # Open input testset and ensure that it is in tensor form
 # input_test_maps = open_data_file(input_testfn)
-# input_test_maps = input_test_maps['x'].values
-# print(f"input_test_maps shape : {input_test_maps.shape}")
+# input_test_maps = input_test_maps['x']
+# # print(f"input_test_maps shape : {input_test_maps.shape}")
 
-# input_test_maps_P = torch.tensor(input_test_maps, dtype=torch.float32).to(device)
+# output_column = 1 # SIGMA IS SHASH PARAMETER OF INTEREST FOR XAI 
+
+# # Compute Integrated Gradients Composites: 
+
+# # CNN CRPS MJO4_EN
+# # select dates from the 3D array and select only the ones that are not None
+# MJO4_EN_dates = dates_array_by_phase[4, 0, :]
+# MJO4_EN_dates = [date for date in MJO4_EN_dates if date is not None]
+# avg_attributions_IG_MJO4_EN = average_attributions(model, input_test_maps, MJO4_EN_dates, device, output_column, config, method="integrated_gradients", keyword = "IG_MJO4_EN")
+
+
+# MJO8_LN_dates = dates_array_by_phase[8, 1, :]
+# MJO8_LN_dates = [date for date in MJO8_LN_dates if date is not None]
+# avg_attributions_IG_MJO4_EN = average_attributions(model, input_test_maps, MJO8_LN_dates, device, output_column, config, method="integrated_gradients", keyword = "IG_MJO8_LN")
+
+
+
+# -----------------------------------------------------------------------------------------------------------------
+
+# Calculate precip regime for raw target input data
+# Open raw INPUT target data
+# nc_file = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc')
+# precip_regime(nc_file, config)
+
+# GARBAGE LAND: -----------------------------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------------------------------- 
 
 # # # Compute the average attributions
-# # print("Computing Average Attributions - IG") #TODO: fix sub_elnino_dates for the following functions
-# # avg_attributions_IG = average_attributions(model, input_test_maps, sub_elnino, device, output_column, config, method="integrated_gradients")
+# # print("Computing Average Attributions - IG") 
 # # print("Computing Average Attributions - DL")
 # # avg_attributions_DL = average_attributions(model, input_test_maps, sub_elnino, device, output_column, config, method="deeplift")
 # # print("Computing Average Attributions - S")
@@ -624,10 +700,6 @@ analysis_metrics.tiled_phase_analysis(MJO_phase_timestamps, elnino_dates, lanina
 # avg_attributions_DL = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/average_attributions_deeplift.pkl')
 # avg_attributions_S = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/average_attributions_saliency.pkl')
 
-# # Split the attributions by channel
-# avg_attributions_P_IG = avg_attributions_IG[..., 0]  # Precipitation channel
-# avg_attributions_TS_IG = avg_attributions_IG[..., 1]  # Temperature channel
-
 # avg_attributions_P_DL = avg_attributions_DL[..., 0]  # Precipitation channel
 # avg_attributions_TS_DL = avg_attributions_DL[..., 1]  # Temperature channel
 
@@ -636,7 +708,7 @@ analysis_metrics.tiled_phase_analysis(MJO_phase_timestamps, elnino_dates, lanina
 
 # # Visualize the average attributions for each channel
 # # EL NINO --------
-# # average input map for given indices:    #TODO: fix sub_elnino_dates for the following functions
+# # average input map for given indices:    
 # ave_input_test_map_elnino_P = np.mean(input_test_maps[sub_elnino, ..., 0], axis=0)
 # ave_input_test_map_elnino_TS = np.mean(input_test_maps[sub_elnino, ..., 1], axis=0)
 
@@ -659,21 +731,6 @@ analysis_metrics.tiled_phase_analysis(MJO_phase_timestamps, elnino_dates, lanina
 # Z500 Geopotential Height ------
 # ave_input_test_map_elnino_Z500 = np.mean(Z500_complowCRPS_highconf[sub_elnino, ...], axis=0)
 # visualize_average_attributions(None, ave_input_test_map_elnino_Z500, config, keyword='El Nino Z500 Anomalies')
-
-
-
-
-
-
-
-
-# Calculate precip regime for raw target input data
-# Open raw INPUT target data
-# nc_file = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc')
-# precip_regime(nc_file, config)
-
-# GARBAGE LAND: -----------------------------------------------------------------------------------------------------------------------
-# ------------------------------------------------------------------------------------------------------------------------------------- 
 
 
 # # Spread-Skill Ratio

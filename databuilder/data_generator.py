@@ -73,30 +73,39 @@ class ClimateData:
         return self.d_train, self.d_val, self.d_test 
 
     def _create_data(self):  
-        for iens, ens in enumerate(self.config["ensembles"]):
-            print("Opening .nc files")
-            if self.verbose:
-                print(ens)
-            if ens == "ens1":   
-                # train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-                train_ds = filemethods.get_netcdf_da(self.data_dir +  "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-                # train_ds = filemethods.get_netcdf_da(self.data_dir +  "/Z500.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+        if self.config["ensembles"] == "None":
+            print("Splitting data into train, val, test from singular file rather than ensemble members.")
+            input_ds = filemethods.get_netcdf_da(self.data_dir)
 
-            if ens == "ens2":
-                # validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
-                validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
-                # validate_ds = filemethods.get_netcdf_da(self.data_dir + "/Z500.v2.LR.historical_0151.eam.h1.1850-2014.nc")
-
-            elif ens == "ens3":
-                # test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
-                test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
-                # test_ds = filemethods.get_netcdf_da(self.data_dir + "Z500.v2.LR.historical_0201.eam.h1.1850-2014.nc")
+            train_ds = input_ds.sel(time = slice(str(self.config["train_years"][0]), str(self.config["train_years"][1])))
+            validate_ds = input_ds.sel(time = slice(str(self.config["val_years"][0]), str(self.config["val_years"][1])))
+            test_ds = input_ds.sel(time = slice(str(self.config["test_years"][0]), str(self.config["test_years"][1])))
         
-        print(self.config["input_years"])
+        else:
+            for iens, ens in enumerate(self.config["ensembles"]):
+                print("Opening .nc files")
+                if self.verbose:
+                    print(ens)
+                if ens == "ens1":   
+                    # train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+                    train_ds = filemethods.get_netcdf_da(self.data_dir +  "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+                    # train_ds = filemethods.get_netcdf_da(self.data_dir +  "/Z500.v2.LR.historical_0101.eam.h1.1850-2014.nc")
 
-        train_ds = train_ds.sel(time = slice(str(self.config["input_years"][0]), str(self.config["input_years"][1])))
-        validate_ds = validate_ds.sel(time = slice(str(self.config["input_years"][0]), str(self.config["input_years"][1])))
-        test_ds = test_ds.sel(time = slice(str(self.config["input_years"][0]), str(self.config["input_years"][1])))
+                if ens == "ens2":
+                    # validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
+                    validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
+                    # validate_ds = filemethods.get_netcdf_da(self.data_dir + "/Z500.v2.LR.historical_0151.eam.h1.1850-2014.nc")
+
+                elif ens == "ens3":
+                    # test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
+                    test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
+                    # test_ds = filemethods.get_netcdf_da(self.data_dir + "Z500.v2.LR.historical_0201.eam.h1.1850-2014.nc")
+            
+            print(self.config["input_years"])
+
+            train_ds = train_ds.sel(time = slice(str(self.config["input_years"][0]), str(self.config["input_years"][1])))
+            validate_ds = validate_ds.sel(time = slice(str(self.config["input_years"][0]), str(self.config["input_years"][1])))
+            test_ds = test_ds.sel(time = slice(str(self.config["input_years"][0]), str(self.config["input_years"][1])))
 
         # Get opened X and Y data
         # Process Data (compute anomalies)
@@ -137,12 +146,13 @@ class ClimateData:
             pass
         else:
             for ivar, var in enumerate(self.config["input_vars"]):
-                if ivar == 0:
+                if ivar == 0: # PRECIPITATION VARIABLE MUST ALWAYS BE FIRST VARIABLE IN DS TO BE LOADED!! FOR ALL DATASETS!!
                     da = ds[var]
                     print(f"shape of da: {da.shape}")
                     print("Isolating variables from Dataset")
 
-                    if var == "PRECT" and int(math.floor(math.log10(da[10, 30, 120].values))) < - 5 : ## CONVERTING PRECIP TO MM/DAY!
+                    if (self.config["target_var"] == "PRECT" or self.config["target_var"] == "tp") and int(math.floor(math.log10(da[10, 30, 120].values))) < - 5 : ## CONVERTING PRECIP TO MM/DAY!
+                        print("Converting precipitation to mm/day")
                         da_copy = da.copy()
 
                         inc = 45 # 45 degree partitions in longitude to split up the data
@@ -180,7 +190,7 @@ class ClimateData:
                 
                 # print(f"magnitude of target pre-unit conversion: {f_dict[key][500:505].values}")
                 
-                if self.config["target_var"] == "PRECT" and int(math.floor(math.log10(f_dict[key][10, 30, 120].values))) < - 5: # CONVERTING PRECIP TO MM/DAY!
+                if (self.config["target_var"] == "PRECT" or self.config["target_var"] == "tp") and int(math.floor(math.log10(f_dict[key][10, 30, 120].values))) < - 5: # CONVERTING PRECIP TO MM/DAY!
                     da_copy = f_dict[key].copy()
                     
                     inc = 45 # 45 degree partitions in longitude to split up the data
