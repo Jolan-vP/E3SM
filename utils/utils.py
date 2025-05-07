@@ -15,6 +15,8 @@ import numpy as np
 import calendar
 import cftime
 from datetime import date, timedelta
+from scipy.ndimage import gaussian_filter1d
+import matplotlib.pyplot as plt
 
 def get_config(exp_name):
 
@@ -252,6 +254,66 @@ def filter_months(selected_months, lagtime, input=None, target=None):
 
         return target_filtered
     
+
+
+def pdf_from_hist(data, bins=100):
+    """
+    Convert a histogram to a probability density function (PDF).
+    Parameters:
+    - data: 1D array-like, the data to be histogrammed.
+    - bins: int, number of bins for the histogram.
+    Returns:
+    - pdf: 1D array, the PDF values.
+    - plot
+    """
+
+    # Calculate histogram
+    hist, bin_edges = np.histogram(data, bins=bins, density=True)
+    # Calculate bin centers
+    bin_centers = 0.5 * (bin_edges[:-1] + bin_edges[1:])
+    # Calculate bin widths
+    bin_widths = np.diff(bin_edges)
+
+    # Calculate PDF
+    pdf = hist / bin_widths
+    # Normalize PDF
+    pdf /= np.sum(pdf * bin_widths)
+
+    # Smooth using a Gaussian kernel
+    pdf = gaussian_filter1d(pdf, sigma=1)
+
+    return pdf, bin_centers
+
+
+
+def plot_hist(data, data_labels, bins, config):
+    """
+    Plot a histogram of the data.
+    """
+    colors = ['#440154', '#21918c', '#5ec962']
+    plt.figure(figsize=(10, 6))
+    for i, d in enumerate(data):
+        plt.hist(d, bins=bins, density=True, alpha=0.5, label=f"{data_labels[i+1]}", color=colors[i])
+        plt.legend()
+
+    if data_labels[0] == "CRPS":
+        plt.xlim([0, 2])
+        # plt.ylim([0, 30])
+    else: 
+        plt.xlim([min(data[0]), max(data[0])])
+
+    
+    plt.ylabel("Probability Density")
+    plt.xlabel(f"{data_labels[0]}")
+    plt.title("Comparative Histogram - " + str(config["expname"]))
+    
+    plt.savefig(config["perlmutter_figure_dir"] + str(config["expname"]) + '/' + str(data_labels[2]) + '_histogram.png', format='png', bbox_inches='tight', dpi=200)
+
+
+
+
+
+
 
 
 

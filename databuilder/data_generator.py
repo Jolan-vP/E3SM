@@ -75,7 +75,7 @@ class ClimateData:
     def _create_data(self):  
         if self.config["ensembles"] == "None":
             print("Splitting data into train, val, test from singular file rather than ensemble members.")
-            input_ds = filemethods.get_netcdf_da(self.data_dir)
+            input_ds = filemethods.get_netcdf_da(self.data_dir + "ERA5/ERA5_1x1_input_vars_1940-2023.nc")
 
             train_ds = input_ds.sel(time = slice(str(self.config["train_years"][0]), str(self.config["train_years"][1])))
             validate_ds = input_ds.sel(time = slice(str(self.config["val_years"][0]), str(self.config["val_years"][1])))
@@ -236,6 +236,9 @@ class ClimateData:
                         min_lon += 360
                     if max_lon < 0:
                         max_lon += 360
+                    
+                    print(f"min_lon: {min_lon}, max_lon: {max_lon}")
+                    print(f"min_lat: {min_lat}, max_lat: {max_lat}")
         
                     if isinstance(f_dict[key], xr.DataArray):
                         mask_lon = (f_dict[key].lon >= min_lon) & (f_dict[key].lon <= max_lon)
@@ -245,15 +248,24 @@ class ClimateData:
                 
                         if self.config["target_mask"] == "land":
                             mask = xr.open_dataset(self.data_dir + "/landfrac.bilin.nc")["LANDFRAC"][0, :, :]
-                            data_masked = data_masked.where(mask > 0.5)
-                            print(f"shape of data_masked: {data_masked.shape}")
+                                          
+                            if str(data_masked.lat.values[0]).split(".")[1] == "0":
+                                # Interpolate LANDFRAC to data grid
+                                mask_interp = mask.interp(
+                                    lat=data_masked.lat,
+                                    lon=data_masked.lon,
+                                    method="nearest"
+                                )
+                                data_masked = data_masked.where(mask_interp > 0.3)
+                            else:
+                                data_masked = data_masked.where(mask > 0.5)
+
+                            # print(f"shape of data_masked: {data_masked.shape}")
                             print("Masking land, Plotting for confirmation: \n")
-                            # data_masked = data_masked.dropna(dim="time", how="all")
-                            # print(f"shape of data_masked after dropping nans: {data_masked.shape}")
                         else: 
                             pass
 
-                        print(data_masked[10, ...])
+                        # print(data_masked[10, ...])
                         fig, ax = plt.subplots(1, 1, figsize=(8, 6), subplot_kw={'projection': ccrs.PlateCarree()})
                         ax.add_feature(cfeature.BORDERS, linewidth=0.3, edgecolor='black')
                         ax.add_feature(cfeature.STATES, linewidth=0.3, edgecolor='black')

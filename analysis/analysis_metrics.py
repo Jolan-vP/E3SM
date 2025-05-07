@@ -513,13 +513,13 @@ def subsetanalysis_SHASH_ENSO(sample_index, shash_params, climatology, target, t
     # identify CRPS scores of each sample in the subset
     sub_CRPS = crps_scores[subset_indices]
 
-    plt.figure()
-    plt.hist(sub_CRPS, bins = 50, density = False)
-    plt.xlabel('CRPS')
-    plt.ylabel('Frequency')
-    plt.title(f'Distribution of CRPS for {str(subset_keyword)} Samples')
-    plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + str(subset_keyword) + '_CRPS_distribution.png', format='png', bbox_inches ='tight', dpi = 300)
-    plt.close()
+    # plt.figure()
+    # plt.hist(sub_CRPS, bins = 50, density = False)
+    # plt.xlabel('CRPS')
+    # plt.ylabel('Frequency')
+    # plt.title(f'Distribution of CRPS for {str(subset_keyword)} Samples')
+    # plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + str(subset_keyword) + '_CRPS_distribution.png', format='png', bbox_inches ='tight', dpi = 300)
+    # plt.close()
 
     # identify shash params of each sample in the subset
     sub_params = shash_params[subset_indices]
@@ -665,11 +665,12 @@ def compositemapping(dates, mapinputs, config, keyword = None):
         plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + '_composite_maps.png', format='png', bbox_inches ='tight', dpi = 300)
         plt.close()
 
-def differenceplot(dates1, dates2, mapinputs, target, config, normalized = False, keyword = None, xarray_obj = False):
+def differenceplot(dates1, dates2, mapinputs, target, evaluation_metric, config, normalized = False, keyword = None):
     """
     Take in two sets of indices, and create a difference map based on the two indices sets
     mapinputs is the input map data for all samples 
     """
+
     if len(mapinputs.shape) == 3: # Time, Lat, Lon      
 
         if normalized == True:
@@ -715,12 +716,18 @@ def differenceplot(dates1, dates2, mapinputs, target, config, normalized = False
         # plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + '_CRPS_distribution.png', format='png', bbox_inches ='tight', dpi = 300)
         # plt.close()
 
-        if diff.max().item() > np.abs(diff.min().item()):
-            vmaxz = diff.max().item()
-            vminz = (-1 * vmaxz)
-        else: 
-            vminz = diff.min().item()
-            vmaxz = (-1 * vminz)
+        # if diff.max().item() > np.abs(diff.min().item()):
+        #     vmaxz = diff.max().item()
+        #     vminz = (-1 * vmaxz)
+        # else: 
+        #     vminz = diff.min().item()
+        #     vmaxz = (-1 * vminz)
+
+        vminz = np.nanpercentile(diff, 5)
+        vmaxz = np.nanpercentile(diff, 95)
+        # Symmetrize
+        vmaxz = max(abs(vminz), abs(vmaxz))
+        vminz = -vmaxz
 
         plt.figure()
         fig, ax = plt.subplots(1, 3, figsize=(18, 8),  subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
@@ -734,8 +741,8 @@ def differenceplot(dates1, dates2, mapinputs, target, config, normalized = False
             ax[i].set_xticks(np.arange(-180, 181, 60), crs=ccrs.PlateCarree())
             ax[i].set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree())
 
-        ax[0].set_title(str(keyword))
-        ax[1].set_title('Z00 SNN CRPS < CNN CRPS < 0.5')
+        ax[0].set_title("High Confidence")
+        ax[1].set_title("Low Confidence")
         ax[2].set_title(f'Difference Composite Map')
 
         # ax[0].text(
@@ -1241,28 +1248,37 @@ def mjo_subsetindices(grouped_phases, mapinputs, target, ninodates1, ninodates2,
     - Composite graphs of groupd phases for each variable (PRECT, TS..) based on EVALUATION DATE
     
     """
-    # Load MJO Indices
-    MJOfilename = '/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_historical_0201_1850-2014.pkl'
+    if config["data_source"] == 'E3SM':
+        # Load MJO Indices
+        MJOfilename = '/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_historical_0201_1850-2014.pkl'
 
-    # print(f"target time for mjo phases: {target.time}")
+        # print(f"target time for mjo phases: {target.time}")
 
-    # Identify time stamps corresponding to each MJO phase
+        # Identify time stamps corresponding to each MJO phase
 
-    with open(MJOfilename, 'rb') as MJO_file:
-        MJOda = np.load(MJO_file, allow_pickle=True)
-        MJOda = np.asarray(MJOda)
-        # print(MJOda)
+        with open(MJOfilename, 'rb') as MJO_file:
+            MJOda = np.load(MJO_file, allow_pickle=True)
+            MJOda = np.asarray(MJOda)
+            # print(MJOda)
 
-    # Isolate MJO timestamps based on the -1, -2, and -3 columns of the dataarray
-    start_year = int(MJOda[0, -3])
-    start_month = int(MJOda[0, -2])
-    start_day = int(MJOda[0, -1])
-    start = datetime.datetime(start_year, start_month, start_day)
-    end_year = int(MJOda[-1, -3])
-    end_month = int(MJOda[-1, -2])
-    end_day = int(MJOda[-1, -1])
-    end = datetime.datetime(end_year, end_month, end_day)
-    time_array = pd.date_range(start = start, end = end, freq = 'D')
+        # Isolate MJO timestamps based on the -1, -2, and -3 columns of the dataarray
+        start_year = int(MJOda[0, -3])
+        start_month = int(MJOda[0, -2])
+        start_day = int(MJOda[0, -1])
+        start = datetime.datetime(start_year, start_month, start_day)
+        end_year = int(MJOda[-1, -3])
+        end_month = int(MJOda[-1, -2])
+        end_day = int(MJOda[-1, -1])
+        end = datetime.datetime(end_year, end_month, end_day)
+        time_array = pd.date_range(start = start, end = end, freq = 'D')
+
+    elif config["data_source"] == 'ERA5':
+
+        MJOfilename = '/pscratch/sd/p/plutzner/E3SM/bigdata/rmm.74toRealtime.txt'
+
+        open_data_file(MJOfilename, 'r')
+        MJOda = np.loadtxt(MJOfilename,  delimiter=',') #skiprows=1,
+        print(MJOda)
 
     # Create phase number output array
     phases = np.zeros(len(MJOda))
@@ -1517,33 +1533,73 @@ def CNN_SNN_ComparativeComposites(cnn_expname, snn_expname, crps_threshold, Z500
                     coords={"time": SNN_target.time},
                     dims=["time"])
 
-    # Identify dataarray where CNN network CRPS is lower than threshold
-    CNN_crps_da_belowthresh = CNN_crps_da.where(CNN_crps_da < crps_threshold, drop=True)
-    SNN_crps_da_belowthresh = SNN_crps_da.where(SNN_crps_da < crps_threshold, drop=True)
-    print(f"shape of CNN crps da below threshold: {CNN_crps_da_belowthresh.shape}")
+    # If crps_threshold is a float, use it directly
+    if isinstance(crps_threshold, float):
+        # Identify dataarray where CNN network CRPS is lower than threshold
+        CNN_crps_da_belowthresh = CNN_crps_da.where(CNN_crps_da < crps_threshold, drop=True)
+        SNN_crps_da_belowthresh = SNN_crps_da.where(SNN_crps_da < crps_threshold, drop=True)
+        print(f"shape of CNN crps da below threshold: {CNN_crps_da_belowthresh.shape}")
 
-    CNN_crps_da_lower = CNN_crps_da_belowthresh.where(CNN_crps_da_belowthresh < SNN_crps_da_belowthresh, drop=True)
-    SNN_crps_da_lower = SNN_crps_da_belowthresh.where(CNN_crps_da_belowthresh < SNN_crps_da_belowthresh, drop=True)
-    CNN_crps_da_higher = CNN_crps_da_belowthresh.where(CNN_crps_da_belowthresh > SNN_crps_da_belowthresh, drop=True)
-    SNN_crps_da_higher = SNN_crps_da_belowthresh.where(CNN_crps_da_belowthresh > SNN_crps_da_belowthresh, drop=True)
-    print(f"shape of CNN crps da lower: {CNN_crps_da_lower.shape}")
-    print(f"shape of CNN crps da higher: {SNN_crps_da_higher.shape}")
+        CNN_crps_da_lower = CNN_crps_da_belowthresh.where(CNN_crps_da_belowthresh < SNN_crps_da_belowthresh, drop=True)
+        SNN_crps_da_lower = SNN_crps_da_belowthresh.where(CNN_crps_da_belowthresh < SNN_crps_da_belowthresh, drop=True)
+        CNN_crps_da_higher = CNN_crps_da_belowthresh.where(CNN_crps_da_belowthresh > SNN_crps_da_belowthresh, drop=True)
+        SNN_crps_da_higher = SNN_crps_da_belowthresh.where(CNN_crps_da_belowthresh > SNN_crps_da_belowthresh, drop=True)
+        print(f"shape of CNN crps da lower: {CNN_crps_da_lower.shape}")
+        print(f"shape of CNN crps da higher: {SNN_crps_da_higher.shape}")
+    # if crps_threshold indicates to find the lowest values of CNN CRPS below SNN CRPS:
+    elif isinstance(crps_threshold, str):
+        pass #TODO: figure out how to select the lowest values of CNN CRPS below SNN CRPS    
 
     compositemapping(CNN_crps_da_lower.time, Z500_data, config, keyword = keyword + ' CNN CRPS < SNN CRPS < 0.5')
 
-    differenceplot(CNN_crps_da_lower.time, CNN_crps_da_higher.time, Z500_data, CNN_target, config, normalized = False, keyword = keyword + ' CNN CRPS < SNN CRPS < 0.5', xarray_obj = True)
-    differenceplot(CNN_crps_da_lower.time, CNN_crps_da_higher.time, Z500_data, CNN_target, config, normalized = True, keyword = keyword + ' CNN CRPS < SNN CRPS < 0.5', xarray_obj = True)
+    differenceplot(CNN_crps_da_lower.time, CNN_crps_da_higher.time, Z500_data, CNN_target, crps_network_CNN, config, normalized = False, keyword = keyword + ' CNN CRPS < SNN CRPS < 0.5')
+    differenceplot(CNN_crps_da_lower.time, CNN_crps_da_higher.time, Z500_data, CNN_target, crps_network_CNN, config, normalized = True, keyword = keyword + ' CNN CRPS < SNN CRPS < 0.5')
 
-    # plt.figure(figsize=(8, 5))
-    # bins = np.arange(0.28, 1.5, 0.008)
-    # plt.hist(CNN_crps_da_lower, bins=bins, alpha=0.5, label='CNN CRPS')
-    # plt.hist(SNN_crps_da_lower, bins=bins, alpha=0.5, label='SNN CRPS')
-    # plt.axvline(x=crps_climo_CNN.mean(), color='blue', linestyle='--', label=f'CNN Climo CRPS: {crps_climo_CNN.mean():.4f}')
-    # plt.axvline(x=crps_climo_SNN.mean(), color='orange', linestyle='--', label=f'SNN Climo CRPS: {crps_climo_SNN.mean():.4f}')
-    # plt.xlabel('CRPS')
-    # plt.ylabel('Frequency')
-    # plt.title('CRPS Distribution for CNN and SNN')
-    # plt.legend()
-    # plt.tight_layout()
-    # plt.savefig(config["perlmutter_figure_dir"] + str(config["expname"]) + "/" + str(config["expname"]) + "CNN_SNN_CompLower_CRPS_distribution.png", format = 'png', dpi = 200)
+    plt.figure(figsize=(8, 5))
+    bins = np.arange(0.28, 1.5, 0.008)
+    plt.hist(crps_climo_CNN, bins=bins, alpha = 0.7, histtype = 'step', linewidth = 2, color = '#cc4778', label='CNN Climo CRPS')
+    plt.hist(crps_climo_SNN, bins=bins, alpha = 0.7, histtype = 'step', linewidth = 2, color = '#f89540', label='SNN Climo CRPS')
+    plt.hist(crps_network_SNN, bins=bins, alpha = 0.7, histtype = 'step', linewidth = 2, color = '#7e03a8', label='SNN CRPS')
+    plt.hist(crps_network_CNN, bins=bins, alpha = 0.7, histtype = 'step', linewidth = 2, color = '#0d0887', label='CNN CRPS')
+    plt.axvline(x=crps_climo_CNN.mean(), color='blue', linestyle='--', linewidth = 1, label=f'CNN Climo CRPS: {crps_climo_CNN.mean():.4f}')
+    plt.axvline(x=crps_climo_SNN.mean(), color='purple', linestyle='--', linewidth = 1, label=f'SNN Climo CRPS: {crps_climo_SNN.mean():.4f}')
+    plt.xlabel('CRPS', fontsize = 10)
+    plt.ylabel('Frequency', fontsize = 10)
+    plt.title('CRPS Distribution for CNN and SNN', fontsize = 10)
+    plt.legend(fontsize = 10)
+    plt.tight_layout()
+    plt.savefig(config["perlmutter_figure_dir"] + str(config["expname"]) + "/" + str(config["expname"]) + "CNN_SNN_CRPS_distribution.png", format = 'png', dpi = 200)
 
+    return CNN_crps_da_lower
+
+
+def pdf_comparison(pdfs, bin_centers, config, keyword = None):
+    """
+    Input: 
+    - pdfs: list of pdfs to compare
+    - bin_centers: bin centers for the histograms
+    - config: Configuration dictionary containing paths and other settings
+    - keyword: Optional keyword for naming the output files
+
+    Output:
+    - PDF comparison plot
+    """
+
+    # Create a figure and axis
+    fig, ax = plt.subplots(figsize=(10, 6), dpi=200)
+
+    # Plot each PDF with a different color
+    colors = ['#440154', '#21918c', '#5ec962', '#d62728', '#9467bd']
+    pdf_labels = ['PDF - All samples', 'PDF - Lowest CRPS']
+    for i, pdf in enumerate(pdfs):
+        ax.plot(bin_centers[i], pdf, label=f'{pdf_labels[i]}', color=colors[i % len(colors)], linewidth=2)
+
+    # Set labels and title
+    ax.set_xlabel(str(keyword), fontsize=12)
+    ax.set_ylabel('Probability Density', fontsize=12)
+    ax.set_title('PDF Comparison - ' + str(keyword), fontsize=14)
+    ax.legend()
+
+    # Save the figure
+    plt.tight_layout()
+    plt.savefig(config["perlmutter_figure_dir"] + str(config["expname"]) + '/' + str(keyword) + '_pdf_comparison.png', format='png', bbox_inches='tight', dpi=200)

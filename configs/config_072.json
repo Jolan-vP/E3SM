@@ -2,9 +2,10 @@
     "device": "cpu",
     "seed_list": [7],
 
-    "input_data": "None",
-    "data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5/ERA5_1x1_input_vars_1940-2023.nc",
-    "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5/ERA5_1x1_input_vars_1940-2023.nc",
+    "input_data": "exp072",
+    "data_source": "ERA5", 
+    "data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/",
+    "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/",
     "perlmutter_inputs_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",
     "local_inputs_dir": "/Users/C830793391/BIG_DATA/E3SM_Data/presaved/Network Inputs/",
     "figure_dir": "/Users/C830793391/Documents/Research/E3SM/saved/figures",
@@ -50,7 +51,7 @@
         "ensembles": "None",
         "ensemble_codes": "None",
         "target_var": "tp",
-        "target_region": [38.5, 54.5, -133.5, -120.5],
+        "target_region": [39, 55, -134, -121],
         "target_months": [10, 11, 12, 1, 2, 3],
         "averaging_length": 14,
         "lagtime": 14, 
@@ -77,7 +78,7 @@
         "cnn_act": ["ReLU", "ReLU"],
 
         "hiddens_block": [20, 20],
-        "hiddens_block_in": [141120],
+        "hiddens_block_in": [144256],
         "hiddens_block_act": ["ReLU"],
         "hiddens_block_out": 20,
 

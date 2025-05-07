@@ -36,41 +36,65 @@ def identify_nino_phases(nino34_index, config, threshold=0.4, window=6, lagtime 
     Returns:
     - phase_array (numpy array): Array with 3 columns (El Niño, La Niña, Neutral) and rows corresponding to time steps.
     """
-    n = len(nino34_index)
+    n = nino34_index.values.shape[0]  # Number of time steps
+
+    if config["data_source"] == "ERA5": # ERA5 ENSO data is monthly 
+        print("Data source is ERA5 - monthly ENSO data")
+        nino34_index = nino34_index.sel(time = slice("1940", "2023"))
+        window_length = window  # 6 months of daily data
+    elif config["data_source"] == "E3SM":
+        print("Data source is E3SM - daily ENSO data")
+        if n > 25000: #E3SM ENSO data is daily
+           window_length = 6 * 30
+        elif n < 15000:
+            window_length = window
+            print(f"Caution, seems like Monthly E3SM data is being used, double check that!")
+ 
     # Initialize array to hold the phase classifications
     phase_array = np.zeros((n, 3), dtype=int)  # Columns: [El Niño, La Niña, Neutral]
     
     # Loop through the Nino3.4 index using a sliding window
-    for i in range(n - window + 1):
-        window_slice = nino34_index[i:i + window]
+    for i in range(n - window_length + 1):
+        window_slice = nino34_index[i:i + window_length]
         
         if np.all(window_slice > threshold):
             # Mark El Niño (6-month period all > threshold)
-            phase_array[i:i + window, 0] = 1
+            phase_array[i:i + window_length, 0] = 1
         elif np.all(window_slice < -threshold):
             # Mark La Niña (6-month period all < -threshold)
-            phase_array[i:i + window, 1] = 1
+            phase_array[i:i + window_length, 1] = 1
         else:
             # Mark neutral for all other periods
-            phase_array[i:i + window, 2] = 1
+            phase_array[i:i + window_length, 2] = 1
 
-    # open original training dataset: 
-    train_ds = filemethods.get_netcdf_da(str(config['perlmutter_data_dir']) + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-    # train_ds = filemethods.get_netcdf_da(str(config['perlmutter_data_dir']) + "ens1/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-    train_ds = train_ds.sel(time = slice("1850", "2014"))
-    # train_ds = train_ds.sel(time = slice("str(config["databuilder"]["input_years"][0]"), str(config["databuilder"]["input_years"][1])))
+    if config["data_source"] == "E3SM":
+        # open original training dataset: 
+        train_ds = filemethods.get_netcdf_da(str(config['perlmutter_data_dir']) + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+        train_ds = train_ds.sel(time = slice("1850", "2014"))
 
-    days_in_month = [28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 31] 
-    days_in_month_array = np.tile(days_in_month, 165) # repeat days in month pattern to match SST data
-    index_array_daily = np.full([len(train_ds.time), 3], np.nan, dtype=float)
+        index_array_daily = phase_array.copy()
 
-    current_day = 0
-    # Interpolate each column of 'ones' and 'zeros' from monthly to daily according to the 355-no leap calendar
-    for row in range(phase_array.shape[0]):
-            for col in range(phase_array.shape[1]):
-                month_chunk = np.repeat(phase_array[row, col], days_in_month_array[row])
-                index_array_daily[current_day : current_day + days_in_month_array[row], col] = month_chunk
-            current_day += days_in_month_array[row]
+    elif config["data_source"] == "ERA5":
+        # open original training dataset: 
+        train_ds = filemethods.get_netcdf_da(str(config['perlmutter_data_dir']) + "/ERA5/ERA5_1x1_input_vars_1940-2023.nc")
+        train_ds = train_ds.sel(time = slice("1940", "2023"))
+
+        # ERA5 Monthly data begins 1940-01-01, and in datetimenoleap, January is 31 days long
+        days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        years = 2024 - 1940
+        days_in_month_array = np.tile(days_in_month, years) # repeat days in month pattern to match SST data
+        print(f"days in month array length: {len(days_in_month_array)}")
+        index_array_daily = np.full([len(train_ds.time), 3], np.nan, dtype=float)
+        print(f"index array daily shape: {index_array_daily.shape}")
+
+        current_day = 0
+        # Interpolate each column of 'ones' and 'zeros' from monthly to daily according to the 355-no leap calendar
+        for row in range(phase_array.shape[0]):
+                for col in range(phase_array.shape[1]):
+                    month_chunk = np.repeat(phase_array[row, col], days_in_month_array[row])
+                    index_array_daily[current_day : current_day + days_in_month_array[row], col] = month_chunk
+                current_day += days_in_month_array[row]
+
 
     # save index array daily as an xarray dataset with a time component (same as the original dataset)
     # Assign daily index array the same time coordinate from the original dataset
@@ -87,149 +111,57 @@ def identify_nino_phases(nino34_index, config, threshold=0.4, window=6, lagtime 
     # filter indices by target months, cut leads/lags, smoothing length, etc. 
     filtered_daily_indicesXR = universaldataloader(index_array_dailyXR, config, target_only = True) 
 
-    # Multiply the index_array_daily by the row number to recover the index of each day
-    non_zero_indices = np.full_like(filtered_daily_indicesXR, np.nan)
+    # initialize dict to hold timestamps for each ENSO phase
+    ENSO_dates_dict = {
+        "El Nino" : [],
+        "La Nina" : [], 
+        "Neutral" : []
+    }
 
     for col in range(filtered_daily_indicesXR.shape[1]):
         for row in range(filtered_daily_indicesXR.shape[0]):
             if filtered_daily_indicesXR[row, col] != 0:
-                filtered_daily_indicesXR[row, col] = filtered_daily_indicesXR[row, col] * row
-        # Remove all zeros from each column so that only non-zero values remain
-        non_zero_values = filtered_daily_indicesXR[:, col][filtered_daily_indicesXR[:, col] != 0]
-        non_zero_indices[:len(non_zero_values), col] = non_zero_values
+                date = filtered_daily_indicesXR.time.isel(time = row)
+                if col == 0:
+                    ENSO_dates_dict['El Nino'].append(date.values)
+                elif col == 1:
+                    ENSO_dates_dict['La Nina'].append(date.values)
+                elif col == 2:
+                    ENSO_dates_dict['Neutral'].append(date.values)
 
-    # convert all remaining nans to zeros:
-    non_zero_indices[np.isnan(non_zero_indices)] = 0
-
-    return non_zero_indices.astype(int)  #index_array_daily.astype(int),
+    return ENSO_dates_dict
 
 
+def ENSO_CRPS(daily_enso_dates, crps_scores, target_time, config): 
 
-def ENSO_CRPS(enso_indices_daily, crps_scores, climatology, x_values, output, target, config): 
-    # Isolate non-zero indices for each ENSO phase
-    # Calculate index of first non-zero value when counting from back to front
-    nino_indices = np.where(enso_indices_daily[:,0] != 0)[0]
-    nina_indices = np.where(enso_indices_daily[:,1] != 0)[0]
-
-    if nino_indices.size == 0:
-        raise ValueError("No non-zero elements found in enso_indices_daily[:,0].")
-    if nina_indices.size == 0:
-        raise ValueError("No non-zero elements found in enso_indices_daily[:,1].")
-    
-    # Calculate index of first non-zero value when counting from back to front
-    maxnino = max(np.where(enso_indices_daily[:,0] != 0)[0])
-    maxnina = max(np.where(enso_indices_daily[:,1] != 0)[0])
-
-    # print(f"maxnino: {maxnino}")
-    # print(f"maxnina: {maxnina}")
-
-    elnino = enso_indices_daily[:maxnino, 0]
-    lanina = enso_indices_daily[:maxnina, 1]
-
-    # print(f"len of elnino: {len(elnino)}")
-    # print(f"len of lanina: {len(lanina)}")
-    # print(f"len of crps_scores: {len(crps_scores)}")
-
-    non_neutral = np.concatenate((elnino, lanina))
-    neutral_total = (len(crps_scores) - (len(elnino) + len(lanina)))
-    neutral = np.setdiff1d(np.arange(0, 60225), non_neutral)[:neutral_total]
-
-    CRPS_elnino = round(crps_scores[elnino].mean(), 5)
-    CRPS_lanina = round(crps_scores[lanina].mean(), 5)
-    CRPS_neutral = round(crps_scores[neutral].mean(), 5)
+    elnino_dates = daily_enso_dates["El Nino"]
+    lanina_dates = daily_enso_dates["La Nina"]
+    neutral_dates = daily_enso_dates["Neutral"]
 
     ENSO_dict = {
-        "elnino" : [elnino], 
-        "lanina" : [lanina], 
-        "neutral": [neutral], 
+        "elnino" : [elnino_dates], 
+        "lanina" : [lanina_dates], 
+        "neutral": [neutral_dates], 
         "CRPS":    [crps_scores]
     }
 
     save_pickle(ENSO_dict, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "ENSO_indices_CRPS.pkl")
+    
+    # derive indices for each phase using target time
+    elnino = np.array([np.where(target_time == date)[0][0] for date in elnino_dates if date in target_time])
+    lanina = np.array([np.where(target_time == date)[0][0] for date in lanina_dates if date in target_time])
+    neutral = np.array([np.where(target_time == date)[0][0] for date in neutral_dates if date in target_time])
 
-    # Plot CRPS by ENSO index
-    # create a subplot with three columns and one row
-    fig, ax = plt.subplots(3, 1, figsize=(8, 10), sharey=True)
-    ax[0].scatter(elnino, crps_scores[elnino], s=0.4, color ='#26828e', label = f'CRPS Average: {CRPS_elnino} ')
-    ax[0].set_title('El Nino')
-    ax[0].set_ylabel('CRPS')
-    ax[1].scatter(lanina, crps_scores[lanina], s=0.4, color = '#26828e', label = f'CRPS Average: {CRPS_lanina}')
-    ax[1].set_title('La Nina')
-    ax[1].set_ylabel('CRPS')
-    ax[2].scatter(neutral, crps_scores[neutral], s=0.4, color = '#26828e', label = f'CRPS Average: {CRPS_neutral}')
-    ax[2].set_title('Neutral')
-    ax[2].set_xlabel('Time (Samples in Chronological Order)')
-    ax[2].set_ylabel('CRPS')
-    ax[0].legend(loc = 'upper right')
-    ax[1].legend(loc = 'upper right') 
-    ax[2].legend(loc = 'upper right')
-    plt.subplots_adjust(hspace=0.3)
-
-    # Create plot with climatology histogram in the background and 100 random ENSO phase distributions on top
-    # select 100 random samples each from elnino, lanina, and neutral
-    np.random.seed(config["seed_list"][0])
-    num_samples = 300
-    rand_samps_elnino = np.random.choice(len(elnino), num_samples)
-    rand_samps_lanina = np.random.choice(len(lanina), num_samples)
-    rand_samps_neutral = np.random.choice(len(neutral), num_samples)
-
-    dist_elnino = Shash(output[rand_samps_elnino])
-    dist_lanina = Shash(output[rand_samps_lanina])
-    dist_neutral = Shash(output[rand_samps_neutral])
-
-    p_elnino = dist_elnino.prob(x_values).numpy()
-    p_lanina = dist_lanina.prob(x_values).numpy()
-    p_neutral = dist_neutral.prob(x_values).numpy()
-
-    # print(f"shape of p_elnino: {p_elnino.shape}")
-    # print(f"x_values shape: {x_values.shape}")  
-
-    plt.figure(figsize=(12, 7), dpi=200)
-    plt.hist(
-        climatology, x_values, density=True, color="silver", alpha=0.75, label="climatology"
-    )
-     # Plot the first curve with a label
-    plt.plot(x_values, p_elnino[:,0], alpha=0.1, color='#648FFF', linewidth=0.9, label=f'{num_samples} Random Predictions (El Nino)')
-    plt.plot(x_values, p_elnino, alpha=0.1, color='#648FFF', linewidth=0.9, label=None)
-
-    # Plot the first curve with a label
-    plt.plot(x_values, p_lanina[:,0], alpha=0.1, color='#FE6100', linewidth=0.9, label=f'{num_samples} Random Predictions (La Nina)')
-    plt.plot(x_values, p_lanina, alpha=0.1, color='#FE6100', linewidth=0.9, label=None)
-
-    # # Plot the first curve with a label
-    # plt.plot(x_values, p_neutral[:,0], alpha=0.2, color='#646363', linewidth=0.7, label=f'{num_samples} Random Predictions (Neutral ENSO)')
-    # plt.plot(x_values, p_neutral, alpha=0.2, color='#646363', linewidth=0.7, label=None)
-
-    # plt.plot(x_values, p_elnino, alpha = 0.2, color = '#648FFF', linewidth = 0.5 , label = f'{num_samples} Random Predictions during El Nino') 
-    # plt.plot(x_values, p_lanina, alpha = 0.2, color = '#FFB000' , linewidth = 0.5, label = f'{num_samples} Random Predictions during La Nina') 
-    # plt.plot(x_values, p_neutral, alpha = 0.2, color = '#b0b0b0', linewidth = 0.5, label = f'{num_samples} Random Predictions during Neutral ENSO') 
-    plt.xlabel("Precipitation Anomalies (mm/day)")
-    plt.ylabel("Probability Density")
-    plt.title("Network Shash Prediction")
-    plt.xlim([-10, 12])
-    plt.ylim([0, 0.35])
-    # plt.axvline(valset[:len(output)], color='r', linestyle='dashed', linewidth=1)
-    lege = plt.legend(loc = 'upper left', )
-    for lh in lege.legendHandles: 
-        lh.set_alpha(1)
-    plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + '_ENSO_phase_predictions_w_climatology.png', format='png', bbox_inches ='tight', dpi = 300)
+    CRPS_elnino = round(crps_scores[elnino].mean(), 5)
+    CRPS_lanina = round(crps_scores[lanina].mean(), 5)
+    CRPS_neutral = round(crps_scores[neutral].mean(), 5)
    
-
-    print(f"El Nino average CRPS across all samples: {np.round(crps_scores[elnino].mean(), 4)}")
-    print(f"La Nina average CRPS across all samples: {np.round(crps_scores[lanina].mean(), 4)}")
-    print(f"Neutral average CRPS across all samples: {np.round(crps_scores[neutral].mean(), 4)}")
-
-    # plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/CRPS_vs_ENSO_Phases_' + str(config["expname"]) + '.png', format='png', bbox_inches ='tight', dpi = 300)
-
-    # Convert indices to datetime xarray object using climatology time coordinate: 
-    elnino_dates = target.time[elnino]
-    lanina_dates = target.time[lanina]
-    neutral_dates = target.time[neutral]
-
-    return elnino_dates, lanina_dates, neutral_dates, CRPS_elnino, CRPS_lanina, CRPS_neutral
+    print(f"El Nino average CRPS across all samples: {np.round(CRPS_elnino, 4)}")
+    print(f"La Nina average CRPS across all samples: {np.round(CRPS_lanina, 4)}")
+    print(f"Neutral average CRPS across all samples: {np.round(CRPS_neutral, 4)}")
 
 
-def idealENSOphases(nino34index, ens = None, percentile = None, numberofeachphase = None, plotfn = None):
+def idealENSOphases(nino34index, strength_threshold = 2, ens = None, percentile = None, numberofeachphase = None, plotfn = None):
     """
     Function to find the dates corresponding to 'idealized' ENSO phases for OBSERVATIONAL Nino 3.4 index.
     """
@@ -270,18 +202,30 @@ def idealENSOphases(nino34index, ens = None, percentile = None, numberofeachphas
         else:
             if current_block:
                 # Filter values within the block that are greater than 2 or less than -2
-                filtered_block = [(value, date) for value, date in current_block if value > 2 or value < -2]
+                filtered_block = [(value, date) for value, date in current_block if value > strength_threshold or value < -strength_threshold]
                 if filtered_block:
-                    # If the filtered block is not empty, calculate the max value and record the date
-                    max_value, max_date = max(filtered_block, key=lambda x: np.abs(x[0]))
-                    max_values.append(max_value)
-                    max_dates.append(max_date)
+                    # If the filtered block is not empty, calculate the three highest values and their corresponding dates
+                    top_three = sorted(filtered_block, key=lambda x: np.abs(x[0]), reverse=True)[:3]
+                    for value, date in top_three:
+                        max_values.append(value)
+                        max_dates.append(date)
+                    
+                    # max_value, max_date = max(filtered_block, key=lambda x: np.abs(x[0]))
+                    # max_values.append(max_value)
+                    # max_dates.append(max_date)
+                    # If the max value switches from positive to negative or vice versa within the block, record three max values and three dates:
+                    if len(filtered_block) > 1:
+                        for j in range(1, len(filtered_block)):
+                            if np.sign(filtered_block[j][0]) != np.sign(filtered_block[j-1][0]):
+                                max_values.append(filtered_block[j][0])
+                                max_dates.append(filtered_block[j][1])
+                                
                 # Reset the current block for the next contiguous block
                 current_block = []
 
     # Handle the case where the last block extends to the end of the array
     if current_block:
-        filtered_block = [(value, date) for value, date in current_block if value > 2 or value < -2]
+        filtered_block = [(value, date) for value, date in current_block if value >  strength_threshold or value < - strength_threshold]
         if filtered_block:
             max_value, max_date = max(filtered_block, key=lambda x: np.abs(x[0]))
             max_values.append(max_value)
@@ -291,16 +235,29 @@ def idealENSOphases(nino34index, ens = None, percentile = None, numberofeachphas
     max_values = np.array(max_values)
     max_dates = np.array(max_dates)
 
+    # Print max dates and values separately for positive and negative values
+    positive_max_dates = max_dates[max_values > 0]
+    positive_max_values = max_values[max_values > 0]
+    negative_max_dates = max_dates[max_values < 0]
+    negative_max_values = max_values[max_values < 0]
+    print(f"The maximum values of the Nino 3.4 index that are greater than {strength_threshold} are: {positive_max_values}")
+    print(f"The dates for the maximum values of the Nino 3.4 index that are greater than {strength_threshold} are: {positive_max_dates}")
+    print(f"The maximum values of the Nino 3.4 index that are less than {-strength_threshold} are: {negative_max_values}")
+    print(f"The dates for the maximum values of the Nino 3.4 index that are less than {-strength_threshold} are: {negative_max_dates}")
+
+    # print(f"The maximum values of the Nino 3.4 index that are greater than {strength_threshold} or less than {-strength_threshold} are: {max_values}")
+    # print(f"The dates for the maximum values of the Nino 3.4 index that are greater than {strength_threshold} or less than {-strength_threshold} are: {max_dates}")
     ## FIND NEUTRAL PHASES: ---------------------------------------------------------------------------------
 
     filtered_neutral_values = []
     filtered_neutral_dates = []
+    neutral_threshold = 0.3
 
     # Find blocks of consecutive dates where the enso index is -0.3 to 0.3, without using the threshold mask
     current_block_dates_neutral = []
     current_block_values_neutral = []
     for i in range(n):
-        if nino34index[i] > -0.2 and nino34index[i] < 0.2:
+        if nino34index[i] > -neutral_threshold and nino34index[i] < neutral_threshold:
             current_block_dates_neutral.append(nino34index.time.values[i])
             current_block_values_neutral.append(nino34index[i].values)
         else:
@@ -325,18 +282,18 @@ def idealENSOphases(nino34index, ens = None, percentile = None, numberofeachphas
     # Convert dates in filtered_neutral_dates to datetime objects
     filtered_neutral_dates = [[convert_to_datetime(date) for date in block] for block in filtered_neutral_dates]
 
-    print(f"The longest block of consecutive dates with Nino 3.4 index between -0.2 and 0.2 is {max(map(len, filtered_neutral_dates))} dates long.")
-    print(f"The top 5 longest blocks of consecutive dates with Nino 3.4 index between -0.2 and 0.2 are {sorted(map(len, filtered_neutral_dates), reverse=True)[:number_of_blocks]} dates long.")
+    print(f"The longest block of consecutive dates with Nino 3.4 index between -{neutral_threshold} and {neutral_threshold} is {max(map(len, filtered_neutral_dates))} dates long.")
+    print(f"The top 5 longest blocks of consecutive dates with Nino 3.4 index between -{neutral_threshold} and {neutral_threshold} are {sorted(map(len, filtered_neutral_dates), reverse=True)[:number_of_blocks]} dates long.")
     
     # Save these top five blocks of dates in a variable
     consecutive_neutral_dates = sorted(filtered_neutral_dates, key=len, reverse=True)[:number_of_blocks]
     
 
-    print(f"The dates for all the top 5 longest blocks of consecutive dates with Nino 3.4 index between -0.2 and 0.2 are:")
+    print(f"The dates for all the top 5 longest blocks of consecutive dates with Nino 3.4 index between -{neutral_threshold} and {neutral_threshold} are:")
     for i, block in enumerate(sorted(filtered_neutral_dates, key=len, reverse=True)[:number_of_blocks]):
         print(f"Block {i + 1}: {block[0]} to {block[-1]}")
 
-    print(f"ALL of the actual values of the Nino 3.4 index for the top 5 longest blocks of consecutive dates with Nino 3.4 index between -0.2 and 0.2 are:")
+    print(f"ALL of the actual values of the Nino 3.4 index for the top 5 longest blocks of consecutive dates with Nino 3.4 index between -{neutral_threshold} and {neutral_threshold} are:")
     for i, block in enumerate(sorted(filtered_neutral_values, key=len, reverse=True)[:number_of_blocks]):
         print(f"Block {i + 1}: {np.array(block)} \n")
         # print(f"Block {i + 1}: {block[0]} to {block[-1]}")
@@ -379,7 +336,7 @@ def idealENSOphases(nino34index, ens = None, percentile = None, numberofeachphas
     # add labels of each dates for each point (without time values)
     for i, txt in enumerate(max_dates):
         plt.annotate(pd.to_datetime(txt).strftime('%Y-%m-%d'), (max_dates[i], max_values[i]), fontsize=10)
-    plt.title(f"{str(ens)} : Nino 3.4 Index with Events Greater than 2.0")
+    plt.title(f"{str(ens)} : Nino 3.4 Index with Events Greater than {strength_threshold}")
     plt.ylabel('Nino 3.4 Index')
     plt.xlabel('Time')
     # plt.show()
