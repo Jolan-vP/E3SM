@@ -29,7 +29,7 @@ def get_config(exp_name):
 
     # add additional attributes for easier use later
     config["fig_dpi"] = config["fig_dpi"]
-    config["data_dir"] = config["data_dir"]
+    config["data_dir"] = config["perlmutter_data_dir"]
 
     return config
 

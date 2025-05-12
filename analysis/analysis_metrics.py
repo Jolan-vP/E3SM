@@ -453,31 +453,40 @@ def spread_skill(output, target, config):
     plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/SpreadSkillRatio_network_vs_climatology.png', format='png', bbox_inches ='tight', dpi = 300)
     plt.close()
 
-def subsetanalysis_SHASH_ENSO(sample_index, shash_params, climatology, target, target_raw, config, x_values, subset_keyword = None): 
+def subsetanalysis_SHASH_ENSO(sample_index, daily_enso_timestamps, shash_params, climatology, target, target_raw, config, x_values, subset_keyword = None): 
     # open saved ENSO phase indices and CRPS scores for all samples
     ENSO_CRPS_dict = load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "ENSO_indices_CRPS.pkl")
 
-    elnino = np.array(ENSO_CRPS_dict["elnino"], dtype = int)
-    lanina = np.array(ENSO_CRPS_dict["lanina"], dtype = int)
-    neutral = np.array(ENSO_CRPS_dict["neutral"], dtype = int)
-    crps_scores = load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_network_values.pkl")
+    elnino = daily_enso_timestamps["El Nino"]
+    lanina = daily_enso_timestamps["La Nina"]
+    neutral = daily_enso_timestamps["Neutral"]
 
-    # # Select subset of samples based on percentage
-    # subset_indices = sample_index[:, 100 - percentage]
-    # # remove zeros from subset_indices
-    # subset_indices = subset_indices[subset_indices != 0].astype(int)
+    # Step 1: Make fast sets for lookup
+    elnino_set = set(elnino)
+    lanina_set = set(lanina)
+    neutral_set = set(neutral)
+
+    # Step 2: Create map from datetime -> index
+    time_to_index = {pd.Timestamp(t.item()): i for i, t in enumerate(target.time.values)}
+
+    # Step 3: Create arrays of indices by intersecting with time set
+    elnino_ix = np.array([time_to_index[t] for t in elnino if pd.Timestamp(t) in time_to_index])
+    lanina_ix = np.array([time_to_index[t] for t in lanina if pd.Timestamp(t) in time_to_index])
+    neutral_ix = np.array([time_to_index[t] for t in neutral if pd.Timestamp(t) in time_to_index])
+
+    crps_scores = load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_network_values.pkl")
 
     subset_indices = sample_index
     
     # Calculate relative ratio of ENSO phases relative to all samples
-    elnino_ratio = elnino.shape[1] / crps_scores.shape[0]
-    lanina_ratio = lanina.shape[1] / crps_scores.shape[0]
-    neutral_ratio = neutral.shape[1] / crps_scores.shape[0]
+    elnino_ratio = len(elnino) / crps_scores.shape[0]
+    lanina_ratio = len(lanina) / crps_scores.shape[0]
+    neutral_ratio = len(neutral) / crps_scores.shape[0]
 
-    # identify enso phases of each sample in the subset
-    sub_elnino = elnino[np.isin(elnino, subset_indices)]
-    sub_lanina = lanina[np.isin(lanina, subset_indices)]
-    sub_neutral = neutral[np.isin(neutral, subset_indices)]
+    # identify enso phases of each sample in the subset_ix
+    sub_elnino = elnino[np.isin(elnino_ix, subset_indices)]
+    sub_lanina = lanina[np.isin(lanina_ix, subset_indices)]
+    sub_neutral = neutral[np.isin(neutral_ix, subset_indices)]
 
     sub_elnino_dates = target.time.isel(time = sub_elnino)
     sub_lanina_dates = target.time.isel(time = sub_lanina)

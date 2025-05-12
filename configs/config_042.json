@@ -4,6 +4,7 @@
 
     "input_data": "exp042",
     "data_source": "E3SM", 
+    "inference_data": "E3SM",
     "data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved",
     "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/",
     "perlmutter_inputs_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",

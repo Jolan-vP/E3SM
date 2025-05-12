@@ -69,7 +69,7 @@ def identify_nino_phases(nino34_index, config, threshold=0.4, window=6, lagtime 
 
     if config["data_source"] == "E3SM":
         # open original training dataset: 
-        train_ds = filemethods.get_netcdf_da(str(config['perlmutter_data_dir']) + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+        train_ds = filemethods.get_netcdf_da(str(config['perlmutter_data_dir']) + "input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
         train_ds = train_ds.sel(time = slice("1850", "2014"))
 
         index_array_daily = phase_array.copy()
@@ -134,27 +134,25 @@ def identify_nino_phases(nino34_index, config, threshold=0.4, window=6, lagtime 
 
 def ENSO_CRPS(daily_enso_dates, crps_scores, target_time, config): 
 
-    elnino_dates = daily_enso_dates["El Nino"]
-    lanina_dates = daily_enso_dates["La Nina"]
-    neutral_dates = daily_enso_dates["Neutral"]
+    elnino_dates = [d.item() for d in daily_enso_dates["El Nino"]]
+    lanina_dates = [d.item() for d in daily_enso_dates["La Nina"]]
+    neutral_dates = [d.item() for d in daily_enso_dates["Neutral"]]
 
     ENSO_dict = {
-        "elnino" : [elnino_dates], 
-        "lanina" : [lanina_dates], 
-        "neutral": [neutral_dates], 
-        "CRPS":    [crps_scores]
+        "elnino" : elnino_dates, 
+        "lanina" : lanina_dates, 
+        "neutral": neutral_dates, 
+        "CRPS":    crps_scores
     }
 
     save_pickle(ENSO_dict, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "ENSO_indices_CRPS.pkl")
-    
-    # derive indices for each phase using target time
-    elnino = np.array([np.where(target_time == date)[0][0] for date in elnino_dates if date in target_time])
-    lanina = np.array([np.where(target_time == date)[0][0] for date in lanina_dates if date in target_time])
-    neutral = np.array([np.where(target_time == date)[0][0] for date in neutral_dates if date in target_time])
 
-    CRPS_elnino = round(crps_scores[elnino].mean(), 5)
-    CRPS_lanina = round(crps_scores[lanina].mean(), 5)
-    CRPS_neutral = round(crps_scores[neutral].mean(), 5)
+    # Create crps xarray object with target time coordinate 
+    crps_scores = xr.DataArray(crps_scores, coords=[target_time], dims=["time"], attrs={"description": "CRPS scores"})
+
+    CRPS_elnino = round(crps_scores.sel(time = elnino_dates).mean(), 5)
+    CRPS_lanina = round(crps_scores.sel(time = lanina_dates).mean(), 5)
+    CRPS_neutral = round(crps_scores.sel(time = neutral_dates).mean(), 5)
    
     print(f"El Nino average CRPS across all samples: {np.round(CRPS_elnino, 4)}")
     print(f"La Nina average CRPS across all samples: {np.round(CRPS_lanina, 4)}")

@@ -1,4 +1,5 @@
 {
     "todo-tree.tree.showBadges": false,
-    "git.ignoreLimitWarning": true
+    "git.ignoreLimitWarning": true,
+    "explorer.sortOrder": "modified"
 }

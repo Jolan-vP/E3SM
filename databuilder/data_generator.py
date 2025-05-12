@@ -73,7 +73,7 @@ class ClimateData:
         return self.d_train, self.d_val, self.d_test 
 
     def _create_data(self):  
-        if self.config["ensembles"] == "None":
+        if "ERA5" in self.config["data_source"]:
             print("Splitting data into train, val, test from singular file rather than ensemble members.")
             input_ds = filemethods.get_netcdf_da(self.data_dir + "ERA5/ERA5_1x1_input_vars_1940-2023.nc")
 
@@ -81,7 +81,7 @@ class ClimateData:
             validate_ds = input_ds.sel(time = slice(str(self.config["val_years"][0]), str(self.config["val_years"][1])))
             test_ds = input_ds.sel(time = slice(str(self.config["test_years"][0]), str(self.config["test_years"][1])))
         
-        else:
+        elif self.config["data_source"] == "E3SM":
             for iens, ens in enumerate(self.config["ensembles"]):
                 print("Opening .nc files")
                 if self.verbose:
@@ -526,30 +526,29 @@ def multi_input_data_organizer(config, fn1, fn2, fn3, MJO=False, ENSO = False, o
 
     # ENSO Indices / Temperature Time Series of Nino3.4 -------------------
     if ENSO == True: 
-        print("Opening high-res Nino34 Data")
+        print("Opening high-res DAILY Linearly Interpolated Nino34 Data")
         ninox_array = np.zeros([da_length, 3])
         for iens, ens in enumerate(config["databuilder"]["ensemble_codes"]):
-            fpath = config["perlmutter_data_dir"] + "presaved/ENSO_ne30pg2_HighRes/nino.member" + str(ens) + ".daily.nc"
+            fpath = config["perlmutter_data_dir"] + "ENSO_Data/E3SM/ENSO_ne30pg2_HighRes/nino.member" + str(ens) + "_daily_linterp_shifted.nc"
             ninox = filemethods.get_netcdf_da(fpath)
             ninox = ninox.sel(time = slice(str(start_year), str(end_year)))
             nino34 = ninox.nino34.values
+            print(f"shape of nino34: {nino34.shape}")
+            print(f"nino time coordinate: {ninox.time}")
 
-            if start_year ==1850: 
-                # add 30 new days of nans to the beginning of the array such that the total array length is now 30 values longer:
-                nan_array = np.zeros(31)
-                ninox_array[:, iens] = np.concatenate((nan_array, nino34), axis = 0)
+            if start_year == 1850: 
+                # add 15 new days of nans to the beginning of the array such that the total array length is now 15 values longer:
+                nan_array = np.zeros(15)
+                ninox_array[:, iens] = np.concatenate((nan_array, nino34, nan_array), axis = 0)
+                print(f"shape of ninox_array after adding 15 frontnans: {ninox_array.shape}")
             else: 
                 ninox_array[:, iens] = nino34
         print(f"filtered ninox_array shape: {ninox_array.shape}")
-            # 30 values missing (first month) from 60225 total samples due to backward rolling average and monthly time step configuration
-            # By starting at index 31, the ninox array should begin on 0 days since 1850-01-01 rather than 31 days since 1850-01-01
+            # 15 values missing (1850-01-01 to 1850-01-15) from 60225 total samples due to backward rolling average and monthly time step configuration
+            # By starting at index 15, the ninox array should begin on 0 days since 1850-01-01
     else:
         pass
-
-    # OTHER INPUT:  -------------------------------
-    # if other == True: 
-    #     print("Opening OTHER")
-   
+  
     # Create Input and Target Arrays ------------------------------------------------------------
     
     # NO LAGGING OCCURS IN THIS CODE

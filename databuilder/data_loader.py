@@ -138,6 +138,9 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
         if selected_months != "None": 
             print(f"Filtering by months: {selected_months}")
             input_filtered, target_filtered = filter_months(selected_months, lagtime, input = input, target = target)
+            print(f"input filtered time: {input_filtered.time}")
+            print(f"target filtered time: {target_filtered.time}")
+
             print(f"input filtered shape: {input_filtered.shape}")
             print(f"target filtered shape: {target_filtered.shape}")
         else: 
@@ -149,8 +152,6 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
         input_mod_final = input_filtered[smoothing_length:]
         target_mod_final = target_filtered[smoothing_length:]
         
-        print(f" input_mod_final time: {input_mod_final.time}")
-        print(f" target_mod_final time: {target_mod_final.time}")
         # print(f"input_mod_final shape: {input_mod_final.shape}")
         # print(f"target_mod_final shape: {target_mod_final.shape}")
 
@@ -164,7 +165,7 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
                     "x": (["time", "lat", "lon", "channel"], input_mod_final.data),  
                     "y": (["time"], target_mod_final.data),
                     }, coords = {
-                        "time": input_mod_final.coords["time"],
+                        "time": target_mod_final.coords["time"],
                         "lat": input_mod_final.coords["lat"],
                         "lon": input_mod_final.coords["lon"],
                         "channel": input_mod_final.coords["channel"]
@@ -174,7 +175,7 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
                     "x": (["time", "lat", "lon"], input_mod_final.data),  
                     "y": (["time"], target_mod_final.data),
                     }, coords = {
-                        "time": input_mod_final.coords["time"],
+                        "time": target_mod_final.coords["time"],
                         "lat": input_mod_final.coords["lat"],
                         "lon": input_mod_final.coords["lon"],
                     })
@@ -183,7 +184,7 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
                     "x": (["time", "channel"], input_mod_final.data),  
                     "y": (["time"], target_mod_final.data),
                     }, coords = {
-                        "time": input_mod_final.coords["time"],
+                        "time": target_mod_final.coords["time"],
                         "channel": input_mod_final.coords["channel"]
                     })
             else: 
@@ -191,6 +192,7 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
 
                 raise ValueError
             
+            print(f"target time: {data_dict['y'].sel(time = slice('1860-01-01','1861-01-01'))}") 
             return data_dict
     
     elif target_only is True: 
