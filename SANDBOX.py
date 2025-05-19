@@ -65,7 +65,7 @@ print(f"pytorch version = {torch.__version__}")
 # https://github.com/victoresque/pytorch-template/tree/master
 
 # ----CONFIG AND CLASS SETUP----------------------------------------------
-config = utils.get_config("exp076")
+config = utils.get_config("exp077")
 print(config["expname"])
 seed = config["seed_list"][0]
 
@@ -320,425 +320,431 @@ print(output[:20]) # look at a small sample of the output data
 
 # # ------------------------------ Evaluate Network Predictions -----------------------------------------------
 # # -------------------------------------------------------------------------------------------------------------
-if config["input_data"] != "None": 
-    input_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "train_dat.nc"
-    input_valfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "val_dat.nc"
-    input_testfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "test_dat.nc"
-else: 
-    input_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_trimmed_" + "train_dat.nc"
-    input_valfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_trimmed_" + "val_dat.nc"
-    input_testfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_trimmed_" + "test_dat.nc"
+# if config["input_data"] != "None": 
+#     input_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "train_dat.nc"
+#     input_valfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "val_dat.nc"
+#     input_testfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "test_dat.nc"
+# else: 
+#     input_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_trimmed_" + "train_dat.nc"
+#     input_valfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_trimmed_" + "val_dat.nc"
+#     input_testfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_trimmed_" + "test_dat.nc"
 
-lagtime = config["databuilder"]["lagtime"] 
-smoothing_length = config["databuilder"]["averaging_length"]  
-selected_months = config["databuilder"]["target_months"]
-front_cutoff = config["databuilder"]["front_cutoff"] 
-back_cutoff = config["databuilder"]["back_cutoff"] 
+# lagtime = config["databuilder"]["lagtime"] 
+# smoothing_length = config["databuilder"]["averaging_length"]  
+# selected_months = config["databuilder"]["target_months"]
+# front_cutoff = config["databuilder"]["front_cutoff"] 
+# back_cutoff = config["databuilder"]["back_cutoff"] 
 
-# # # # ## -------------------------------------------------------------------------------------------------
+# # # # # ## -------------------------------------------------------------------------------------------------
 
-# Open Model Outputs
-model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + '_network_SHASH_parameters.pkl'
-output = analysis_metrics.load_pickle(model_output)
-print(f"output shape: {output.shape}")
+# # Open Model Outputs
+# model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + '_network_SHASH_parameters.pkl'
+# output = analysis_metrics.load_pickle(model_output)
+# print(f"output shape: {output.shape}")
 
-# Open Target Data
-test_inputs = open_data_file(input_testfn)
-target = test_inputs['y']
-print(f"UDL target shape: {target.shape}")
+# # Open Target Data
+# test_inputs = open_data_file(input_testfn)
+# target = test_inputs['y']
+# print(f"UDL target shape: {target.shape}")
 
-print(f"test input time: {test_inputs['x'].sel(time = slice('1851-01-01', '1852-01-01')).time}")
-print(f"test target time: {target.time.sel(time = slice('1851-01-01', '1852-01-01')).time}")
+# # print(f"test input time: {test_inputs['x'].sel(time = slice('1851-01-01', '1852-01-01')).time}")
+# # print(f"test target time: {target.time.sel(time = slice('1851-01-01', '1852-01-01')).time}")
 
-# Open Climatology Data: TRAINING DATA
-train_inputs = open_data_file(input_trainfn)
-climatology = train_inputs['y']
-print(f"UDL climatology shape {climatology.shape}")
+# # Open Climatology Data: TRAINING DATA
+# train_inputs = open_data_file(input_trainfn)
+# climatology = train_inputs['y']
+# print(f"UDL climatology shape {climatology.shape}")
 
-# # # Compare SHASH predictions to climatology histogram
-# # p = calc_climatology.deriveclimatology(output, climatology, number_of_samples=50, config=config, climate_data = False)
+# # # # Compare SHASH predictions to climatology histogram
+# p = calc_climatology.deriveclimatology(output, climatology, number_of_samples=50, config=config, climate_data = False)
 
-# # # # ----------------------------- CRPS ------------------------------------------------------------------------
-# # # # -------------------------------------------------------------------------------------------------------------
-x = np.linspace(-10, 12, 1000)
-x_wide = np.arange(-25, 25, 0.01)
+# # # # # ----------------------------- CRPS ------------------------------------------------------------------------
+# # # # # -------------------------------------------------------------------------------------------------------------
+# x = np.linspace(-10, 12, 1000)
+# x_wide = np.arange(-25, 25, 0.01)
 
-# # Compute CRPS for climatology
-# CRPS_climatology = CRPS.calculateCRPS(output, target, x_wide, config, climatology)
+# # # Compute CRPS for climatology
+# # CRPS_climatology = CRPS.calculateCRPS(output, target, x_wide, config, climatology)
 
-# # Compute CRPS for all predictions 
-# CRPS_network = CRPS.calculateCRPS(output, target, x_wide, config, climatology = None)
+# # # Compute CRPS for all predictions 
+# # CRPS_network = CRPS.calculateCRPS(output, target, x_wide, config, climatology = None)
 
-# analysis_metrics.save_pickle(CRPS_climatology, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_climatology_values.pkl")
-# analysis_metrics.save_pickle(CRPS_network, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_network_values.pkl")
+# # analysis_metrics.save_pickle(CRPS_climatology, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_climatology_values.pkl")
+# # analysis_metrics.save_pickle(CRPS_network, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_network_values.pkl")
 
-CRPS_climatology = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_climatology_values.pkl")
-CRPS_network = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_network_values.pkl")
+# CRPS_climatology = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_climatology_values.pkl")
+# CRPS_network = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_network_values.pkl")
 
-# Compare CRPS scores for climatology vs predictions (Is network better than climatology on average?)
-CRPS.CRPScompare(CRPS_network, CRPS_climatology, config)
+# # Compare CRPS scores for climatology vs predictions (Is network better than climatology on average?)
+# CRPS.CRPScompare(CRPS_network, CRPS_climatology, config)
 
-# # # ----------------------------- ENSO ----------------------------------------------------------------------
-# -------------------------------------------------------------------------------------------------------------
-
-
-# # Calculate ENSO Indices from Monthly ENSO Data:
-if config["data_source"] == "E3SM": 
-    # Calculate ENSO Indices from Daily ENSO Data: 
-    daily_ENSO = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/ENSO_Data/E3SM/ENSO_ne30pg2_HighRes/nino.member0201_daily_linterp_shifted.nc')
-    Nino34 = daily_ENSO.nino34
-    # Create desired full time range (e.g., 1850-01-01 to 2014-12-31, daily)
-    full_time = xr.cftime_range(start='1850-01-01', end='2014-12-31', freq='D', calendar = 'noleap')
-    # Reindex to full time range, filling the first and last two weeks of the entire dataset with NANs. Due to monthly -> daily interpolation of centered monthly means, the first and last two weeks are missing. 
-    Nino34 = Nino34.reindex(time=full_time)
-
-elif config["data_source"] == "ERA5":
-    monthlyENSO = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/ENSO_Data/OBS/nino34.long.anom_daily_linterp_shifted.nc')
-    Nino34 = monthlyENSO
-
-# Calculate enso indices for daily data based on EVALUATION DAY
-daily_enso_timestamps = ENSO_indices_calculator.identify_nino_phases(Nino34, config, threshold=0.4, window=6, lagtime = lagtime, smoothing_length = smoothing_length)
-
-# save daily timestamps dictionary: 
-enso_savename = str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_daily_enso_timestamps.pkl"
-# analysis_metrics.save_pickle(daily_enso_timestamps, enso_savename)
-daily_enso_timestamps = analysis_metrics.load_pickle(enso_savename)
-
-elnino_dates = daily_enso_timestamps["El Nino"]
-lanina_dates = daily_enso_timestamps["La Nina"]
-neutral_dates = daily_enso_timestamps["Neutral"]
-
-# Separate CRPS scores by ENSO phases 
-analysis.ENSO_indices_calculator.ENSO_CRPS(daily_enso_timestamps, CRPS_network, target.time, config)
-
-# # Compare Distributions? 
-# p = calc_climatology.deriveclimatology(output, climatology, number_of_samples=30, config=config, climate_data = False)
-
-# Calculate precipitation anomalies during each ENSO Phase + Plot -----------------------------------------
-print("Calculating Raw Precip Test Data")
-# Open raw TESTING target data
-if config["inference_data"] == "E3SM":
-    nc_file = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc')
-    prect_global = nc_file.PRECT.sel(time = slice(str(config["databuilder"]["input_years"][0]) + '-01-01', str(config["databuilder"]["input_years"][1])))
-elif config["inference_data"] == "ERA5":
-    nc_file = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5/ERA5_1x1_input_vars_1940-2023.nc')
-    prect_global = nc_file.tp
-else: 
-    ValueError("Please specify a valid inference data source")
-
-min_lat, max_lat = config["databuilder"]["target_region"][:2]
-min_lon, max_lon = config["databuilder"]["target_region"][2:]
-
-# Convert longitudes from -180 to 180 range to 0 to 360 range
-if min_lon < 0:
-    min_lon += 360
-if max_lon < 0:
-    max_lon += 360
-
-if isinstance(prect_global, xr.DataArray):
-    mask_lon = (prect_global.lon >= min_lon) & (prect_global.lon <= max_lon)
-    mask_lat = (prect_global.lat >= min_lat) & (prect_global.lat <= max_lat)
-    prect_regional = prect_global.where(mask_lon & mask_lat, drop=True)
-
-# average around target region
-prect_regional = prect_regional.mean(dim=['lat', 'lon'])
-target_raw = universaldataloader(prect_regional, config, target_only = True, repackage = False)
-target_raw = target_raw * 86400 * 1000  # Convert to mm/day
-
-analysis_metrics.save_pickle(target_raw, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_target_raw.pkl")
-target_raw = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_target_raw.pkl")
-    
-# # # DISCARD PLOTS: --------------------------------------------------------------------------------------------
-# # # -------------------------------------------------------------------------------------------------------------
-print("Discard Plots")
-# Discard plot of CRPS vs IQR Percentile for INCREASING CONFIDENCE, CRPS vs Anomalies & true precip
-sample_index_increasingconf_anoms, inconf_perc, inconf_crps = analysis_metrics.IQRdiscard_plot(
-    output, target, CRPS_network, CRPS_climatology, target.time, config, target_type = 'anomalous', keyword = 'All Samples', analyze_months = False, most_confident= True)
-# sample_index_increasingconf_raw = analysis_metrics.IQRdiscard_plot(output, target_raw, CRPS_network, CRPS_climatology, config, target_type = 'raw', keyword = 'All Samples', analyze_months = False, most_confident= True)
-# print(f"shape of sample index : {sample_index_increasingconf_anoms.shape}")
-
-# # # Discard plot of CRPS vs IQR Percentile for DECREASING CONFIDENCE
-sample_index_decreasingconf_anoms, deconf_perc, deconf_crps = analysis_metrics.IQRdiscard_plot(
-    output, target, CRPS_network, CRPS_climatology, target.time, config, target_type = 'anomalous', keyword = 'All Samples', analyze_months = False, most_confident= False)
-
-if config["arch"]["type"] == "basicnn":
-    crps_SNN = CRPS_network
-    CNN_expname = "exp042" # CHOOSE
-    crps_CNN = open_data_file(str(config["perlmutter_output_dir"]) + str(CNN_expname) + '/' + CNN_expname + '_CRPS_network_values.pkl')
-    CNN_inputs = open_data_file(str(config["perlmutter_inputs_dir"]) + str(CNN_expname) + "_trimmed_" + "test_dat.nc")
-    CNN_target = CNN_inputs['y']
-    SNN_target = target
-else:
-    crps_CNN = CRPS_network
-    SNN_expname = "exp074" # CHOOSE
-    crps_SNN = open_data_file(str(config["perlmutter_output_dir"]) + str(SNN_expname) + '/' + SNN_expname + '_CRPS_network_values.pkl')
-    SNN_inputs = open_data_file(str(config["perlmutter_inputs_dir"]) + str(SNN_expname) + "_trimmed_" + "test_dat.nc")
-    SNN_target = SNN_inputs['y']
-    CNN_target = target
-
-# # Discard plot of CRPS vs Target Magnitude; CNN, Simple NN, Climo
-analysis_metrics.target_discardplot(CNN_target, SNN_target, crps_CNN, crps_SNN, CRPS_climatology, config, target_type = 'anomalous', keyword = 'All Samples')
-analysis_metrics.target_discardplot(target_raw, SNN_target, crps_SNN, crps_SNN, CRPS_climatology, config, target_type = 'raw', keyword = 'All Samples')
-
-# # SUCCESS RATIO discard plot
-analysis_metrics.IQR_success_discard_plot(output, CRPS_network, CRPS_climatology, config, keyword = None)
-
-
-# # ANALYSIS OF BEST PREDICTIONS --------------------------------------------------------------------------------
+# # # # ----------------------------- ENSO ----------------------------------------------------------------------
 # # -------------------------------------------------------------------------------------------------------------
-## Analysis of Comparatively Better CRPS Predictions  
-print("Analysis of 10-30% most confident predictions")
-# Composite Maps - Anomalies by ENSO Phase for Most Confident Low CRPS Predictions
-input_test_maps = open_data_file(input_testfn)
-input_test_maps = input_test_maps['x']
-
-# # # Isolate the MOST confident of these low CRPS predictions from 'sample_index_anoms'
-percent = 30 
-percentile = 100 - percent # 30% most confident predictions 
-percentile_index_high = int(sample_index_increasingconf_anoms.shape[1] - ((percentile/100) * sample_index_increasingconf_anoms.shape[1]))
-# TAKE OUT THE MOST CONFIDENT 10% WHICH HAVE ABNORMAL VALUES: #TODO: DECIDE WHETHER TO KEEP THIS FEATURE OR NOT
-percentile_index_10 = int(sample_index_increasingconf_anoms.shape[1] - ((10/100) * sample_index_increasingconf_anoms.shape[1]))
-percentile_index_high = np.unique(np.array([percentile_index_high, percentile_index_10]))
-IQR_subset_highconf = sample_index_increasingconf_anoms[:, percentile_index_high][sample_index_increasingconf_anoms[..., percentile_index_high] != 0].astype(int)
-IQR_subset_highconf_dates = target.time.isel(time = IQR_subset_highconf)
-
-# # Isolate the LEAST confident of low CRPS predictions from 'sample_index_anoms'
-percentile_index_low = int(sample_index_decreasingconf_anoms.shape[1] - ((percentile/100) * sample_index_decreasingconf_anoms.shape[1]))
-IQR_subset_lowconf = sample_index_decreasingconf_anoms[:, percentile_index_low][sample_index_decreasingconf_anoms[..., percentile_index_low] != 0].astype(int)
-IQR_subset_lowconf_dates = target.time.isel(time = IQR_subset_lowconf)
-
-# # # Look at predictions with CRPS that are just comparatively lower than climatological CRPS on a sample-by-sample basis
-comparatively_low_CRPS = np.where(CRPS_network < CRPS_climatology)[0]
-lowCRPS_highconfident = np.intersect1d(comparatively_low_CRPS, IQR_subset_highconf).astype(int)
-# # print(f"Number of Comparatively low CRPS High Conf Samples: {lowCRPS_highconfident.shape}")
-
-lowCRPS_lowconfident = np.intersect1d(comparatively_low_CRPS, IQR_subset_lowconf).astype(int)
-print(f"Number of Comparatively low CRPS Low Conf Samples: {lowCRPS_lowconfident.shape}")
-
-sub_elnino_dates, sub_lanina_dates, sub_neutral_dates = analysis_metrics.subsetanalysis_SHASH_ENSO(lowCRPS_highconfident, daily_enso_timestamps, output, climatology, target, target_raw, config, x, subset_keyword = 'Comparatively Low CRPS') 
-
-# ## Composite Maps - Anomalies by ENSO Phase for Comparatively Low, Confident CRPS Predictions
-# analysis_metrics.compositemapping(sub_elnino_dates, input_test_maps, config, keyword= "Comparatively Low CRPS High Conf El Nino Norm")
-# analysis_metrics.compositemapping(sub_lanina_dates, input_test_maps, config, keyword= "Comparatively Low CRPS High Conf La Nina Norm")
-
-# # Composite Maps - All anomalies for Comparatively Low, Confident CRPS Predictions
-# analysis_metrics.compositemapping(lowCRPS_highconfident, input_test_maps, config, keyword= "Comparatively Low CRPS High Conf Norm All")
-
-# Low CRPS, High Confidence SHASH Predictions:
-lowCRPS_highconf_params = output[lowCRPS_highconfident, ...]
-analysis_metrics.plotSHASH(lowCRPS_highconf_params, climatology, config, keyword = "ComparativelyLowCRPS_HighConf")
-
-# Low CRPS, Low Confidence SHASH Predictions:
-lowCRPS_lowconf_params = output[lowCRPS_lowconfident, ...]
-analysis_metrics.plotSHASH(lowCRPS_lowconf_params, climatology, config, keyword = "ComparativelyLowCRPS_LowConf")
-
-# # Composite Maps - **CONDITIONED ON CONFIDENCE** enso phase samples -----------------------------------
-
-# EL NINO - High Confidence
-high_conf_EN_dates = elnino_dates[elnino_dates.isin(IQR_subset_highconf_dates)]
-# EL NINO - Low Confidence
-low_conf_EN_dates = elnino_dates[elnino_dates.isin(IQR_subset_lowconf_dates)]
-
-# analysis_metrics.differenceplot(high_conf_EN_dates, low_conf_EN_dates, input_test_maps, target, CRPS_network, config, normalized = True, keyword= "Confidence Conditioned El Nino High-Low Confidence Norm")
-# analysis_metrics.differenceplot(high_conf_EN_dates, low_conf_EN_dates, input_test_maps, target, CRPS_network, config, normalized = False, keyword= "Confidence Conditioned El Nino High-Low Confidence")
-# LA NINA - High Confidence
-high_conf_LN_dates = lanina_dates[lanina_dates.isin(IQR_subset_highconf_dates)]
-# LA NINA - Low Confidence
-low_conf_LN_dates = lanina_dates[lanina_dates.isin(IQR_subset_lowconf_dates)]
-
-# analysis_metrics.differenceplot(high_conf_LN_dates, low_conf_LN_dates, input_test_maps, target, CRPS_network, config, normalized = True, keyword= "Confidence Conditioned La Nina High-Low Confidence Norm")
-# analysis_metrics.differenceplot(high_conf_LN_dates, low_conf_LN_dates, input_test_maps, target, CRPS_network, config, normalized = False, keyword= "Confidence Conditioned La Nina High-Low Confidence")
-# Neutral - High Confidence
-high_conf_NE_dates = neutral_dates[neutral_dates.isin(IQR_subset_highconf_dates)]
-# Neutral - Low Confidence
-low_conf_NE_dates = neutral_dates[neutral_dates.isin(IQR_subset_lowconf_dates)]
-
-# analysis_metrics.differenceplot(high_conf_NE_dates, low_conf_NE_dates, input_test_maps, target, CRPS_network, config, normalized = True, keyword= "Confidence Conditioned Neutral High-Low Confidence Norm")
-# analysis_metrics.differenceplot(high_conf_NE_dates, low_conf_NE_dates, input_test_maps, target, CRPS_network, config, normalized = False, keyword= "Confidence Conditioned Neutral High-Low Confidence")
 
 
-# # ## Combined Phase Discard Plot: -------------------------------------------------------------------------
-sample_index_increasingconf_anoms_EN, inconf_percEN, inconf_crpsEN = analysis_metrics.IQRdiscard_plot(output, target, CRPS_network, CRPS_climatology, elnino_dates, 
-                                                                        config, target_type = 'anomalous', keyword = 'Conditioned on El_Nino', analyze_months = False, most_confident= True)
-sample_index_increasingconf_anoms_LN, inconf_percLN, inconf_crpsLN = analysis_metrics.IQRdiscard_plot(output, target, CRPS_network, CRPS_climatology, lanina_dates, 
-                                                                        config, target_type = 'anomalous', keyword = 'Conditioned on La_Nina', analyze_months = False, most_confident= True)
-sample_index_increasingconf_anoms_NE, inconf_percNE, inconf_crpsNE = analysis_metrics.IQRdiscard_plot(output, target, CRPS_network, CRPS_climatology, neutral_dates, 
-                                                                        config, target_type = 'anomalous', keyword = 'Conditioned on Neutral', analyze_months = False, most_confident= True)
+# # # # Calculate ENSO Indices from Monthly ENSO Data:
+# # if config["data_source"] == "E3SM": 
+# #     # Calculate ENSO Indices from Daily ENSO Data: 
+# #     daily_ENSO = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/ENSO_Data/E3SM/ENSO_ne30pg2_HighRes/nino.member0201_daily_linterp_shifted.nc')
+# #     Nino34 = daily_ENSO.nino34
+# #     # Create desired full time range (e.g., 1850-01-01 to 2014-12-31, daily)
+# #     full_time = xr.cftime_range(start='1850-01-01', end='2014-12-31', freq='D', calendar = 'noleap')
+# #     # Reindex to full time range, filling the first and last two weeks of the entire dataset with NANs. Due to monthly -> daily interpolation of centered monthly means, the first and last two weeks are missing. 
+# #     Nino34 = Nino34.reindex(time=full_time)
 
-percentile_dict = {"EN": inconf_percEN, "LN": inconf_percLN, "NE": inconf_percNE}
-crps_dict = {"EN": inconf_crpsEN, "LN": inconf_crpsLN, "NE": inconf_crpsNE}
-analysis_metrics.IQRdiscard_combined(percentile_dict, crps_dict, CRPS_climatology, config, keyword = None)
+# # elif config["data_source"] == "ERA5":
+# #     monthlyENSO = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/ENSO_Data/OBS/nino34.long.anom_daily_linterp_shifted.nc')
+# #     Nino34 = monthlyENSO
 
+# # Calculate enso indices for daily data based on EVALUATION DAY
+# # daily_enso_timestamps = ENSO_indices_calculator.identify_nino_phases(Nino34, config, threshold=0.4, window=6, lagtime = lagtime, smoothing_length = smoothing_length)
 
-# # Z500 ANALYSIS Z500 Z500 Z500 ----------------------------------------------------------------------------
-# -------------------------------------------------------------------------------------------------------------
-# Composite Maps with Z500 Geopotential Height: 
-Z500_test_data = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/Z500_trimmed_processed_anomalies.v2.LR.historical_0201.eam.h1.1850-2014.nc')
-Z500_test_data = Z500_test_data['x']
-analysis_metrics.compositemapping(lowCRPS_highconfident, Z500_test_data, config, keyword= "Comparatively Low CRPS High Conf Z500 All")
-analysis_metrics.compositemapping(lowCRPS_lowconfident, Z500_test_data, config, keyword= "Comparatively Low CRPS Low Conf Z500 All")
+# # save daily timestamps dictionary: 
+# enso_savename = str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_daily_enso_timestamps.pkl"
+# # analysis_metrics.save_pickle(daily_enso_timestamps, enso_savename)
+# daily_enso_timestamps = analysis_metrics.load_pickle(enso_savename)
 
-Z500_complowCRPS_highconf_dates = Z500_test_data.time.sel(time = Z500_test_data.time[lowCRPS_highconfident])
-Z500_complowCRPS_lowconf_dates = Z500_test_data.time.sel(time = Z500_test_data.time[lowCRPS_lowconfident])
-analysis_metrics.differenceplot(Z500_complowCRPS_highconf_dates, Z500_complowCRPS_lowconf_dates, Z500_test_data, CRPS_network, config, normalized = True, keyword= "Comparatively Low CRPS High-Low Confidence Z500 Norm")
-analysis_metrics.differenceplot(Z500_complowCRPS_highconf_dates, Z500_complowCRPS_lowconf_dates, Z500_test_data, CRPS_network, config, normalized = False, keyword= "Comparatively Low CRPS High-Low Confidence Z500")
+# elnino_dates = np.array([d.item() for d in daily_enso_timestamps["El Nino"]])
+# lanina_dates = np.array([d.item() for d in daily_enso_timestamps["La Nina"]])
+# neutral_dates = np.array([d.item() for d in daily_enso_timestamps["Neutral"]])
 
-analysis_metrics.differenceplot(high_conf_EN_dates, low_conf_EN_dates, Z500_test_data, target, CRPS_network, config, normalized = True, keyword= "Z500 Confidence Conditioned El Nino High-Low Confidence Norm")
-analysis_metrics.differenceplot(high_conf_EN_dates, low_conf_EN_dates, Z500_test_data, target, CRPS_network, config, normalized = False, keyword= "Z500 Confidence Conditioned El Nino High-Low Confidence")
+# # Separate CRPS scores by ENSO phases 
+# analysis.ENSO_indices_calculator.ENSO_CRPS(daily_enso_timestamps, CRPS_network, target.time, config)
 
-analysis_metrics.differenceplot(high_conf_LN_dates, low_conf_LN_dates, Z500_test_data, target, CRPS_network, config, normalized = True, keyword= "Z500 Confidence Conditioned La Nina High-Low Confidence Norm")
-analysis_metrics.differenceplot(high_conf_LN_dates, low_conf_LN_dates, Z500_test_data, target, CRPS_network, config, normalized = False, keyword= "Z500 Confidence Conditioned La Nina High-Low Confidence")
+# # # Compare Distributions? 
+# # p = calc_climatology.deriveclimatology(output, climatology, number_of_samples=30, config=config, climate_data = False)
 
-analysis_metrics.differenceplot(high_conf_NE_dates, low_conf_NE_dates, Z500_test_data, target, CRPS_network, config, normalized = True, keyword= "Z500 Confidence Conditioned Neutral High-Low Confidence Norm")
-analysis_metrics.differenceplot(high_conf_NE_dates, low_conf_NE_dates, Z500_test_data, target, CRPS_network, config, normalized = False, keyword= "Z500 Confidence Conditioned Neutral High-Low Confidence")
+# # Calculate precipitation anomalies during each ENSO Phase + Plot -----------------------------------------
+# # print("Calculating Raw Precip Test Data")
+# # # Open raw TESTING target data
+# # if config["inference_data"] == "E3SM":
+# #     nc_file = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc')
+# #     prect_global = nc_file.PRECT.sel(time = slice(str(config["databuilder"]["input_years"][0]) + '-01-01', str(config["databuilder"]["input_years"][1])))
+# # elif config["inference_data"] == "ERA5":
+# #     nc_file = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5/ERA5_1x1_input_vars_1940-2023.nc')
+# #     prect_global = nc_file.tp
+# # else: 
+# #     ValueError("Please specify a valid inference data source")
 
+# # min_lat, max_lat = config["databuilder"]["target_region"][:2]
+# # min_lon, max_lon = config["databuilder"]["target_region"][2:]
 
-# MJO Phase Analysis: BOOSTRAPPING ----------------------------------------------------------------------------
-# -------------------------------------------------------------------------------------------------------------
-phase_subsets = {
-    1: [2, 3, 4, 5], 
-    2: [6, 7, 8, 1]}
-MJO_phase_timestamps = analysis_metrics.mjo_subsetindices(
-    phase_subsets, input_test_maps, target, elnino_dates, lanina_dates, neutral_dates, CRPS_network, config, keyword = '2-5_6-1')
+# # # Convert longitudes from -180 to 180 range to 0 to 360 range
+# # if min_lon < 0:
+# #     min_lon += 360
+# # if max_lon < 0:
+# #     max_lon += 360
 
-phase_subsets = {
-    1: [3, 4, 5, 6], 
-    2: [7, 8, 1, 2]}
-MJO_subset = analysis_metrics.mjo_subsetindices(
-    phase_subsets, input_test_maps, target, elnino_dates, lanina_dates, neutral_dates, CRPS_network, config, keyword = '3-6_7-2')
+# # if isinstance(prect_global, xr.DataArray):
+# #     mask_lon = (prect_global.lon >= min_lon) & (prect_global.lon <= max_lon)
+# #     mask_lat = (prect_global.lat >= min_lat) & (prect_global.lat <= max_lat)
+# #     prect_regional = prect_global.where(mask_lon & mask_lat, drop=True)
 
-phase_subsets = {
-    1: [4, 5, 6, 7], 
-    2: [8, 1, 2, 3]}
-MJO_subset = analysis_metrics.mjo_subsetindices(
-    phase_subsets, input_test_maps, target, elnino_dates, lanina_dates, neutral_dates, CRPS_network, config, keyword = '4-7_8-3')
+# # # average around target region
+# # prect_regional = prect_regional.mean(dim=['lat', 'lon'])
+# # target_raw = universaldataloader(prect_regional, config, target_only = True, repackage = False)
+# # target_raw = target_raw * 86400 * 1000  # Convert to mm/day
 
-phase_subsets = {
-    1: [5, 6, 7, 8], 
-    2: [1, 2, 3, 4]}
-MJO_subset = analysis_metrics.mjo_subsetindices(
-    phase_subsets, input_test_maps, target, elnino_dates, lanina_dates, neutral_dates, CRPS_network, config, keyword = '5-8_1-4')
+# # analysis_metrics.save_pickle(target_raw, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_target_raw.pkl")
+# target_raw = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_target_raw.pkl")
+    
+# # # # DISCARD PLOTS: --------------------------------------------------------------------------------------------
+# # # # -------------------------------------------------------------------------------------------------------------
+# print("Discard Plots")
+# # Discard plot of CRPS vs IQR Percentile for INCREASING CONFIDENCE, CRPS vs Anomalies & true precip
+# sample_index_increasingconf_anoms, inconf_perc, inconf_crps = analysis_metrics.IQRdiscard_plot(
+#     output, target, CRPS_network, CRPS_climatology, target.time, config, target_type = 'anomalous', keyword = 'All Samples', analyze_months = False, most_confident= True)
+# # sample_index_increasingconf_raw = analysis_metrics.IQRdiscard_plot(output, target_raw, CRPS_network, CRPS_climatology, config, target_type = 'raw', keyword = 'All Samples', analyze_months = False, most_confident= True)
+# # print(f"shape of sample index : {sample_index_increasingconf_anoms.shape}")
 
-# PRECIP EXCEEDANCE THRESHOLD: ------------------------------------------------------------------------------
-# precip_thresh = 95
+# # # # Discard plot of CRPS vs IQR Percentile for DECREASING CONFIDENCE
+# sample_index_decreasingconf_anoms, deconf_perc, deconf_crps = analysis_metrics.IQRdiscard_plot(
+#     output, target, CRPS_network, CRPS_climatology, target.time, config, target_type = 'anomalous', keyword = 'All Samples', analyze_months = False, most_confident= False)
 
-# # # Isolate the time stamps of samples for which the target precip is at or above the 95th percentile 
-# # extreme_precip_dates = analysis_metrics.precip_exceedance_threshold(
-# #     target, output, precip_thresh, CRPS_network, CRPS_climatology, config, keyword = ' ')
+# # if config["arch"]["type"] == "basicnn":
+# #     crps_SNN = CRPS_network
+# #     CNN_expname = "exp042" # CHOOSE
+# #     crps_CNN = open_data_file(str(config["perlmutter_output_dir"]) + str(CNN_expname) + '/' + CNN_expname + '_CRPS_network_values.pkl')
+# #     CNN_inputs = open_data_file(str(config["perlmutter_inputs_dir"]) + str(CNN_expname) + "_trimmed_" + "test_dat.nc")
+# #     CNN_target = CNN_inputs['y']
+# #     SNN_target = target
+# # else:
+# #     crps_CNN = CRPS_network
+# #     SNN_expname = "exp074" # CHOOSE
+# #     crps_SNN = open_data_file(str(config["perlmutter_output_dir"]) + str(SNN_expname) + '/' + SNN_expname + '_CRPS_network_values.pkl')
+# #     SNN_inputs = open_data_file(str(config["perlmutter_inputs_dir"]) + str(SNN_expname) + "_trimmed_" + "test_dat.nc")
+# #     SNN_target = SNN_inputs['y']
+# #     CNN_target = target
 
-# index_increasingconf_exceedanceprecip_success = analysis_metrics.IQRdiscard_plot(
-#     output, target, CRPS_network, CRPS_climatology, extreme_precip_dates, config, target_type = 'anomalous', keyword = 'All Samples', analyze_months = False, most_confident= True)
+# # # # Discard plot of CRPS vs Target Magnitude; CNN, Simple NN, Climo
+# # analysis_metrics.target_discardplot(CNN_target, SNN_target, crps_CNN, crps_SNN, CRPS_climatology, config, target_type = 'anomalous', keyword = 'All Samples')
+# # # analysis_metrics.target_discardplot(target_raw, SNN_target, crps_SNN, crps_SNN, CRPS_climatology, config, target_type = 'raw', keyword = 'All Samples')
 
-
-# ENSO / MJO Tile Plots ! -------------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------------------------------------
-MJO_phase_timestamps = analysis_metrics.load_pickle("/pscratch/sd/p/plutzner/E3SM/saved/output/exp042/2-5_6-1_MJOphase_dates.pkl")
-
-def safe_parse_date(datestr):
-    try:
-        dt = datetime.strptime(datestr, "%Y-%m-%d %H:%M:%S")
-        if dt.month == 2 and dt.day == 29:
-            return None  # Skip leap days for NoLeap calendar
-        return DatetimeNoLeap(dt.year, dt.month, dt.day)
-    except ValueError as e:
-        print(f"Skipping invalid date: {datestr} ({e})")
-        return None
-
-MJO_phase_timestamps_converted = {}
-for phase, datelist in MJO_phase_timestamps.items():
-    converted = [safe_parse_date(date) for date in datelist]
-    MJO_phase_timestamps_converted[phase] = [d for d in converted if d is not None]
-
-MJO_phase_timestamps = MJO_phase_timestamps_converted
-
-# CRPS! And 3d array of dates corresponding to each phase combination
-dates_array_by_phase = analysis_metrics.tiled_phase_analysis(MJO_phase_timestamps, elnino_dates, lanina_dates, neutral_dates, CRPS_network, target, config, keyword = 'CRPS')
-
-## SUCCESS RATIO!
-success_ratio_all_samples = np.where(CRPS_network < CRPS_climatology, 1, 0)
-print(f"Success Ratio All Samples: {success_ratio_all_samples.shape}")
-analysis_metrics.tiled_phase_analysis(MJO_phase_timestamps, elnino_dates, lanina_dates, neutral_dates, success_ratio_all_samples, target, config, keyword = 'Success Ratio')
-
-# RMSE! 
-# mean of SHASH for all output parameters: 
-# Convert output columns to tensors
-mu = torch.tensor(output[:, 0], dtype=torch.float32)
-sigma = torch.tensor(output[:, 1], dtype=torch.float32)
-gamma = torch.tensor(output[:, 2], dtype=torch.float32)
-tau = torch.tensor(output[:, 3], dtype=torch.float32)  # Only if tau is included explicitly
-output_tensor = torch.stack((mu, sigma, gamma, tau), dim=1)
-
-# Instantiate Shash Class: 
-shash_instance = Shash(output_tensor)
-output_mean = shash_instance.mean()
-output_mean_np = output_mean.detach().cpu().numpy()  # Convert to numpy array
-print(f"output_mean shape: {output_mean_np.shape}")
-
-analysis_metrics.tiled_phase_analysis(MJO_phase_timestamps, elnino_dates, lanina_dates, neutral_dates, output_mean_np, target, config, keyword = 'RMSE')
+# # # # SUCCESS RATIO discard plot
+# # analysis_metrics.IQR_success_discard_plot(output, CRPS_network, CRPS_climatology, config, keyword = None)
 
 
-## COUNT + CONFIDENCE PLOTS : ENSO Comparison -----------------------------------------------------------------
-# -------------------------------------------------------------------------------------------------------------
-# histogram of IQR width binned for each ENSO phase
-IQR_EN, IQR_LN, IQR_NE = analysis_metrics.countplot_IQR(output, target, elnino_dates, lanina_dates, neutral_dates, config, keyword = 'All_samples')
+# # # ANALYSIS OF BEST PREDICTIONS --------------------------------------------------------------------------------
+# # # -------------------------------------------------------------------------------------------------------------
+# ## Analysis of Comparatively Better CRPS Predictions  
+# print("Analysis of 10-30% most confident predictions")
+# # Composite Maps - Anomalies by ENSO Phase for Most Confident Low CRPS Predictions
+# input_test_maps = open_data_file(input_testfn)
+# input_test_maps = input_test_maps['x']
 
-# Composite Maps: WHEN CNN IS BETTER THAN SNN: ----------------------------------------------------------------
-# -------------------------------------------------------------------------------------------------------------
+# # # # Isolate the MOST confident of these low CRPS predictions from 'sample_index_anoms'
+# percent = 30 
+# percentile = 100 - percent # 30% most confident predictions 
+# percentile_index_high = int(sample_index_increasingconf_anoms.shape[1] - ((percentile/100) * sample_index_increasingconf_anoms.shape[1]))
+# # TAKE OUT THE MOST CONFIDENT 10% WHICH HAVE ABNORMAL VALUES: #TODO: DECIDE WHETHER TO KEEP THIS FEATURE OR NOT
+# percentile_index_10 = int(sample_index_increasingconf_anoms.shape[1] - ((10/100) * sample_index_increasingconf_anoms.shape[1]))
+# percentile_index_high = np.unique(np.array([percentile_index_high, percentile_index_10]))
+# IQR_subset_highconf = sample_index_increasingconf_anoms[:, percentile_index_high][sample_index_increasingconf_anoms[..., percentile_index_high] != 0].astype(int)
+# IQR_subset_highconf_dates = target.time.isel(time = IQR_subset_highconf)
 
-# load both CNN and SNN data: 
-if config["inference_data"] == "E3SM":
-    SNN_expname = "exp074"
-    CNN_expname = "exp042"
-elif config["inference_data"] == "ERA5":
-    SNN_expname = "exp075"
-    CNN_expname = "exp073"
+# # # Isolate the LEAST confident of low CRPS predictions from 'sample_index_anoms'
+# percentile_index_low = int(sample_index_decreasingconf_anoms.shape[1] - ((percentile/100) * sample_index_decreasingconf_anoms.shape[1]))
+# IQR_subset_lowconf = sample_index_decreasingconf_anoms[:, percentile_index_low][sample_index_decreasingconf_anoms[..., percentile_index_low] != 0].astype(int)
+# IQR_subset_lowconf_dates = target.time.isel(time = IQR_subset_lowconf)
 
-crps_threshold = 0.5
-# returns crps and time for which the CNN has lower CRPS than SNN and is below the threshold
-CNN_crps_da_lower = analysis_metrics.CNN_SNN_ComparativeComposites(CNN_expname, SNN_expname, crps_threshold, Z500_test_data, config, keyword = "Z500")
-# find index fo CNN_crps_da_lower.time within target.time: 
-CNN_crps_da_lower_index = np.where(target.time == CNN_crps_da_lower.time)[0]
-sub_EN_dates, sub_LN_dates, sub_NE_dates = analysis_metrics.subsetanalysis_SHASH_ENSO(CNN_crps_da_lower_index, output, climatology, target, target_raw, config, x, subset_keyword = 'CNN < SNN')
+# # # # Look at predictions with CRPS that are just comparatively lower than climatological CRPS on a sample-by-sample basis
+# comparatively_low_CRPS = np.where(CRPS_network < CRPS_climatology)[0]
+# lowCRPS_highconfident = np.intersect1d(comparatively_low_CRPS, IQR_subset_highconf).astype(int)
+# # # print(f"Number of Comparatively low CRPS High Conf Samples: {lowCRPS_highconfident.shape}")
 
-# return crps and timestamps for samples where CNN crps is ABSOLUTE LOWEST relative to SNN (blue sliver)
-crps_threshold = 0.44
-CNN_crps_da_lowest = analysis_metrics.CNN_SNN_ComparativeComposites(CNN_expname, SNN_expname, crps_threshold, Z500_test_data, config, keyword = "Z500")
-CNN_crps_da_lowest_index = np.where(target.time == CNN_crps_da_lowest.time)[0]
-sublowest_EN_dates, sublowest_LN_dates, sublowest_NE_dates = analysis_metrics.subsetanalysis_SHASH_ENSO(CNN_crps_da_lowest_index, output, climatology, target, target_raw, config, x, subset_keyword = 'Lowest CNN CRPS < SNN CRPS')
+# lowCRPS_lowconfident = np.intersect1d(comparatively_low_CRPS, IQR_subset_lowconf).astype(int)
+# print(f"Number of Comparatively low CRPS Low Conf Samples: {lowCRPS_lowconfident.shape}")
 
-## PDF Histogram Plots: IQR, ANOMALIES, RAW DATA, CRPS (WHEN CNN IS BETTER THAN SNN --------------------------
+# # sub_elnino_dates, sub_lanina_dates, sub_neutral_dates = analysis_metrics.subsetanalysis_SHASH_ENSO(lowCRPS_highconfident, daily_enso_timestamps, output, climatology, target, target_raw, config, x, subset_keyword = 'Comparatively Low CRPS') 
 
-# IQR PDFs
-IQR_cnn_network_output = iqr_basic(output)
-IQR_cnn_network_output_lowest = iqr_basic(output[CNN_crps_da_lowest_index])
-IQR_data_list = [IQR_cnn_network_output, IQR_cnn_network_output_lowest]
-IQR_data_labels = ["IQR", "CNN IQR All Samples", "CNN IQR (Lowest CRPS)"]
+# # ## Composite Maps - Anomalies by ENSO Phase for Comparatively Low, Confident CRPS Predictions
+# # analysis_metrics.compositemapping(sub_elnino_dates, input_test_maps, config, keyword= "Comparatively Low CRPS High Conf El Nino Norm")
+# # analysis_metrics.compositemapping(sub_lanina_dates, input_test_maps, config, keyword= "Comparatively Low CRPS High Conf La Nina Norm")
 
-bins = np.linspace(min(IQR_data_list[0]), max(IQR_data_list[0]), 100)
-utils.plot_hist(IQR_data_list, IQR_data_labels, bins, config)
+# # # Composite Maps - All anomalies for Comparatively Low, Confident CRPS Predictions
+# # analysis_metrics.compositemapping(lowCRPS_highconfident, input_test_maps, config, keyword= "Comparatively Low CRPS High Conf Norm All")
 
-# ANOMALIES PDFs
-target_lowest_crps = target.isel(time = CNN_crps_da_lowest_index)
-anomalies_data_list = [target, target_lowest_crps]
-anomalies_data_labels = ["Precip Anomalies (mm/day)", "Target Anomalies All Samples", "Target Anomalies (Lowest CRPS)"]
+# # # Low CRPS, High Confidence SHASH Predictions:
+# # lowCRPS_highconf_params = output[lowCRPS_highconfident, ...]
+# # analysis_metrics.plotSHASH(lowCRPS_highconf_params, climatology, config, keyword = "ComparativelyLowCRPS_HighConf")
 
-bins = np.linspace(min(anomalies_data_list[0]), max(anomalies_data_list[0]), 100)
-utils.plot_hist(anomalies_data_list, anomalies_data_labels, bins, config)
+# # # Low CRPS, Low Confidence SHASH Predictions:
+# # lowCRPS_lowconf_params = output[lowCRPS_lowconfident, ...]
+# # analysis_metrics.plotSHASH(lowCRPS_lowconf_params, climatology, config, keyword = "ComparativelyLowCRPS_LowConf")
 
-# RAW VALUES PDFs
-target_raw_lowest_crps = target_raw.isel(time = CNN_crps_da_lowest_index)
-raw_data_list = [target_raw, target_raw_lowest_crps]
-raw_data_labels = ["Raw Precip (mm/day)", "Target Raw All Samples", "Target Raw (Lowest CRPS)"]
+# # # Composite Maps - **CONDITIONED ON CONFIDENCE** enso phase samples -----------------------------------
+# # Convert to sets to speed things up
+# print("Composite Map Sets")
+# highconf_set = set(IQR_subset_highconf_dates.values)
+# lowconf_set = set(IQR_subset_lowconf_dates.values)
 
-bins = np.linspace(min(raw_data_list[0]), max(raw_data_list[0]), 100)
-utils.plot_hist(raw_data_list, raw_data_labels, bins, config)
+# # # EL NINO - High Confidence
+# high_conf_EN_dates = elnino_dates[np.fromiter((d in highconf_set for d in elnino_dates), dtype=bool)]
+# # # EL NINO - Low Confidence
+# low_conf_EN_dates  = elnino_dates[np.fromiter((d in lowconf_set  for d in elnino_dates), dtype=bool)]
 
-# CRPS PDFs
-crps_data_list = [CRPS_network, CNN_crps_da_lowest.values]
-crps_data_labels = ["CRPS", "CNN CRPS All Samples", "CNN CRPS (Lowest CRPS)"]
+# # # analysis_metrics.differenceplot(high_conf_EN_dates, low_conf_EN_dates, input_test_maps, target, CRPS_network, config, normalized = True, keyword= "Confidence Conditioned El Nino High-Low Confidence Norm")
+# # # analysis_metrics.differenceplot(high_conf_EN_dates, low_conf_EN_dates, input_test_maps, target, CRPS_network, config, normalized = False, keyword= "Confidence Conditioned El Nino High-Low Confidence")
 
-bins = np.linspace(0, 2, 100)
-utils.plot_hist(crps_data_list, crps_data_labels, bins, config)
+# # # LA NINA - High Confidence
+# high_conf_LN_dates = lanina_dates[np.fromiter((d in highconf_set for d in lanina_dates), dtype=bool)]
+# # # LA NINA - Low Confidence
+# low_conf_LN_dates  = lanina_dates[np.fromiter((d in lowconf_set  for d in lanina_dates), dtype=bool)]
+
+# # # analysis_metrics.differenceplot(high_conf_LN_dates, low_conf_LN_dates, input_test_maps, target, CRPS_network, config, normalized = True, keyword= "Confidence Conditioned La Nina High-Low Confidence Norm")
+# # # analysis_metrics.differenceplot(high_conf_LN_dates, low_conf_LN_dates, input_test_maps, target, CRPS_network, config, normalized = False, keyword= "Confidence Conditioned La Nina High-Low Confidence")
+
+# # # Neutral - High Confidence
+# high_conf_NE_dates = neutral_dates[np.fromiter((d in highconf_set for d in neutral_dates), dtype=bool)]
+# # # Neutral - Low Confidence
+# low_conf_NE_dates  = neutral_dates[np.fromiter((d in lowconf_set  for d in neutral_dates), dtype=bool)]
+# # # analysis_metrics.differenceplot(high_conf_NE_dates, low_conf_NE_dates, input_test_maps, target, CRPS_network, config, normalized = True, keyword= "Confidence Conditioned Neutral High-Low Confidence Norm")
+# # # analysis_metrics.differenceplot(high_conf_NE_dates, low_conf_NE_dates, input_test_maps, target, CRPS_network, config, normalized = False, keyword= "Confidence Conditioned Neutral High-Low Confidence")
+
+
+# # # # ## Combined Phase Discard Plot: -------------------------------------------------------------------------
+# # print("Combined Phase Discard Plot")
+# # sample_index_increasingconf_anoms_EN, inconf_percEN, inconf_crpsEN = analysis_metrics.IQRdiscard_plot(output, target, CRPS_network, CRPS_climatology, elnino_dates, 
+# #                                                                         config, target_type = 'anomalous', keyword = 'Conditioned on El_Nino', analyze_months = False, most_confident= True)
+# # sample_index_increasingconf_anoms_LN, inconf_percLN, inconf_crpsLN = analysis_metrics.IQRdiscard_plot(output, target, CRPS_network, CRPS_climatology, lanina_dates, 
+# #                                                                         config, target_type = 'anomalous', keyword = 'Conditioned on La_Nina', analyze_months = False, most_confident= True)
+# # sample_index_increasingconf_anoms_NE, inconf_percNE, inconf_crpsNE = analysis_metrics.IQRdiscard_plot(output, target, CRPS_network, CRPS_climatology, neutral_dates, 
+# #                                                                         config, target_type = 'anomalous', keyword = 'Conditioned on Neutral', analyze_months = False, most_confident= True)
+
+# # percentile_dict = {"EN": inconf_percEN, "LN": inconf_percLN, "NE": inconf_percNE}
+# # crps_dict = {"EN": inconf_crpsEN, "LN": inconf_crpsLN, "NE": inconf_crpsNE}
+# # analysis_metrics.IQRdiscard_combined(percentile_dict, crps_dict, CRPS_climatology, config, keyword = None)
+
+
+# # # Z500 ANALYSIS Z500 Z500 Z500 ----------------------------------------------------------------------------
+# # -------------------------------------------------------------------------------------------------------------
+# # Composite Maps with Z500 Geopotential Height: 
+# print("Z500 Analysis")
+# Z500_test_data = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/Z500_trimmed_processed_anomalies.v2.LR.historical_0201.eam.h1.1850-2014.nc')
+# Z500_test_data = Z500_test_data['x']
+# analysis_metrics.compositemapping(lowCRPS_highconfident, Z500_test_data, config, keyword= "Comparatively Low CRPS High Conf Z500 All")
+# analysis_metrics.compositemapping(lowCRPS_lowconfident, Z500_test_data, config, keyword= "Comparatively Low CRPS Low Conf Z500 All")
+
+# Z500_complowCRPS_highconf_dates = Z500_test_data.time.sel(time = Z500_test_data.time[lowCRPS_highconfident])
+# Z500_complowCRPS_lowconf_dates = Z500_test_data.time.sel(time = Z500_test_data.time[lowCRPS_lowconfident])
+# analysis_metrics.differenceplot(Z500_complowCRPS_highconf_dates, Z500_complowCRPS_lowconf_dates, Z500_test_data, target, CRPS_network, config, normalized = True, keyword= "Comparatively Low CRPS High-Low Confidence Z500 Norm")
+# analysis_metrics.differenceplot(Z500_complowCRPS_highconf_dates, Z500_complowCRPS_lowconf_dates, Z500_test_data, target, CRPS_network, config, normalized = False, keyword= "Comparatively Low CRPS High-Low Confidence Z500")
+
+# analysis_metrics.differenceplot(high_conf_EN_dates, low_conf_EN_dates, Z500_test_data, target, CRPS_network, config, normalized = True, keyword= "Z500 Confidence Conditioned El Nino High-Low Confidence Norm")
+# analysis_metrics.differenceplot(high_conf_EN_dates, low_conf_EN_dates, Z500_test_data, target, CRPS_network, config, normalized = False, keyword= "Z500 Confidence Conditioned El Nino High-Low Confidence")
+
+# analysis_metrics.differenceplot(high_conf_LN_dates, low_conf_LN_dates, Z500_test_data, target, CRPS_network, config, normalized = True, keyword= "Z500 Confidence Conditioned La Nina High-Low Confidence Norm")
+# analysis_metrics.differenceplot(high_conf_LN_dates, low_conf_LN_dates, Z500_test_data, target, CRPS_network, config, normalized = False, keyword= "Z500 Confidence Conditioned La Nina High-Low Confidence")
+
+# analysis_metrics.differenceplot(high_conf_NE_dates, low_conf_NE_dates, Z500_test_data, target, CRPS_network, config, normalized = True, keyword= "Z500 Confidence Conditioned Neutral High-Low Confidence Norm")
+# analysis_metrics.differenceplot(high_conf_NE_dates, low_conf_NE_dates, Z500_test_data, target, CRPS_network, config, normalized = False, keyword= "Z500 Confidence Conditioned Neutral High-Low Confidence")
+
+# # MJO Phase Analysis: BOOSTRAPPING ----------------------------------------------------------------------------
+# # -------------------------------------------------------------------------------------------------------------
+# phase_subsets = {
+#     1: [2, 3, 4, 5], 
+#     2: [6, 7, 8, 1]}
+# MJO_phase_timestamps = analysis_metrics.mjo_subsetindices(
+#     phase_subsets, input_test_maps, target, elnino_dates, lanina_dates, neutral_dates, CRPS_network, config, keyword = '2-5_6-1')
+
+# # phase_subsets = {
+# #     1: [3, 4, 5, 6], 
+# #     2: [7, 8, 1, 2]}
+# # MJO_subset = analysis_metrics.mjo_subsetindices(
+# #     phase_subsets, input_test_maps, target, elnino_dates, lanina_dates, neutral_dates, CRPS_network, config, keyword = '3-6_7-2')
+
+# # phase_subsets = {
+# #     1: [4, 5, 6, 7], 
+# #     2: [8, 1, 2, 3]}
+# # MJO_subset = analysis_metrics.mjo_subsetindices(
+# #     phase_subsets, input_test_maps, target, elnino_dates, lanina_dates, neutral_dates, CRPS_network, config, keyword = '4-7_8-3')
+
+# # phase_subsets = {
+# #     1: [5, 6, 7, 8], 
+# #     2: [1, 2, 3, 4]}
+# # MJO_subset = analysis_metrics.mjo_subsetindices(
+# #     phase_subsets, input_test_maps, target, elnino_dates, lanina_dates, neutral_dates, CRPS_network, config, keyword = '5-8_1-4')
+
+# # PRECIP EXCEEDANCE THRESHOLD: ------------------------------------------------------------------------------
+# # precip_thresh = 95
+
+# # # # Isolate the time stamps of samples for which the target precip is at or above the 95th percentile 
+# # # extreme_precip_dates = analysis_metrics.precip_exceedance_threshold(
+# # #     target, output, precip_thresh, CRPS_network, CRPS_climatology, config, keyword = ' ')
+
+# # index_increasingconf_exceedanceprecip_success = analysis_metrics.IQRdiscard_plot(
+# #     output, target, CRPS_network, CRPS_climatology, extreme_precip_dates, config, target_type = 'anomalous', keyword = 'All Samples', analyze_months = False, most_confident= True)
+
+
+# # ENSO / MJO Tile Plots ! -------------------------------------------------------------------------------------
+# # -------------------------------------------------------------------------------------------------------------
+# MJO_phase_timestamps = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + '2-5_6-1' + '_MJOphase_dates.pkl')
+
+# def safe_parse_date(datestr):
+#     try:
+#         dt = datetime.strptime(datestr, "%Y-%m-%d %H:%M:%S")
+#         if dt.month == 2 and dt.day == 29:
+#             return None  # Skip leap days for NoLeap calendar
+#         return DatetimeNoLeap(dt.year, dt.month, dt.day)
+#     except ValueError as e:
+#         print(f"Skipping invalid date: {datestr} ({e})")
+#         return None
+
+# MJO_phase_timestamps_converted = {}
+# for phase, datelist in MJO_phase_timestamps.items():
+#     converted = [safe_parse_date(date) for date in datelist]
+#     MJO_phase_timestamps_converted[phase] = [d for d in converted if d is not None]
+
+# MJO_phase_timestamps = MJO_phase_timestamps_converted
+
+# # CRPS! And 3d array of dates corresponding to each phase combination
+# dates_array_by_phase = analysis_metrics.tiled_phase_analysis(MJO_phase_timestamps, elnino_dates, lanina_dates, neutral_dates, CRPS_network, target, config, keyword = 'CRPS')
+
+# ## SUCCESS RATIO!
+# success_ratio_all_samples = np.where(CRPS_network < CRPS_climatology, 1, 0)
+# print(f"Success Ratio All Samples: {success_ratio_all_samples.shape}")
+# analysis_metrics.tiled_phase_analysis(MJO_phase_timestamps, elnino_dates, lanina_dates, neutral_dates, success_ratio_all_samples, target, config, keyword = 'Success Ratio')
+
+# # RMSE! 
+# # mean of SHASH for all output parameters: 
+# # Convert output columns to tensors
+# mu = torch.tensor(output[:, 0], dtype=torch.float32)
+# sigma = torch.tensor(output[:, 1], dtype=torch.float32)
+# gamma = torch.tensor(output[:, 2], dtype=torch.float32)
+# tau = torch.tensor(output[:, 3], dtype=torch.float32)  # Only if tau is included explicitly
+# output_tensor = torch.stack((mu, sigma, gamma, tau), dim=1)
+
+# # Instantiate Shash Class: 
+# shash_instance = Shash(output_tensor)
+# output_mean = shash_instance.mean()
+# output_mean_np = output_mean.detach().cpu().numpy()  # Convert to numpy array
+# print(f"output_mean shape: {output_mean_np.shape}")
+
+# analysis_metrics.tiled_phase_analysis(MJO_phase_timestamps, elnino_dates, lanina_dates, neutral_dates, output_mean_np, target, config, keyword = 'RMSE')
+
+
+# ## COUNT + CONFIDENCE PLOTS : ENSO Comparison -----------------------------------------------------------------
+# # -------------------------------------------------------------------------------------------------------------
+# # histogram of IQR width binned for each ENSO phase
+# IQR_EN, IQR_LN, IQR_NE = analysis_metrics.countplot_IQR(output, target, elnino_dates, lanina_dates, neutral_dates, config, keyword = 'All_samples')
+
+# # Composite Maps: WHEN CNN IS BETTER THAN SNN: ----------------------------------------------------------------
+# # -------------------------------------------------------------------------------------------------------------
+
+# # load both CNN and SNN data: 
+# if config["inference_data"] == "E3SM":
+#     SNN_expname = "exp074"
+#     CNN_expname = "exp042"
+# elif config["inference_data"] == "ERA5":
+#     SNN_expname = "exp075"
+#     CNN_expname = "exp073"
+
+# crps_threshold = 0.5
+# # returns crps and time for which the CNN has lower CRPS than SNN and is below the threshold
+# CNN_crps_da_lower = analysis_metrics.CNN_SNN_ComparativeComposites(CNN_expname, SNN_expname, crps_threshold, Z500_test_data, config, keyword = "Z500")
+# # find index fo CNN_crps_da_lower.time within target.time: 
+# CNN_crps_da_lower_index = np.where(target.time == CNN_crps_da_lower.time)[0]
+# sub_EN_dates, sub_LN_dates, sub_NE_dates = analysis_metrics.subsetanalysis_SHASH_ENSO(CNN_crps_da_lower_index, daily_enso_timestamps, output, climatology, target, target_raw, config, x, subset_keyword = 'CNN < SNN')
+
+# # return crps and timestamps for samples where CNN crps is ABSOLUTE LOWEST relative to SNN (blue sliver)
+# crps_threshold = 0.44
+# CNN_crps_da_lowest = analysis_metrics.CNN_SNN_ComparativeComposites(CNN_expname, SNN_expname, crps_threshold, Z500_test_data, config, keyword = "Z500")
+# CNN_crps_da_lowest_index = np.where(target.time == CNN_crps_da_lowest.time)[0]
+# sublowest_EN_dates, sublowest_LN_dates, sublowest_NE_dates = analysis_metrics.subsetanalysis_SHASH_ENSO(CNN_crps_da_lowest_index, daily_enso_timestamps, output, climatology, target, target_raw, config, x, subset_keyword = 'Lowest CNN CRPS < SNN CRPS')
+
+# ## PDF Histogram Plots: IQR, ANOMALIES, RAW DATA, CRPS (WHEN CNN IS BETTER THAN SNN --------------------------
+
+# # IQR PDFs
+# IQR_cnn_network_output = iqr_basic(output)
+# IQR_cnn_network_output_lowest = iqr_basic(output[CNN_crps_da_lowest_index])
+# IQR_data_list = [IQR_cnn_network_output, IQR_cnn_network_output_lowest]
+# IQR_data_labels = ["IQR", "CNN IQR All Samples", "CNN IQR (Lowest CRPS)"]
+
+# bins = np.linspace(min(IQR_data_list[0]), max(IQR_data_list[0]), 100)
+# utils.plot_hist(IQR_data_list, IQR_data_labels, bins, config)
+
+# # ANOMALIES PDFs
+# target_lowest_crps = target.isel(time = CNN_crps_da_lowest_index)
+# anomalies_data_list = [target, target_lowest_crps]
+# anomalies_data_labels = ["Precip Anomalies (mm/day)", "Target Anomalies All Samples", "Target Anomalies (Lowest CRPS)"]
+
+# bins = np.linspace(min(anomalies_data_list[0]), max(anomalies_data_list[0]), 100)
+# utils.plot_hist(anomalies_data_list, anomalies_data_labels, bins, config)
+
+# # RAW VALUES PDFs
+# target_raw_lowest_crps = target_raw.isel(time = CNN_crps_da_lowest_index)
+# raw_data_list = [target_raw, target_raw_lowest_crps]
+# raw_data_labels = ["Raw Precip (mm/day)", "Target Raw All Samples", "Target Raw (Lowest CRPS)"]
+
+# bins = np.linspace(min(raw_data_list[0]), max(raw_data_list[0]), 100)
+# utils.plot_hist(raw_data_list, raw_data_labels, bins, config)
+
+# # CRPS PDFs
+# crps_data_list = [CRPS_network, CNN_crps_da_lowest.values]
+# crps_data_labels = ["CRPS", "CNN CRPS All Samples", "CNN CRPS (Lowest CRPS)"]
+
+# bins = np.linspace(0, 2, 100)
+# utils.plot_hist(crps_data_list, crps_data_labels, bins, config)
 
 
 ## XAI - CAPTUM  ----------------------------------------------------------------------------------------------

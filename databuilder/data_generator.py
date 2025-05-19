@@ -237,8 +237,8 @@ class ClimateData:
                     if max_lon < 0:
                         max_lon += 360
                     
-                    print(f"min_lon: {min_lon}, max_lon: {max_lon}")
-                    print(f"min_lat: {min_lat}, max_lat: {max_lat}")
+                    # print(f"min_lon: {min_lon}, max_lon: {max_lon}")
+                    # print(f"min_lat: {min_lat}, max_lat: {max_lat}")
         
                     if isinstance(f_dict[key], xr.DataArray):
                         mask_lon = (f_dict[key].lon >= min_lon) & (f_dict[key].lon <= max_lon)

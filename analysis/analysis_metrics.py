@@ -106,7 +106,7 @@ def IQRdiscard_plot(networkoutput, target, crps_scores, crps_climatology_scores,
         selected_target = target.sel(time = dates)
 
         all_timestamps = target.time.values
-        selected_timestamps = dates.values
+        selected_timestamps = dates
         time_indices = np.nonzero(np.isin(all_timestamps, selected_timestamps))[0]
         selected_networkoutput = networkoutput[time_indices]
         crps_network = crps_scores[time_indices]
@@ -454,43 +454,25 @@ def spread_skill(output, target, config):
     plt.close()
 
 def subsetanalysis_SHASH_ENSO(sample_index, daily_enso_timestamps, shash_params, climatology, target, target_raw, config, x_values, subset_keyword = None): 
-    # open saved ENSO phase indices and CRPS scores for all samples
-    ENSO_CRPS_dict = load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "ENSO_indices_CRPS.pkl")
-
-    elnino = daily_enso_timestamps["El Nino"]
-    lanina = daily_enso_timestamps["La Nina"]
-    neutral = daily_enso_timestamps["Neutral"]
-
-    # Step 1: Make fast sets for lookup
-    elnino_set = set(elnino)
-    lanina_set = set(lanina)
-    neutral_set = set(neutral)
-
-    # Step 2: Create map from datetime -> index
-    time_to_index = {pd.Timestamp(t.item()): i for i, t in enumerate(target.time.values)}
-
-    # Step 3: Create arrays of indices by intersecting with time set
-    elnino_ix = np.array([time_to_index[t] for t in elnino if pd.Timestamp(t) in time_to_index])
-    lanina_ix = np.array([time_to_index[t] for t in lanina if pd.Timestamp(t) in time_to_index])
-    neutral_ix = np.array([time_to_index[t] for t in neutral if pd.Timestamp(t) in time_to_index])
+ 
+    elnino = np.array([d.item() for d in daily_enso_timestamps["El Nino"]])
+    lanina = np.array([d.item() for d in daily_enso_timestamps["La Nina"]])
+    neutral = np.array([d.item() for d in daily_enso_timestamps["Neutral"]])
 
     crps_scores = load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_network_values.pkl")
 
     subset_indices = sample_index
+    subset_dates = target.time.isel(time = subset_indices)
     
     # Calculate relative ratio of ENSO phases relative to all samples
     elnino_ratio = len(elnino) / crps_scores.shape[0]
     lanina_ratio = len(lanina) / crps_scores.shape[0]
     neutral_ratio = len(neutral) / crps_scores.shape[0]
 
-    # identify enso phases of each sample in the subset_ix
-    sub_elnino = elnino[np.isin(elnino_ix, subset_indices)]
-    sub_lanina = lanina[np.isin(lanina_ix, subset_indices)]
-    sub_neutral = neutral[np.isin(neutral_ix, subset_indices)]
-
-    sub_elnino_dates = target.time.isel(time = sub_elnino)
-    sub_lanina_dates = target.time.isel(time = sub_lanina)
-    sub_neutral_dates = target.time.isel(time = sub_neutral)
+    # identify enso phases of each sample in the subsetx
+    sub_elnino = elnino[np.isin(elnino, subset_dates)]
+    sub_lanina = lanina[np.isin(lanina, subset_dates)]
+    sub_neutral = neutral[np.isin(neutral, subset_dates)]
 
     sub_elnino_ratio = len(sub_elnino) / len(subset_indices)
     sub_lanina_ratio = len(sub_lanina) / len(subset_indices)
@@ -511,13 +493,13 @@ def subsetanalysis_SHASH_ENSO(sample_index, daily_enso_timestamps, shash_params,
     plt.close()
 
     # Print average target value per ENSO phase
-    print(f"Average Target Anomaly during El Nino: {np.round(target[sub_elnino].mean().item(), 4)}")
-    print(f"Average Target Anomaly during La Nina: {np.round(target[sub_lanina].mean().item(), 4)}")
-    print(f"Average Target Anomaly during Neutral: {np.round(target[sub_neutral].mean().item(), 4)}")
+    print(f"Average Target Anomaly during El Nino: {np.round(target.sel(time = sub_elnino).mean().item(), 4)}")
+    print(f"Average Target Anomaly during La Nina: {np.round(target.sel(time = sub_lanina).mean().item(), 4)}")
+    print(f"Average Target Anomaly during Neutral: {np.round(target.sel(time = sub_neutral).mean().item(), 4)}")
 
-    print(f"Average True Amount during El Nino: {np.round(target_raw[sub_elnino].mean().item(), 4)}")
-    print(f"Average True Amount during La Nina: {np.round(target_raw[sub_lanina].mean().item(), 4)}")
-    print(f"Average True Amount during Neutral: {np.round(target_raw[sub_neutral].mean().item(), 4)}")
+    print(f"Average True Amount during El Nino: {np.round(target_raw.sel(time = sub_elnino).mean().item(), 4)}")
+    print(f"Average True Amount during La Nina: {np.round(target_raw.sel(time = sub_lanina).mean().item(), 4)}")
+    print(f"Average True Amount during Neutral: {np.round(target_raw.sel(time = sub_neutral).mean().item(), 4)}")
 
     # identify CRPS scores of each sample in the subset
     sub_CRPS = crps_scores[subset_indices]
@@ -552,7 +534,7 @@ def subsetanalysis_SHASH_ENSO(sample_index, daily_enso_timestamps, shash_params,
     plt.xlim([-10, 12])
     plt.close()
 
-    return sub_elnino_dates, sub_lanina_dates, sub_neutral_dates
+    return sub_elnino, sub_lanina, sub_neutral
 
 def compositemapping(dates, mapinputs, config, keyword = None): 
     """
@@ -679,6 +661,22 @@ def differenceplot(dates1, dates2, mapinputs, target, evaluation_metric, config,
     Take in two sets of indices, and create a difference map based on the two indices sets
     mapinputs is the input map data for all samples 
     """
+   # Ensure dates1 and dates2 only contain values within the months of interest
+    target_months = config["databuilder"]["target_months"]
+    valid_times = set(mapinputs.time.values)
+
+    # Convert to plain numpy arrays if needed
+    if hasattr(dates1, 'values'):
+        dates1 = dates1.values
+    if hasattr(dates2, 'values'):
+        dates2 = dates2.values
+
+    # Filter based on presence in mapinputs.time and correct months
+    dates1_filtered = np.array([d for d in dates1 if d in valid_times and d.month in target_months])
+    dates2_filtered = np.array([d for d in dates2 if d in valid_times and d.month in target_months])
+
+    dates1 = dates1_filtered
+    dates2 = dates2_filtered
 
     if len(mapinputs.shape) == 3: # Time, Lat, Lon      
 
@@ -725,18 +723,16 @@ def differenceplot(dates1, dates2, mapinputs, target, evaluation_metric, config,
         # plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + '_CRPS_distribution.png', format='png', bbox_inches ='tight', dpi = 300)
         # plt.close()
 
-        # if diff.max().item() > np.abs(diff.min().item()):
-        #     vmaxz = diff.max().item()
-        #     vminz = (-1 * vmaxz)
-        # else: 
-        #     vminz = diff.min().item()
-        #     vmaxz = (-1 * vminz)
+        absmax = max(abs(diff.min().item()), abs(diff.max().item()))
+        scaled_absmax = absmax * 1.25
+        vminz = -scaled_absmax
+        vmaxz = scaled_absmax
 
-        vminz = np.nanpercentile(diff, 5)
-        vmaxz = np.nanpercentile(diff, 95)
-        # Symmetrize
-        vmaxz = max(abs(vminz), abs(vmaxz))
-        vminz = -vmaxz
+        # vminz = np.nanpercentile(diff, 5)
+        # vmaxz = np.nanpercentile(diff, 95)
+        # # Symmetrize
+        # vmaxz = max(abs(vminz), abs(vmaxz))
+        # vminz = -vmaxz
 
         plt.figure()
         fig, ax = plt.subplots(1, 3, figsize=(18, 8),  subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
@@ -986,9 +982,9 @@ def tiled_phase_analysis(MJO_phase_dates, EN_dates, LN_dates, NE_dates, evaluati
                 dims=["time"])
 
     enso_dates_dict = {
-        "El Nino": EN_dates.time.values,
-        "La Nina": LN_dates.time.values,
-        "Neutral": NE_dates.time.values}
+        "El Nino": EN_dates,
+        "La Nina": LN_dates,
+        "Neutral": NE_dates}
     
     evaluation_metric_matrix = np.zeros([len(MJO_phase_dates), len(enso_dates_dict)])
     sample_sizes = np.zeros([len(MJO_phase_dates), len(enso_dates_dict)], dtype=int)
@@ -1259,7 +1255,7 @@ def mjo_subsetindices(grouped_phases, mapinputs, target, ninodates1, ninodates2,
     """
     if config["data_source"] == 'E3SM':
         # Load MJO Indices
-        MJOfilename = '/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_historical_0201_1850-2014.pkl'
+        MJOfilename = '/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/MJO_historical_0201_1850-2014.pkl'
 
         # print(f"target time for mjo phases: {target.time}")
 
@@ -1456,7 +1452,7 @@ def mjo_subsetindices(grouped_phases, mapinputs, target, ninodates1, ninodates2,
             # Convert timestamps to strings for saving
             phase_timestamps_str = {phase: [str(date) for date in dates] for phase, dates in phase_timestamps.items()}
             
-            output_path = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(keyword) + '_MJOphase_dates.pkl'
+            output_path = '/pscratch/sd/p/plutzner/E3SM/bigdata/_MJOphase_dates.pkl'
             with open(output_path, 'wb') as f:
                 pickle.dump(phase_timestamps_str, f)
             

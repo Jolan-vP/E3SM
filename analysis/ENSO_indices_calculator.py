@@ -150,9 +150,9 @@ def ENSO_CRPS(daily_enso_dates, crps_scores, target_time, config):
     # Create crps xarray object with target time coordinate 
     crps_scores = xr.DataArray(crps_scores, coords=[target_time], dims=["time"], attrs={"description": "CRPS scores"})
 
-    CRPS_elnino = round(crps_scores.sel(time = elnino_dates).mean(), 5)
-    CRPS_lanina = round(crps_scores.sel(time = lanina_dates).mean(), 5)
-    CRPS_neutral = round(crps_scores.sel(time = neutral_dates).mean(), 5)
+    CRPS_elnino = round(crps_scores.sel(time = elnino_dates).values.mean(), 5)
+    CRPS_lanina = round(crps_scores.sel(time = lanina_dates).values.mean(), 5)
+    CRPS_neutral = round(crps_scores.sel(time = neutral_dates).values.mean(), 5)
    
     print(f"El Nino average CRPS across all samples: {np.round(CRPS_elnino, 4)}")
     print(f"La Nina average CRPS across all samples: {np.round(CRPS_lanina, 4)}")
@@ -229,7 +229,6 @@ def idealENSOphases(nino34index, strength_threshold = 2, ens = None, percentile 
             max_values.append(max_value)
             max_dates.append(max_date)
 
-    # Find the 10th and 90th percentile values of those maximum values and return their corresponding dates
     max_values = np.array(max_values)
     max_dates = np.array(max_dates)
 
@@ -238,10 +237,10 @@ def idealENSOphases(nino34index, strength_threshold = 2, ens = None, percentile 
     positive_max_values = max_values[max_values > 0]
     negative_max_dates = max_dates[max_values < 0]
     negative_max_values = max_values[max_values < 0]
-    print(f"The maximum values of the Nino 3.4 index that are greater than {strength_threshold} are: {positive_max_values}")
-    print(f"The dates for the maximum values of the Nino 3.4 index that are greater than {strength_threshold} are: {positive_max_dates}")
-    print(f"The maximum values of the Nino 3.4 index that are less than {-strength_threshold} are: {negative_max_values}")
-    print(f"The dates for the maximum values of the Nino 3.4 index that are less than {-strength_threshold} are: {negative_max_dates}")
+    # print(f"The maximum values of the Nino 3.4 index that are greater than {strength_threshold} are: {positive_max_values}")
+    # print(f"The dates for the maximum values of the Nino 3.4 index that are greater than {strength_threshold} are: {positive_max_dates}")
+    # print(f"The maximum values of the Nino 3.4 index that are less than {-strength_threshold} are: {negative_max_values}")
+    # print(f"The dates for the maximum values of the Nino 3.4 index that are less than {-strength_threshold} are: {negative_max_dates}")
 
     # print(f"The maximum values of the Nino 3.4 index that are greater than {strength_threshold} or less than {-strength_threshold} are: {max_values}")
     # print(f"The dates for the maximum values of the Nino 3.4 index that are greater than {strength_threshold} or less than {-strength_threshold} are: {max_dates}")
@@ -280,20 +279,29 @@ def idealENSOphases(nino34index, strength_threshold = 2, ens = None, percentile 
     # Convert dates in filtered_neutral_dates to datetime objects
     filtered_neutral_dates = [[convert_to_datetime(date) for date in block] for block in filtered_neutral_dates]
 
-    print(f"The longest block of consecutive dates with Nino 3.4 index between -{neutral_threshold} and {neutral_threshold} is {max(map(len, filtered_neutral_dates))} dates long.")
-    print(f"The top 5 longest blocks of consecutive dates with Nino 3.4 index between -{neutral_threshold} and {neutral_threshold} are {sorted(map(len, filtered_neutral_dates), reverse=True)[:number_of_blocks]} dates long.")
+    # print(f"The longest block of consecutive dates with Nino 3.4 index between -{neutral_threshold} and {neutral_threshold} is {max(map(len, filtered_neutral_dates))} dates long.")
+    # print(f"The top 5 longest blocks of consecutive dates with Nino 3.4 index between -{neutral_threshold} and {neutral_threshold} are {sorted(map(len, filtered_neutral_dates), reverse=True)[:number_of_blocks]} dates long.")
     
     # Save these top five blocks of dates in a variable
     consecutive_neutral_dates = sorted(filtered_neutral_dates, key=len, reverse=True)[:number_of_blocks]
     
+    neutral_dates_array = np.array(np.concatenate(consecutive_neutral_dates), dtype='datetime64[ns]')
+    # save dictionary of dates for each phase
+    ENSO_dates_dict = {
+        "El Nino" : positive_max_dates,
+        "La Nina" : negative_max_dates, 
+        "Neutral" : neutral_dates_array
+    }
+    # print(f"ENSO dates dictionary: {ENSO_dates_dict}")
 
-    print(f"The dates for all the top 5 longest blocks of consecutive dates with Nino 3.4 index between -{neutral_threshold} and {neutral_threshold} are:")
-    for i, block in enumerate(sorted(filtered_neutral_dates, key=len, reverse=True)[:number_of_blocks]):
-        print(f"Block {i + 1}: {block[0]} to {block[-1]}")
 
-    print(f"ALL of the actual values of the Nino 3.4 index for the top 5 longest blocks of consecutive dates with Nino 3.4 index between -{neutral_threshold} and {neutral_threshold} are:")
-    for i, block in enumerate(sorted(filtered_neutral_values, key=len, reverse=True)[:number_of_blocks]):
-        print(f"Block {i + 1}: {np.array(block)} \n")
+    # print(f"The dates for all the top 5 longest blocks of consecutive dates with Nino 3.4 index between -{neutral_threshold} and {neutral_threshold} are:")
+    # for i, block in enumerate(sorted(filtered_neutral_dates, key=len, reverse=True)[:number_of_blocks]):
+    #     print(f"Block {i + 1}: {block[0]} to {block[-1]}")
+
+    # # print(f"ALL of the actual values of the Nino 3.4 index for the top 5 longest blocks of consecutive dates with Nino 3.4 index between -{neutral_threshold} and {neutral_threshold} are:")
+    # for i, block in enumerate(sorted(filtered_neutral_values, key=len, reverse=True)[:number_of_blocks]):
+    #     print(f"Block {i + 1}: {np.array(block)} \n")
         # print(f"Block {i + 1}: {block[0]} to {block[-1]}")
 
     # # Convert cftime.DatetimeNoLeap objects to datetime objects
@@ -322,6 +330,10 @@ def idealENSOphases(nino34index, strength_threshold = 2, ens = None, percentile 
     plt.savefig(plotfn + 'ENSO_total_index_w_zeros_' + str(ens) + '.png', format='png', bbox_inches='tight', dpi=200)
     # plt.show()
     
+
+    
+
+
     # Scatter Plot ----------------------------------------------------
     x_times = nino34index.time
 
@@ -370,3 +382,5 @@ def idealENSOphases(nino34index, strength_threshold = 2, ens = None, percentile 
     # ax.set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree())
     # ax.add_feature(cfeature.BORDERS, linewidth=0.5, edgecolor='black')
     # plt.savefig(plotfn + 'ENSO_index_' + str(ens) + 'LANINA_1927-02-01.png', format='png', bbox_inches ='tight', dpi = 200)
+
+    return ENSO_dates_dict

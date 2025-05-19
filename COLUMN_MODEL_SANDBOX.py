@@ -52,7 +52,7 @@ print(f"pytorch version = {torch.__version__}")
 # Determine Ideal ENSO Phases for Column Model Runs: 
 
 # Open Observational Nino34 Index: 
-nino_indices = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/NOAA_CPC_SST_NinoInidces.txt')
+nino_indices = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/ENSO_Data/OBS/NOAA_CPC_SST_NinoInidces.txt')
 
 
 # Rename columns for compatibility with pd.to_datetime
@@ -67,7 +67,7 @@ nino34_obs_xr = xr.DataArray(nino34_obs.values, coords=[time], dims=['time'])
 
 # saveplot = '/pscratch/sd/p/plutzner/E3SM/COLUMN MODEL RUN PROJECT/'
 saveplot = '/pscratch/sd/p/plutzner/E3SM/COLUMN MODEL RUN PROJECT/'
-idealENSOphases(nino34_obs_xr, strength_threshold = 1.25, ens = 'OBS', percentile = 70, numberofeachphase= 1, plotfn = saveplot )
+enso_dates_dict = idealENSOphases(nino34_obs_xr, strength_threshold = 1.25, ens = 'OBS', percentile = 70, numberofeachphase= 1, plotfn = saveplot )
 
 # ------------------------------------------------------------
 # Open ERA5 Precip Data: 
@@ -83,8 +83,114 @@ era5_validation_target_data = era5_validation_target_data['y']
 total_era5_target_data = xr.concat([era5_training_target_data, era5_validation_target_data, era5_target_test_data], dim='time')
 print(f"era5 total target precip shape: {total_era5_target_data.shape}")
 
-# # Daily standardized precip data: 
-# era5_precip_standard = total_era5_target_data / total_era5_target_data.std(dim='time')
+# Daily standardized precip data: 
+era5_precip_standard = total_era5_target_data / total_era5_target_data.std(dim='time')
+
+# Take 5 day running mean of daily precip data: 
+era5_precip_standard_smoothed = era5_precip_standard.rolling(time=5, center=True).mean()
+
+# From months that have already been idenified as dry / wet during specific ENSO phases,
+# Identify 5 day stretches of dry / wet days in each month in the dict: 
+for enso_key, month_value in enso_dates_dict.items():
+
+    print(f"month_key: {enso_key}")
+    for month_start in month_value:
+        #first seven digits of the month:
+        month_start_short_name = str(month_start)[:7]
+
+        month_end = month_start + pd.DateOffset(months=1)
+        month_data = era5_precip_standard_smoothed.sel(time=slice(month_start, month_end))
+
+        plt.figure(figsize=(12, 5))
+        plt.plot(month_data.time, month_data, label='Smoothed Standardized Precip', color="#392498")
+        plt.axhline(y = 0, color = '#392498', linestyle='--', label='Mean Standardized Precip')
+
+        plt.title(f'Smoothed Standardized Precipitation Anomalies for {month_start_short_name} during {enso_key}')
+        plt.xlabel('Time')
+        plt.ylabel('Standardized Precipitation Anomaly (mm/day)')
+        plt.legend()
+        plt.ylim([-3, 3])
+        plt.tight_layout()
+
+        highlighted = False
+
+        # find 5 day stretches of dry / wet days within month_data: 
+        for i in range(len(month_data.time) - 5):
+            # mean of 5 day stretch: 
+            mean_precip = month_data[i:i+5].mean()
+
+            start_time = pd.Timestamp(month_data.time[i].values)
+            end_time = pd.Timestamp(month_data.time[i+5].values)
+
+            if mean_precip < -1.75:
+                plt.axvspan(start_time, end_time, color='#bb8e3d', alpha=0.3, label='Dry Days')
+                highlighted = True
+            elif mean_precip > 1.75:
+                plt.axvspan(start_time, end_time, color="#3486c9ff", alpha=0.3, label='Wet Days')
+                highlighted = True
+            elif enso_key == 'La Nina' and mean_precip > 1.5:
+                plt.axvspan(start_time, end_time, color="#3486c9ff", alpha=0.3, label='Wet Days')
+                highlighted = True
+            elif (-0.1 < month_data[i:i+5].mean() < 0.1) and (np.abs(month_data[i]) + np.abs(month_data[i+5]) < 0.5):
+                plt.axvspan(start_time, end_time, color="#93a6a7", alpha=0.3, label='Neutral Days')
+                highlighted = True
+            else:
+                # skip saving the figure if no dry / wet / neutral stretches are found 
+                continue
+
+        if highlighted:
+            plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/COLUMN MODEL RUN PROJECT/ERA5_precip_{month_start_short_name}_{enso_key}_.png', format='png', dpi=250)
+        else: 
+            print(f"No highlighted regions found for {month_start_short_name}. Skipping figure save.")
+
+        plt.close()
+
+# print nino34_obs_xr value for the hand-picked dates in the dictionary: 
+daily_dates_dict = {
+    "dry_dates_EN" : pd.to_datetime(['1997-11-01', '1997-12-01', '2002-12-01']),
+    "wet_dates_EN" : pd.to_datetime(['1983-02-01', '2009-11-01']),
+    "neutral_wet_dates_EN" : pd.to_datetime(['1992-02-01', '1991-12-01', '2016-01-01']), 
+    "dry_dates_LN" : pd.to_datetime(['1985-01-01']),
+    "wet_dates_LN" : pd.to_datetime(['2008-02-01']),
+    "neutral_wet_dates_LN" : pd.to_datetime(['1988-10-01']),
+    "dry_dates_N" : pd.to_datetime(['1989-12-01', '2004-04-01']),
+    "wet_dates_N" : pd.to_datetime(['1990-01-01', '1990-02-01', '2005-04-01']),
+    "neutral_wet_dates_N" : pd.to_datetime(['1994-07-01', '1990-08-01', '2005-09-01'])
+}
+# Print the value of the nino34 index for each date in the dictionary
+for event_type, dates in daily_dates_dict.items():
+    for date in dates:
+        print(f"{event_type} event on {date.strftime('%Y-%m-%d')}: Nino34 Index = {nino34_obs_xr.sel(time=date, method='nearest').values:.2f}")
+        # print(f"{event_type} event on {date.strftime('%Y-%m-%d')}: {total_era5_target_data.sel(time=date).values:.2f}")
+
+
+
+# first day of the month:
+# months_dict = {
+#     "dry_dates" : pd.to_datetime(['1982-12-01', '2008-02-01', '2004-05-01']),
+#     "wet_dates" : pd.to_datetime(['2009-12-01', '2007-11-01', '1990-02-01']),
+#     "neutral_wet_dates" : pd.to_datetime(['1992-01-01', '1998-12-01', '1994-07-01'])
+# }
+
+# Plot the smoothed standardized precipitation data for each month: 
+# for month in months_dict.keys():
+#     plt.figure(figsize=(12, 5))
+#     plt.plot(era5_precip_standard_smoothed.time, era5_precip_standard_smoothed, label='Smoothed Standardized Precip', color="#3b528b")
+#     plt.axhline(y = 0, color = '#3b528b', linestyle='--', label='Mean Standardized Precip')
+#     plt.scatter(months_dict[month], era5_precip_standard_smoothed.sel(time=months_dict[month], method = 'nearest'), color='red', label=f'{month} Events', marker='o')
+#     # label each point with the date
+#     for date in months_dict[month]:
+#         plt.annotate(date.strftime('%Y-%m'), (date, era5_precip_standard_smoothed.sel(time=date, method='nearest').values), textcoords="offset points", xytext=(0,10), ha='center', fontsize=8)
+#     start_date = pd.to_datetime('1980-01-01')
+#     end_date = pd.to_datetime('2023-01-01')
+#     plt.xlim(start_date, end_date)
+#     plt.title(f'Smoothed Standardized Precipitation Anomalies for {month}')
+#     plt.xlabel('Time')
+#     plt.ylabel('Standardized Precipitation Anomaly (mm/day)')
+#     plt.legend()
+#     plt.tight_layout()
+#     plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/COLUMN MODEL RUN PROJECT/ERA5_precip_{month}_anomalies.png', format='png', dpi=250)
+
 
 # plt.figure(figsize=(10, 5))
 # plt.plot(total_era5_target_data.time, era5_precip_standard, label='Standardized Precipitation')
@@ -97,13 +203,13 @@ print(f"era5 total target precip shape: {total_era5_target_data.shape}")
 # daily_std_per_year = total_era5_target_data.groupby('time.year').std(dim='time')
 # print(f"shape of daily std per year: {daily_std_per_year.shape}")
 
-# Identify precipitation variance on monthly timescales: "Is each month dry relative to all months?"
-monthly_precip_anomalies = total_era5_target_data.resample(time = 'ME').mean(dim='time')
-analysis_metrics.save_pickle(monthly_precip_anomalies, '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp072_monthly_precip_anomalies.pkl')
-monthly_precip_anomalies = analysis_metrics.load_pickle('/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp072_monthly_precip_anomalies.pkl')
+# # Identify precipitation variance on monthly timescales: "Is each month dry relative to all months?"
+# monthly_precip_anomalies = total_era5_target_data.resample(time = 'ME').mean(dim='time')
+# analysis_metrics.save_pickle(monthly_precip_anomalies, '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp072_monthly_precip_anomalies.pkl')
+# monthly_precip_anomalies = analysis_metrics.load_pickle('/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp072_monthly_precip_anomalies.pkl')
 
-monthly_std_per_year = monthly_precip_anomalies.groupby('time.year').std(dim='time')
-print(f"shape of monthly std per year: {monthly_std_per_year.shape}")
+# monthly_std_per_year = monthly_precip_anomalies.groupby('time.year').std(dim='time')
+# print(f"shape of monthly std per year: {monthly_std_per_year.shape}")
 
 # plt.figure(figsize=(10, 5))
 # plt.plot(monthly_std_per_year['year'], monthly_std_per_year, label='Monthly Standard Deviation', color = '#3b528b')
@@ -136,68 +242,67 @@ print(f"shape of monthly std per year: {monthly_std_per_year.shape}")
 # plt.savefig('/pscratch/sd/p/plutzner/E3SM/COLUMN MODEL RUN PROJECT/ERA5_precip_daily_monthly_STD_timeseries_shaded.png', format='png', dpi=250)
 
 
-
 # # ------------------------------------------------------------
 
-enso_dates_dict = {
-    "El Nino": pd.to_datetime(['1982-12-01', '1992-01-01', '2009-12-01']),
-    "La Nina": pd.to_datetime(['1998-12-01', '2008-02-01', '2007-11-01']),
-    "Neutral": pd.to_datetime(['1990-02-01', '1994-07-01', '2004-05-01'])
-}
-
-# Print the value of the enso index for each date in the dictionary
-for event_type, dates in enso_dates_dict.items():
-    for date in dates:
-        print(f"{event_type} event on {date.strftime('%Y-%m-%d')}: {nino34_obs_xr.sel(time=date, method='nearest').values:.2f}")
-        # print(f"{event_type} event on {date.strftime('%Y-%m-%d')}: {total_era5_target_data.sel(time=date).values:.2f}")
-# Print the value of the precipitaion anomaly for each date in the dictionary
-for event_type, dates in enso_dates_dict.items():
-    for date in dates:
-        print(f"{event_type} event on {date.strftime('%Y-%m-%d')}: {monthly_precip_anomalies.sel(time=date, method='nearest').values:.2f} mm/day")
-        # print(f"{event_type} event on {date.strftime('%Y-%m-%d')}: {total_era5_target_data.sel(time=date).values:.2f}")
-
 # enso_dates_dict = {
-#     "El Nino": pd.to_datetime(['1982-12-01', '1997-11-01', '2015-11-01', '1992-01-01', '2023-12-01', '2002-12-01', '1987-09-01', '2009-12-01']),
-#     "La Nina": pd.to_datetime(['1988-11-01', '1998-12-01', '2008-01-01', '1999-02-01', '1984-12-01', '2011-01-01', '1985-01-01', '1984-11-01', '2008-02-01', '2007-11-01', '2010-10-01']),
-#     "Neutral": pd.to_datetime(['1994-01-01', '1990-02-01', '1990-09-01', '2004-04-01', '2001-08-01', '1993-08-01', '1994-07-01', '2004-06-01', '2004-05-01', '1993-09-01', '1993-10-01', '1991-01-01', '1991-02-01', '1991-04-01'])
+#     "El Nino": pd.to_datetime(['1982-12-01', '1992-01-01', '2009-12-01']),
+#     "La Nina": pd.to_datetime(['1998-12-01', '2008-02-01', '2007-11-01']),
+#     "Neutral": pd.to_datetime(['1990-02-01', '1994-07-01', '2004-05-01'])
 # }
 
-low_thresh = np.percentile(monthly_precip_anomalies, 25)
-high_thresh = np.percentile(monthly_precip_anomalies, 75)
+# # Print the value of the enso index for each date in the dictionary
+# for event_type, dates in enso_dates_dict.items():
+#     for date in dates:
+#         print(f"{event_type} event on {date.strftime('%Y-%m-%d')}: {nino34_obs_xr.sel(time=date, method='nearest').values:.2f}")
+#         # print(f"{event_type} event on {date.strftime('%Y-%m-%d')}: {total_era5_target_data.sel(time=date).values:.2f}")
+# # Print the value of the precipitaion anomaly for each date in the dictionary
+# for event_type, dates in enso_dates_dict.items():
+#     for date in dates:
+#         print(f"{event_type} event on {date.strftime('%Y-%m-%d')}: {monthly_precip_anomalies.sel(time=date, method='nearest').values:.2f} mm/day")
+#         # print(f"{event_type} event on {date.strftime('%Y-%m-%d')}: {total_era5_target_data.sel(time=date).values:.2f}")
 
-monthly_precip_anomalies_smoothed = monthly_precip_anomalies.rolling(time=5, center=True).mean()
-print(f"monthly precip anomalies time: {monthly_precip_anomalies.time}")
+# # enso_dates_dict = {
+# #     "El Nino": pd.to_datetime(['1982-12-01', '1997-11-01', '2015-11-01', '1992-01-01', '2023-12-01', '2002-12-01', '1987-09-01', '2009-12-01']),
+# #     "La Nina": pd.to_datetime(['1988-11-01', '1998-12-01', '2008-01-01', '1999-02-01', '1984-12-01', '2011-01-01', '1985-01-01', '1984-11-01', '2008-02-01', '2007-11-01', '2010-10-01']),
+# #     "Neutral": pd.to_datetime(['1994-01-01', '1990-02-01', '1990-09-01', '2004-04-01', '2001-08-01', '1993-08-01', '1994-07-01', '2004-06-01', '2004-05-01', '1993-09-01', '1993-10-01', '1991-01-01', '1991-02-01', '1991-04-01'])
+# # }
 
-plt.figure(figsize=(12, 5))
-plt.plot(monthly_precip_anomalies.time, monthly_precip_anomalies_smoothed, label='Monthly Mean Precip', color='#3b528b')
-plt.axhline(low_thresh, color='#bb8e3d', linestyle='--', label='25th Percentile')
-plt.axhline(high_thresh, color='#299b7d', linestyle='--', label='75th Percentile')
-# plt.scatter(enso_dates_dict['El Nino'], total_era5_target_data.sel(time=enso_dates_dict['El Nino']), color='red', label='El Nino Events', marker='*')
-# plt.scatter(enso_dates_dict['La Nina'], total_era5_target_data.sel(time=enso_dates_dict['La Nina']), color='blue', label='La Nina Events', marker='*')
-# plt.scatter(enso_dates_dict['Neutral'], total_era5_target_data.sel(time=enso_dates_dict['Neutral']), color='grey', label='Neutral Events', marker='*')
-plt.scatter(enso_dates_dict['El Nino'], monthly_precip_anomalies.sel(time=enso_dates_dict['El Nino'], method = 'nearest'), color='red', label='El Nino Events', marker='o')
-plt.scatter(enso_dates_dict['La Nina'], monthly_precip_anomalies.sel(time=enso_dates_dict['La Nina'], method = 'nearest'), color='blue', label='La Nina Events', marker='o')
-plt.scatter(enso_dates_dict['Neutral'], monthly_precip_anomalies.sel(time=enso_dates_dict['Neutral'], method = 'nearest'), color='grey', label='Neutral Events', marker='o')
-# label each point with the date
-for event_type, dates in enso_dates_dict.items():
-    for date in dates:
-        plt.annotate(date.strftime('%Y-%m'), (date, monthly_precip_anomalies.sel(time=date, method='nearest').values), textcoords="offset points", xytext=(0,10), ha='center', fontsize=8)
-start_date = pd.to_datetime('1980-01-01')
-end_date = pd.to_datetime('2023-01-01')
-plt.xlim(start_date, end_date)
-# # Shade areas below 25th and above 75th percentile
-# for t, val in zip(monthly_precip_anomalies.time.values, monthly_precip_anomalies.values):
-#     if val < low_thresh:
-#         plt.axvspan(t - np.timedelta64(15, 'D'), t + np.timedelta64(15, 'D'), color='#bb8e3d', alpha=0.3)
-#     elif val > high_thresh:
-#         plt.axvspan(t - np.timedelta64(15, 'D'), t + np.timedelta64(15, 'D'), color='#299b7d', alpha=0.3)
+# low_thresh = np.percentile(monthly_precip_anomalies, 25)
+# high_thresh = np.percentile(monthly_precip_anomalies, 75)
 
-plt.title('Monthly Precipitation Anomalies')
-plt.xlabel('Time')
-plt.ylabel('Precipitation Anomaly (mm/day)')
-plt.legend()
-plt.tight_layout()
-plt.savefig('/pscratch/sd/p/plutzner/E3SM/COLUMN MODEL RUN PROJECT/ERA5_precip_monthly_anomalies_DryWetNeutralDates.png', format='png', dpi=250)
+# monthly_precip_anomalies_smoothed = monthly_precip_anomalies.rolling(time=5, center=True).mean()
+# print(f"monthly precip anomalies time: {monthly_precip_anomalies.time}")
+
+# plt.figure(figsize=(12, 5))
+# plt.plot(monthly_precip_anomalies.time, monthly_precip_anomalies_smoothed, label='Monthly Mean Precip', color='#3b528b')
+# plt.axhline(low_thresh, color='#bb8e3d', linestyle='--', label='25th Percentile')
+# plt.axhline(high_thresh, color='#299b7d', linestyle='--', label='75th Percentile')
+# # plt.scatter(enso_dates_dict['El Nino'], total_era5_target_data.sel(time=enso_dates_dict['El Nino']), color='red', label='El Nino Events', marker='*')
+# # plt.scatter(enso_dates_dict['La Nina'], total_era5_target_data.sel(time=enso_dates_dict['La Nina']), color='blue', label='La Nina Events', marker='*')
+# # plt.scatter(enso_dates_dict['Neutral'], total_era5_target_data.sel(time=enso_dates_dict['Neutral']), color='grey', label='Neutral Events', marker='*')
+# plt.scatter(enso_dates_dict['El Nino'], monthly_precip_anomalies.sel(time=enso_dates_dict['El Nino'], method = 'nearest'), color='red', label='El Nino Events', marker='o')
+# plt.scatter(enso_dates_dict['La Nina'], monthly_precip_anomalies.sel(time=enso_dates_dict['La Nina'], method = 'nearest'), color='blue', label='La Nina Events', marker='o')
+# plt.scatter(enso_dates_dict['Neutral'], monthly_precip_anomalies.sel(time=enso_dates_dict['Neutral'], method = 'nearest'), color='grey', label='Neutral Events', marker='o')
+# # label each point with the date
+# for event_type, dates in enso_dates_dict.items():
+#     for date in dates:
+#         plt.annotate(date.strftime('%Y-%m'), (date, monthly_precip_anomalies.sel(time=date, method='nearest').values), textcoords="offset points", xytext=(0,10), ha='center', fontsize=8)
+# start_date = pd.to_datetime('1980-01-01')
+# end_date = pd.to_datetime('2023-01-01')
+# plt.xlim(start_date, end_date)
+# # # Shade areas below 25th and above 75th percentile
+# # for t, val in zip(monthly_precip_anomalies.time.values, monthly_precip_anomalies.values):
+# #     if val < low_thresh:
+# #         plt.axvspan(t - np.timedelta64(15, 'D'), t + np.timedelta64(15, 'D'), color='#bb8e3d', alpha=0.3)
+# #     elif val > high_thresh:
+# #         plt.axvspan(t - np.timedelta64(15, 'D'), t + np.timedelta64(15, 'D'), color='#299b7d', alpha=0.3)
+
+# plt.title('Monthly Precipitation Anomalies')
+# plt.xlabel('Time')
+# plt.ylabel('Precipitation Anomaly (mm/day)')
+# plt.legend()
+# plt.tight_layout()
+# plt.savefig('/pscratch/sd/p/plutzner/E3SM/COLUMN MODEL RUN PROJECT/ERA5_precip_monthly_anomalies_DryWetNeutralDates.png', format='png', dpi=250)
 
 
 
