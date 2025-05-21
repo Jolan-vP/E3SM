@@ -21,7 +21,7 @@ import cftime
 import pandas as pd
 from datetime import datetime
 
-def identify_nino_phases(nino34_index, config, threshold=0.4, window=6, lagtime = None, smoothing_length = None):
+def identify_nino_phases(nino34_filename, config, threshold=0.4, window=6, lagtime = None, smoothing_length = None):
     """
     Function to identify El Niño, La Niña, and Neutral phases based on Nino 3.4 SST index.
     The Niño 3.4 index typically uses a 5-month running mean, and El Niño or La  Niña events are defined when the  
@@ -29,30 +29,42 @@ def identify_nino_phases(nino34_index, config, threshold=0.4, window=6, lagtime 
     https://climatedataguide.ucar.edu/climate-data/nino-sst-indices-nino-12-3-34-4-oni-and-tni
 
     Parameters:
-    - nino34_index (numpy array): Time series of Nino 3.4 SST index values.
+    - nino34_index (numpy array): Time series of DAILY Nino 3.4 SST index values.
     - threshold (float): Threshold for El Niño/La Niña classification.
     - window (int): Number of consecutive months for classification (default 6 months).
     
     Returns:
     - phase_array (numpy array): Array with 3 columns (El Niño, La Niña, Neutral) and rows corresponding to time steps.
     """
-    n = nino34_index.values.shape[0]  # Number of time steps
-
     if config["data_source"] == "ERA5": # ERA5 ENSO data is monthly 
-        print("Data source is ERA5 - monthly ENSO data")
-        nino34_index = nino34_index.sel(time = slice("1940", "2023"))
-        window_length = window  # 6 months of daily data
+        print("Data source is ERA5 - daily ENSO data")
+        Nino34 = xr.open_dataset(nino34_filename)
+        Nino34 = Nino34.value
+        nino34_index = Nino34.sel(time = slice(str(config["databuilder"]["input_years"][0]), str(config["databuilder"]["input_years"][1])))
+        window_length = window * 30 # 6 months of daily data
+
     elif config["data_source"] == "E3SM":
         print("Data source is E3SM - daily ENSO data")
+        Nino34 = xr.open_dataset(nino34_filename)
+        Nino34 = Nino34.nino34
+        # Create desired full time range (e.g., 1850-01-01 to 2014-12-31, daily)
+        full_time = xr.cftime_range(start='1850-01-01', end='2014-12-31', freq='D', calendar = 'noleap')
+        # Reindex to full time range, filling the first and last two weeks of the entire dataset with NANs. Due to monthly -> daily interpolation of centered monthly means, the first and last two weeks are missing. 
+        Nino34 = Nino34.reindex(time=full_time)
+        nino34_index = Nino34.sel(time = slice(str(config["databuilder"]["input_years"][0]), str(config["databuilder"]["input_years"][1])))
+
+        n = nino34_index.values.shape[0]  # Number of time steps
+
         if n > 25000: #E3SM ENSO data is daily
            window_length = 6 * 30
         elif n < 15000:
             window_length = window
             print(f"Caution, seems like Monthly E3SM data is being used, double check that!")
  
+    n = nino34_index.values.shape[0]  # Number of time steps
     # Initialize array to hold the phase classifications
     phase_array = np.zeros((n, 3), dtype=int)  # Columns: [El Niño, La Niña, Neutral]
-    
+
     # Loop through the Nino3.4 index using a sliding window
     for i in range(n - window_length + 1):
         window_slice = nino34_index[i:i + window_length]
@@ -66,47 +78,22 @@ def identify_nino_phases(nino34_index, config, threshold=0.4, window=6, lagtime 
         else:
             # Mark neutral for all other periods
             phase_array[i:i + window_length, 2] = 1
+    
+    index_array_daily = phase_array.copy()
 
-    if config["data_source"] == "E3SM":
-        # open original training dataset: 
-        train_ds = filemethods.get_netcdf_da(str(config['perlmutter_data_dir']) + "input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-        train_ds = train_ds.sel(time = slice("1850", "2014"))
-
-        index_array_daily = phase_array.copy()
-
-    elif config["data_source"] == "ERA5":
-        # open original training dataset: 
-        train_ds = filemethods.get_netcdf_da(str(config['perlmutter_data_dir']) + "/ERA5/ERA5_1x1_input_vars_1940-2023.nc")
-        train_ds = train_ds.sel(time = slice("1940", "2023"))
-
-        # ERA5 Monthly data begins 1940-01-01, and in datetimenoleap, January is 31 days long
-        days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-        years = 2024 - 1940
-        days_in_month_array = np.tile(days_in_month, years) # repeat days in month pattern to match SST data
-        print(f"days in month array length: {len(days_in_month_array)}")
-        index_array_daily = np.full([len(train_ds.time), 3], np.nan, dtype=float)
-        print(f"index array daily shape: {index_array_daily.shape}")
-
-        current_day = 0
-        # Interpolate each column of 'ones' and 'zeros' from monthly to daily according to the 355-no leap calendar
-        for row in range(phase_array.shape[0]):
-                for col in range(phase_array.shape[1]):
-                    month_chunk = np.repeat(phase_array[row, col], days_in_month_array[row])
-                    index_array_daily[current_day : current_day + days_in_month_array[row], col] = month_chunk
-                current_day += days_in_month_array[row]
-
-
-    # save index array daily as an xarray dataset with a time component (same as the original dataset)
+    # save index array daily as an xarray dataset with a time component (same as the original ENSO dataset)
     # Assign daily index array the same time coordinate from the original dataset
     index_array_dailyXR = xr.DataArray(
         index_array_daily, 
         dims=["time", "variables"],  # Specify the dimensions
         coords={
-            "time": train_ds.coords["time"],  # Use the 'time' from 'y'
+            "time": nino34_index.coords["time"],  # Use the 'time' from ENSO index
             "variables": ["El Nino Phase", "La Nina Phase", "Neutral Phase"] 
         },
         attrs = {"description" : "ENSO phases by each day carrying the time coord"}
     )
+    # print(f"index_array_dailyXR shape: {index_array_dailyXR.shape}")
+    # print(f"index_array_dailyXR: {index_array_dailyXR}")
 
     # filter indices by target months, cut leads/lags, smoothing length, etc. 
     filtered_daily_indicesXR = universaldataloader(index_array_dailyXR, config, target_only = True) 
@@ -134,26 +121,40 @@ def identify_nino_phases(nino34_index, config, threshold=0.4, window=6, lagtime 
 
 def ENSO_CRPS(daily_enso_dates, crps_scores, target_time, config): 
 
-    elnino_dates = [d.item() for d in daily_enso_dates["El Nino"]]
-    lanina_dates = [d.item() for d in daily_enso_dates["La Nina"]]
-    neutral_dates = [d.item() for d in daily_enso_dates["Neutral"]]
+    # Ensure that EN, LN, N dates all fall within the test set period: 
+    start_year = config["databuilder"]["test_years"][0]
+    end_year = config["databuilder"]["test_years"][1]
+
+    # Convert to pandas
+    elnino_dates = [pd.Timestamp(d) for d in daily_enso_dates["El Nino"] if start_year <= pd.Timestamp(d).year <= end_year]
+    lanina_dates = [pd.Timestamp(d) for d in daily_enso_dates["La Nina"] if start_year <= pd.Timestamp(d).year <= end_year]
+    neutral_dates = [pd.Timestamp(d) for d in daily_enso_dates["Neutral"] if start_year <= pd.Timestamp(d).year <= end_year]
+
+    # Convert to numpy datetime64
+    lanina_dates_np = np.array([np.datetime64(date) for date in lanina_dates])
+    elnino_dates_np = np.array([np.datetime64(date) for date in elnino_dates])
+    neutral_dates_np = np.array([np.datetime64(date) for date in neutral_dates])
 
     ENSO_dict = {
-        "elnino" : elnino_dates, 
-        "lanina" : lanina_dates, 
-        "neutral": neutral_dates, 
+        "elnino" : elnino_dates_np, 
+        "lanina" : lanina_dates_np, 
+        "neutral": neutral_dates_np, 
         "CRPS":    crps_scores
     }
-
     save_pickle(ENSO_dict, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "ENSO_indices_CRPS.pkl")
 
     # Create crps xarray object with target time coordinate 
-    crps_scores = xr.DataArray(crps_scores, coords=[target_time], dims=["time"], attrs={"description": "CRPS scores"})
+    crps_scores = xr.DataArray(crps_scores, coords=[target_time.values], dims=["time"], attrs={"description": "CRPS scores"})
 
-    CRPS_elnino = round(crps_scores.sel(time = elnino_dates).values.mean(), 5)
-    CRPS_lanina = round(crps_scores.sel(time = lanina_dates).values.mean(), 5)
-    CRPS_neutral = round(crps_scores.sel(time = neutral_dates).values.mean(), 5)
-   
+    # Find intersections between dates and target times
+    elnino_common = np.intersect1d(elnino_dates_np, target_time.values)
+    lanina_common = np.intersect1d(lanina_dates_np, target_time.values)
+    neutral_common = np.intersect1d(neutral_dates_np, target_time.values)
+
+    CRPS_elnino = round(crps_scores.sel(time = elnino_common).values.mean(), 5)
+    CRPS_lanina = round(crps_scores.sel(time = lanina_common).values.mean(), 5)
+    CRPS_neutral = round(crps_scores.sel(time = neutral_common).values.mean(), 5)
+
     print(f"El Nino average CRPS across all samples: {np.round(CRPS_elnino, 4)}")
     print(f"La Nina average CRPS across all samples: {np.round(CRPS_lanina, 4)}")
     print(f"Neutral average CRPS across all samples: {np.round(CRPS_neutral, 4)}")

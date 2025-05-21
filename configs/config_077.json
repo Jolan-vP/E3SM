@@ -58,7 +58,7 @@
         "cnn_act": ["ReLU", "ReLU"],
 
         "hiddens_block": [20, 20],
-        "hiddens_block_in": [141120],
+        "hiddens_block_in": [144256],
         "hiddens_block_act": ["ReLU"],
         "hiddens_block_out": 20,
 
@@ -73,7 +73,7 @@
     "optimizer": {
         "type": "Adam",
         "args": {
-            "lr": 0.0000001,
+            "lr": 0.00000001,
             "weight_decay": 0.0
         }
     },

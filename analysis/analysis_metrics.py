@@ -265,7 +265,7 @@ def IQR_success_discard_plot(shash_output, network_CRPS, climatology_CRPS, confi
     # plt.axhline(y=climatology_CRPS.mean(), color='grey', linestyle='--', label='CRPS Climatology Mean')
     plt.xlabel('IQR Percentile (% Data Remaining)')
     plt.ylabel('Proportion of Samples with Lower Network CRPS')
-    plt.ylim([0.5, 0.7])
+    plt.ylim([0.5, max(avg_success_ratio) + 0.1])
     plt.title('Increasing Confidence Success Ratio Discard Plot -' + str(config["expname"]))
     # plt.legend(loc = 'upper right')
     plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + '_SuccessRatio_IQR_DiscardPlot.png', format='png', bbox_inches ='tight', dpi = 300) 
@@ -665,6 +665,9 @@ def differenceplot(dates1, dates2, mapinputs, target, evaluation_metric, config,
     target_months = config["databuilder"]["target_months"]
     valid_times = set(mapinputs.time.values)
 
+    print(f"dates1 length: {len(dates1)}")
+    print(f"dates2 length: {len(dates2)}")
+    
     # Convert to plain numpy arrays if needed
     if hasattr(dates1, 'values'):
         dates1 = dates1.values
@@ -678,6 +681,9 @@ def differenceplot(dates1, dates2, mapinputs, target, evaluation_metric, config,
     dates1 = dates1_filtered
     dates2 = dates2_filtered
 
+    print(f"dates1 length: {len(dates1)}")
+    print(f"dates2 length: {len(dates2)}")
+
     if len(mapinputs.shape) == 3: # Time, Lat, Lon      
 
         if normalized == True:
@@ -687,6 +693,10 @@ def differenceplot(dates1, dates2, mapinputs, target, evaluation_metric, config,
 
             icomposite1 = mapinputs.sel(time=dates1).mean(dim='time')  
             icomposite2 = mapinputs.sel(time=dates2).mean(dim='time')  
+
+            # Make sure they have the same dimensions before division
+            print(f"Shape of icomposite1: {icomposite1.shape}")
+            print(f"Shape of icomposite1_std: {icomposite1_std.shape}")
 
             # Normalize by dividing by std at each gridpoint
             icomposite1 = icomposite1 / icomposite1_std

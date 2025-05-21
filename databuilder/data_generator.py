@@ -35,6 +35,9 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from cartopy.crs import PlateCarree
 from analysis.analysis_metrics import save_pickle
+from utils.filemethods import open_data_file as open_data_file
+from itertools import islice
+import pandas as pd
 
 
 # -----------------------------------------------------
@@ -498,70 +501,152 @@ def multi_input_data_organizer(config, fn1, fn2, fn3, MJO=False, ENSO = False, o
 
     if MJO == True: 
         print("Opening MJO PCs")
-        MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/MJOarray.leadnans.1850-2014.pkl'
-        with gzip.open(MJOsavename, "rb") as obj:
-            MJOarray = pickle.load(obj)
-        obj.close()
+        if config["data_source"] == "E3SM":
+            MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/MJOarray.leadnans.1850-2014.pkl'
+            with gzip.open(MJOsavename, "rb") as obj:
+                MJOarray = pickle.load(obj)
+            obj.close()
 
-        if start_year == 1850:
-            # Due to EOF processing (by Po-Lun) the first four months of MJO dataset are NANS
-            nan_rows = MJOarray[:120]
+            if start_year == 1850:
+                # Due to EOF processing (by Po-Lun) the first four months of MJO dataset are NANS
+                nan_rows = MJOarray[:120]
 
-            # Filter rows based on input years
-            filtered_rows = MJOarray[120:][(MJOarray[120:, 4, 0] >= start_year) & (MJOarray[120:, 4, 0] <= end_year)]
+                # Filter rows based on input years
+                filtered_rows = MJOarray[120:][(MJOarray[120:, 4, 0] >= start_year) & (MJOarray[120:, 4, 0] <= end_year)]
 
-            # Combine NaN rows and filtered rows
-            filtered_MJOarray = np.vstack((nan_rows, filtered_rows))
+                # Combine NaN rows and filtered rows
+                filtered_MJOarray = np.vstack((nan_rows, filtered_rows))
+            else:
+                # Directly filter all rows by input years
+                filtered_MJOarray = MJOarray[(MJOarray[:, 4, 0] >= start_year) & (MJOarray[:, 4, 0] <= end_year)]
+
+            # Replace the original MJOarray with the filtered version
+            MJOarray = filtered_MJOarray
+
+            # Optional: Print the filtered array or its shape for verification
+            print(f"Filtered MJOarray shape: {MJOarray.shape}")
+        
+        elif config["data_source"] == "ERA5":
+            MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/rmm.74toRealtime.txt'
+            ## RMM values up to "real time". 19740601-20131231: Both SST1 variability (ENSO) and 120-day mean have been removed in these RMM values; 20140101-: Only the 120-day has been removed.
+            MJOdf = open_data_file(MJOsavename)
+            # print(f"MJO array: {MJOarray}")
+            MJOdf.columns = MJOdf.columns.str.strip().str.rstrip(',')
+            MJOdf['date'] = pd.to_datetime(dict(year=MJOdf.year, month=MJOdf.month, day=MJOdf.day))
+            MJOdf.set_index('date', inplace=True)
+
+            RMM1 = MJOdf["RMM1"]
+            RMM2 = MJOdf["RMM2"]
+
+            train_start_year = config["databuilder"]["train_years"][0]
+            train_end_year = config["databuilder"]["train_years"][1]
+            val_start_year = config["databuilder"]["val_years"][0]
+            val_end_year = config["databuilder"]["val_years"][1]
+            test_start_year = config["databuilder"]["test_years"][0]
+            test_end_year = config["databuilder"]["test_years"][1]
+            
+            # Add 5 months worth of nans to the beginning of the training set
+            # Original data begins 1974-06-01, but we want to start at 1974-01-01
+            nan_dates = pd.date_range(start='1974-01-01', end='1974-05-31', freq='D')
+            nan_series = pd.Series(data=np.nan, index=nan_dates)
+
+            RMM1_orig = RMM1.loc[f'{train_start_year}-06-01':f'{train_end_year}-12-31']
+            RMM1_train = pd.concat([nan_series, RMM1_orig])
+            RMM1_val = RMM1.loc[f'{val_start_year}-01-01':f'{val_end_year}-12-31']
+            RMM1_test = RMM1.loc[f'{test_start_year}-01-01':f'{test_end_year}-04-29']
+
+            RMM2_orig = RMM2.loc[f'{train_start_year}-06-01':f'{train_end_year}-12-31']
+            RMM2_train = pd.concat([nan_series, RMM2_orig])
+            RMM2_val = RMM2.loc[f'{val_start_year}-01-01':f'{val_end_year}-12-31']
+            RMM2_test = RMM2.loc[f'{test_start_year}-01-01':f'{test_end_year}-04-29']
+
+            RMM1_data_dict = {0: RMM1_train, 1: RMM1_val, 2: RMM1_test}
+            RMM2_data_dict = {0: RMM2_train, 1: RMM2_val, 2: RMM2_test}
+
+            # print(f"RMM1 train: {RMM1_train.head(6)}")
+            # print(f"RMM1 val: {RMM1_val.head(6)}")
+            # print(f"RMM2 train: {RMM2_train.head(6)}")s
+            # print(f"RMM2 val: {RMM2_val.head(6)}")
         else:
-            # Directly filter all rows by input years
-            filtered_MJOarray = MJOarray[(MJOarray[:, 4, 0] >= start_year) & (MJOarray[:, 4, 0] <= end_year)]
-
-        # Replace the original MJOarray with the filtered version
-        MJOarray = filtered_MJOarray
-
-        # Optional: Print the filtered array or its shape for verification
-        print(f"Filtered MJOarray shape: {MJOarray.shape}")
-    else:
-        pass
+            pass
+            
 
     # ENSO Indices / Temperature Time Series of Nino3.4 -------------------
     if ENSO == True: 
-        print("Opening high-res DAILY Linearly Interpolated Nino34 Data")
-        ninox_array = np.zeros([da_length, 3])
-        for iens, ens in enumerate(config["databuilder"]["ensemble_codes"]):
-            fpath = config["perlmutter_data_dir"] + "ENSO_Data/E3SM/ENSO_ne30pg2_HighRes/nino.member" + str(ens) + "_daily_linterp_shifted.nc"
-            ninox = filemethods.get_netcdf_da(fpath)
-            ninox = ninox.sel(time = slice(str(start_year), str(end_year)))
-            nino34 = ninox.nino34.values
-            print(f"shape of nino34: {nino34.shape}")
-            print(f"nino time coordinate: {ninox.time}")
+        if config["data_source"] == "E3SM":
+            print("Opening high-res DAILY Linearly Interpolated Nino34 Data")
+            ninox_array = np.zeros([da_length, 3])
+            for iens, ens in enumerate(config["databuilder"]["ensemble_codes"]):
+                fpath = config["perlmutter_data_dir"] + "ENSO_Data/E3SM/ENSO_ne30pg2_HighRes/nino.member" + str(ens) + "_daily_linterp_shifted.nc"
+                ninox = filemethods.get_netcdf_da(fpath)
+                ninox = ninox.sel(time = slice(str(start_year), str(end_year)))
+                nino34 = ninox.nino34.values
+                print(f"shape of nino34: {nino34.shape}")
+                print(f"nino time coordinate: {ninox.time}")
 
-            if start_year == 1850: 
-                # add 15 new days of nans to the beginning of the array such that the total array length is now 15 values longer:
-                nan_array = np.zeros(15)
-                ninox_array[:, iens] = np.concatenate((nan_array, nino34, nan_array), axis = 0)
-                print(f"shape of ninox_array after adding 15 frontnans: {ninox_array.shape}")
-            else: 
-                ninox_array[:, iens] = nino34
-        print(f"filtered ninox_array shape: {ninox_array.shape}")
-            # 15 values missing (1850-01-01 to 1850-01-15) from 60225 total samples due to backward rolling average and monthly time step configuration
-            # By starting at index 15, the ninox array should begin on 0 days since 1850-01-01
-    else:
-        pass
+                if start_year == 1850: 
+                    # add 15 new days of nans to the beginning of the array such that the total array length is now 15 values longer:
+                    nan_array = np.zeros(15)
+                    ninox_array[:, iens] = np.concatenate((nan_array, nino34, nan_array), axis = 0)
+                    print(f"shape of ninox_array after adding 15 frontnans: {ninox_array.shape}")
+                else: 
+                    ninox_array[:, iens] = nino34
+            print(f"filtered ninox_array shape: {ninox_array.shape}")
+                # 15 values missing (1850-01-01 to 1850-01-15) from 60225 total samples due to backward rolling average and monthly time step configuration
+                # By starting at index 15, the ninox array should begin on 0 days since 1850-01-01
+        
+        elif config["data_source"] == "ERA5":
+            print("Opening Observational Nino34 Data")
+            fpath = '/pscratch/sd/p/plutzner/E3SM/bigdata/ENSO_Data/OBS/nino34.long.anom_daily_linterp_shifted.nc'
+            ninox = open_data_file(fpath)
+            nino34 = ninox.value
+            ninox_array = np.zeros([len(RMM1_train), 3])
+
+            nino34_train = nino34.sel(time = slice(str(train_start_year), str(train_end_year)))
+            nino34_val = nino34.sel(time = slice(str(val_start_year), str(val_end_year)))
+            nino34_test = nino34.sel(time = slice(str(test_start_year), str(test_end_year)))
+
+            ninox_array[:len(nino34_train), 0] = nino34_train
+            ninox_array[:len(nino34_val), 1] = nino34_val
+            ninox_array[:len(nino34_test), 2] = nino34_test
+        else:
+            pass
   
     # Create Input and Target Arrays ------------------------------------------------------------
     
     # NO LAGGING OCCURS IN THIS CODE
     print("Combining Input and target data")
 
-    inputda = np.zeros([da_length, 3, 3])
+    inputda = np.nan * np.ones([da_length, 3, 3])
 
     target_dict = {0: d_train_target, 1: d_val_target, 2: d_test_target}
+
+    # establish correct time coordinates for input data: 
+    training_time = xr.date_range(
+        start = f'{config["databuilder"]["train_years"][0]}-01-01', 
+        end = f'{config["databuilder"]["train_years"][1]}-12-31',
+        freq = "1D", 
+        calendar = "standard"
+    )
+    validation_time = xr.date_range(
+        start = f'{config["databuilder"]["val_years"][0]}-01-01', 
+        end = f'{config["databuilder"]["val_years"][1]}-12-31',
+        freq = "1D", 
+        calendar = "standard"
+    )
+    testing_time = xr.date_range(
+        start = f'{config["databuilder"]["test_years"][0]}-01-01', 
+        end = f'{config["databuilder"]["test_years"][1]}-12-31',
+        freq = "1D", 
+        calendar = "standard"
+    )
+
+    time_dict = {0: training_time, 1: validation_time, 2: testing_time}
     
     for key, value in target_dict.items():
         inputda[:,  0, key] = ninox_array[:, key] #ENSO
-        inputda[: , 1, key] = MJOarray[:, 2, key]  #RMM1
-        inputda[: , 2, key] = MJOarray[:, 3, key]  #RMM2
+        inputda[:len(RMM1_data_dict[key]) , 1, key] = RMM1_data_dict[key] #RMM1
+        inputda[:len(RMM2_data_dict[key]) , 2, key] = RMM2_data_dict[key] #RMM2
 
     # INPUT DICT
     s_dict_train = SampleDict()
@@ -573,21 +658,40 @@ def multi_input_data_organizer(config, fn1, fn2, fn3, MJO=False, ENSO = False, o
 
     # Assign target time coordinate to input data in new xarray dataarray
     for idict, s_dict in enumerate(input_dicts):
-        s_dict["x"] = xr.DataArray(
-            inputda[:, :, idict], 
-            dims=["time", "channel"],  # Specify the dimensions
-            coords={
-                "time": d_train_target['y'].coords["time"],  # Use the 'time' from 'y'
-                "channel": ["ENSO", "RMM1", "RMM2"] 
-            },
-            attrs = {"description" : "Input dataset with time metadata from target precip netcdf"}
-        )
-        # Assign target data from preprocessed target data above
-        s_dict["y"] = target_dict[idict]["y"]
+        if config["data_source"] == "E3SM": 
+            s_dict["x"] = xr.DataArray(
+                inputda[:, :, idict], 
+                dims=["time", "channel"],  # Specify the dimensions
+                coords={
+                    "time": d_train_target['y'].coords["time"],  # Use the 'time' from 'y'
+                    "channel": ["ENSO", "RMM1", "RMM2"] 
+                },
+                attrs = {"description" : "Input dataset with time metadata from target precip netcdf"}
+            )
+            # Assign target data from preprocessed target data above
+            s_dict["y"] = target_dict[idict]["y"]
+
+        elif config["data_source"] == "ERA5":
+            s_dict["x"] = xr.DataArray(
+                inputda[:time_dict[idict].shape[0], :, idict], 
+                dims=["time", "channel"],  # Specify the dimensions
+                coords={
+                    "time": time_dict[idict],  # Use the 'time' created from split obs dataset
+                    "channel": ["ENSO", "RMM1", "RMM2"] 
+                },
+                attrs = {"description" : "Input dataset with time metadata from target precip netcdf"}
+            )
+            # Assign target data from preprocessed target data above
+            s_dict["y"] = target_dict[idict]["y"]
 
     # Confirm correct metadata for input and time coordinates
     # print(f"s_dict_train input time coordinate: {s_dict_train['x'].time}")
     # print(f"s_dict_train target time coordinate: {s_dict_train['y'].time}")
+
+    # # print indices corresponding to nan values in input data
+    # print(f"nan indices in input data: {np.where(np.isnan(s_dict_train['x'].values))}")
+    # print(f"nan indices in input data: {np.where(np.isnan(s_dict_val['x'].values))}")
+    # print(f"nan indices in input data: {np.where(np.isnan(s_dict_test['x'].values))}")
     return s_dict_train, s_dict_val, s_dict_test
 
 
