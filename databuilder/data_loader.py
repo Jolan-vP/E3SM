@@ -103,6 +103,7 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
 
     # assign nan-less and lagged input and target variables: 
     if isinstance(data, xr.Dataset):
+        print("Data is an xarray dataset")
         # Access 'x' and 'y' directly since they behave like a dictionary
         input = data['x']
         target = data['y']
@@ -119,6 +120,7 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
         print(f"target shape post lag: {target.shape}")
 
     elif isinstance(data, dict):
+        print("Data is a dictionary")
         # If there are leading or ending nans, cut the inputs evenly so there are no longer nans
         trimmed_data = {key: value[front_nans : -back_nans] for key, value in data.items() }
         
@@ -129,6 +131,7 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
         target = trimmed_data["y"][lagtime:]
 
     else: 
+        print("Data is not a dictionary or xarray dataset")
         # assume that if it is not a dictionary passed, then only a target is passed with no inputs
         target = data[front_nans : -back_nans]
         target = target[lagtime:]
@@ -160,6 +163,15 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
         
         else: 
             print("Repackaging data into xarray dataset")
+
+            # check if there are nans and what location the nans are: 
+            if np.any(np.isnan(input_mod_final)):
+                print("Input data has nans")
+                # print location of nans
+                print(np.where(np.isnan(input_mod_final)))
+
+        
+
             if len(input_mod_final.shape) == 4: 
                 data_dict = xr.Dataset({
                     "x": (["time", "lat", "lon", "channel"], input_mod_final.data),  

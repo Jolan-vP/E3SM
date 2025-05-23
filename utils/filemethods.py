@@ -56,3 +56,26 @@ def create_folder(folder_name):
     except Exception as e:
         print(f"An error occurred: {e}")
 
+def filter_dates(dates1, dates2, valid_times, target_months):
+    # Ensure valid_times is a set for faster lookup
+    valid_times_set = set(valid_times)
+
+    def is_valid_date(d):
+        try:
+            return d in valid_times_set and d.month in target_months
+        except Exception:
+            return False
+
+    # Handle xarray.DataArray
+    if isinstance(dates1, xr.DataArray):
+        dates1_np = dates1.values
+        dates2_np = dates2.values
+    else:  # assume numpy.ndarray
+        dates1_np = dates1
+        dates2_np = dates2
+
+    # Apply filtering
+    dates1_filtered = np.array([d for d in dates1_np if is_valid_date(d)])
+    dates2_filtered = np.array([d for d in dates2_np if is_valid_date(d)])
+
+    return dates1_filtered, dates2_filtered
