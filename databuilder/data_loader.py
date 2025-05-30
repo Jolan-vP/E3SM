@@ -47,6 +47,9 @@ class CustomData(torch.utils.data.Dataset):
 
             self.input = (self.input - i_mean) / i_std
 
+            # print("Min std:", np.min(i_std))
+            # print("Where std is zero:", np.where(i_std == 0))
+
         elif which_set == "validation": 
             stats = open_data_file(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/train_stats.pkl")
             i_std = stats['input_std']
@@ -170,8 +173,7 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
                 # print location of nans
                 print(np.where(np.isnan(input_mod_final)))
 
-        
-
+    
             if len(input_mod_final.shape) == 4: 
                 data_dict = xr.Dataset({
                     "x": (["time", "lat", "lon", "channel"], input_mod_final.data),  

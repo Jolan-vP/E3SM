@@ -78,7 +78,7 @@ class ClimateData:
     def _create_data(self):  
         if "ERA5" in self.config["data_source"]:
             print("Splitting data into train, val, test from singular file rather than ensemble members.")
-            input_ds = filemethods.get_netcdf_da(self.data_dir + "ERA5/ERA5_1x1_input_vars_1940-2023.nc")
+            input_ds = filemethods.get_netcdf_da(self.data_dir + "ERA5/ERA5_1x1_input_vars_1940-2023_regrid.nc")
 
             train_ds = input_ds.sel(time = slice(str(self.config["train_years"][0]), str(self.config["train_years"][1])))
             validate_ds = input_ds.sel(time = slice(str(self.config["val_years"][0]), str(self.config["val_years"][1])))
@@ -335,7 +335,7 @@ class ClimateData:
                         # REMOVE SEASONAL CYCLE
                         for ichannel in range(f_dict[key].shape[-1]):
                             f_dict[key][..., ichannel] = self.trend_remove_seasonal_cycle(f_dict[key][...,ichannel])
-                        
+                    
                         # checkplot = f_dict[key].sel(time = '1905-01-01')
                         # checkplot[...,1].plot()
 
@@ -421,7 +421,7 @@ class ClimateData:
                 stacked = da[:, :, start:end].stack(z=("lat", "lon"))
 
                 da_copy[:, :, start:end] = stacked.groupby("time.dayofyear").map(self.subtract_trend).unstack()
-        
+
         return da_copy.dropna("time")
 
     def rolling_ave(self, da):
