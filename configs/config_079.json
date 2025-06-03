@@ -2,7 +2,7 @@
     "device": "cpu",
     "seed_list": [7],
 
-    "input_data": "None",
+    "input_data": "exp079",
     "data_source": "ERA5", 
     "inference_data": "ERA5",
     "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/",
@@ -58,7 +58,7 @@
         "cnn_act": ["ReLU", "ReLU"],
 
         "hiddens_block": [20, 20],
-        "hiddens_block_in": [144256],
+        "hiddens_block_in": [141120],
         "hiddens_block_act": ["ReLU"],
         "hiddens_block_out": 20,
 

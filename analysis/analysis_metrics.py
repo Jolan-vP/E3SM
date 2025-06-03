@@ -44,6 +44,7 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import utils.filemethods as filemethods
 from utils.filemethods import open_data_file
+from utils.filemethods import filter_dates
 
 import math
 import datetime
@@ -102,16 +103,61 @@ def climatologyCDF(target, x, climatology_var = None):
 
 def IQRdiscard_plot(networkoutput, target, crps_scores, crps_climatology_scores, dates, config, target_type = 'anomalous', keyword = None, analyze_months = True, most_confident = True):
 
-    if keyword != "All Samples":
-        selected_target = target.sel(time = dates)
+    # if keyword != "All Samples":
+    #     selected_target = target.sel(time = dates)
 
+    #     all_timestamps = target.time.values
+    #     selected_timestamps = dates
+    #     time_indices = np.nonzero(np.isin(all_timestamps, selected_timestamps))[0]
+    #     selected_networkoutput = networkoutput[time_indices]
+    #     crps_network = crps_scores[time_indices]
+    #     crps_climo = crps_climatology_scores[time_indices]
+    # else: 
+    #     selected_networkoutput = networkoutput
+    #     selected_target = target
+    #     crps_network = crps_scores
+    #     crps_climo = crps_climatology_scores
+
+    if keyword != "All Samples":
+        # Fix 1: Convert dates to appropriate format if it's a numpy array
+        if isinstance(dates, np.ndarray):
+            # If dates is already in the right format, convert to list
+            dates_list = dates.tolist()
+        else:
+            dates_list = dates
+        
+        # Try different approaches based on your data structure
+        try:
+            # Method 1: Direct selection with converted dates
+            selected_target = target.sel(time=dates_list)
+        except (TypeError, KeyError):
+            try:
+                # Method 2: Use isin for boolean indexing
+                selected_target = target.isel(time=target.time.isin(dates))
+            except:
+                # Method 3: Manual indexing approach
+                all_timestamps = target.time.values
+                if isinstance(dates, np.ndarray):
+                    selected_timestamps = dates
+                else:
+                    selected_timestamps = np.array(dates)
+                
+                # Find matching indices
+                time_indices = np.nonzero(np.isin(all_timestamps, selected_timestamps))[0]
+                selected_target = target.isel(time=time_indices)
+        
+        # Get indices for other arrays
         all_timestamps = target.time.values
-        selected_timestamps = dates
+        if isinstance(dates, np.ndarray):
+            selected_timestamps = dates
+        else:
+            selected_timestamps = np.array(dates)
         time_indices = np.nonzero(np.isin(all_timestamps, selected_timestamps))[0]
+        
         selected_networkoutput = networkoutput[time_indices]
         crps_network = crps_scores[time_indices]
         crps_climo = crps_climatology_scores[time_indices]
-    else: 
+    else:
         selected_networkoutput = networkoutput
         selected_target = target
         crps_network = crps_scores
@@ -226,9 +272,9 @@ def IQRdiscard_combined(percentile_dict, crps_dict, crps_climatology, config, ke
     plt.figure(figsize=(8, 6))
     plt.gca().invert_xaxis()  # high confidence = low IQR = right side of plot
 
-    plt.plot(percentile_dict['EN'], crps_dict['EN'], label='El Niño', color='#c77f08')
-    plt.plot(percentile_dict['LN'], crps_dict['LN'], label='La Niña', color='#5b9da4')
-    plt.plot(percentile_dict['NE'], crps_dict['NE'], label='Neutral', color='#c2ab85')
+    plt.plot(percentile_dict['EN'], crps_dict['EN'], label='El Niño', linewidth = 1.5, color='#c77f08')
+    plt.plot(percentile_dict['LN'], crps_dict['LN'], label='La Niña', linewidth = 1.5, color='#5b9da4')
+    plt.plot(percentile_dict['NE'], crps_dict['NE'], label='Neutral', linewidth = 1.5, color='#c2ab85')
 
     plt.axhline(y=crps_climatology.mean(), color='grey', linestyle='--', label='CRPS Climatology Mean')
     plt.xlabel('IQR Percentile (% Data Remaining)')
@@ -236,7 +282,13 @@ def IQRdiscard_combined(percentile_dict, crps_dict, crps_climatology, config, ke
     plt.title('Increasing Confidence CRPS Discard Plot (All Phases)')
     plt.legend()
     plt.tight_layout()
-    plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + '_CRPS_IQR_DiscardPlot_ENSOcombined.png', format='png', bbox_inches ='tight', dpi = 300)
+    plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + '_CRPS_IQR_DiscardPlot_ENSOcombined.png', format='png', bbox_inches ='tight', dpi = 250)
+
+    plot_data_dict = {
+        'percentiles': percentile_dict,
+        'crps': crps_dict
+    }
+    return plot_data_dict
 
 def IQR_success_discard_plot(shash_output, network_CRPS, climatology_CRPS, config, keyword= None):
     # IQR discard plot
@@ -265,13 +317,14 @@ def IQR_success_discard_plot(shash_output, network_CRPS, climatology_CRPS, confi
     # plt.axhline(y=climatology_CRPS.mean(), color='grey', linestyle='--', label='CRPS Climatology Mean')
     plt.xlabel('IQR Percentile (% Data Remaining)')
     plt.ylabel('Proportion of Samples with Lower Network CRPS')
-    plt.ylim([0.5, max(avg_success_ratio) + 0.1])
+    plt.ylim([min(avg_success_ratio) - 0.2, max(avg_success_ratio) + 0.1])
     plt.title('Increasing Confidence Success Ratio Discard Plot -' + str(config["expname"]))
     # plt.legend(loc = 'upper right')
     plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + '_SuccessRatio_IQR_DiscardPlot.png', format='png', bbox_inches ='tight', dpi = 300) 
 
+    return percentiles, avg_success_ratio
 
-def target_discardplot(targetCNN, targetSNN, CNNcrps_scores, NNcrps_scores, crps_climatology_scores, config, target_type = 'anomalous', keyword = None):
+def target_discardplot(targetCNN, CNN_expname, targetSNN, SNN_expname, CNNcrps_scores, NNcrps_scores, crps_climatology_scores, config, target_type = 'anomalous', keyword = None):
     
     percentiles = np.linspace(100, 0, 21)
 
@@ -308,9 +361,9 @@ def target_discardplot(targetCNN, targetSNN, CNNcrps_scores, NNcrps_scores, crps
     fig, ax1 = plt.subplots()
     ax1.set_ylabel('Average CRPS')
     ax1.set_xlabel('Percentile of Target Value \n (% Data Remaining)')
-    ax1.plot(percentiles, avg_crpsCNN, color=colors[0], linewidth = 1.3, label = 'CNN')
-    ax1.plot(percentiles, avg_crpsNN,  color=colors[1], linewidth = 1.3, label = 'Simple NN') 
-    ax1.plot(percentiles, avg_crpsClimo, color=colors[2], linewidth = 1.3, label = 'Climatology')
+    ax1.plot(percentiles, avg_crpsCNN, color=colors[0], linewidth = 1.3, label = f"CNN - {str(CNN_expname)}")
+    ax1.plot(percentiles, avg_crpsNN,  color=colors[1], linewidth = 1.3, label = f'Simple NN - {str(SNN_expname)}') 
+    ax1.plot(percentiles, avg_crpsClimo, color=colors[2], linewidth = 1.3, label = f'Climatology - {str(config["expname"])}')
     ax1.set_title(f'Discard Plot \n CRPS vs. Decreasing Target Value ({config["expname"]})')
 
     ax1.tick_params(axis='y')
@@ -455,21 +508,34 @@ def spread_skill(output, target, config):
 
 def subsetanalysis_SHASH_ENSO(sample_index, daily_enso_timestamps, shash_params, climatology, target, target_raw, config, x_values, subset_keyword = None): 
  
-    elnino = np.array([d.item() for d in daily_enso_timestamps["El Nino"]])
-    lanina = np.array([d.item() for d in daily_enso_timestamps["La Nina"]])
-    neutral = np.array([d.item() for d in daily_enso_timestamps["Neutral"]])
+    # elnino = np.array([d.item() for d in daily_enso_timestamps["El Nino"]])   
+    # lanina = np.array([d.item() for d in daily_enso_timestamps["La Nina"]])
+    # neutral = np.array([d.item() for d in daily_enso_timestamps["Neutral"]])
+    elnino = np.array(pd.to_datetime(daily_enso_timestamps["El Nino"]), dtype='datetime64[ns]')
+    lanina = np.array(pd.to_datetime(daily_enso_timestamps["La Nina"]), dtype='datetime64[ns]')
+    neutral = np.array(pd.to_datetime(daily_enso_timestamps["Neutral"]), dtype='datetime64[ns]')
 
     crps_scores = load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_network_values.pkl")
 
-    subset_indices = sample_index
-    subset_dates = target.time.isel(time = subset_indices)
-    
+    subset_indices = np.array(sample_index)
+    # subset_dates = target.time.isel(time = subset_indices)
+    # subset_dates = np.array(target.time.isel(time=subset_indices).values, dtype='datetime64[ns]')
+    subset_dates = np.array(pd.to_datetime(target.time.values[subset_indices]), dtype='datetime64[ns]')
+
+    # ensure that elnino, lanina, and neutral dates fall within target years: 
+    target_start_year = target.time[0].dt.year.item()
+    target_end_year = target.time[-1].dt.year.item()
+    elnino = elnino[(pd.DatetimeIndex(elnino).year >= target_start_year) & (pd.DatetimeIndex(elnino).year <= target_end_year)]
+    lanina = lanina[(pd.DatetimeIndex(lanina).year >= target_start_year) & (pd.DatetimeIndex(lanina).year <= target_end_year)]
+    neutral = neutral[(pd.DatetimeIndex(neutral).year >= target_start_year) & (pd.DatetimeIndex(neutral).year <= target_end_year)]
+
+
     # Calculate relative ratio of ENSO phases relative to all samples
     elnino_ratio = len(elnino) / crps_scores.shape[0]
     lanina_ratio = len(lanina) / crps_scores.shape[0]
     neutral_ratio = len(neutral) / crps_scores.shape[0]
 
-    # identify enso phases of each sample in the subsetx
+    # identify enso phases of each sample in the subset
     sub_elnino = elnino[np.isin(elnino, subset_dates)]
     sub_lanina = lanina[np.isin(lanina, subset_dates)]
     sub_neutral = neutral[np.isin(neutral, subset_dates)]
@@ -486,7 +552,7 @@ def subsetanalysis_SHASH_ENSO(sample_index, daily_enso_timestamps, shash_params,
     plt.axhline(y=neutral_ratio, color='k', xmin = .70, xmax = 0.95,  linestyle='--', linewidth=1.5)
     plt.xlabel('ENSO Phase')
     plt.ylabel('Frequency')
-    plt.ylim([0, max_ratio + 0.075])
+    # plt.ylim([0, max_ratio + 0.075])
     plt.title(f'ENSO Phase Distribution for {str(subset_keyword)} Samples')
     plt.legend()
     plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + str(subset_keyword) + '_ENSO_phase_distribution.png', format='png', bbox_inches ='tight', dpi = 300)
@@ -667,17 +733,15 @@ def differenceplot(dates1, dates2, mapinputs, target, evaluation_metric, config,
 
     print(f"dates1 length: {len(dates1)}")
     print(f"dates2 length: {len(dates2)}")
-    
+    print(f"type dates1: {type(dates1)}")
+
     # Convert to plain numpy arrays if needed
     if hasattr(dates1, 'values'):
         dates1 = dates1.values
     if hasattr(dates2, 'values'):
         dates2 = dates2.values
 
-    # Filter based on presence in mapinputs.time and correct months
-    dates1_filtered = np.array([d for d in dates1 if d in valid_times and d.month in target_months])
-    dates2_filtered = np.array([d for d in dates2 if d in valid_times and d.month in target_months])
-
+    dates1_filtered, dates2_filtered = filter_dates(dates1, dates2, valid_times, target_months)
     dates1 = dates1_filtered
     dates2 = dates2_filtered
 
@@ -1287,13 +1351,21 @@ def mjo_subsetindices(grouped_phases, mapinputs, target, ninodates1, ninodates2,
         end = datetime.datetime(end_year, end_month, end_day)
         time_array = pd.date_range(start = start, end = end, freq = 'D')
 
+        RMM1 = MJOda[:, 2]
+        RMM2 = MJOda[:, 3]
+
     elif config["data_source"] == 'ERA5':
 
-        MJOfilename = '/pscratch/sd/p/plutzner/E3SM/bigdata/rmm.74toRealtime.txt'
+        MJOfilename = '/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/rmm.74toRealtime.txt'
 
-        open_data_file(MJOfilename, 'r')
-        MJOda = np.loadtxt(MJOfilename,  delimiter=',') #skiprows=1,
-        print(MJOda)
+        MJOdf = open_data_file(MJOfilename)
+        MJOdf.columns = MJOdf.columns.str.strip().str.rstrip(',')
+        MJOdf['date'] = pd.to_datetime(dict(year=MJOdf.year, month=MJOdf.month, day=MJOdf.day))
+        MJOdf.set_index('date', inplace=True)
+
+        RMM1 = MJOdf["RMM1"]
+        RMM2 = MJOdf["RMM2"]
+        print(RMM1)
 
     # Create phase number output array
     phases = np.zeros(len(MJOda))
@@ -1301,8 +1373,6 @@ def mjo_subsetindices(grouped_phases, mapinputs, target, ninodates1, ninodates2,
 
     # Identify which phase of MJO each data point is in
     for samplecoord in range(0, len(MJOda[:, 2])):
-        RMM1 = MJOda[samplecoord, 2]
-        RMM2 = MJOda[samplecoord, 3]
 
         if not math.isnan(RMM1):
             dY = RMM2
@@ -1493,10 +1563,10 @@ def countplot_IQR(ouptut, target, ensodates1, ensodates2, ensodates3, config, ke
     iqr_LN = iqr_values[iLN]
     iqr_NE = iqr_values[iNE]
 
-    # minbin = np.min(iqr_values)
-    # maxbin = np.max(iqr_values)
-    minbin = 1.75
-    maxbin = 3.05
+    minbin = np.min(iqr_values)
+    maxbin = np.max(iqr_values)
+    # minbin = 1.75
+    # maxbin = 3.05
     bins = np.linspace(minbin, maxbin, 50)
     # Create a histogram of IQR values
     fig, ax = plt.subplots(figsize=(10, 6), dpi=200)
@@ -1505,8 +1575,8 @@ def countplot_IQR(ouptut, target, ensodates1, ensodates2, ensodates3, config, ke
     ax.hist(iqr_NE, bins=bins, alpha=0.25, label='Neutral', color='#c2ab85')
     ax.set_xlabel('IQR of SHASH Parameters')
     ax.set_ylabel('Count')
-    ax.set_ylim([0, 4500])
-    ax.set_xlim([1.9, 3])
+    # ax.set_ylim([0, 4500])
+    # ax.set_xlim([1.9, 3])
     ax.set_title('Countplot of IQR Values for ENSO Phases')
     ax.legend()
     plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + 

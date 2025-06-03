@@ -1,10 +1,10 @@
-{"expname": "exp076",
+{"expname": "exp080",
     "device": "cpu",
     "seed_list": [7],
 
-    "input_data": "exp076", 
-    "data_source": "E3SM",
-    "inference_data": "E3SM",
+    "input_data": "exp078", 
+    "data_source": "ERA5",
+    "inference_data": "ERA5",
     "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/",
     "perlmutter_inputs_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",
     "perlmutter_figure_dir": "/pscratch/sd/p/plutzner/E3SM/saved/figures/",
@@ -19,23 +19,24 @@
     "criterion": "ShashNLL",
 
     "databuilder": {
-        "data_source": "E3SM",
+        "data_source": "ERA5",
         "input_vars": "None",   
         "network_inputs": ["RMM1", "RMM2", "Nino34"],
-        "input_years": [1850, 2014],
-        "test_years": [1850, 2014], 
+        "input_years": [1974, 2023],
+        "train_years": [1974, 2009],
+        "val_years": [2010, 2017],
+        "test_years": [2018, 2023],
         "input_region": "None",
         "input_mask": ["None"],
         "target_mask": "land",
-        "ensembles": ["ens1", "ens2", "ens3"],
         "ensemble_codes": ["0101", "0151", "0201"],
-        "target_var": "PRECT",
+        "target_var": "tp",
         "target_region": [38.5, 54.5, -133.5, -120.5],
         "target_months": [10, 11, 12, 1, 2, 3],
         "averaging_length": 14,
         "lagtime": 14, 
-        "front_cutoff": 121, 
-        "back_cutoff": 47, 
+        "front_cutoff": 150, 
+        "back_cutoff": 245, 
         "CRPS_tolerance": 1e-7
         
     }, 
@@ -67,7 +68,7 @@
     "optimizer": {
         "type": "ASGD",
         "args": {
-            "lr": 0.00001,
+            "lr": 0.0001,
             "weight_decay": 0.0
         }
     },
@@ -77,7 +78,7 @@
         "perlmutter_save_dir": "/pscratch/sd/p/plutzner/E3SM/saved/models",
         "early_stopping":{
             "args":{
-                "patience": 200,
+                "patience": 100,
                 "min_delta": 0.0
             }
         }

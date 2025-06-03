@@ -527,16 +527,12 @@ def multi_input_data_organizer(config, fn1, fn2, fn3, MJO=False, ENSO = False, o
             print(f"Filtered MJOarray shape: {MJOarray.shape}")
         
         elif config["data_source"] == "ERA5":
-            MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/rmm.74toRealtime.txt'
-            ## RMM values up to "real time". 19740601-20131231: Both SST1 variability (ENSO) and 120-day mean have been removed in these RMM values; 20140101-: Only the 120-day has been removed.
-            MJOdf = open_data_file(MJOsavename)
+            MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/mjo_combined_ERA20C_MJO_SatOBS_1900_2023.nc'
+            MJOda = open_data_file(MJOsavename)
             # print(f"MJO array: {MJOarray}")
-            MJOdf.columns = MJOdf.columns.str.strip().str.rstrip(',')
-            MJOdf['date'] = pd.to_datetime(dict(year=MJOdf.year, month=MJOdf.month, day=MJOdf.day))
-            MJOdf.set_index('date', inplace=True)
 
-            RMM1 = MJOdf["RMM1"]
-            RMM2 = MJOdf["RMM2"]
+            RMM1 = MJOda["RMM1"]
+            RMM2 = MJOda["RMM2"]
 
             train_start_year = config["databuilder"]["train_years"][0]
             train_end_year = config["databuilder"]["train_years"][1]
@@ -545,17 +541,18 @@ def multi_input_data_organizer(config, fn1, fn2, fn3, MJO=False, ENSO = False, o
             test_start_year = config["databuilder"]["test_years"][0]
             test_end_year = config["databuilder"]["test_years"][1]
             
-            # Add 5 months worth of nans to the beginning of the training set
-            # Original data begins 1974-06-01, but we want to start at 1974-01-01
-            nan_dates = pd.date_range(start='1974-01-01', end='1974-05-31', freq='D')
+            # Add 4 months worth of nans to the beginning of the training set
+            # Original data begins 1900-05-01, but we want to start at 1900-01-01
+            nan_dates = pd.date_range(start='1900-01-01', end='1900-04-30', freq='D')
             nan_series = pd.Series(data=np.nan, index=nan_dates)
 
-            RMM1_orig = RMM1.loc[f'{train_start_year}-06-01':f'{train_end_year}-12-31']
+            # TODO: Convert syntax from pandas to xarray!!!!!
+            RMM1_orig = RMM1.loc[f'{train_start_year}-05-01':f'{train_end_year}-12-31']
             RMM1_train = pd.concat([nan_series, RMM1_orig])
             RMM1_val = RMM1.loc[f'{val_start_year}-01-01':f'{val_end_year}-12-31']
             RMM1_test = RMM1.loc[f'{test_start_year}-01-01':f'{test_end_year}-04-29']
 
-            RMM2_orig = RMM2.loc[f'{train_start_year}-06-01':f'{train_end_year}-12-31']
+            RMM2_orig = RMM2.loc[f'{train_start_year}-05-01':f'{train_end_year}-12-31']
             RMM2_train = pd.concat([nan_series, RMM2_orig])
             RMM2_val = RMM2.loc[f'{val_start_year}-01-01':f'{val_end_year}-12-31']
             RMM2_test = RMM2.loc[f'{test_start_year}-01-01':f'{test_end_year}-04-29']
@@ -565,7 +562,7 @@ def multi_input_data_organizer(config, fn1, fn2, fn3, MJO=False, ENSO = False, o
 
             # print(f"RMM1 train: {RMM1_train.head(6)}")
             # print(f"RMM1 val: {RMM1_val.head(6)}")
-            # print(f"RMM2 train: {RMM2_train.head(6)}")s
+            # print(f"RMM2 train: {RMM2_train.head(6)}")
             # print(f"RMM2 val: {RMM2_val.head(6)}")
         else:
             pass
@@ -704,3 +701,21 @@ def uniform_dist(lowerbound, upperbound, n, expname, config):
     save_pickle(dist, config["perlmutter_output_dir"] + str(expname) + "uniform_dist.pkl")
 
     return dist
+
+
+
+
+
+
+
+
+
+
+
+
+# -----------------------------------------------------------------------------
+ # MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/rmm.74toRealtime.txt'
+            ## RMM values up to "real time". 19740601-20131231: Both SST1 variability (ENSO) and 120-day mean have been removed in these RMM values; 20140101-: Only the 120-day has been removed.
+            # MJOdf.columns = MJOdf.columns.str.strip().str.rstrip(',')
+            # MJOdf['date'] = pd.to_datetime(dict(year=MJOdf.year, month=MJOdf.month, day=MJOdf.day))
+            # MJOdf.set_index('date', inplace=True)

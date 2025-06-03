@@ -125,31 +125,79 @@ def ENSO_CRPS(daily_enso_dates, crps_scores, target_time, config):
     start_year = config["databuilder"]["test_years"][0]
     end_year = config["databuilder"]["test_years"][1]
 
-    # Convert to pandas
-    elnino_dates = [pd.Timestamp(d) for d in daily_enso_dates["El Nino"] if start_year <= pd.Timestamp(d).year <= end_year]
-    lanina_dates = [pd.Timestamp(d) for d in daily_enso_dates["La Nina"] if start_year <= pd.Timestamp(d).year <= end_year]
-    neutral_dates = [pd.Timestamp(d) for d in daily_enso_dates["Neutral"] if start_year <= pd.Timestamp(d).year <= end_year]
+    if config["expname"] == "exp083":
+        start_year = config["databuilder"]["analysis_years"][0]
+        end_year = config["databuilder"]["analysis_years"][1]      
 
-    # Convert to numpy datetime64
-    lanina_dates_np = np.array([np.datetime64(date) for date in lanina_dates])
-    elnino_dates_np = np.array([np.datetime64(date) for date in elnino_dates])
-    neutral_dates_np = np.array([np.datetime64(date) for date in neutral_dates])
+    
+    def to_timestamp(date_obj):
+        """Convert various datetime objects to pandas.Timestamp"""
+        try:
+            if hasattr(date_obj, 'year') and hasattr(date_obj, 'month') and hasattr(date_obj, 'day'):
+                hour = getattr(date_obj, 'hour', 0)
+                minute = getattr(date_obj, 'minute', 0)
+                second = getattr(date_obj, 'second', 0)
+                return pd.Timestamp(f"{date_obj.year:04d}-{date_obj.month:02d}-{date_obj.day:02d} {hour:02d}:{minute:02d}:{second:02d}")
+            else:
+                return pd.Timestamp(date_obj)
+        except Exception as e:
+            print(f"Error converting {date_obj} of type {type(date_obj)}: {e}")
+            if hasattr(date_obj, 'year'):
+                return pd.Timestamp(f"{date_obj.year:04d}-01-01")
+            else:
+                raise
 
-    ENSO_dict = {
-        "elnino" : elnino_dates_np, 
-        "lanina" : lanina_dates_np, 
-        "neutral": neutral_dates_np, 
-        "CRPS":    crps_scores
-    }
-    save_pickle(ENSO_dict, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "ENSO_indices_CRPS.pkl")
+    def flatten_and_filter(date_list):
+        """Flatten nested or scalar date lists and convert/filter by test years"""
+        flat_list = []
+        for item in date_list:
+            if isinstance(item, np.ndarray):
+                flat_list.extend(item.flatten() if item.ndim > 0 else [item.item()])
+            else:
+                flat_list.append(item)
+        # Convert to pd.Timestamp and filter
+        return [
+            to_timestamp(d)
+            for d in flat_list
+            if start_year <= to_timestamp(d).year <= end_year
+        ]
+
+    # Process each ENSO category
+    elnino_dates = flatten_and_filter(daily_enso_dates["El Nino"])
+    lanina_dates = flatten_and_filter(daily_enso_dates["La Nina"])
+    neutral_dates = flatten_and_filter(daily_enso_dates["Neutral"])
+
+    # Convert to numpy.datetime64[D] for consistent indexing with target_time
+    elnino_dates_np = np.array(elnino_dates, dtype='datetime64[D]')
+    lanina_dates_np = np.array(lanina_dates, dtype='datetime64[D]')
+    neutral_dates_np = np.array(neutral_dates, dtype='datetime64[D]')
+
+    # Standardize target_time to numpy.datetime64[D]
+    if hasattr(target_time, 'values'):
+        target_time_values = target_time.values
+    else:
+        target_time_values = np.array(target_time)
+
+    target_time_values = np.array(
+        [np.datetime64(to_timestamp(t), 'D') for t in target_time_values],
+        dtype='datetime64[D]'
+    )
+
+    # ENSO_dict = {
+    #     "elnino" : elnino_dates_np, 
+    #     "lanina" : lanina_dates_np, 
+    #     "neutral": neutral_dates_np, 
+    #     "CRPS":    crps_scores
+    # }
+    # save_pickle(ENSO_dict, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "ENSO_indices_CRPS.pkl")
 
     # Create crps xarray object with target time coordinate 
-    crps_scores = xr.DataArray(crps_scores, coords=[target_time.values], dims=["time"], attrs={"description": "CRPS scores"})
+    crps_scores = xr.DataArray(crps_scores, coords=[target_time_values], dims=["time"], attrs={"description": "CRPS scores"})
 
     # Find intersections between dates and target times
-    elnino_common = np.intersect1d(elnino_dates_np, target_time.values)
-    lanina_common = np.intersect1d(lanina_dates_np, target_time.values)
-    neutral_common = np.intersect1d(neutral_dates_np, target_time.values)
+    elnino_common = np.intersect1d(elnino_dates_np, target_time_values)
+    lanina_common = np.intersect1d(lanina_dates_np, target_time_values)
+    neutral_common = np.intersect1d(neutral_dates_np, target_time_values)
 
     CRPS_elnino = round(crps_scores.sel(time = elnino_common).values.mean(), 5)
     CRPS_lanina = round(crps_scores.sel(time = lanina_common).values.mean(), 5)
