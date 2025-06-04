@@ -481,15 +481,15 @@ def multi_input_data_organizer(config, fn1, fn2, fn3, MJO=False, ENSO = False, o
     
     # OPEN PREPROCESSED TARGET INPUT  ------------------------------- 
 
-    print("Opening Seattle-area PRECIP target data for TRAINING")
+    print("Opening PNW PRECIP target data for TRAINING")
     with gzip.open(fn1, "rb") as obj:
         d_train_target = pickle.load(obj)
 
-    print("Opening Seattle-area PRECIP target data for VALIDATION")
+    print("Opening PNW PRECIP target data for VALIDATION")
     with gzip.open(fn2, "rb") as obj:
         d_val_target = pickle.load(obj)
 
-    print("Opening Seattle-area PRECIP target data for TESTING")
+    print("Opening PNW PRECIP target data for TESTING")
     with gzip.open(fn3, "rb") as obj:
         d_test_target = pickle.load(obj)
 
@@ -542,20 +542,22 @@ def multi_input_data_organizer(config, fn1, fn2, fn3, MJO=False, ENSO = False, o
             test_end_year = config["databuilder"]["test_years"][1]
             
             # Add 4 months worth of nans to the beginning of the training set
-            # Original data begins 1900-05-01, but we want to start at 1900-01-01
-            nan_dates = pd.date_range(start='1900-01-01', end='1900-04-30', freq='D')
-            nan_series = pd.Series(data=np.nan, index=nan_dates)
+            # Original data begins 1900-05-01, but we want to start at 1900-01-01 - fill with 120 xarray nans 
+            missing_dates = pd.date_range(start='1900-01-01', end='1900-04-30', freq='D')
+            nan_series_length = missing_dates.shape[0]
+            print(f"nans length: {nan_series_length}")
+            nans = np.ones(nan_series_length)*np.nan
+            nans_xr = xr.DataArray(nans, dims=['time'], coords={'time': missing_dates})
 
-            # TODO: Convert syntax from pandas to xarray!!!!!
-            RMM1_orig = RMM1.loc[f'{train_start_year}-05-01':f'{train_end_year}-12-31']
-            RMM1_train = pd.concat([nan_series, RMM1_orig])
-            RMM1_val = RMM1.loc[f'{val_start_year}-01-01':f'{val_end_year}-12-31']
-            RMM1_test = RMM1.loc[f'{test_start_year}-01-01':f'{test_end_year}-04-29']
+            RMM1_orig = RMM1.sel(time=slice(f'{train_start_year}-05-01', f'{train_end_year}-12-31'))
+            RMM1_train = xr.concat([nans_xr, RMM1_orig], dim='time')
+            RMM1_val = RMM1.sel(time=slice(f'{val_start_year}-01-01', f'{val_end_year}-12-31'))
+            RMM1_test = RMM1.sel(time=slice(f'{test_start_year}-01-01', f'{test_end_year}-12-31'))
 
-            RMM2_orig = RMM2.loc[f'{train_start_year}-05-01':f'{train_end_year}-12-31']
-            RMM2_train = pd.concat([nan_series, RMM2_orig])
-            RMM2_val = RMM2.loc[f'{val_start_year}-01-01':f'{val_end_year}-12-31']
-            RMM2_test = RMM2.loc[f'{test_start_year}-01-01':f'{test_end_year}-04-29']
+            RMM2_orig = RMM2.sel(time=slice(f'{train_start_year}-05-01', f'{train_end_year}-12-31'))
+            RMM2_train = xr.concat([nans_xr, RMM2_orig], dim='time')
+            RMM2_val = RMM2.sel(time=slice(f'{val_start_year}-01-01', f'{val_end_year}-12-31'))
+            RMM2_test = RMM2.sel(time=slice(f'{test_start_year}-01-01', f'{test_end_year}-12-31'))
 
             RMM1_data_dict = {0: RMM1_train, 1: RMM1_val, 2: RMM1_test}
             RMM2_data_dict = {0: RMM2_train, 1: RMM2_val, 2: RMM2_test}
@@ -564,6 +566,8 @@ def multi_input_data_organizer(config, fn1, fn2, fn3, MJO=False, ENSO = False, o
             # print(f"RMM1 val: {RMM1_val.head(6)}")
             # print(f"RMM2 train: {RMM2_train.head(6)}")
             # print(f"RMM2 val: {RMM2_val.head(6)}")
+            # print(f"RMM1 train time: {RMM1_train.time}")
+            # print(f"RMM2 train time: {RMM2_train.time}")
         else:
             pass
             
@@ -597,7 +601,7 @@ def multi_input_data_organizer(config, fn1, fn2, fn3, MJO=False, ENSO = False, o
             fpath = '/pscratch/sd/p/plutzner/E3SM/bigdata/ENSO_Data/OBS/nino34.long.anom_daily_linterp_shifted.nc'
             ninox = open_data_file(fpath)
             nino34 = ninox.value
-            ninox_array = np.zeros([len(RMM1_train), 3])
+            ninox_array = np.zeros([len(RMM1_train) + 1, 3])
 
             nino34_train = nino34.sel(time = slice(str(train_start_year), str(train_end_year)))
             nino34_val = nino34.sel(time = slice(str(val_start_year), str(val_end_year)))

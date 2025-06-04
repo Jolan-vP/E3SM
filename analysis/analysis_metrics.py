@@ -122,19 +122,32 @@ def IQRdiscard_plot(networkoutput, target, crps_scores, crps_climatology_scores,
         # Fix 1: Convert dates to appropriate format if it's a numpy array
         if isinstance(dates, np.ndarray):
             # If dates is already in the right format, convert to list
+            print("to list")
             dates_list = dates.tolist()
         else:
             dates_list = dates
         
         # Try different approaches based on your data structure
         try:
+            print("try method 1")
             # Method 1: Direct selection with converted dates
             selected_target = target.sel(time=dates_list)
         except (TypeError, KeyError):
             try:
-                # Method 2: Use isin for boolean indexing
-                selected_target = target.isel(time=target.time.isin(dates))
+                print("try method 2")
+                # Ensure datetime64[ns] and sort both arrays (if not already)
+                target_times = np.array(target.time.values, dtype='datetime64[ns]')
+                dates_np = np.array(dates_list, dtype='datetime64[ns]')
+
+                # Use intersect1d (fast and reliable)
+                common_dates, target_idx, _ = np.intersect1d(target_times, dates_np, return_indices=True)
+
+                if len(target_idx) == 0:
+                    raise ValueError("No matching timestamps found between target and input dates.")
+
+                selected_target = target.isel(time=target_idx)
             except:
+                print("try method 3")
                 # Method 3: Manual indexing approach
                 all_timestamps = target.time.values
                 if isinstance(dates, np.ndarray):
@@ -147,16 +160,17 @@ def IQRdiscard_plot(networkoutput, target, crps_scores, crps_climatology_scores,
                 selected_target = target.isel(time=time_indices)
         
         # Get indices for other arrays
-        all_timestamps = target.time.values
-        if isinstance(dates, np.ndarray):
-            selected_timestamps = dates
-        else:
-            selected_timestamps = np.array(dates)
-        time_indices = np.nonzero(np.isin(all_timestamps, selected_timestamps))[0]
+        # all_timestamps = target.time.values
+        # if isinstance(dates, np.ndarray):
+        #     selected_timestamps = dates
+        # else:
+        #     selected_timestamps = np.array(dates)
+        # print("selecting time indices")
+        # time_indices = np.nonzero(np.isin(all_timestamps, selected_timestamps))[0]
         
-        selected_networkoutput = networkoutput[time_indices]
-        crps_network = crps_scores[time_indices]
-        crps_climo = crps_climatology_scores[time_indices]
+        selected_networkoutput = networkoutput[target_idx]
+        crps_network = crps_scores[target_idx]
+        crps_climo = crps_climatology_scores[target_idx]
     else:
         selected_networkoutput = networkoutput
         selected_target = target
@@ -1069,6 +1083,8 @@ def tiled_phase_analysis(MJO_phase_dates, EN_dates, LN_dates, NE_dates, evaluati
         for iENSO, (enso_phase_name, ENSOdates) in enumerate(enso_dates_dict.items()):
             # Select dates that overlap between MJO and ENSO phases: 
             overlapping_dates = np.intersect1d(MJOdates, ENSOdates)
+            overlapping_dates = np.intersect1d(target.time, overlapping_dates)
+
             # save overlapping dates in 3D array
             dates_array_by_phase[iMJO, iENSO, :len(overlapping_dates)] = overlapping_dates
 
@@ -1350,39 +1366,43 @@ def mjo_subsetindices(grouped_phases, mapinputs, target, ninodates1, ninodates2,
         end_day = int(MJOda[-1, -1])
         end = datetime.datetime(end_year, end_month, end_day)
         time_array = pd.date_range(start = start, end = end, freq = 'D')
+        print(f"time_array 1852: {time_array.loc[1852]}")
 
         RMM1 = MJOda[:, 2]
         RMM2 = MJOda[:, 3]
 
     elif config["data_source"] == 'ERA5':
 
-        MJOfilename = '/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/rmm.74toRealtime.txt'
+        # MJOfilename = '/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/rmm.74toRealtime.txt'
+        MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/mjo_combined_ERA20C_MJO_SatOBS_1900_2023.nc'
+        MJOda = open_data_file(MJOsavename)
+        # print(f"MJO array: {MJOarray}")
 
-        MJOdf = open_data_file(MJOfilename)
-        MJOdf.columns = MJOdf.columns.str.strip().str.rstrip(',')
-        MJOdf['date'] = pd.to_datetime(dict(year=MJOdf.year, month=MJOdf.month, day=MJOdf.day))
-        MJOdf.set_index('date', inplace=True)
+        RMM1 = MJOda["RMM1"].sel(time = slice(str(config["databuilder"]["test_years"][0]), str(config["databuilder"]["test_years"][1]))).values
+        RMM2 = MJOda["RMM2"].sel(time = slice(str(config["databuilder"]["test_years"][0]), str(config["databuilder"]["test_years"][1]))).values
 
-        RMM1 = MJOdf["RMM1"]
-        RMM2 = MJOdf["RMM2"]
-        print(RMM1)
+        # time_array = MJOda.time
+        start_date = datetime.datetime(config["databuilder"]["test_years"][0], 1, 1)
+        end_date = datetime.datetime(config["databuilder"]["test_years"][1], 12, 31)
+
+        time_array = pd.date_range(start = start_date, end = end_date, freq = 'D' )
 
     # Create phase number output array
-    phases = np.zeros(len(MJOda))
+    phases = np.zeros(len(time_array))
     phaseqty = 9
 
     # Identify which phase of MJO each data point is in
-    for samplecoord in range(0, len(MJOda[:, 2])):
+    for samplecoord in range(0, len(RMM1)):
 
-        if not math.isnan(RMM1):
-            dY = RMM2
-            dX = RMM1
+        if not np.isnan(RMM1[samplecoord]):
+            dY = RMM2[samplecoord]
+            dX = RMM1[samplecoord]
 
             angle_deg = np.rad2deg(np.arctan2(dY, dX))
             if angle_deg < 0:
                 angle_deg = 360 - np.abs(angle_deg)
 
-            amplitude = np.sqrt(RMM1**2 + RMM2**2)
+            amplitude = np.sqrt(RMM1[samplecoord]**2 + RMM2[samplecoord]**2)
             assert amplitude >= 0
 
             if amplitude <= 1:
@@ -1406,137 +1426,145 @@ def mjo_subsetindices(grouped_phases, mapinputs, target, ninodates1, ninodates2,
             else:
                 print(f"angle: {angle_deg}, amplitude: {amplitude}")
                 raise ValueError("Sample does not fit into a phase (?)")
-
+            
     # Collect timestamps for each phase
     phase_timestamps = {}
     for phase in range(phaseqty):
         collected_phase_indices = np.where(phases == phase)[0]
-        phase_timestamps[phase] = time_array[collected_phase_indices]  # Map indices to timestamps
+        phase_timestamps[phase] = time_array[collected_phase_indices] # Map indices to timestamps
     
+    # Convert timestamps to strings for saving
+    phase_timestamps_str = {phase: [str(date) for date in dates] for phase, dates in phase_timestamps.items()}
+    
+    output_path = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + str(config["data_source"]) + '_MJO_phase_timestamps.pkl'
+    with open(output_path, 'wb') as f:
+        pickle.dump(phase_timestamps_str, f)
     # print(f"Phase Timestamps: {phase_timestamps}")
 
-    phases_concat = []  # Use a list to dynamically store concatenated timestamps
-    for key, value in grouped_phases.items():
-        concatenated_timestamps = np.concatenate([phase_timestamps[phase] for phase in value])
-        phases_concat.append(concatenated_timestamps)
+    if grouped_phases != "None":
+        phases_concat = []  # Use a list to dynamically store concatenated timestamps
+        for key, value in grouped_phases.items():
+            concatenated_timestamps = np.concatenate([phase_timestamps[phase] for phase in value])
+            phases_concat.append(concatenated_timestamps)
 
-    # Convert the list to a NumPy array
-    phases_concat = np.array(phases_concat, dtype=object)  # Use dtype=object for arrays of varying lengths
+        # Convert the list to a NumPy array
+        phases_concat = np.array(phases_concat, dtype=object)  # Use dtype=object for arrays of varying lengths
 
-    # Align time stamps of target data with those of the group MJO phases to identify the corresponding indices
-    # Isolate map inputs conditioned first on El Nino, La Nina, and Neutral: 
-    target_time_coord = target.time
-    # Convert CRPS scores to xarray.DataArray with time coordinates
-    crps_with_target_time = xr.DataArray(
-                data=network_crps,  
-                coords={"time": target_time_coord}, 
-                dims=["time"])
+        # Align time stamps of target data with those of the group MJO phases to identify the corresponding indices
+        # Isolate map inputs conditioned first on El Nino, La Nina, and Neutral: 
+        target_time_coord = target.time
+        # Convert CRPS scores to xarray.DataArray with time coordinates
+        crps_with_target_time = xr.DataArray(
+                    data=network_crps,  
+                    coords={"time": target_time_coord}, 
+                    dims=["time"])
 
-    EN_crps_scores = crps_with_target_time.sel(time = ninodates1)
-    LN_crps_scores = crps_with_target_time.sel(time = ninodates2)
-    N_crps_scores = crps_with_target_time.sel(time = ninodates3)
+        EN_crps_scores = crps_with_target_time.sel(time = ninodates1)
+        LN_crps_scores = crps_with_target_time.sel(time = ninodates2)
+        N_crps_scores = crps_with_target_time.sel(time = ninodates3)
 
-    enso_inputsdict = {
-        'El Nino': (mapinputs.sel(time = ninodates1), EN_crps_scores),
-        'La Nina': (mapinputs.sel(time = ninodates2), LN_crps_scores), 
-        'Neutral': (mapinputs.sel(time = ninodates3), N_crps_scores)
-    }
-    enso_to_index = {'El Nino': 0, 'La Nina': 1, 'Neutral': 2}
+    else:
+        pass
 
-    # Apply the indices to the map inputs to create a composite map
-    data_dict = {}
+    if mapinputs != "None":
+        enso_inputsdict = {
+            'El Nino': (mapinputs.sel(time = ninodates1), EN_crps_scores),
+            'La Nina': (mapinputs.sel(time = ninodates2), LN_crps_scores), 
+            'Neutral': (mapinputs.sel(time = ninodates3), N_crps_scores)
+        }
+        enso_to_index = {'El Nino': 0, 'La Nina': 1, 'Neutral': 2}
 
-    var_dict = {0: 'Precipitation', 1: 'SkinTemp'}
-    color_dict = {0: 'BrBG', 1: 'RdBu_r'}
+        # Apply the indices to the map inputs to create a composite map
+        data_dict = {}
 
-    for key, var in var_dict.items():
-        for normalize in [False, True]:
-            fig, ax = plt.subplots(2, 3, figsize = (22, 14), subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
-            for enso_phase, (maps, crps_scores) in enso_inputsdict.items():
-                for grouping, dates in enumerate(phases_concat):
-                    # Find overlapping dates between dates and conditioned maps: 
-                    # Convert numpy.datetime64 to cftime.DatetimeNoLeap
-                    dates_converted = []
-                    for date in dates:
-                        timestamp = pd.Timestamp(date)
-                        try:
-                            # Attempt to create a valid cftime.DatetimeNoLeap object
-                            dates_converted.append(cftime.DatetimeNoLeap(timestamp.year, timestamp.month, timestamp.day))
-                        except ValueError:
-                            # Skip invalid dates (e.g., February 29 in non-leap years)
-                            # print(f"Skipping invalid date: {timestamp}")
-                            pass
+        var_dict = {0: 'Precipitation', 1: 'SkinTemp'}
+        color_dict = {0: 'BrBG', 1: 'RdBu_r'}
 
-                    overlapping_dates = np.intersect1d(maps.time, dates_converted)
+        for key, var in var_dict.items():
+            for normalize in [False, True]:
+                fig, ax = plt.subplots(2, 3, figsize = (22, 14), subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
+                for enso_phase, (maps, crps_scores) in enso_inputsdict.items():
+                    for grouping, dates in enumerate(phases_concat):
+                        # Find overlapping dates between dates and conditioned maps: 
+                        # Convert numpy.datetime64 to cftime.DatetimeNoLeap
+                        dates_converted = []
+                        for date in dates:
+                            timestamp = pd.Timestamp(date)
+                            try:
+                                # Attempt to create a valid cftime.DatetimeNoLeap object
+                                dates_converted.append(cftime.DatetimeNoLeap(timestamp.year, timestamp.month, timestamp.day))
+                            except ValueError:
+                                # Skip invalid dates (e.g., February 29 in non-leap years)
+                                # print(f"Skipping invalid date: {timestamp}")
+                                pass
 
-                    # Select the corresponding map inputs for the current phase
-                    phase_mapinputs = maps[..., key].sel(time=overlapping_dates)
+                        overlapping_dates = np.intersect1d(maps.time, dates_converted)
 
-                    # Filter CRPS scores for the overlapping dates
-                    crps_filtered = crps_scores.sel(time = overlapping_dates)
-                    mean_crps = crps_filtered.mean()
+                        # Select the corresponding map inputs for the current phase
+                        phase_mapinputs = maps[..., key].sel(time=overlapping_dates)
 
-                    if normalize:
-                        # Normalize the map inputs
-                        mean_mapinputs = phase_mapinputs.mean(dim='time')
-                        std_mapinputs = phase_mapinputs.std(dim='time')
+                        # Filter CRPS scores for the overlapping dates
+                        crps_filtered = crps_scores.sel(time = overlapping_dates)
+                        mean_crps = crps_filtered.mean()
 
-                        plot_data = mean_mapinputs / std_mapinputs
-                        norm_label = " normalized"
-                        cbar_label = "Normalized " + var + " Anomalies (sigma)"
-                    else:
-                        plot_data = phase_mapinputs.mean(dim='time')
-                        norm_label = " anomalies"
-                        cbar_label = var + " Anomalies"
+                        if normalize:
+                            # Normalize the map inputs
+                            mean_mapinputs = phase_mapinputs.mean(dim='time')
+                            std_mapinputs = phase_mapinputs.std(dim='time')
 
-                    # # Calculate the mean of the selected map inputs
-                    # mean_mapinputs = phase_mapinputs.mean(dim='time')
-                    # std_mapinputs = phase_mapinputs.std(dim='time')
+                            plot_data = mean_mapinputs / std_mapinputs
+                            norm_label = " normalized"
+                            cbar_label = "Normalized " + var + " Anomalies (sigma)"
+                        else:
+                            plot_data = phase_mapinputs.mean(dim='time')
+                            norm_label = " anomalies"
+                            cbar_label = var + " Anomalies"
 
-                    # norm_mapinputs = mean_mapinputs / std_mapinputs
+                        # # Calculate the mean of the selected map inputs
+                        # mean_mapinputs = phase_mapinputs.mean(dim='time')
+                        # std_mapinputs = phase_mapinputs.std(dim='time')
 
-                    # store normalized map inputs in the dictionary: 
-                    data_dict[(grouping, enso_phase)] = plot_data
+                        # norm_mapinputs = mean_mapinputs / std_mapinputs
 
-                    enso_column = enso_to_index[enso_phase]
+                        # store normalized map inputs in the dictionary: 
+                        data_dict[(grouping, enso_phase)] = plot_data
 
-                    vlim = max(np.abs(plot_data.min()), np.abs(plot_data.max()))
+                        enso_column = enso_to_index[enso_phase]
 
-                    # Plot the mean map inputs
-                    cf = ax[grouping, enso_column].pcolormesh(plot_data.lon, plot_data.lat, plot_data, 
-                                                            cmap=color_dict[key], transform=ccrs.PlateCarree(), vmin = -vlim, vmax = vlim)
-                    ax[grouping, enso_column].set_title(f'{enso_phase} Mean Map Inputs \n MJO Phases {grouped_phases[grouping + 1]}')
-                    ax[grouping, enso_column].coastlines()
-                    ax[grouping, enso_column].set_xticks(np.arange(-180, 181, 60), crs=ccrs.PlateCarree())
-                    ax[grouping, enso_column].set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree()) 
+                        vlim = max(np.abs(plot_data.min()), np.abs(plot_data.max()))
 
-                    # Add mean CRPS as a label on the subplot
-                    ax[grouping, enso_column].text(
-                        0.02, 0.03, f'Mean CRPS: {mean_crps:.3f} \nN = {len(overlapping_dates)}',
-                        transform=ax[grouping, enso_column].transAxes,
-                        ha='left', va='bottom', fontsize=10, color='black', 
-                        bbox=dict(facecolor='white', alpha=0.85, edgecolor='none', boxstyle='round,pad=0.2')
-                    )
+                        # Plot the mean map inputs
+                        cf = ax[grouping, enso_column].pcolormesh(plot_data.lon, plot_data.lat, plot_data, 
+                                                                cmap=color_dict[key], transform=ccrs.PlateCarree(), vmin = -vlim, vmax = vlim)
+                        ax[grouping, enso_column].set_title(f'{enso_phase} Mean Map Inputs \n MJO Phases {grouped_phases[grouping + 1]}')
+                        ax[grouping, enso_column].coastlines()
+                        ax[grouping, enso_column].set_xticks(np.arange(-180, 181, 60), crs=ccrs.PlateCarree())
+                        ax[grouping, enso_column].set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree()) 
 
-                    # Add colorbar
-                    cbar = fig.colorbar(cf, ax=ax[grouping, enso_column], orientation='vertical', fraction=0.02, pad=0.04, aspect=20, shrink=0.8)
-                    cbar.set_label(str(cbar_label))
+                        # Add mean CRPS as a label on the subplot
+                        ax[grouping, enso_column].text(
+                            0.02, 0.03, f'Mean CRPS: {mean_crps:.3f} \nN = {len(overlapping_dates)}',
+                            transform=ax[grouping, enso_column].transAxes,
+                            ha='left', va='bottom', fontsize=10, color='black', 
+                            bbox=dict(facecolor='white', alpha=0.85, edgecolor='none', boxstyle='round,pad=0.2')
+                        )
 
-                    plt.tight_layout()
+                        # Add colorbar
+                        cbar = fig.colorbar(cf, ax=ax[grouping, enso_column], orientation='vertical', fraction=0.02, pad=0.04, aspect=20, shrink=0.8)
+                        cbar.set_label(str(cbar_label))
+
+                        plt.tight_layout()
 
 
-            plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + 
-                '_ENSO_Conditioned_MJO_composite_maps_' + str(var) + str(norm_label) +'.png', format='png', bbox_inches ='tight', dpi = 200)
-            plt.close(fig)
+                plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + 
+                    '_ENSO_Conditioned_MJO_composite_maps_' + str(var) + str(norm_label) +'.png', format='png', bbox_inches ='tight', dpi = 200)
+                plt.close(fig)
+
+                return phase_timestamps_str
+
+    else: 
             
-            # Convert timestamps to strings for saving
-            phase_timestamps_str = {phase: [str(date) for date in dates] for phase, dates in phase_timestamps.items()}
-            
-            output_path = '/pscratch/sd/p/plutzner/E3SM/bigdata/_MJOphase_dates.pkl'
-            with open(output_path, 'wb') as f:
-                pickle.dump(phase_timestamps_str, f)
-            
-            return phase_timestamps_str
+        return phase_timestamps_str
 
 def countplot_IQR(ouptut, target, ensodates1, ensodates2, ensodates3, config, keyword = None):
     """
