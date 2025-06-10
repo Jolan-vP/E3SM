@@ -1,8 +1,8 @@
-{"expname": "exp082",
+{"expname": "exp086",
     "device": "cpu",
     "seed_list": [7],
 
-    "input_data": "exp082", 
+    "input_data": "None", 
     "data_source": "ERA5",
     "inference_data": "ERA5",
     "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/",

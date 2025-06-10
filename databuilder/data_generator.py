@@ -89,26 +89,37 @@ class ClimateData:
                 print("Opening .nc files")
                 if self.verbose:
                     print(ens)
-                if ens == "ens1":   
-                    # train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-                    train_ds = filemethods.get_netcdf_da(self.data_dir +  "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-                    # train_ds = filemethods.get_netcdf_da(self.data_dir +  "/Z500.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+                if self.config["input_years"] != [1850, 2014]:
+                    print(f"Input years are not 1850-2014, using {self.config['input_years']} as input years")
+                    train_ds = filemethods.get_netcdf_da(self.data_dir + "input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+                    validate_ds = filemethods.get_netcdf_da(self.data_dir + "input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+                    test_ds = filemethods.get_netcdf_da(self.data_dir  + "input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
 
-                if ens == "ens2":
-                    # validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
-                    validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
-                    # validate_ds = filemethods.get_netcdf_da(self.data_dir + "/Z500.v2.LR.historical_0151.eam.h1.1850-2014.nc")
+                    train_ds = train_ds.sel(time = slice(str(self.config["train_years"][0]), str(self.config["train_years"][1])))
+                    validate_ds = validate_ds.sel(time = slice(str(self.config["val_years"][0]), str(self.config["val_years"][1])))
+                    test_ds = test_ds.sel(time = slice(str(self.config["test_years"][0]), str(self.config["test_years"][1])))
+        #TODO: How to get a network to TRAIN on two ensembles given the time coordinate issue.....
+                else: 
+                    if ens == "ens1":   
+                        # train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+                        train_ds = filemethods.get_netcdf_da(self.data_dir +  "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+                        # train_ds = filemethods.get_netcdf_da(self.data_dir +  "/Z500.v2.LR.historical_0101.eam.h1.1850-2014.nc")
 
-                elif ens == "ens3":
-                    # test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
-                    test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
-                    # test_ds = filemethods.get_netcdf_da(self.data_dir + "Z500.v2.LR.historical_0201.eam.h1.1850-2014.nc")
+                    if ens == "ens2":
+                        # validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
+                        validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
+                        # validate_ds = filemethods.get_netcdf_da(self.data_dir + "/Z500.v2.LR.historical_0151.eam.h1.1850-2014.nc")
+
+                    elif ens == "ens3":
+                        # test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
+                        test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
+                        # test_ds = filemethods.get_netcdf_da(self.data_dir + "Z500.v2.LR.historical_0201.eam.h1.1850-2014.nc")
             
-            print(self.config["input_years"])
+                    print(self.config["input_years"])
 
-            train_ds = train_ds.sel(time = slice(str(self.config["input_years"][0]), str(self.config["input_years"][1])))
-            validate_ds = validate_ds.sel(time = slice(str(self.config["input_years"][0]), str(self.config["input_years"][1])))
-            test_ds = test_ds.sel(time = slice(str(self.config["input_years"][0]), str(self.config["input_years"][1])))
+                    train_ds = train_ds.sel(time = slice(str(self.config["input_years"][0]), str(self.config["input_years"][1])))
+                    validate_ds = validate_ds.sel(time = slice(str(self.config["input_years"][0]), str(self.config["input_years"][1])))
+                    test_ds = test_ds.sel(time = slice(str(self.config["input_years"][0]), str(self.config["input_years"][1])))
 
         # Get opened X and Y data
         # Process Data (compute anomalies)
@@ -493,7 +504,7 @@ def multi_input_data_organizer(config, fn1, fn2, fn3, MJO=False, ENSO = False, o
     with gzip.open(fn3, "rb") as obj:
         d_test_target = pickle.load(obj)
 
-    da_length = len(d_train_target['y'])
+    da_length = len(d_train_target['y']) + 1
     
     # print(f"time training target data from processed pkl : {d_train_target['y'].time}")
 
@@ -527,12 +538,17 @@ def multi_input_data_organizer(config, fn1, fn2, fn3, MJO=False, ENSO = False, o
             print(f"Filtered MJOarray shape: {MJOarray.shape}")
         
         elif config["data_source"] == "ERA5":
-            MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/mjo_combined_ERA20C_MJO_SatOBS_1900_2023.nc'
-            MJOda = open_data_file(MJOsavename)
-            # print(f"MJO array: {MJOarray}")
 
-            RMM1 = MJOda["RMM1"]
-            RMM2 = MJOda["RMM2"]
+            MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/rmm.74toRealtime.txt'
+            ## RMM values up to "real time". 19740601-20131231: Both SST1 variability (ENSO) and 120-day mean have been removed in these RMM values; 20140101-: Only the 120-day has been removed.
+            MJOdf = open_data_file(MJOsavename)
+            # print(f"MJO array: {MJOarray}")
+            MJOdf.columns = MJOdf.columns.str.strip().str.rstrip(',')
+            MJOdf['date'] = pd.to_datetime(dict(year=MJOdf.year, month=MJOdf.month, day=MJOdf.day))
+            MJOdf.set_index('date', inplace=True)
+
+            RMM1 = MJOdf["RMM1"]
+            RMM2 = MJOdf["RMM2"]
 
             train_start_year = config["databuilder"]["train_years"][0]
             train_end_year = config["databuilder"]["train_years"][1]
@@ -540,34 +556,24 @@ def multi_input_data_organizer(config, fn1, fn2, fn3, MJO=False, ENSO = False, o
             val_end_year = config["databuilder"]["val_years"][1]
             test_start_year = config["databuilder"]["test_years"][0]
             test_end_year = config["databuilder"]["test_years"][1]
-            
-            # Add 4 months worth of nans to the beginning of the training set
-            # Original data begins 1900-05-01, but we want to start at 1900-01-01 - fill with 120 xarray nans 
-            missing_dates = pd.date_range(start='1900-01-01', end='1900-04-30', freq='D')
-            nan_series_length = missing_dates.shape[0]
-            print(f"nans length: {nan_series_length}")
-            nans = np.ones(nan_series_length)*np.nan
-            nans_xr = xr.DataArray(nans, dims=['time'], coords={'time': missing_dates})
 
-            RMM1_orig = RMM1.sel(time=slice(f'{train_start_year}-05-01', f'{train_end_year}-12-31'))
-            RMM1_train = xr.concat([nans_xr, RMM1_orig], dim='time')
-            RMM1_val = RMM1.sel(time=slice(f'{val_start_year}-01-01', f'{val_end_year}-12-31'))
-            RMM1_test = RMM1.sel(time=slice(f'{test_start_year}-01-01', f'{test_end_year}-12-31'))
+            # Add 5 months worth of nans to the beginning of the training set
+            # Original data begins 1974-06-01, but we want to start at 1974-01-01
+            nan_dates = pd.date_range(start='1974-01-01', end='1974-05-31', freq='D')
+            nan_series = pd.Series(data=np.nan, index=nan_dates)
 
-            RMM2_orig = RMM2.sel(time=slice(f'{train_start_year}-05-01', f'{train_end_year}-12-31'))
-            RMM2_train = xr.concat([nans_xr, RMM2_orig], dim='time')
-            RMM2_val = RMM2.sel(time=slice(f'{val_start_year}-01-01', f'{val_end_year}-12-31'))
-            RMM2_test = RMM2.sel(time=slice(f'{test_start_year}-01-01', f'{test_end_year}-12-31'))
+            RMM1_orig = RMM1.loc[f'{train_start_year}-06-01':f'{train_end_year}-12-31']
+            RMM1_train = pd.concat([nan_series, RMM1_orig])
+            RMM1_val = RMM1.loc[f'{val_start_year}-01-01':f'{val_end_year}-12-31']
+            RMM1_test = RMM1.loc[f'{test_start_year}-01-01':f'{test_end_year}-04-29']
+
+            RMM2_orig = RMM2.loc[f'{train_start_year}-06-01':f'{train_end_year}-12-31']
+            RMM2_train = pd.concat([nan_series, RMM2_orig])
+            RMM2_val = RMM2.loc[f'{val_start_year}-01-01':f'{val_end_year}-12-31']
+            RMM2_test = RMM2.loc[f'{test_start_year}-01-01':f'{test_end_year}-04-29']
 
             RMM1_data_dict = {0: RMM1_train, 1: RMM1_val, 2: RMM1_test}
             RMM2_data_dict = {0: RMM2_train, 1: RMM2_val, 2: RMM2_test}
-
-            # print(f"RMM1 train: {RMM1_train.head(6)}")
-            # print(f"RMM1 val: {RMM1_val.head(6)}")
-            # print(f"RMM2 train: {RMM2_train.head(6)}")
-            # print(f"RMM2 val: {RMM2_val.head(6)}")
-            # print(f"RMM1 train time: {RMM1_train.time}")
-            # print(f"RMM2 train time: {RMM2_train.time}")
         else:
             pass
             

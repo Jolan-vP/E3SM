@@ -122,19 +122,16 @@ def IQRdiscard_plot(networkoutput, target, crps_scores, crps_climatology_scores,
         # Fix 1: Convert dates to appropriate format if it's a numpy array
         if isinstance(dates, np.ndarray):
             # If dates is already in the right format, convert to list
-            print("to list")
             dates_list = dates.tolist()
         else:
             dates_list = dates
         
         # Try different approaches based on your data structure
         try:
-            print("try method 1")
             # Method 1: Direct selection with converted dates
             selected_target = target.sel(time=dates_list)
         except (TypeError, KeyError):
             try:
-                print("try method 2")
                 # Ensure datetime64[ns] and sort both arrays (if not already)
                 target_times = np.array(target.time.values, dtype='datetime64[ns]')
                 dates_np = np.array(dates_list, dtype='datetime64[ns]')
@@ -147,7 +144,6 @@ def IQRdiscard_plot(networkoutput, target, crps_scores, crps_climatology_scores,
 
                 selected_target = target.isel(time=target_idx)
             except:
-                print("try method 3")
                 # Method 3: Manual indexing approach
                 all_timestamps = target.time.values
                 if isinstance(dates, np.ndarray):
@@ -1020,7 +1016,7 @@ def maximum_difference(shash_parameters, required_samples = 50, tau_frozen = Tru
     else:
         all_indices = np.concatenate((mu_indices, sigma_indices, gamma_indices))
     
-    return shash_parameters[all_indices]
+    return shash_parameters[all_indices], dates #TODO: calculate dates in maximum difference
 
 
 def plotSHASH(shash_parameters, climatology, config, keyword = None): 
@@ -1716,3 +1712,18 @@ def pdf_comparison(pdfs, bin_centers, config, keyword = None):
     # Save the figure
     plt.tight_layout()
     plt.savefig(config["perlmutter_figure_dir"] + str(config["expname"]) + '/' + str(keyword) + '_pdf_comparison.png', format='png', bbox_inches='tight', dpi=200)
+
+
+
+# def success_by_SHASH(output, network_crps, climo_crps, target, config):
+#     """
+#     Visualize proportion of samples whose CRPS is below Climatological CPRS (sample-by-sample) according to SHASH parameter magnitude.
+#     """
+#     time_coord = target.time
+
+#     low_crps_dates = []
+#     # Shash params scatter vs success ratio: 
+#     for i in range(0, len(network_crps)):
+#         if network_crps[i] < climo_crps[i]:
+#             low_crps_dates[i] = time_coord.isel(time = i)
+            

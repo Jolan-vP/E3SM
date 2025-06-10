@@ -1,9 +1,9 @@
-{"expname": "exp082",
+{"expname": "exp085",
     "device": "cpu",
     "seed_list": [7],
 
-    "input_data": "exp082", 
-    "data_source": "ERA5",
+    "input_data": "None",
+    "data_source": "ERA5", 
     "inference_data": "ERA5",
     "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/",
     "perlmutter_inputs_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",
@@ -11,7 +11,7 @@
     "perlmutter_model_dir": "/pscratch/sd/p/plutzner/E3SM/saved/models/",
     "perlmutter_output_dir": "/pscratch/sd/p/plutzner/E3SM/saved/output/", 
     "fig_dpi": 300,
-
+    
     "metrics": [
         "custom_mae", "iqr_capture", "sign_test"
     ],
@@ -20,23 +20,24 @@
 
     "databuilder": {
         "data_source": "ERA5",
-        "input_vars": "None",   
-        "network_inputs": ["RMM1", "RMM2", "Nino34"],
-        "input_years": [1979, 2023],
-        "train_years": [1986, 2017],
-        "val_years": [2018, 2023],
-        "test_years": [1979, 1985],
+        "input_vars": ["tp", "skt"],
+        "network_inputs": ["tp", "skt"],
+        "input_years": [1940, 2023],
+        "train_years": [1940, 1997],
+        "val_years": [1998, 2010],
+        "test_years": [2011, 2023],
         "input_region": "None",
         "input_mask": ["None"],
         "target_mask": "land",
-        "ensemble_codes": ["0101", "0151", "0201"],
+        "ensembles": "None",
+        "ensemble_codes": "None",
         "target_var": "tp",
-        "target_region": [38.5, 54.5, -133.5, -120.5],
+        "target_region": [39, 55, -134, -121],
         "target_months": [10, 11, 12, 1, 2, 3],
         "averaging_length": 14,
         "lagtime": 14, 
-        "front_cutoff": 150, 
-        "back_cutoff": 245, 
+        "front_cutoff": 14, 
+        "back_cutoff": 14, 
         "CRPS_tolerance": 1e-7
         
     }, 
@@ -44,42 +45,45 @@
     "data_loader": {
         "shuffle_target": "False",
         "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",
-        "batch_size": 32
+        "batch_size": 128
     }, 
 
     "arch": {
-        "type": "basicnn",
-        "n_inputchannel": 1,
-
-        "basic_act": ["ReLU", "ReLU"],
+        "type": "cnn",
+        "n_inputchannel": 2,
         "freeze_id" : "None",
-        "hiddens_block_in": [3, 3],
-        "hiddens_block_out": 6,
-        "hiddens_block_act": ["ReLU", "ReLU"],
+        "circular_padding": [15, 15, 0, 0],
+        "filters" : [32, 32], 
+        "kernel_size": [7, 3],
+        "cnn_act": ["ReLU", "ReLU"],
 
-        "hiddens_final_in": 6,
+        "hiddens_block": [20, 20],
+        "hiddens_block_in": [141120],
+        "hiddens_block_act": ["ReLU"],
+        "hiddens_block_out": 20,
+
+        "hiddens_final_in": 20,
         "hiddens_final_out": 4,
-        "hiddens_final_act": "ReLU",
-        "filters" : [0], 
-        "cnn_act": ["None"], 
-        "kernel_size": [0]
+        "hiddens_final_act": "ReLU", 
+
+        "dropout": 0.60
     }, 
 
     "optimizer": {
-        "type": "ASGD",
+        "type": "Adam",
         "args": {
-            "lr": 0.001,
+            "lr": 0.00000001,
             "weight_decay": 0.0
         }
     },
 
     "trainer": {
-        "max_epochs": 3500,
-        "perlmutter_save_dir": "/pscratch/sd/p/plutzner/E3SM/saved/models",
+        "max_epochs": 100,
+        "perlmutter_model_dir": "/pscratch/sd/p/plutzner/E3SM/saved/models",
         "early_stopping":{
             "args":{
-                "patience": 100,
-                "min_delta": 0.0
+                "patience": 25,
+                "min_delta": 0.00000001
             }
         }
     }
