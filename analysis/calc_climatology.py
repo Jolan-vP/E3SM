@@ -54,7 +54,7 @@ def deriveclimatology(output, target, number_of_samples, config, climate_data=Fa
 
     print(f"Climatological Mean = {np.mean(climatology).item()}")
 
-    extreme_samps = maximum_difference(output, required_samples= number_of_samples, tau_frozen=True)
+    extreme_samps, extreme_dates = maximum_difference(output, target, required_samples= number_of_samples, tau_frozen=True)
 
     dist = Shash(extreme_samps)
 

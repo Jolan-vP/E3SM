@@ -77,13 +77,9 @@ class ClimateData:
 
     def _create_data(self):  
         if "ERA5" in self.config["data_source"]:
-            print("Splitting data into train, val, test from singular file rather than ensemble members.")
-            input_ds = filemethods.get_netcdf_da(self.data_dir + "ERA5/ERA5_1x1_input_vars_1940-2023_regrid.nc")
+            # input_ds = filemethods.get_netcdf_da(self.data_dir + "ERA5/ERA5_1x1_input_vars_1940-2023_regrid.nc")
+            input_ds = filemethods.get_netcdf_da(self.data_dir + "ERA5/ERA5_1x1_input_vars_1940-2023_cdo_remapbil.nc")
 
-            train_ds = input_ds.sel(time = slice(str(self.config["train_years"][0]), str(self.config["train_years"][1])))
-            validate_ds = input_ds.sel(time = slice(str(self.config["val_years"][0]), str(self.config["val_years"][1])))
-            test_ds = input_ds.sel(time = slice(str(self.config["test_years"][0]), str(self.config["test_years"][1])))
-        
         elif self.config["data_source"] == "E3SM":
             for iens, ens in enumerate(self.config["ensembles"]):
                 print("Opening .nc files")
@@ -121,20 +117,41 @@ class ClimateData:
                     validate_ds = validate_ds.sel(time = slice(str(self.config["input_years"][0]), str(self.config["input_years"][1])))
                     test_ds = test_ds.sel(time = slice(str(self.config["input_years"][0]), str(self.config["input_years"][1])))
 
-        # Get opened X and Y data
-        # Process Data (compute anomalies)
-        print("Processing training")
-        f_dict_train = self._process_data(train_ds)
-        print("Processing validation")
-        f_dict_val = self._process_data(validate_ds)
-        print("Processing testing")
-        f_dict_test = self._process_data(test_ds)
+        if self.config["data_source"] == "ERA5": 
+            print("Process whole ERA5 dataset in one shot")
+            f_dict_whole = self._process_data(input_ds)
+            print("Splitting data into train, val, and test sets")
 
-        self.d_train.concat(f_dict_train) 
-        self.d_val.concat(f_dict_val) 
-        self.d_test.concat(f_dict_test) 
-        # print(f"shape of f_dict_train input: {f_dict_train['x'].shape}")
-        # print(f"shape of f_dict_train target: {f_dict_train['y'].shape}")
+            f_dict_train = SampleDict()
+            f_dict_val = SampleDict()
+            f_dict_test = SampleDict()
+
+            f_dict_train['x'] = f_dict_whole['x'].sel(time = slice(str(self.config["train_years"][0]), str(self.config["train_years"][1])))
+            f_dict_train['y'] = f_dict_whole['y'].sel(time = slice(str(self.config["train_years"][0]), str(self.config["train_years"][1])))
+            f_dict_val['x'] = f_dict_whole['x'].sel(time = slice(str(self.config["val_years"][0]), str(self.config["val_years"][1])))
+            f_dict_val['y'] = f_dict_whole['y'].sel(time = slice(str(self.config["val_years"][0]), str(self.config["val_years"][1])))
+            f_dict_test['x'] = f_dict_whole['x'].sel(time = slice(str(self.config["test_years"][0]), str(self.config["test_years"][1])))
+            f_dict_test['y'] = f_dict_whole['y'].sel(time = slice(str(self.config["test_years"][0]), str(self.config["test_years"][1])))
+
+            self.d_train.concat(f_dict_train) 
+            self.d_val.concat(f_dict_val) 
+            self.d_test.concat(f_dict_test) 
+
+        elif self.config["data_source"] == "E3SM":
+            # Get opened X and Y data
+            # Process Data (compute anomalies)
+            print("Processing training")
+            f_dict_train = self._process_data(train_ds)
+            print("Processing validation")
+            f_dict_val = self._process_data(validate_ds)
+            print("Processing testing")
+            f_dict_test = self._process_data(test_ds)
+
+            self.d_train.concat(f_dict_train) 
+            self.d_val.concat(f_dict_val) 
+            self.d_test.concat(f_dict_test) 
+            # print(f"shape of f_dict_train input: {f_dict_train['x'].shape}")
+            # print(f"shape of f_dict_train target: {f_dict_train['y'].shape}")
 
     def _process_data(self, ds):
         '''

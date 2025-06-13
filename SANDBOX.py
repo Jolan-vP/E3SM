@@ -65,7 +65,7 @@ print(f"pytorch version = {torch.__version__}")
 # https://github.com/victoresque/pytorch-template/tree/master
 
 # ----CONFIG AND CLASS SETUP----------------------------------------------
-config = utils.get_config("exp095")
+config = utils.get_config("exp92")
 print(config["expname"])
 seed = config["seed_list"][0]
 
@@ -111,19 +111,20 @@ if config["input_data"] == "None": # Then input data must be processed FROM SCRA
     print(f"This is a {config['arch']['type']} model")
 
     d_train, d_val, d_test = data.fetch_data()
+    print(f"d_train printing: {d_train}")
 
     # ---- FOR SIMPLE INPUTS ONLY : ----------------------------------------------
     if config["arch"]["type"] == "basicnn":
         # print(d_train['y'].shape)
-        target_savename1 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_train_TARGET_1850-2014.pkl"
+        target_savename1 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_train_TARGET.pkl"
         with gzip.open(target_savename1, "wb") as fp:
             pickle.dump(d_train, fp)
 
-        target_savename2 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_val_TARGET_1850-2014.pkl"
+        target_savename2 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_val_TARGET.pkl"
         with gzip.open(target_savename2, "wb") as fp:
             pickle.dump(d_val, fp)
 
-        target_savename3 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_test_TARGET_1850-2014.pkl"
+        target_savename3 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_test_TARGET.pkl"
         with gzip.open(target_savename3, "wb") as fp:
             pickle.dump(d_test, fp)
 
@@ -411,12 +412,14 @@ train_inputs = open_data_file(input_trainfn)
 climatology = train_inputs['y']
 print(f"UDL climatology shape {climatology.shape}")
 
-if config["expname"] == "exp083":
+if config["expname"] == "exp083" or config["expname"] == "exp099":
     print("Adjusting climatology for OOD Inference Data")
     # Split ERA5 data into climatology and test data: 
+    training_data = open_data_file(str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "train_dat.nc")
     climatology_years = [1940, 1980]
-    analysis_years = [1981, 2023]
-    climatology = target.sel(time=slice(str(climatology_years[0]) + '-01-01', str(climatology_years[1]) + '-12-31'))
+    climatology = training_data['y'].sel(time=slice(str(climatology_years[0]) + '-01-01', str(climatology_years[1]) + '-12-31'))
+
+    analysis_years = [2018, 2023]
     target = target.sel(time=slice(str(analysis_years[0]) + '-01-01', str(analysis_years[1]) + '-12-31'))
     # trim output to just the indices corresponding with analysis years
     analysis_years_time = target.time.sel(time = slice(str(analysis_years[0]) + '-01-01', str(analysis_years[1]) + '-12-31'))
@@ -424,6 +427,14 @@ if config["expname"] == "exp083":
     output = output[analysis_years_indices, ...]
     print(f"modified target length: {target.shape}")
     print(f"climatology length: {climatology.shape}")
+
+if config["expname"] == "exp097" or config["expname"] == "exp101":
+    print("Adjusting climatology for OOD Inference Data")
+    # Split ERA5 data into climatology and test data: 
+    # SELECT EXP099 for 1940-1980 climatology from exp099 processing:
+    training_data = open_data_file(str(config["perlmutter_inputs_dir"]) + "exp099_trimmed_" + "train_dat.nc")
+    climatology_years = [1940, 1980]
+    climatology = training_data['y'].sel(time=slice(str(climatology_years[0]) + '-01-01', str(climatology_years[1]) + '-12-31'))
 
 # print(f"test input time: {test_inputs['x'].sel(time = slice('1851-01-01', '1852-01-01')).time}")
 # print(f"test target time: {target.time.sel(time = slice('1851-01-01', '1852-01-01')).time}")

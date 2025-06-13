@@ -989,7 +989,7 @@ def differenceplot(dates1, dates2, mapinputs, target, evaluation_metric, config,
         plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + '_difference_maps.png', format='png', bbox_inches ='tight', dpi = 250)
         plt.close(fig)  # Close the figure to avoid memory issues
 
-def maximum_difference(shash_parameters, required_samples = 50, tau_frozen = True):
+def maximum_difference(shash_parameters, target, required_samples = 50, tau_frozen = True):
     # Calculate the which samples are most different from one another based on shash parameters
     # Return the number of samples based on the required_samples input
     # shash_parameters is a 2D array of shash parameters for each sample
@@ -1016,7 +1016,9 @@ def maximum_difference(shash_parameters, required_samples = 50, tau_frozen = Tru
     else:
         all_indices = np.concatenate((mu_indices, sigma_indices, gamma_indices))
     
-    return shash_parameters[all_indices], dates #TODO: calculate dates in maximum difference
+    dates = target.time.isel(time = all_indices)
+
+    return shash_parameters[all_indices], dates
 
 
 def plotSHASH(shash_parameters, climatology, config, keyword = None): 

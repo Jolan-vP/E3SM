@@ -345,7 +345,7 @@ def CRPScompare(crps_scores, crps_climatology_scores, config):
 
     # Plot CRPS as scattered time series of all samples: 
     plt.figure(figsize=(6, 4))
-    plt.scatter(np.linspace(0, len(crps_scores), len(crps_scores)), crps_scores, s = 0.3, color = '#6d186e', label = f'{better_than_climatology}% of Sample CRPS > Mean Climatological CRPS')
+    plt.scatter(np.linspace(0, len(crps_scores), len(crps_scores)), crps_scores, s = 0.3, color = '#6d186e', label = f'{better_than_climatology}% of Sample CRPS < Mean Climatological CRPS')
     plt.xlabel('Time (Samples in Chronological Order)')
     plt.ylabel('CRPS')
     plt.axhline(y = np.mean(crps_climatology_scores), color = '#2c728e', linewidth = 1.3, label = 'Climatology CRPS Average')
