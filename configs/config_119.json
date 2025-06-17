@@ -1,10 +1,10 @@
-{"expname": "exp109",
+{"expname": "exp119",
     "device": "cpu",
     "seed_list": [7],
 
-    "input_data": "exp109",
-    "data_source": "ERA5", 
-    "inference_data": "ERA5",
+    "input_data": "exp117",
+    "data_source": "E3SM", 
+    "inference_data": "E3SM",
     "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/",
     "perlmutter_inputs_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",
     "perlmutter_figure_dir": "/pscratch/sd/p/plutzner/E3SM/saved/figures/",
@@ -19,19 +19,19 @@
     "criterion": "ShashNLL",
 
     "databuilder": {
-        "data_source": "ERA5",
-        "input_vars": ["tp", "skt"],
-        "network_inputs": ["tp", "skt"],
-        "input_years": [1940, 2023],
-        "train_years": [1940, 1998],
-        "val_years": [1999, 2017],
-        "test_years": [2018, 2023],
+        "data_source": "E3SM",
+        "input_vars": ["PRECT", "TS"],
+        "network_inputs": ["PRECT", "TS"],
+        "input_years": [1850, 2014],
+        "train_years": [1850, 2014],
+        "val_years": [1850, 2014],
+        "test_years": [2009, 2014], 
         "input_region": "None",
         "input_mask": ["None"],
         "target_mask": "land",
-        "ensembles": "None",
-        "ensemble_codes": "None",
-        "target_var": "tp",
+        "ensembles": ["ens1", "ens2", "ens3"],
+        "ensemble_codes": ["0101", "0151", "0201"],
+        "target_var": "PRECT",
         "target_region": [38.5, 54.5, -133.5, -120.5],
         "target_months": [10, 11, 12, 1, 2, 3],
         "averaging_length": 14,
@@ -66,19 +66,21 @@
         "hiddens_final_out": 4,
         "hiddens_final_act": "ReLU", 
 
+
         "dropout": 0.60
     }, 
 
     "optimizer": {
         "type": "Adam",
         "args": {
-            "lr": 0.00000001,
+            "lr": 0.000000001,
             "weight_decay": 0.0
         }
     },
 
     "trainer": {
         "max_epochs": 100,
+        "save_dir": "/Users/C830793391/Documents/Research/E3SM/saved/",
         "perlmutter_model_dir": "/pscratch/sd/p/plutzner/E3SM/saved/models",
         "early_stopping":{
             "args":{

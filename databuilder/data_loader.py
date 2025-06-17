@@ -34,6 +34,13 @@ class CustomData(torch.utils.data.Dataset):
         self.input = dict_data["x"].values
         self.target= dict_data["y"].values
 
+        print(f"shape of self.input: {self.input.shape}")
+        #TODO: EVENTUALLY FIX!!
+        if self.input.shape[1] > 180: 
+            self.input = self.input[:, :180, ...]
+        
+        print(f"MODIFIED SELF.INPUT SHAPE: {self.input.shape}")
+        
         # Normalize data using TRAINING stats: 
         if which_set == "training":
             i_std = np.std(self.input, axis = 0)

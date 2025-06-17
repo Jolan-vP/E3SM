@@ -78,48 +78,12 @@ class ClimateData:
     def _create_data(self):  
         if "ERA5" in self.config["data_source"]:
             # input_ds = filemethods.get_netcdf_da(self.data_dir + "ERA5/ERA5_1x1_input_vars_1940-2023_regrid.nc")
-            input_ds = filemethods.get_netcdf_da(self.data_dir + "ERA5/ERA5_1x1_input_vars_1940-2023_cdo_remapbil.nc")
+            input_ds = filemethods.get_netcdf_da(self.data_dir + "ERA5/ERA5_1x1_input_vars_1940-2023.nc")
 
-        elif self.config["data_source"] == "E3SM":
-            for iens, ens in enumerate(self.config["ensembles"]):
-                print("Opening .nc files")
-                if self.verbose:
-                    print(ens)
-                if self.config["input_years"] != [1850, 2014]:
-                    print(f"Input years are not 1850-2014, using {self.config['input_years']} as input years")
-                    train_ds = filemethods.get_netcdf_da(self.data_dir + "input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-                    validate_ds = filemethods.get_netcdf_da(self.data_dir + "input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-                    test_ds = filemethods.get_netcdf_da(self.data_dir  + "input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-
-                    train_ds = train_ds.sel(time = slice(str(self.config["train_years"][0]), str(self.config["train_years"][1])))
-                    validate_ds = validate_ds.sel(time = slice(str(self.config["val_years"][0]), str(self.config["val_years"][1])))
-                    test_ds = test_ds.sel(time = slice(str(self.config["test_years"][0]), str(self.config["test_years"][1])))
-        #TODO: How to get a network to TRAIN on two ensembles given the time coordinate issue.....
-                else: 
-                    if ens == "ens1":   
-                        # train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-                        train_ds = filemethods.get_netcdf_da(self.data_dir +  "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-                        # train_ds = filemethods.get_netcdf_da(self.data_dir +  "/Z500.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-
-                    if ens == "ens2":
-                        # validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
-                        validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
-                        # validate_ds = filemethods.get_netcdf_da(self.data_dir + "/Z500.v2.LR.historical_0151.eam.h1.1850-2014.nc")
-
-                    elif ens == "ens3":
-                        # test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
-                        test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
-                        # test_ds = filemethods.get_netcdf_da(self.data_dir + "Z500.v2.LR.historical_0201.eam.h1.1850-2014.nc")
-            
-                    print(self.config["input_years"])
-
-                    train_ds = train_ds.sel(time = slice(str(self.config["input_years"][0]), str(self.config["input_years"][1])))
-                    validate_ds = validate_ds.sel(time = slice(str(self.config["input_years"][0]), str(self.config["input_years"][1])))
-                    test_ds = test_ds.sel(time = slice(str(self.config["input_years"][0]), str(self.config["input_years"][1])))
-
-        if self.config["data_source"] == "ERA5": 
             print("Process whole ERA5 dataset in one shot")
             f_dict_whole = self._process_data(input_ds)
+            # save f_dict_whole for use later: 
+            save_pickle(f_dict_whole, self.data_dir + "ERA5/ERA5_complete_processed_1940-2023.pkl")
             print("Splitting data into train, val, and test sets")
 
             f_dict_train = SampleDict()
@@ -138,20 +102,72 @@ class ClimateData:
             self.d_test.concat(f_dict_test) 
 
         elif self.config["data_source"] == "E3SM":
-            # Get opened X and Y data
-            # Process Data (compute anomalies)
-            print("Processing training")
-            f_dict_train = self._process_data(train_ds)
-            print("Processing validation")
-            f_dict_val = self._process_data(validate_ds)
-            print("Processing testing")
-            f_dict_test = self._process_data(test_ds)
+            for iens, ens in enumerate(self.config["ensembles"]):
+                print("Opening .nc files")
+                if self.verbose:
+                    print(ens)
+                if self.config["input_years"] != [1850, 2014]:
+                    print(f"Input years are not 1850-2014, using {self.config['input_years']} as input years")
+                    train_ds = filemethods.get_netcdf_da(self.data_dir + "input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+                    validate_ds = filemethods.get_netcdf_da(self.data_dir + "input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+                    test_ds = filemethods.get_netcdf_da(self.data_dir  + "input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+                    #TODO: How to get a network to TRAIN on two ensembles given the time coordinate issue.....
+                else: 
+                    if ens == "ens1":   
+                        # train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+                        train_ds = filemethods.get_netcdf_da(self.data_dir +  "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+                        # train_ds = filemethods.get_netcdf_da(self.data_dir +  "/Z500.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+
+                    if ens == "ens2":
+                        # validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
+                        validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
+                        # validate_ds = filemethods.get_netcdf_da(self.data_dir + "/Z500.v2.LR.historical_0151.eam.h1.1850-2014.nc")
+
+                    elif ens == "ens3":
+                        # test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
+                        test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
+                        # test_ds = filemethods.get_netcdf_da(self.data_dir + "Z500.v2.LR.historical_0201.eam.h1.1850-2014.nc")
+            
+                    print(self.config["input_years"])
+                
+            if self.config["data_source"] != self.config["inference_data"]: 
+                f_dict_train = SampleDict()
+                f_dict_val = SampleDict()
+                f_dict_test = SampleDict()
+
+                train_ds = train_ds.sel(time = slice(str(self.config["train_years"][0]), str(self.config["train_years"][1])))
+                validate_ds = validate_ds.sel(time = slice(str(self.config["val_years"][0]), str(self.config["val_years"][1])))
+                test_ds = test_ds.sel(time = slice(str(self.config["test_years"][0]), str(self.config["test_years"][1])))
+
+                print("Processing training")
+                f_dict_train = self._process_data(train_ds)
+                print("Processing Validation")
+                f_dict_val = self._process_data(validate_ds)
+                print("Processing Testing")
+                f_dict_test = self._process_data(test_ds)
+
+            else:
+                print("Processing Training")
+                f_dict_train = self._process_data(train_ds)
+                f_dict_train['x'] = f_dict_train['x'].sel(time = slice(str(self.config["train_years"][0]), str(self.config["train_years"][1])))
+                f_dict_train['y'] = f_dict_train['y'].sel(time = slice(str(self.config["train_years"][0]), str(self.config["train_years"][1])))
+                print("Processing validation")
+                f_dict_val = self._process_data(validate_ds)
+                f_dict_val['x'] = f_dict_val['x'].sel(time = slice(str(self.config["val_years"][0]), str(self.config["val_years"][1])))
+                f_dict_val['y'] = f_dict_val['y'].sel(time = slice(str(self.config["val_years"][0]), str(self.config["val_years"][1])))
+                print("Processing testing")
+                f_dict_test = self._process_data(test_ds)
+                f_dict_test['x'] = f_dict_test['x'].sel(time = slice(str(self.config["test_years"][0]), str(self.config["test_years"][1])))
+                f_dict_test['y'] = f_dict_test['y'].sel(time = slice(str(self.config["test_years"][0]), str(self.config["test_years"][1])))   
+            
+
+            print(f"magnitude of input precip: {f_dict_train['x'][300:310, ...]}")
 
             self.d_train.concat(f_dict_train) 
             self.d_val.concat(f_dict_val) 
             self.d_test.concat(f_dict_test) 
-            # print(f"shape of f_dict_train input: {f_dict_train['x'].shape}")
-            # print(f"shape of f_dict_train target: {f_dict_train['y'].shape}")
+            print(f"shape of f_dict_train input: {f_dict_train['x'].shape}")
+            print(f"shape of f_dict_train target: {f_dict_train['y'].shape}")
 
     def _process_data(self, ds):
         '''
@@ -198,6 +214,8 @@ class ClimateData:
                             da[:, :, start:end] = mm_day
 
                         assert -150 < da[10, 30, 120].values < 150
+                        assert int(math.floor(math.log10(da[10, 30, 120].values))) > - 5
+                   
                         # print(f"da post incremental unit conversion: {da[500:505].values}")
                     else:
                         pass

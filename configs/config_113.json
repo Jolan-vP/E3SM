@@ -1,10 +1,11 @@
-{"expname": "exp109",
+{"expname": "exp113",
     "device": "cpu",
     "seed_list": [7],
 
-    "input_data": "exp109",
+    "input_data": "exp111",
     "data_source": "ERA5", 
-    "inference_data": "ERA5",
+    "inference_data": "None",
+    "trained_model" : "exp075",
     "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/",
     "perlmutter_inputs_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",
     "perlmutter_figure_dir": "/pscratch/sd/p/plutzner/E3SM/saved/figures/",
@@ -23,9 +24,11 @@
         "input_vars": ["tp", "skt"],
         "network_inputs": ["tp", "skt"],
         "input_years": [1940, 2023],
-        "train_years": [1940, 1998],
-        "val_years": [1999, 2017],
-        "test_years": [2018, 2023],
+        "train_years": [1940, 1944],
+        "val_years": [1940, 1944],
+        "test_years": [1940, 2023],
+        "climatology_years" : [1940, 1980], 
+        "analysis_years": [1981, 2023],
         "input_region": "None",
         "input_mask": ["None"],
         "target_mask": "land",
@@ -58,7 +61,7 @@
         "cnn_act": ["ReLU", "ReLU"],
 
         "hiddens_block": [20, 20],
-        "hiddens_block_in": [141120],
+        "hiddens_block_in": [144256],
         "hiddens_block_act": ["ReLU"],
         "hiddens_block_out": 20,
 
@@ -66,19 +69,21 @@
         "hiddens_final_out": 4,
         "hiddens_final_act": "ReLU", 
 
+
         "dropout": 0.60
     }, 
 
     "optimizer": {
         "type": "Adam",
         "args": {
-            "lr": 0.00000001,
+            "lr": 0.0000001,
             "weight_decay": 0.0
         }
     },
 
     "trainer": {
         "max_epochs": 100,
+        "save_dir": "/Users/C830793391/Documents/Research/E3SM/saved/",
         "perlmutter_model_dir": "/pscratch/sd/p/plutzner/E3SM/saved/models",
         "early_stopping":{
             "args":{
