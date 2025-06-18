@@ -111,7 +111,7 @@ class ClimateData:
                     train_ds = filemethods.get_netcdf_da(self.data_dir + "input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
                     validate_ds = filemethods.get_netcdf_da(self.data_dir + "input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
                     test_ds = filemethods.get_netcdf_da(self.data_dir  + "input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-                    #TODO: How to get a network to TRAIN on two ensembles given the time coordinate issue.....
+                    #TODO: How to get a network to TRAIN on two ensembles given the time coordinate.....
                 else: 
                     if ens == "ens1":   
                         # train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
@@ -161,9 +161,12 @@ class ClimateData:
                 f_dict_test['y'] = f_dict_test['y'].sel(time = slice(str(self.config["test_years"][0]), str(self.config["test_years"][1])))   
             
 
-            print(f"magnitude of input precip: {f_dict_train['x'][300:310, ...]}")
+            print(f"magnitude of input precip: {f_dict_train['x'][300:310, 10, 30, 0]}")
+            print(f"magnitude of input temp: {f_dict_train['x'][300:310, 10, 30, 1]}")
 
+            print(f"Before concat: {f_dict_train['x'][400:405, 10, 40].values}")
             self.d_train.concat(f_dict_train) 
+            print(f"After concat: {self.d_train['x'][400:405, 10, 40].values}")
             self.d_val.concat(f_dict_val) 
             self.d_test.concat(f_dict_test) 
             print(f"shape of f_dict_train input: {f_dict_train['x'].shape}")
@@ -213,10 +216,12 @@ class ClimateData:
                             mm_day = da_copy[:,:,start:end] * 10**3 * 86400
                             da[:, :, start:end] = mm_day
 
+                        da = da.compute()
+
                         assert -150 < da[10, 30, 120].values < 150
                         assert int(math.floor(math.log10(da[10, 30, 120].values))) > - 5
                    
-                        # print(f"da post incremental unit conversion: {da[500:505].values}")
+                        print(f"da post incremental unit conversion: {da[500:505].values}")
                     else:
                         pass
 
@@ -237,7 +242,7 @@ class ClimateData:
                 
                 f_dict[key] = ds[self.config["target_var"]]
                 
-                # print(f"magnitude of target pre-unit conversion: {f_dict[key][500:505].values}")
+                print(f"magnitude of target pre-unit conversion: {f_dict[key][500:505].values}")
                 
                 if (self.config["target_var"] == "PRECT" or self.config["target_var"] == "tp") and int(math.floor(math.log10(f_dict[key][10, 30, 120].values))) < - 5: # CONVERTING PRECIP TO MM/DAY!
                     da_copy = f_dict[key].copy()
@@ -253,8 +258,10 @@ class ClimateData:
                         mm_day = da_copy[:,:,start:end] * 10**3 * 86400
                         f_dict[key][:, :, start:end] = mm_day
 
+                    f_dict[key] = f_dict[key].compute()
+
                     assert -150 < f_dict[key][10, 30, 120].values < 150
-                # print(f"magnitude of target post unit-conversion: {f_dict[key][500:505].values}") 
+                print(f"magnitude of target post unit-conversion: {f_dict[key][500:505].values}") 
                 
                 # fig, ax = plt.subplots(1, 1, figsize=(8, 6), subplot_kw={'projection': ccrs.PlateCarree()})
                 # ax.add_feature(cfeature.BORDERS, linewidth=0.5, edgecolor='black')
@@ -464,7 +471,7 @@ class ClimateData:
                 if start == end:
                     break
 
-                stacked = da[:, :, start:end].stack(z=("lat", "lon"))
+                stacked = da_copy[:, :, start:end].stack(z=("lat", "lon"))
 
                 da_copy[:, :, start:end] = stacked.groupby("time.dayofyear").map(self.subtract_trend).unstack()
 
@@ -485,7 +492,7 @@ class ClimateData:
                     if start == end: 
                         break
 
-                    da_copy[:, :, start:end] = da[:, :, start:end].rolling(time = self.config["averaging_length"]).mean()
+                    da_copy[:, :, start:end] = da_copy[:, :, start:end].rolling(time = self.config["averaging_length"]).mean()
 
                 return da_copy
             

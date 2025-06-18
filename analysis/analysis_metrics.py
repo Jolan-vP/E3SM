@@ -45,6 +45,7 @@ import cartopy.feature as cfeature
 import utils.filemethods as filemethods
 from utils.filemethods import open_data_file
 from utils.filemethods import filter_dates
+import matplotlib.cm as cm
 
 import math
 import datetime
@@ -300,7 +301,7 @@ def IQRdiscard_combined(percentile_dict, crps_dict, crps_climatology, config, ke
     }
     return plot_data_dict
 
-def IQR_success_discard_plot(shash_output, network_CRPS, climatology_CRPS, config, keyword= None):
+def  IQR_success_discard_plot(shash_output, network_CRPS, climatology_CRPS, config, keyword= None):
     # IQR discard plot
     iqr = iqr_basic(shash_output)
     percentiles = np.linspace(100, 0, 21)
@@ -320,6 +321,7 @@ def IQR_success_discard_plot(shash_output, network_CRPS, climatology_CRPS, confi
             success_ratio = np.sum(network_CRPS[indices] < climatology_CRPS[indices]) / len(indices)
             avg_success_ratio.append(success_ratio)
             avg_iqr.append(np.mean(iqr[indices]))
+        
 
     plt.figure()
     plt.gca().invert_xaxis()  # high confidence = low IQR = right side of plot
@@ -330,9 +332,94 @@ def IQR_success_discard_plot(shash_output, network_CRPS, climatology_CRPS, confi
     plt.ylim([min(avg_success_ratio) - 0.2, max(avg_success_ratio) + 0.1])
     plt.title('Increasing Confidence Success Ratio Discard Plot -' + str(config["expname"]))
     # plt.legend(loc = 'upper right')
-    plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + '_SuccessRatio_IQR_DiscardPlot.png', format='png', bbox_inches ='tight', dpi = 300) 
+    plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + '_SuccessRatio_IQR_DiscardPlot.png', format='png', bbox_inches ='tight', transparent = True, dpi = 300) 
 
     return percentiles, avg_success_ratio
+
+
+def  IQR_ENSO_success_discard_plot(shash_output, network_CRPS, climatology_CRPS, elnino_dates, lanina_dates, neutral_dates, target, config, colormap = 'Purples'):
+    # IQR discard plot
+    iqr = iqr_basic(shash_output)
+    percentiles = np.linspace(100, 0, 21)
+
+    avg_success_ratio_EN = []
+    avg_success_ratio_LN = []
+    avg_success_ratio_N = []
+    
+    indices_EN = np.where(target.time.isin(elnino_dates))[0]
+    indices_LN = np.where(target.time.isin(lanina_dates))[0]
+    indices_N = np.where(target.time.isin(neutral_dates))[0]
+
+    # print(f"indices phases: {indices_EN}, {indices_LN}, {indices_N}")
+
+    iqr_EN = iqr[indices_EN]
+    iqr_LN = iqr[indices_LN]
+    iqr_N = iqr[indices_N]
+
+    cmap = cm.get_cmap(colormap)  
+    colors = cmap(np.linspace(0.3, 0.8, 3))
+
+    for ip, p in enumerate(percentiles):
+        # percentage of samples to keep for each round of the loop
+        num_to_keep_EN = int(len(iqr_EN) * p / 100)
+        num_to_keep_LN = int(len(iqr_LN) * p / 100)
+        num_to_keep_N = int(len(iqr_N) * p / 100)
+        # print(f"nums to keep: {num_to_keep_EN}, {num_to_keep_LN}, {num_to_keep_N}")
+
+        # Get indices relative to subset, then map back to original indices
+        i_EN_subset = np.argsort(iqr_EN)[:num_to_keep_EN]
+        i_LN_subset = np.argsort(iqr_LN)[:num_to_keep_LN]
+        i_N_subset = np.argsort(iqr_N)[:num_to_keep_N]
+        
+        # Map back to original dataset indices
+        i_EN = indices_EN[i_EN_subset]
+        i_LN = indices_LN[i_LN_subset]
+        i_N = indices_N[i_N_subset]
+
+        if len(indices_EN) == 0:
+            avg_success_ratio_EN.append(np.nan)
+        if len(indices_LN) == 0:
+            avg_success_ratio_LN.append(np.nan)
+        if len(indices_N) == 0:
+            avg_success_ratio_N.append(np.nan)
+        else:
+            success_ratio_EN = np.sum(network_CRPS[i_EN] < climatology_CRPS[i_EN]) / len(i_EN)
+            avg_success_ratio_EN.append(success_ratio_EN)
+            success_ratio_LN = np.sum(network_CRPS[i_LN] < climatology_CRPS[i_LN]) / len(i_LN)
+            avg_success_ratio_LN.append(success_ratio_LN)
+            success_ratio_N = np.sum(network_CRPS[i_N] < climatology_CRPS[i_N]) / len(i_N)
+            avg_success_ratio_N.append(success_ratio_N)
+        
+        if p == 10: # top 10% most confident samples
+            print(f"i_LN : indices of la ninas for top 10% confidence relative to target: {i_LN}")
+            save_pickle(i_LN, str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/i_LN_top10percent.pkl')
+
+    print(f"success ratios: {avg_success_ratio_EN}, {avg_success_ratio_LN}, {avg_success_ratio_N}")
+    plt.figure()
+    plt.gca().invert_xaxis()  # high confidence = low IQR = right side of plot
+    plt.plot(percentiles, avg_success_ratio_EN, color= colors[2], label = 'El Nino')
+    plt.plot(percentiles, avg_success_ratio_LN, color = colors[1], label = 'La Nina')
+    plt.plot(percentiles, avg_success_ratio_N, color = colors[0], label = 'Neutral ENSO')
+    # plt.axhline(y=climatology_CRPS.mean(), color='grey', linestyle='--', label='CRPS Climatology Mean')
+    plt.xlabel('IQR Percentile (% Data Remaining)')
+    plt.ylabel('Proportion of Samples with Lower Network CRPS')
+    # plt.ylim([min(avg_success_ratio) - 0.2, max(avg_success_ratio) + 0.1])
+    plt.title('Increasing Confidence Success Ratio Discard Plot -' + str(config["expname"]))
+    plt.legend(loc = 'upper left')
+    plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/SuccessRatio_ENSO_Phases_IQR_DiscardPlot.png', format='png', bbox_inches ='tight', dpi = 300) 
+
+    print(success_ratio_EN)
+    ENSO_success_ratios = {
+        'EN': avg_success_ratio_EN, 
+        'LN': avg_success_ratio_LN, 
+        'N': avg_success_ratio_N
+    }
+    ENSO_success_plot_data = {
+        "percentiles" : percentiles, 
+        "ENSO_success_ratios": ENSO_success_ratios
+    }
+    save_pickle(ENSO_success_plot_data, str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/SuccessRatio_ENSO_Phases_IQR_DATA.pkl')
+    return percentiles, ENSO_success_ratios
 
 def target_discardplot(targetCNN, CNN_expname, targetSNN, SNN_expname, CNNcrps_scores, NNcrps_scores, crps_climatology_scores, config, target_type = 'anomalous', keyword = None):
     
@@ -1016,10 +1103,9 @@ def maximum_difference(shash_parameters, target, required_samples = 50, tau_froz
     else:
         all_indices = np.concatenate((mu_indices, sigma_indices, gamma_indices))
     
-    dates = target.time.isel(time = all_indices)
+    # dates = target.time.isel(time = all_indices)
 
-    return shash_parameters[all_indices], dates
-
+    return shash_parameters[all_indices]
 
 def plotSHASH(shash_parameters, climatology, config, keyword = None): 
     """
