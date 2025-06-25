@@ -65,7 +65,7 @@ print(f"pytorch version = {torch.__version__}")
 # https://github.com/victoresque/pytorch-template/tree/master
 
 # ----CONFIG AND CLASS SETUP----------------------------------------------
-config = utils.get_config("exp111")
+config = utils.get_config("exp131")
 print(config["expname"])
 seed = config["seed_list"][0]
 
@@ -106,14 +106,14 @@ create_folder(figure_folder_name)
 # # ---- DATA PROCESSING ----------------------------------------------------------------
 # # # Check if input data is being processed from scratch or if it is being loaded from a previous experiment
 
-# if config["input_data"] == "None": # Then input data must be processed FROM SCRATCH
-#     print("Processing input data from scratch")
-#     print(f"This is a {config['arch']['type']} model")
+if config["input_data"] == "None": # Then input data must be processed FROM SCRATCH
+    print("Processing input data from scratch")
+    print(f"This is a {config['arch']['type']} model")
 
-#     d_train, d_val, d_test = data.fetch_data()
-#     print(f"d_train printing: {d_train}")
+    d_train, d_val, d_test = data.fetch_data()
+    # print(f"d_train printing: {d_train}")
 
-# #     # ---- FOR SIMPLE INPUTS ONLY : ----------------------------------------------
+#     # ---- FOR SIMPLE INPUTS ONLY : ----------------------------------------------
 #     if config["arch"]["type"] == "basicnn":
 #         # print(d_train['y'].shape)
 #         target_savename1 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_train_TARGET.pkl"

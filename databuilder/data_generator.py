@@ -108,25 +108,22 @@ class ClimateData:
                     print(ens)
                 if self.config["input_years"] != [1850, 2014]:
                     print(f"Input years are not 1850-2014, using {self.config['input_years']} as input years")
-                    train_ds = filemethods.get_netcdf_da(self.data_dir + "input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-                    validate_ds = filemethods.get_netcdf_da(self.data_dir + "input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-                    test_ds = filemethods.get_netcdf_da(self.data_dir  + "input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-                    #TODO: How to get a network to TRAIN on two ensembles given the time coordinate.....
-                else: 
-                    if ens == "ens1":   
-                        # train_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-                        train_ds = filemethods.get_netcdf_da(self.data_dir +  "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-                        # train_ds = filemethods.get_netcdf_da(self.data_dir +  "/Z500.v2.LR.historical_0101.eam.h1.1850-2014.nc")
+                    # train_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.P_T_Z5.v2.LR.historical_0101_0151.eam.h1.1685-2014_precip_mmday.nc")
+                    train_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.P_T_Z5.v2.LR.historical_0101_0151.eam.h1.1685-1690_precip_mmday.nc")
+                    # validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.P_T_Z5.v2.LR.historical_0201.eam.h1.1850-2014_precip_mmday.nc")
+                    validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.P_T_Z5.v2.LR.historical_0101_0151.eam.h1.1685-1690_precip_mmday.nc")
+                    # test_ds = filemethods.get_netcdf_da(self.data_dir  + "/input_vars.P_T_Z5.v2.LR.historical_0201.eam.h1.1850-2014_precip_mmday.nc")
+                    test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.P_T_Z5.v2.LR.historical_0101_0151.eam.h1.1685-1690_precip_mmday.nc")
+
+                else:
+                    if ens == "ens1":
+                        train_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
 
                     if ens == "ens2":
-                        # validate_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
                         validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
-                        # validate_ds = filemethods.get_netcdf_da(self.data_dir + "/Z500.v2.LR.historical_0151.eam.h1.1850-2014.nc")
 
                     elif ens == "ens3":
-                        # test_ds = filemethods.get_netcdf_da(self.data_dir + ens + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
                         test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
-                        # test_ds = filemethods.get_netcdf_da(self.data_dir + "Z500.v2.LR.historical_0201.eam.h1.1850-2014.nc")
             
                     print(self.config["input_years"])
                 
@@ -161,16 +158,15 @@ class ClimateData:
                 f_dict_test['y'] = f_dict_test['y'].sel(time = slice(str(self.config["test_years"][0]), str(self.config["test_years"][1])))   
             
 
-            print(f"magnitude of input precip: {f_dict_train['x'][300:310, 10, 30, 0]}")
-            print(f"magnitude of input temp: {f_dict_train['x'][300:310, 10, 30, 1]}")
+            # print(f"magnitude of processed precip: {f_dict_train['x'][300:310, 10, 30, 0]}")
+            # print(f"magnitude of processed temp: {f_dict_train['x'][300:310, 10, 30, 1]}")
+            # print(f"magnitude of processed z500: {f_dict_train['x'][300:310, 10, 30, 2]}")
 
-            print(f"Before concat: {f_dict_train['x'][400:405, 10, 40].values}")
             self.d_train.concat(f_dict_train) 
-            print(f"After concat: {self.d_train['x'][400:405, 10, 40].values}")
             self.d_val.concat(f_dict_val) 
             self.d_test.concat(f_dict_test) 
-            print(f"shape of f_dict_train input: {f_dict_train['x'].shape}")
-            print(f"shape of f_dict_train target: {f_dict_train['y'].shape}")
+            # print(f"shape of f_dict_train input: {f_dict_train['x'].shape}")
+            # print(f"shape of f_dict_train target: {f_dict_train['y'].shape}")
 
     def _process_data(self, ds):
         '''
@@ -201,29 +197,29 @@ class ClimateData:
                     print(f"shape of da: {da.shape}")
                     print("Isolating variables from Dataset")
 
-                    if (self.config["target_var"] == "PRECT" or self.config["target_var"] == "tp") and int(math.floor(math.log10(da[10, 30, 120].values))) < - 5 : ## CONVERTING PRECIP TO MM/DAY!
-                        print("Converting precipitation to mm/day")
-                        da_copy = da.copy()
+                    # if (self.config["target_var"] == "PRECT" or self.config["target_var"] == "tp") and int(math.floor(math.log10(da[10, 30, 120].values))) < - 6 : ## CONVERTING PRECIP TO MM/DAY!
+                    #     print("Converting precipitation to mm/day")
+                    #     da_copy = da.copy()
 
-                        inc = 45 # 45 degree partitions in longitude to split up the data
+                    #     inc = 45 # 45 degree partitions in longitude to split up the data
                     
-                        for iloop in np.arange(0, da_copy.shape[2] // inc + 1):
-                            start = inc * iloop
-                            end = np.min([inc * (iloop + 1), da_copy.shape[2]])
-                            if start == end:
-                                break
+                    #     for iloop in np.arange(0, da_copy.shape[2] // inc + 1):
+                    #         start = inc * iloop
+                    #         end = np.min([inc * (iloop + 1), da_copy.shape[2]])
+                    #         if start == end:
+                    #             break
                             
-                            mm_day = da_copy[:,:,start:end] * 10**3 * 86400
-                            da[:, :, start:end] = mm_day
+                    #         mm_day = da_copy[:,:,start:end] * 10**3 * 86400
+                    #         da[:, :, start:end] = mm_day
 
-                        da = da.compute()
+                    #     da = da.compute()
 
-                        assert -150 < da[10, 30, 120].values < 150
-                        assert int(math.floor(math.log10(da[10, 30, 120].values))) > - 5
+                    #     assert -150 < da[10, 30, 120].values < 150
+                    #     assert int(math.floor(math.log10(da[10, 30, 120].values))) > - 5
                    
-                        print(f"da post incremental unit conversion: {da[500:505].values}")
-                    else:
-                        pass
+                    #     print(f"da post incremental unit conversion: {da[500:505].values}")
+                    # else:
+                    #     pass
 
                     if len(self.config["input_vars"]) > 1: # If there is more than one input variable to process here
                         da = da.expand_dims(dim={"channel": 1}, axis = -1)   # (2) Create a channel dimension in da
@@ -242,27 +238,27 @@ class ClimateData:
                 
                 f_dict[key] = ds[self.config["target_var"]]
                 
-                print(f"magnitude of target pre-unit conversion: {f_dict[key][500:505].values}")
+                # print(f"magnitude of target pre-unit conversion: {f_dict[key][500:505].values}")
                 
-                if (self.config["target_var"] == "PRECT" or self.config["target_var"] == "tp") and int(math.floor(math.log10(f_dict[key][10, 30, 120].values))) < - 5: # CONVERTING PRECIP TO MM/DAY!
-                    da_copy = f_dict[key].copy()
+                # if (self.config["target_var"] == "PRECT" or self.config["target_var"] == "tp") and int(math.floor(math.log10(f_dict[key][10, 30, 120].values))) < - 5: # CONVERTING PRECIP TO MM/DAY!
+                #     da_copy = f_dict[key].copy()
                     
-                    inc = 45 # 45 degree partitions in longitude to split up the data
+                #     inc = 45 # 45 degree partitions in longitude to split up the data
                 
-                    for iloop in np.arange(0, da_copy.shape[2] // inc + 1):
-                        start = inc * iloop
-                        end = np.min([inc * (iloop + 1), da_copy.shape[2]])
-                        if start == end:
-                            break
+                #     for iloop in np.arange(0, da_copy.shape[2] // inc + 1):
+                #         start = inc * iloop
+                #         end = np.min([inc * (iloop + 1), da_copy.shape[2]])
+                #         if start == end:
+                #             break
                         
-                        mm_day = da_copy[:,:,start:end] * 10**3 * 86400
-                        f_dict[key][:, :, start:end] = mm_day
+                #         mm_day = da_copy[:,:,start:end] * 10**3 * 86400
+                #         f_dict[key][:, :, start:end] = mm_day
 
-                    f_dict[key] = f_dict[key].compute()
+                #     f_dict[key] = f_dict[key].compute()
 
-                    assert -150 < f_dict[key][10, 30, 120].values < 150
-                print(f"magnitude of target post unit-conversion: {f_dict[key][500:505].values}") 
-                
+                #     assert -150 < f_dict[key][10, 30, 120].values < 150
+                # print(f"magnitude of target {f_dict[key][500:505].values}")
+
                 # fig, ax = plt.subplots(1, 1, figsize=(8, 6), subplot_kw={'projection': ccrs.PlateCarree()})
                 # ax.add_feature(cfeature.BORDERS, linewidth=0.5, edgecolor='black')
                 # ax.add_feature(cfeature.STATES, linewidth=0.5, edgecolor='black')
@@ -330,8 +326,9 @@ class ClimateData:
                         data_masked_oneday.plot(ax=ax, transform=ccrs.PlateCarree(), cmap='viridis_r')
                         ax.set_xticks(np.arange(-180, 181, 4), crs=ccrs.PlateCarree())
                         ax.set_yticks(np.arange(-90, 91, 4), crs=ccrs.PlateCarree())
-                        ax.set_ylim([36.5, 58.5])
-                        ax.set_xlim([-135, -110])
+                        ax.tick_params(axis = 'x', label_rotation = 45)
+                        ax.set_ylim([30.5, 60.5])
+                        ax.set_xlim([-200, -120])
                         plt.tight_layout()
                         plt.show()
                         plt.savefig(self.figure_dir + str(self.expname) + "/" + str(self.expname) + "_target_masked.png", dpi=300)
