@@ -108,13 +108,13 @@ class ClimateData:
                     print(ens)
                 if self.config["input_years"] != [1850, 2014]:
                     print(f"Input years are not 1850-2014, using {self.config['input_years']} as input years")
-                    # train_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.P_T_Z5.v2.LR.historical_0101_0151.eam.h1.1685-2014_precip_mmday.nc")
-                    train_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.P_T_Z5.v2.LR.historical_0101_0151.eam.h1.1685-1690_precip_mmday.nc")
-                    # validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.P_T_Z5.v2.LR.historical_0201.eam.h1.1850-2014_precip_mmday.nc")
-                    validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.P_T_Z5.v2.LR.historical_0101_0151.eam.h1.1685-1690_precip_mmday.nc")
-                    # test_ds = filemethods.get_netcdf_da(self.data_dir  + "/input_vars.P_T_Z5.v2.LR.historical_0201.eam.h1.1850-2014_precip_mmday.nc")
-                    test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.P_T_Z5.v2.LR.historical_0101_0151.eam.h1.1685-1690_precip_mmday.nc")
+            
+                    train_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.P_T_Z5.v2.LR.historical_merged_ens1ens2.eam.h1.1685-2014.nc")
 
+                    validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.P_T_Z5.v2.LR.historical_0201.eam.h1.1850-2014_precip_mmday.nc")
+
+                    test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.P_T_Z5.v2.LR.historical_0201.eam.h1.1850-2014_precip_mmday.nc")
+    
                 else:
                     if ens == "ens1":
                         train_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
@@ -146,16 +146,16 @@ class ClimateData:
             else:
                 print("Processing Training")
                 f_dict_train = self._process_data(train_ds)
-                f_dict_train['x'] = f_dict_train['x'].sel(time = slice(str(self.config["train_years"][0]), str(self.config["train_years"][1])))
-                f_dict_train['y'] = f_dict_train['y'].sel(time = slice(str(self.config["train_years"][0]), str(self.config["train_years"][1])))
+                # f_dict_train['x'] = f_dict_train['x'].sel(time = slice(str(self.config["train_years"][0]), str(self.config["train_years"][1])))
+                # f_dict_train['y'] = f_dict_train['y'].sel(time = slice(str(self.config["train_years"][0]), str(self.config["train_years"][1])))
                 print("Processing validation")
                 f_dict_val = self._process_data(validate_ds)
-                f_dict_val['x'] = f_dict_val['x'].sel(time = slice(str(self.config["val_years"][0]), str(self.config["val_years"][1])))
-                f_dict_val['y'] = f_dict_val['y'].sel(time = slice(str(self.config["val_years"][0]), str(self.config["val_years"][1])))
+                # f_dict_val['x'] = f_dict_val['x'].sel(time = slice(str(self.config["val_years"][0]), str(self.config["val_years"][1])))
+                # f_dict_val['y'] = f_dict_val['y'].sel(time = slice(str(self.config["val_years"][0]), str(self.config["val_years"][1])))
                 print("Processing testing")
                 f_dict_test = self._process_data(test_ds)
-                f_dict_test['x'] = f_dict_test['x'].sel(time = slice(str(self.config["test_years"][0]), str(self.config["test_years"][1])))
-                f_dict_test['y'] = f_dict_test['y'].sel(time = slice(str(self.config["test_years"][0]), str(self.config["test_years"][1])))   
+                # f_dict_test['x'] = f_dict_test['x'].sel(time = slice(str(self.config["test_years"][0]), str(self.config["test_years"][1])))
+                # f_dict_test['y'] = f_dict_test['y'].sel(time = slice(str(self.config["test_years"][0]), str(self.config["test_years"][1])))   
             
 
             # print(f"magnitude of processed precip: {f_dict_train['x'][300:310, 10, 30, 0]}")
@@ -197,30 +197,6 @@ class ClimateData:
                     print(f"shape of da: {da.shape}")
                     print("Isolating variables from Dataset")
 
-                    # if (self.config["target_var"] == "PRECT" or self.config["target_var"] == "tp") and int(math.floor(math.log10(da[10, 30, 120].values))) < - 6 : ## CONVERTING PRECIP TO MM/DAY!
-                    #     print("Converting precipitation to mm/day")
-                    #     da_copy = da.copy()
-
-                    #     inc = 45 # 45 degree partitions in longitude to split up the data
-                    
-                    #     for iloop in np.arange(0, da_copy.shape[2] // inc + 1):
-                    #         start = inc * iloop
-                    #         end = np.min([inc * (iloop + 1), da_copy.shape[2]])
-                    #         if start == end:
-                    #             break
-                            
-                    #         mm_day = da_copy[:,:,start:end] * 10**3 * 86400
-                    #         da[:, :, start:end] = mm_day
-
-                    #     da = da.compute()
-
-                    #     assert -150 < da[10, 30, 120].values < 150
-                    #     assert int(math.floor(math.log10(da[10, 30, 120].values))) > - 5
-                   
-                    #     print(f"da post incremental unit conversion: {da[500:505].values}")
-                    # else:
-                    #     pass
-
                     if len(self.config["input_vars"]) > 1: # If there is more than one input variable to process here
                         da = da.expand_dims(dim={"channel": 1}, axis = -1)   # (2) Create a channel dimension in da
                 else: 
@@ -238,38 +214,6 @@ class ClimateData:
                 
                 f_dict[key] = ds[self.config["target_var"]]
                 
-                # print(f"magnitude of target pre-unit conversion: {f_dict[key][500:505].values}")
-                
-                # if (self.config["target_var"] == "PRECT" or self.config["target_var"] == "tp") and int(math.floor(math.log10(f_dict[key][10, 30, 120].values))) < - 5: # CONVERTING PRECIP TO MM/DAY!
-                #     da_copy = f_dict[key].copy()
-                    
-                #     inc = 45 # 45 degree partitions in longitude to split up the data
-                
-                #     for iloop in np.arange(0, da_copy.shape[2] // inc + 1):
-                #         start = inc * iloop
-                #         end = np.min([inc * (iloop + 1), da_copy.shape[2]])
-                #         if start == end:
-                #             break
-                        
-                #         mm_day = da_copy[:,:,start:end] * 10**3 * 86400
-                #         f_dict[key][:, :, start:end] = mm_day
-
-                #     f_dict[key] = f_dict[key].compute()
-
-                #     assert -150 < f_dict[key][10, 30, 120].values < 150
-                # print(f"magnitude of target {f_dict[key][500:505].values}")
-
-                # fig, ax = plt.subplots(1, 1, figsize=(8, 6), subplot_kw={'projection': ccrs.PlateCarree()})
-                # ax.add_feature(cfeature.BORDERS, linewidth=0.5, edgecolor='black')
-                # ax.add_feature(cfeature.STATES, linewidth=0.5, edgecolor='black')
-                # one_day = f_dict[key][10, ...]
-                # one_day.plot(ax=ax, transform=ccrs.PlateCarree(), cmap='viridis_r')
-                # ax.set_xticks(np.arange(-180, 181, 30), crs=ccrs.PlateCarree())
-                # ax.set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree())
-                # plt.tight_layout()
-                # plt.show()
-                # plt.savefig(self.figure_dir + str(self.expname) + "/" + str(self.expname) + "_target_masked_prelandmask.png", dpi=200)
-
 
                 # EXTRACT TARGET LOCATION
                 if len(self.config["target_region"]) == 2: # Specific city / lat lon location
@@ -318,20 +262,55 @@ class ClimateData:
                             pass
 
                         # print(data_masked[10, ...])
-                        fig, ax = plt.subplots(1, 1, figsize=(8, 6), subplot_kw={'projection': ccrs.PlateCarree()})
+                        # fig, ax = plt.subplots(1, 1, figsize=(8, 6), subplot_kw={'projection': ccrs.PlateCarree()})
+                        # ax.add_feature(cfeature.BORDERS, linewidth=0.3, edgecolor='black')
+                        # ax.add_feature(cfeature.STATES, linewidth=0.3, edgecolor='black')
+                        # ax.add_feature(cfeature.COASTLINE, linewidth=0.3, edgecolor='black')
+                        # data_masked_oneday = data_masked[10, ...]
+                        # data_masked_oneday.plot(ax=ax, transform=ccrs.PlateCarree(), cmap='PuOr_r')
+                        # ax.set_xticks(np.arange(-180, 181, 4), crs=ccrs.PlateCarree())
+                        # ax.set_yticks(np.arange(-90, 91, 4), crs=ccrs.PlateCarree())
+                        # ax.tick_params(axis = 'x', rotation = 45)
+                        # ax.set_ylim([30.5, 60.5])
+                        # ax.set_xlim([-200, -120])
+                        # # shrink cbar
+                        # plt.tight_layout()
+                        # plt.show()
+
+                        # Create figure and axis
+                        fig, ax = plt.subplots(1, 1, figsize=(8, 7), subplot_kw={'projection': ccrs.PlateCarree()})
+
+                        # Add map features
                         ax.add_feature(cfeature.BORDERS, linewidth=0.3, edgecolor='black')
                         ax.add_feature(cfeature.STATES, linewidth=0.3, edgecolor='black')
                         ax.add_feature(cfeature.COASTLINE, linewidth=0.3, edgecolor='black')
+
+                        # Plot data
                         data_masked_oneday = data_masked[10, ...]
-                        data_masked_oneday.plot(ax=ax, transform=ccrs.PlateCarree(), cmap='viridis_r')
-                        ax.set_xticks(np.arange(-180, 181, 4), crs=ccrs.PlateCarree())
-                        ax.set_yticks(np.arange(-90, 91, 4), crs=ccrs.PlateCarree())
-                        ax.tick_params(axis = 'x', label_rotation = 45)
+                        im = data_masked_oneday.plot(ax=ax, 
+                                                    transform=ccrs.PlateCarree(), 
+                                                    cmap='PuOr_r',
+                                                    add_colorbar=False)  # Don't add colorbar automatically
                         ax.set_ylim([30.5, 60.5])
                         ax.set_xlim([-200, -120])
+                        ax.set_xticks(np.arange(-180, -119, 4))
+                        ax.set_yticks(np.arange(32, 61, 4))
+                        ax.tick_params(axis='x', rotation=45)
+                        gl = ax.gridlines(draw_labels=False, linewidth=0.5, alpha=0.3, linestyle='--')
+
+                        # Create custom colorbar with smaller size
+                        from mpl_toolkits.axes_grid1 import make_axes_locatable
+                        divider = make_axes_locatable(ax)
+                        cax = divider.append_axes("right", size="3%", pad=0.1, axes_class=plt.Axes)
+                        cbar = plt.colorbar(im, cax=cax)
+                        cbar.set_label('Geopotential Z at 500 mbar\npressure surface [m]')
+
+                        # Alternative method for colorbar sizing:
+                        # fig.colorbar(im, ax=ax, shrink=0.6, aspect=20)
+
                         plt.tight_layout()
-                        plt.show()
                         plt.savefig(self.figure_dir + str(self.expname) + "/" + str(self.expname) + "_target_masked.png", dpi=300)
+                        plt.show()
 
                         f_dict[key] = data_masked.mean(['lat', 'lon'])
 

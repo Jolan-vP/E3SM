@@ -202,6 +202,8 @@ def filter_months(selected_months, lagtime, input=None, target=None):
     - Filtered xarray object with only the desired months.
     """
     if input is not None and target is not None: 
+        print(f"target time in filter_months; {target['time']}")
+        
         # Extract month and day from the 'time' coordinate
         months = target["time"].dt.month
 

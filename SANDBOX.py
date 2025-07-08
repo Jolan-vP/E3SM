@@ -111,316 +111,346 @@ if config["input_data"] == "None": # Then input data must be processed FROM SCRA
     print(f"This is a {config['arch']['type']} model")
 
     d_train, d_val, d_test = data.fetch_data()
-    # print(f"d_train printing: {d_train}")
 
-#     # ---- FOR SIMPLE INPUTS ONLY : ----------------------------------------------
-#     if config["arch"]["type"] == "basicnn":
-#         # print(d_train['y'].shape)
-#         target_savename1 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_train_TARGET.pkl"
-#         with gzip.open(target_savename1, "wb") as fp:
-#             pickle.dump(d_train, fp)
+# # #     # ---- FOR SIMPLE INPUTS ONLY : ----------------------------------------------
+    if config["arch"]["type"] == "basicnn":
+        # print(d_train['y'].shape)
+        target_savename1 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_train_TARGET.pkl"
+        with gzip.open(target_savename1, "wb") as fp:
+            pickle.dump(d_train, fp)
 
-#         target_savename2 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_val_TARGET.pkl"
-#         with gzip.open(target_savename2, "wb") as fp:
-#             pickle.dump(d_val, fp)
+        target_savename2 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_val_TARGET.pkl"
+        with gzip.open(target_savename2, "wb") as fp:
+            pickle.dump(d_val, fp)
 
-#         target_savename3 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_test_TARGET.pkl"
-#         with gzip.open(target_savename3, "wb") as fp:
-#             pickle.dump(d_test, fp)
+        target_savename3 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_test_TARGET.pkl"
+        with gzip.open(target_savename3, "wb") as fp:
+            pickle.dump(d_test, fp)
 
-#         d_train, d_val, d_test = multi_input_data_organizer(config, target_savename1, target_savename2, target_savename3, MJO = True, ENSO = True, other = False)
+        d_train, d_val, d_test = multi_input_data_organizer(config, target_savename1, target_savename2, target_savename3, MJO = True, ENSO = True, other = False)
           
-#         # confirm metadata is stored for both input and target
-#         print(f" s_dict_train INPUT time {d_train['x'].time}")
-#         print(f" s_dict_train TARGET time {d_train['y'].time}")
+        # confirm metadata is stored for both input and target
+        print(f" s_dict_train INPUT time {d_train['x'].time}")
+        print(f" s_dict_train TARGET time {d_train['y'].time}")
 
-#         # confirm input structure: 
-#         print(f"input shape: {d_train['x'].shape}")
-#     else: 
-#         pass
+        # confirm input structure: 
+        print(f"input shape: {d_train['x'].shape}")
+    else: 
+        pass
 
-# #     # Save full input data for the experiment: ----------------------------------
-#     s_dict_savename1 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_train.pkl"
-#     s_dict_savename2 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_val.pkl"
-#     s_dict_savename3 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_test.pkl"
+#     # Save full input data for the experiment: ----------------------------------
+    s_dict_savename1 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_train.pkl"
+    s_dict_savename2 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_val.pkl"
+    s_dict_savename3 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_test.pkl"
 
-#     with gzip.open(s_dict_savename1, "wb") as fp:
-#         pickle.dump(d_train, fp)
+    with gzip.open(s_dict_savename1, "wb") as fp:
+        pickle.dump(d_train, fp)
 
-#     with gzip.open(s_dict_savename2, "wb") as fp:
-#         pickle.dump(d_val, fp)
+    with gzip.open(s_dict_savename2, "wb") as fp:
+        pickle.dump(d_val, fp)
 
-#     with gzip.open(s_dict_savename3, "wb") as fp:
-#         pickle.dump(d_test, fp)
+    with gzip.open(s_dict_savename3, "wb") as fp:
+        pickle.dump(d_test, fp)
 
-#     # Trim input data: Lead/lag, month selection ----------------------------------
-#     trimmed_trainfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "train_dat.nc"
-#     trimmed_valfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "val_dat.nc"
-#     trimmed_testfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "test_dat.nc"
+    # Trim input data: Lead/lag, month selection ----------------------------------
+    trimmed_trainfn_current_exp = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "train_dat.nc"
+    trimmed_valfn_current_exp = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "val_dat.nc"
+    trimmed_testfn_current_exp = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "test_dat.nc"
 
-#     train_dat_trimmed = universaldataloader(s_dict_savename1, config, target_only = False, repackage = True)
-#     train_dat_trimmed.to_netcdf(trimmed_trainfn)
-#     print(f"Data saved to {trimmed_trainfn}")
+    train_dat_trimmed = universaldataloader(s_dict_savename1, config, target_only = False, repackage = True)
+    train_dat_trimmed.to_netcdf(trimmed_trainfn_current_exp)
+    print(f"Data saved to {trimmed_trainfn_current_exp}")
 
-#     val_dat_trimmed = universaldataloader(s_dict_savename2, config, target_only = False, repackage = True)
-#     val_dat_trimmed.to_netcdf(trimmed_valfn)
-#     print(f"Data saved to {trimmed_valfn}")
+    val_dat_trimmed = universaldataloader(s_dict_savename2, config, target_only = False, repackage = True)
+    val_dat_trimmed.to_netcdf(trimmed_valfn_current_exp)
+    print(f"Data saved to {trimmed_valfn_current_exp}")
 
-#     test_dat_trimmed = universaldataloader(s_dict_savename3, config, target_only = False, repackage = True)
-#     test_dat_trimmed.to_netcdf(trimmed_testfn)
-#     print(f"Data saved to {trimmed_testfn}")
+    test_dat_trimmed = universaldataloader(s_dict_savename3, config, target_only = False, repackage = True)
+    test_dat_trimmed.to_netcdf(trimmed_testfn_current_exp)
+    print(f"Data saved to {trimmed_testfn_current_exp}")
 
-#     if config["inference_data"] == "ERA5":
-#         # process whole ERA5 dataset in it's complete form to have for use in climatology later: 
-#         ERA5_processed_timeseries = config["perlmutter_data_dir"] + "ERA5/ERA5_complete_processed_1940-2023.pkl"
-#         ERA5_trimmed_timeseries = universaldataloader(ERA5_processed_timeseries, config, target_only = True, repackage = True)
-#         ERA5_trimmed_timeseries_fn = "/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5/ERA5_processed_trimmed_1940-2023.nc"
-#         ERA5_trimmed_timeseries.to_netcdf(ERA5_trimmed_timeseries_fn)
+    if config["inference_data"] == "ERA5":
+        # process whole ERA5 dataset in it's complete form to have for use in climatology later: 
+        ERA5_processed_timeseries = config["perlmutter_data_dir"] + "ERA5/ERA5_complete_processed_1940-2023.pkl"
+        ERA5_trimmed_timeseries = universaldataloader(ERA5_processed_timeseries, config, target_only = True, repackage = True)
+        ERA5_trimmed_timeseries_fn = "/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5/ERA5_processed_trimmed_1940-2023.nc"
+        ERA5_trimmed_timeseries.to_netcdf(ERA5_trimmed_timeseries_fn)
 
-# elif "exp" in config["input_data"]: 
-#     trimmed_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "train_dat.nc"
-#     trimmed_valfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "val_dat.nc"
-#     trimmed_testfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "test_dat.nc"
+elif "exp" in config["input_data"]: 
+    trimmed_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "train_dat.nc"
+    trimmed_valfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "val_dat.nc"
+    trimmed_testfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "test_dat.nc"
+
+    d_train = open_data_file(trimmed_trainfn)
+    d_val = open_data_file(trimmed_valfn)
+    d_test = open_data_file(trimmed_testfn)
     
-#     if config["inference_data"] == "ERA5" or config["inference_data"] == "None":
-#         # process whole ERA5 dataset in it's complete form to have for use in climatology later: 
-#         ERA5_processed_timeseries = config["perlmutter_data_dir"] + "ERA5/ERA5_complete_processed_1940-2023.pkl"
-#         ERA5_trimmed_timeseries = universaldataloader(ERA5_processed_timeseries, config, target_only = True, repackage = True)
-#         ERA5_trimmed_timeseries_fn = "/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5/ERA5_processed_trimmed_1940-2023.nc"
-#         ERA5_trimmed_timeseries.to_netcdf(ERA5_trimmed_timeseries_fn)
+    print("Running EXP trim block")
+    print(config["databuilder"]["train_years"][1])
+    print(config["databuilder"]["val_years"][0])
+    print(config["databuilder"]["val_years"][1])
+
+    d_train = d_train.sel(time = slice(str(config["databuilder"]["train_years"][0]), str(config["databuilder"]["train_years"][1])))
+    print(f"d_train x: {d_train['x'].time} d_train y: {d_train['y'].time}")
+    d_val = d_val.sel(time = slice(str(config["databuilder"]["val_years"][0]), str(config["databuilder"]["val_years"][1])))
+    print(f"d_val x: {d_val['x'].time} d_val y: {d_val['y'].time}")
+    d_test = d_test.sel(time = slice(str(config["databuilder"]["test_years"][0]), str(config["databuilder"]["test_years"][1])))
+    print(f"d_test x: {d_test['x'].time} d_test y: {d_test['y'].time}")   
+
+    trimmed_trainfn_current_exp = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_trimmed_" + "train_dat.nc"
+    trimmed_valfn_current_exp = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_trimmed_" + "val_dat.nc"
+    trimmed_testfn_current_exp = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_trimmed_" + "test_dat.nc"
+
+    d_train.to_netcdf(trimmed_trainfn_current_exp)
+    print(f"Data saved to {trimmed_trainfn_current_exp}")
+
+    d_val.to_netcdf(trimmed_valfn_current_exp)
+    print(f"Data saved to {trimmed_valfn_current_exp}")
+
+    d_test.to_netcdf(trimmed_testfn_current_exp)
+    print(f"Data saved to {trimmed_testfn_current_exp}")
+    
+    if config["inference_data"] == "ERA5" or config["inference_data"] == "None":
+        # process whole ERA5 dataset in it's complete form to have for use in climatology later: 
+        ERA5_processed_timeseries = config["perlmutter_data_dir"] + "ERA5/ERA5_complete_processed_1940-2023.pkl"
+        ERA5_trimmed_timeseries = universaldataloader(ERA5_processed_timeseries, config, target_only = True, repackage = True)
+        ERA5_trimmed_timeseries_fn = "/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5/ERA5_processed_trimmed_1940-2023.nc"
+        ERA5_trimmed_timeseries.to_netcdf(ERA5_trimmed_timeseries_fn)
 
 
 # # # # --- Setup the Data for Training ---------------------------------------------
-# lagtime = config["databuilder"]["lagtime"] 
-# smoothing_length = config["databuilder"]["averaging_length"]
+lagtime = config["databuilder"]["lagtime"] 
+smoothing_length = config["databuilder"]["averaging_length"]
 
-# trainset = data_loader.CustomData(trimmed_trainfn, config, which_set = 'training')
-# valset = data_loader.CustomData(trimmed_valfn, config, which_set = 'validation')
-# testset = data_loader.CustomData(trimmed_testfn, config, which_set = 'testing')
+trainset = data_loader.CustomData(trimmed_trainfn_current_exp, config, which_set = 'training')
+valset = data_loader.CustomData(trimmed_valfn_current_exp, config, which_set = 'validation')
+testset = data_loader.CustomData(trimmed_testfn_current_exp, config, which_set = 'testing')
 
-# train_loader = torch.utils.data.DataLoader(
-#     trainset,
-#     batch_size=config["data_loader"]["batch_size"],
-#     shuffle=True,
-#     drop_last=False
-# )
+train_loader = torch.utils.data.DataLoader(
+    trainset,
+    batch_size=config["data_loader"]["batch_size"],
+    shuffle=True,
+    drop_last=False
+)
 
-# val_loader = torch.utils.data.DataLoader(
-#     valset,
-#     batch_size=config["data_loader"]["batch_size"],
-#     shuffle=False,
-#     drop_last=False
-# )
+val_loader = torch.utils.data.DataLoader(
+    valset,
+    batch_size=config["data_loader"]["batch_size"],
+    shuffle=False,
+    drop_last=False
+)
 
-# --- Setup the Model ----------------------------------------------------
+## --- Setup the Model ----------------------------------------------------
 
-# # Check if model already exists: 
-# if os.path.exists(str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'):
-#     print("Model already exists")
-#     response = input("Would you like to load the model? (yes) \n or retrain from epoch 0 (no): ")
+# Check if model already exists: 
+if os.path.exists(str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'):
+    print("Model already exists")
+    response = input("Would you like to load the model? (yes) \n or retrain from epoch 0 (no): ")
 
-#     if response == "yes":
-#         path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
-#         load_model_dict = torch.load(path)
-#         state_dict = load_model_dict["model_state_dict"]
-#         std_mean = load_model_dict["training_std_mean"]
-#         model = TorchModel(
-#             config=config["arch"],
-#             target_mean=std_mean["trainset_target_mean"],
-#             target_std=std_mean["trainset_target_std"],
-#         )
-#         model.load_state_dict(state_dict)
+    if response == "yes":
+        path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
+        load_model_dict = torch.load(path)
+        state_dict = load_model_dict["model_state_dict"]
+        std_mean = load_model_dict["training_std_mean"]
+        model = TorchModel(
+            config=config["arch"],
+            target_mean=std_mean["trainset_target_mean"],
+            target_std=std_mean["trainset_target_std"],
+        )
+        model.load_state_dict(state_dict)
 
-#     elif response == "no": # Model is being run from epoch 0 for the first time: 
-#         model = TorchModel(
-#             config=config["arch"],
-#             target_mean=trainset.target.mean(axis=0),
-#             target_std=trainset.target.std(axis=0),
-#         )
-#         std_mean = {"trainset_target_mean": trainset.target.mean(axis=0), "trainset_target_std": trainset.target.std(axis=0)}
-# else: 
-#     model = TorchModel(
-#             config=config["arch"],
-#             target_mean=trainset.target.mean(axis=0),
-#             target_std=trainset.target.std(axis=0),
-#         )
-#     std_mean = {"trainset_target_mean": trainset.target.mean(axis=0), "trainset_target_std": trainset.target.std(axis=0)}
+    elif response == "no": # Model is being run from epoch 0 for the first time: 
+        model = TorchModel(
+            config=config["arch"],
+            target_mean=trainset.target.mean(axis=0),
+            target_std=trainset.target.std(axis=0),
+        )
+        std_mean = {"trainset_target_mean": trainset.target.mean(axis=0), "trainset_target_std": trainset.target.std(axis=0)}
+else: 
+    model = TorchModel(
+            config=config["arch"],
+            target_mean=trainset.target.mean(axis=0),
+            target_std=trainset.target.std(axis=0),
+        )
+    std_mean = {"trainset_target_mean": trainset.target.mean(axis=0), "trainset_target_std": trainset.target.std(axis=0)}
 
-# model.freeze_layers(freeze_id="None")
-# optimizer = getattr(torch.optim, config["optimizer"]["type"])(
-#     model.parameters(), **config["optimizer"]["args"]
-# )
-# criterion = getattr(module_loss, config["criterion"])()
-# metric_funcs = [getattr(module_metric, met) for met in config["metrics"]]
+model.freeze_layers(freeze_id="None")
+optimizer = getattr(torch.optim, config["optimizer"]["type"])(
+    model.parameters(), **config["optimizer"]["args"]
+)
+criterion = getattr(module_loss, config["criterion"])()
+metric_funcs = [getattr(module_metric, met) for met in config["metrics"]]
 
-# # Build the trainer
-# device = utils.prepare_device(config["device"])
-# trainer = Trainer(
-#     model,
-#     criterion,
-#     metric_funcs,
-#     optimizer,
-#     max_epochs=config["trainer"]["max_epochs"],
-#     data_loader=train_loader,
-#     validation_data_loader=val_loader,
-#     device=device,
-#     config=config,
-# )
+# Build the trainer
+device = utils.prepare_device(config["device"])
+trainer = Trainer(
+    model,
+    criterion,
+    metric_funcs,
+    optimizer,
+    max_epochs=config["trainer"]["max_epochs"],
+    data_loader=train_loader,
+    validation_data_loader=val_loader,
+    device=device,
+    config=config,
+)
 
-# # # Visualize the model
-# torchinfo.summary(
-#     model,
-#     [   trainset.input[: config["data_loader"]["batch_size"]].shape ],
-#     verbose=1,
-#     col_names=("input_size", "output_size", "num_params"),
-# )
+# # Visualize the model
+torchinfo.summary(
+    model,
+    [   trainset.input[: config["data_loader"]["batch_size"]].shape ],
+    verbose=1,
+    col_names=("input_size", "output_size", "num_params"),
+)
 
-# # TRAIN THE MODEL
-# model.to(device)
-# trainer.fit(std_mean)
+# TRAIN THE MODEL
+model.to(device)
+trainer.fit(std_mean)
 
-# # Save the Model
-# path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + ".pth"
-# torch.save({
-#             "model_state_dict" : model.state_dict(),
-#             "training_std_mean" : std_mean,
-#              }, path)
+# Save the Model
+path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + ".pth"
+torch.save({
+            "model_state_dict" : model.state_dict(),
+            "training_std_mean" : std_mean,
+             }, path)
 
-# # Load the Model
-# path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
+# Load the Model
+path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
 
-# load_model_dict = torch.load(path)
+load_model_dict = torch.load(path)
 
-# state_dict = load_model_dict["model_state_dict"]
-# std_mean = load_model_dict["training_std_mean"]
+state_dict = load_model_dict["model_state_dict"]
+std_mean = load_model_dict["training_std_mean"]
 
-# model = TorchModel(
-#     config=config["arch"],
-#     target_mean=std_mean["trainset_target_mean"],
-#     target_std=std_mean["trainset_target_std"],
-# )
+model = TorchModel(
+    config=config["arch"],
+    target_mean=std_mean["trainset_target_mean"],
+    target_std=std_mean["trainset_target_std"],
+)
 
-# model.load_state_dict(state_dict)
-# model.eval()
+model.load_state_dict(state_dict)
+model.eval()
 
-# # Evaluate Training Metrics
-# print(trainer.log.history.keys())
+# Evaluate Training Metrics
+print(trainer.log.history.keys())
 
-# print(trainer.log.history.keys())
+print(trainer.log.history.keys())
 
-# plt.figure(figsize=(20, 4))
-# for i, m in enumerate(("loss", *config["metrics"])):
-#     plt.subplot(1, 4, i + 1)
-#     plt.plot(trainer.log.history["epoch"], trainer.log.history[m], label=m)
-#     plt.plot(
-#         trainer.log.history["epoch"], trainer.log.history["val_" + m], label="val_" + m
-#     )
-#     plt.axvline(
-#        x=trainer.early_stopper.best_epoch, linestyle="--", color="k", linewidth=0.75
-#     )
-#     plt.title(m)
-#     plt.legend()
-# plt.tight_layout()
-# plt.savefig(config["perlmutter_figure_dir"] + str(config["expname"]) + "/" + str(config["expname"]) + "training_metrics.png", format = 'png', dpi = 200) 
+plt.figure(figsize=(20, 4))
+for i, m in enumerate(("loss", *config["metrics"])):
+    plt.subplot(1, 4, i + 1)
+    plt.plot(trainer.log.history["epoch"], trainer.log.history[m], label=m)
+    plt.plot(
+        trainer.log.history["epoch"], trainer.log.history["val_" + m], label="val_" + m
+    )
+    plt.axvline(
+       x=trainer.early_stopper.best_epoch, linestyle="--", color="k", linewidth=0.75
+    )
+    plt.title(m)
+    plt.legend()
+plt.tight_layout()
+plt.savefig(config["perlmutter_figure_dir"] + str(config["expname"]) + "/" + str(config["expname"]) + "training_metrics.png", format = 'png', dpi = 200) 
 
 # # ------------------------------ Model Inference -------------------------------------------------------------
 # # -------------------------------------------------------------------------------------------------------------
 
-# if config["data_source"] == config["inference_data"] and config["input_data"] == "None":
-#     # Load the Model
-#     path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
+if config["data_source"] == config["inference_data"] and config["input_data"] == "None":
+    # Load the Model
+    path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
 
-#     load_model_dict = torch.load(path)
+    load_model_dict = torch.load(path)
 
-#     state_dict = load_model_dict["model_state_dict"]
-#     std_mean = load_model_dict["training_std_mean"]
+    state_dict = load_model_dict["model_state_dict"]
+    std_mean = load_model_dict["training_std_mean"]
 
-#     model = TorchModel(
-#         config=config["arch"],
-#         target_mean=std_mean["trainset_target_mean"],
-#         target_std=std_mean["trainset_target_std"],
-#     )
+    model = TorchModel(
+        config=config["arch"],
+        target_mean=std_mean["trainset_target_mean"],
+        target_std=std_mean["trainset_target_std"],
+    )
 
-#     model.load_state_dict(state_dict)
-#     model.eval()
+    model.load_state_dict(state_dict)
+    model.eval()
     
-#     device = utils.prepare_device(config["device"])
+    device = utils.prepare_device(config["device"])
 
-#     with torch.inference_mode():
-#         print(device)
-#         output = model.predict(dataset=testset, batch_size=128, device=device) # The output is the batched SHASH distribution parameters
+    with torch.inference_mode():
+        print(device)
+        output = model.predict(dataset=testset, batch_size=128, device=device) # The output is the batched SHASH distribution parameters
     
-#     # Save Model Outputs
-#     model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + '_network_SHASH_parameters.pkl'
-#     analysis_metrics.save_pickle(output, model_output)
-#     print(output[:20]) # look at a small sample of the output data
+    # Save Model Outputs
+    model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + '_network_SHASH_parameters.pkl'
+    analysis_metrics.save_pickle(output, model_output)
+    print(output[:20]) # look at a small sample of the output data
 
-# elif config["data_source"] == config["inference_data"] and "exp" in config["input_data"]:
-#     # Load the Model
-#     path = str(config["perlmutter_model_dir"]) + str(config["input_data"]) + '.pth'
+elif config["data_source"] == config["inference_data"] and "exp" in config["input_data"]:
+    # Load the Model
+    path = str(config["perlmutter_model_dir"]) + str(config["input_data"]) + '.pth'
 
-#     load_model_dict = torch.load(path)
+    load_model_dict = torch.load(path)
 
-#     state_dict = load_model_dict["model_state_dict"]
-#     std_mean = load_model_dict["training_std_mean"]
+    state_dict = load_model_dict["model_state_dict"]
+    std_mean = load_model_dict["training_std_mean"]
 
-#     model = TorchModel(
-#         config=config["arch"],
-#         target_mean=std_mean["trainset_target_mean"],
-#         target_std=std_mean["trainset_target_std"],
-#     )
+    model = TorchModel(
+        config=config["arch"],
+        target_mean=std_mean["trainset_target_mean"],
+        target_std=std_mean["trainset_target_std"],
+    )
 
-#     model.load_state_dict(state_dict)
-#     model.eval()
+    model.load_state_dict(state_dict)
+    model.eval()
     
-#     device = utils.prepare_device(config["device"])
+    device = utils.prepare_device(config["device"])
 
-#     with torch.inference_mode():
-#         print(device)
-#         output = model.predict(dataset=testset, batch_size=128, device=device) # The output is the batched SHASH distribution parameters
+    with torch.inference_mode():
+        print(device)
+        output = model.predict(dataset=testset, batch_size=128, device=device) # The output is the batched SHASH distribution parameters
     
-#     # Save Model Outputs
-#     model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + '_network_SHASH_parameters.pkl'
-#     analysis_metrics.save_pickle(output, model_output)
-#     print(output[:20]) # look at a small sample of the output data
+    # Save Model Outputs
+    model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + '_network_SHASH_parameters.pkl'
+    analysis_metrics.save_pickle(output, model_output)
+    print(output[:20]) # look at a small sample of the output data
 
-# elif config["data_source"] != config["inference_data"]: 
-#     print("PERFORMING INFERENCE ON OUT OF DISTRIBUTION DATA")
-#     # specify which model experiment you'd like to use to make the inference: 
-#     model_exp = config["trained_model"]
-#     ood_config = utils.get_config(str(model_exp))
-#     device = utils.prepare_device(ood_config["device"])
+elif config["data_source"] != config["inference_data"]: 
+    print("PERFORMING INFERENCE ON OUT OF DISTRIBUTION DATA")
+    # specify which model experiment you'd like to use to make the inference: 
+    model_exp = config["trained_model"]
+    ood_config = utils.get_config(str(model_exp))
+    device = utils.prepare_device(ood_config["device"])
     
-#     # Load the Model
-#     path = str(ood_config["perlmutter_model_dir"]) + str(model_exp) + '.pth'
+    # Load the Model
+    path = str(ood_config["perlmutter_model_dir"]) + str(model_exp) + '.pth'
 
-#     load_model_dict = torch.load(path)
+    load_model_dict = torch.load(path)
 
-#     state_dict = load_model_dict["model_state_dict"]
-#     std_mean = load_model_dict["training_std_mean"]
+    state_dict = load_model_dict["model_state_dict"]
+    std_mean = load_model_dict["training_std_mean"]
 
-#     model = TorchModel(
-#         config=ood_config["arch"],
-#         target_mean=std_mean["trainset_target_mean"],
-#         target_std=std_mean["trainset_target_std"],
-#     )
+    model = TorchModel(
+        config=ood_config["arch"],
+        target_mean=std_mean["trainset_target_mean"],
+        target_std=std_mean["trainset_target_std"],
+    )
   
-#     with torch.inference_mode():
-#         print(device)
-#         output = model.predict(dataset=testset, batch_size=128, device=device) # The output is the batched SHASH distribution parameters
+    with torch.inference_mode():
+        print(device)
+        output = model.predict(dataset=testset, batch_size=128, device=device) # The output is the batched SHASH distribution parameters
     
-#     # Save Model Outputs
-#     ood_model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(model_exp) + 'T_' + str(config["expname"]) + '_OOD_INFERENCE_network_SHASH_parameters.pkl'
-#     analysis_metrics.save_pickle(output, ood_model_output)
-#     print(output[:20]) # look at a small sample of the output data
+    # Save Model Outputs
+    ood_model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(model_exp) + 'T_' + str(config["expname"]) + '_OOD_INFERENCE_network_SHASH_parameters.pkl'
+    analysis_metrics.save_pickle(output, ood_model_output)
+    print(output[:20]) # look at a small sample of the output data
 
 # # ------------------------------ Evaluate Network Predictions -------------------------------------------------
 # # -------------------------------------------------------------------------------------------------------------
 if config["input_data"] != "None": 
+    print(f"Analysis data loaded from {config['input_data']}")
     input_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "train_dat.nc"
     input_valfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "val_dat.nc"
     input_testfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "test_dat.nc"
 else: 
+    print(f"Analysis data loaded from {config['expname']}")
     input_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_trimmed_" + "train_dat.nc"
     input_valfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_trimmed_" + "val_dat.nc"
     input_testfn = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_trimmed_" + "test_dat.nc"
@@ -451,36 +481,37 @@ target = test_inputs['y']
 # print(f"target time: {target.time.values[:300]}")
 print(f"UDL target shape: {target.shape}")
 
-# # Open Climatology Data: TRAINING DATA
-# if "E3SM" in config["inference_data"]:
-#     train_inputs = open_data_file(input_trainfn)
-#     climatology = train_inputs['y']
-#     print(f"UDL climatology shape {climatology.shape}")
+# Open Climatology Data: TRAINING DATA
+if "E3SM" in config["inference_data"]:
+    train_inputs = open_data_file(input_trainfn)
+    climatology = train_inputs['y']
+    print(f"UDL climatology shape {climatology.shape}")
 
-# elif config["inference_data"] == "ERA5" or config["inference_data"] == "None": 
-#     # Ensure that climatology is consistent [1940-1980], cut from ERA5 data processed as one time series:
-#     ERA5_trimmed_timeseries_fn = "/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5/ERA5_processed_trimmed_1940-2023.nc" 
-#     # ERA5_trimmed_processed_timeseries = open_data_file(ERA5_trimmed_timeseries_fn)
-#     ERA5_trimmed_processed_timeseries = xr.open_dataset(ERA5_trimmed_timeseries_fn, engine='netcdf4')
-#     climatology = ERA5_trimmed_processed_timeseries['tp'].sel(time = slice('1940-01-01', '1980-12-31'))
-#     print(f"climatology shape: {climatology.shape}")
+elif config["inference_data"] == "ERA5" or config["inference_data"] == "None": 
+    # Ensure that climatology is consistent [1940-1980], cut from ERA5 data processed as one time series:
+    ERA5_trimmed_timeseries_fn = "/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5/ERA5_processed_trimmed_1940-2023.nc" 
+    # ERA5_trimmed_processed_timeseries = open_data_file(ERA5_trimmed_timeseries_fn)
+    ERA5_trimmed_processed_timeseries = xr.open_dataset(ERA5_trimmed_timeseries_fn, engine='netcdf4')
+    climatology = ERA5_trimmed_processed_timeseries['tp'].sel(time = slice('1940-01-01', '1980-12-31'))
+    print(f"climatology shape: {climatology.shape}")
 
-# # # # Compare SHASH predictions to climatology histogram
-# p = calc_climatology.deriveclimatology(output, climatology, number_of_samples=50, config=config, climate_data = False)
+# # # Compare SHASH predictions to climatology histogram
+p = calc_climatology.deriveclimatology(output, climatology, number_of_samples=50, config=config, climate_data = False)
 
 # # # # ----------------------------- CRPS ------------------------------------------------------------------------
 # # # # -------------------------------------------------------------------------------------------------------------
-x = np.linspace(-10, 12, 1000)
-x_wide = np.arange(-25, 25, 0.01)
+print(f"Min climo : {min(climatology)}, max climo: {max(climatology)}")
+x = np.linspace(min(climatology), max(climatology), 1000)
+x_wide = np.arange(min(climatology), max(climatology), 0.01)
 
-# # Compute CRPS for climatology
-# CRPS_climatology = CRPS.calculateCRPS(output, target, x_wide, config, climatology)
+# Compute CRPS for climatology
+CRPS_climatology = CRPS.calculateCRPS(output, target, x_wide, config, climatology)
 
-# # Compute CRPS for all predictions 
-# CRPS_network = CRPS.calculateCRPS(output, target, x_wide, config, climatology = None)
+# Compute CRPS for all predictions 
+CRPS_network = CRPS.calculateCRPS(output, target, x_wide, config, climatology = None)
 
-# analysis_metrics.save_pickle(CRPS_climatology, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_climatology_values.pkl")
-# analysis_metrics.save_pickle(CRPS_network, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_network_values.pkl")
+analysis_metrics.save_pickle(CRPS_climatology, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_climatology_values.pkl")
+analysis_metrics.save_pickle(CRPS_network, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_network_values.pkl")
 
 CRPS_climatology = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_climatology_values.pkl")
 CRPS_network = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_CRPS_network_values.pkl")

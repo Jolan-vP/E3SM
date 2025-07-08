@@ -117,10 +117,14 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
         # Access 'x' and 'y' directly since they behave like a dictionary
         input = data['x']
         target = data['y']
-
+        
         # Handle front/back NaNs
-        input_trimmed = input[front_nans : -back_nans]
-        target_trimmed = target[front_nans : -back_nans]
+        if front_nans > 0 or back_nans > 0:
+            input_trimmed = input[front_nans : -back_nans]
+            target_trimmed = target[front_nans : -back_nans]
+        else: 
+            input_trimmed = input
+            target_trimmed = target
 
         # Apply lagtime adjustment
         input = input_trimmed[:-lagtime]
@@ -131,19 +135,28 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
 
     elif isinstance(data, dict):
         print("Data is a dictionary")
+
         # If there are leading or ending nans, cut the inputs evenly so there are no longer nans
-        trimmed_data = {key: value[front_nans : -back_nans] for key, value in data.items() }
-        
+        if front_nans > 0 or back_nans > 0:
+            trimmed_data = {key: value[front_nans : -back_nans] for key, value in data.items() }
+        else: 
+            trimmed_data = {key: value for key, value in data.items() }
+
         # Remove Lag-length BACK nans from Input
         input = trimmed_data["x"][:-lagtime]
         
         # Remove Lag-length FRONT nans from Target
         target = trimmed_data["y"][lagtime:]
+        
 
     else: 
         print("Data is not a dictionary or xarray dataset")
         # assume that if it is not a dictionary passed, then only a target is passed with no inputs
-        target = data[front_nans : -back_nans]
+        if front_nans > 0 or back_nans > 0:
+            target = data[front_nans : -back_nans]
+        else: 
+            target = data
+            
         target = target[lagtime:]
 
     # use assigned target and input variables as inputs for filter months function to select target months
@@ -228,6 +241,23 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
 
         return target
     
+
+
+
+
+def select_years(data, config):
+    print("Processing Training")
+    f_dict_train = self._process_data(train_ds)
+    f_dict_train['x'] = f_dict_train['x'].sel(time = slice(str(self.config["train_years"][0]), str(self.config["train_years"][1])))
+    f_dict_train['y'] = f_dict_train['y'].sel(time = slice(str(self.config["train_years"][0]), str(self.config["train_years"][1])))
+    print("Processing validation")
+    f_dict_val = self._process_data(validate_ds)
+    f_dict_val['x'] = f_dict_val['x'].sel(time = slice(str(self.config["val_years"][0]), str(self.config["val_years"][1])))
+    f_dict_val['y'] = f_dict_val['y'].sel(time = slice(str(self.config["val_years"][0]), str(self.config["val_years"][1])))
+    print("Processing testing")
+    f_dict_test = self._process_data(test_ds)
+    f_dict_test['x'] = f_dict_test['x'].sel(time = slice(str(self.config["test_years"][0]), str(self.config["test_years"][1])))
+    f_dict_test['y'] = f_dict_test['y'].sel(time = slice(str(self.config["test_years"][0]), str(self.config["test_years"][1])))   
 
 
 # GARBAGE HEAP: -----------------------------------------
