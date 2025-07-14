@@ -109,7 +109,7 @@ class ClimateData:
                 if self.config["input_years"] != [1850, 2014]:
                     print(f"Input years are not 1850-2014, using {self.config['input_years']} as input years")
             
-                    train_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.P_T_Z5.v2.LR.historical_merged_ens1ens2.eam.h1.1685-2014.nc")
+                    train_ds = filemethods.get_netcdf_da(self.data_dir + "input_vars.P_T_Z5.v2.LR.historical_merged_0101_0151.eam.h1.1685-2014.nc")
 
                     validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.P_T_Z5.v2.LR.historical_0201.eam.h1.1850-2014_precip_mmday.nc")
 
@@ -285,17 +285,14 @@ class ClimateData:
                         ax.add_feature(cfeature.STATES, linewidth=0.3, edgecolor='black')
                         ax.add_feature(cfeature.COASTLINE, linewidth=0.3, edgecolor='black')
 
-                        # Plot data
-                        data_masked_oneday = data_masked[10, ...]
-                        im = data_masked_oneday.plot(ax=ax, 
-                                                    transform=ccrs.PlateCarree(), 
-                                                    cmap='PuOr_r',
-                                                    add_colorbar=False)  # Don't add colorbar automatically
-                        ax.set_ylim([30.5, 60.5])
-                        ax.set_xlim([-200, -120])
-                        ax.set_xticks(np.arange(-180, -119, 4))
-                        ax.set_yticks(np.arange(32, 61, 4))
+                        lon_2d, lat_2d = np.meshgrid(data_masked.lon, data_masked.lat)
+
+                        # ax.set_ylim([30.5, 60.5])
+                        ax.set_extent([-180, -120, 30.5, 60.5], crs=ccrs.PlateCarree())
+                        ax.set_xlim([-180, -120])
+                        ax.set_xticks(np.arange(-180, -119, 4), crs=ccrs.PlateCarree())
                         ax.tick_params(axis='x', rotation=45)
+                        ax.set_yticks(np.arange(32, 61, 4), crs=ccrs.PlateCarree())
                         gl = ax.gridlines(draw_labels=False, linewidth=0.5, alpha=0.3, linestyle='--')
 
                         # Create custom colorbar with smaller size
@@ -304,9 +301,6 @@ class ClimateData:
                         cax = divider.append_axes("right", size="3%", pad=0.1, axes_class=plt.Axes)
                         cbar = plt.colorbar(im, cax=cax)
                         cbar.set_label('Geopotential Z at 500 mbar\npressure surface [m]')
-
-                        # Alternative method for colorbar sizing:
-                        # fig.colorbar(im, ax=ax, shrink=0.6, aspect=20)
 
                         plt.tight_layout()
                         plt.savefig(self.figure_dir + str(self.expname) + "/" + str(self.expname) + "_target_masked.png", dpi=300)

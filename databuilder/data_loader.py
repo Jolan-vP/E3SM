@@ -38,39 +38,51 @@ class CustomData(torch.utils.data.Dataset):
         #TODO: EVENTUALLY FIX!!
         if self.input.shape[1] > 180: 
             self.input = self.input[:, :180, ...]
-        
-        print(f"MODIFIED SELF.INPUT SHAPE: {self.input.shape}")
+            print(f"MODIFIED SELF.INPUT SHAPE: {self.input.shape}")
         
         # Normalize data using TRAINING stats: 
         if which_set == "training":
-            i_std = np.std(self.input, axis = 0)
-            i_mean = np.mean(self.input, axis = 0)
+            i_std_input = np.std(self.input, axis = 0)
+            i_std_target = np.std(self.target, axis = 0)
+            i_mean_input = np.mean(self.input, axis = 0)
+            i_mean_target = np.mean(self.target, axis = 0)
             stats = {
-                'input_std': i_std,
-                'input_mean': i_mean
+                'input_std': i_std_input,
+                'input_mean': i_mean_input, 
+                'target_std': i_std_target,
+                'target_mean': i_mean_target,
             }
             am.save_pickle(stats, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/train_stats.pkl")
             print("Saved training stats")
 
-            self.input = (self.input - i_mean) / i_std
+            self.input = (self.input - i_mean_input) / i_std_input
+            self.target = (self.target - i_mean_target) / i_std_target
 
             # print("Min std:", np.min(i_std))
             # print("Where std is zero:", np.where(i_std == 0))
 
         elif which_set == "validation": 
             stats = open_data_file(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/train_stats.pkl")
-            i_std = stats['input_std']
-            i_mean = stats['input_mean']
+            i_std_input = stats['input_std']
+            i_mean_input = stats['input_mean']
+            i_std_target = stats['target_std']
+            i_mean_target = stats['target_mean']
+
+            self.input = (self.input - i_mean_input) / i_std_input
+            self.target = (self.target - i_mean_target) / i_std_target
 
             # self.input = self.input[::3]
             # self.target = self.target[::3]
 
         elif which_set == "testing":
             stats = open_data_file(str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/train_stats.pkl")
-            i_std = stats['input_std']
-            i_mean = stats['input_mean']
+            i_std_input = stats['input_std']
+            i_mean_input = stats['input_mean']
+            i_std_target = stats['target_std']
+            i_mean_target = stats['target_mean']
 
-            self.input = (self.input - i_mean) / i_std
+            self.input = (self.input - i_mean_input) / i_std_input
+            self.target = (self.target - i_mean_target) / i_std_target
 
         assert not np.any(np.isnan(self.input))
         assert not np.any(np.isnan(self.target))
@@ -226,7 +238,7 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
 
                 raise ValueError
             
-            print(f"target time: {data_dict['y'].sel(time = slice('1860-01-01','1861-01-01'))}") 
+            # print(f"target time: {data_dict['y'].sel(time = slice('1860-01-01','1861-01-01'))}") 
             return data_dict
     
     elif target_only is True: 

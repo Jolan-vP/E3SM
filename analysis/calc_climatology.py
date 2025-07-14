@@ -47,8 +47,8 @@ def deriveclimatology(output, target, number_of_samples, config, climate_data=Fa
     if climate_data == True:
         with gzip.open(climate_data, "rb") as obj1:
             data = pickle.load(obj1)
-        climatology = data["y"] # pulling all target values from processed data
-    
+        climatology = data["y"] - data["y"].mean() / data["y"].std() # pulling all target values from processed data
+
     else:
         climatology = target
 
