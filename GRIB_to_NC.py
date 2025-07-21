@@ -83,16 +83,17 @@ ERA5_Z500_GRIB2 = '/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5/Z500/71afb81b29c3a5
 ERA5_Z500_GRIB3 = '/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5/Z500/dff6a21d88ba8a0cf6f81cc35cbd8c6d.grib'
 
 
-ERA5_Z500_1940_1970 = '/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5/ERA5_Z500_1940-1970.nc'
-ERA5_Z500_1971_1999 = '/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5/ERA5_Z500_1971-1999.nc'
-ERA5_Z500_2000_2024 = '/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5/ERA5_Z500_2000-2024.nc'
+ERA5_Z500_1940_1970 = '/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5/ERA5_025deg_Z500_1940-1970.nc'
+ERA5_Z500_1971_1999 = '/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5/ERA5_025deg_Z500_1971-1999.nc'
+ERA5_Z500_2000_2024 = '/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5/ERA5_025deg_Z500_2000-2024.nc'
 
-grib_to_netcdf(ERA5_Z500_GRIB1, ERA5_Z500_1940_1970)
-grib_to_netcdf(ERA5_Z500_GRIB2, ERA5_Z500_1971_1999)
-grib_to_netcdf(ERA5_Z500_GRIB3, ERA5_Z500_2000_2024)
+# grib_to_netcdf(ERA5_Z500_GRIB1, ERA5_Z500_1940_1970)
+# grib_to_netcdf(ERA5_Z500_GRIB2, ERA5_Z500_1971_1999)
+# grib_to_netcdf(ERA5_Z500_GRIB3, ERA5_Z500_2000_2024)
 
 # MERGE THE THREE NETCDF FILES INTO ONE:
-def merge_netcdf_files(input_files, output_file):
+
+def resample_netcdf_file(input_file, output_file):
     """
     Take daily average of 6 hourly Z500 data and merge into one NetCDF file.
     Merge multiple NetCDF files into a single NetCDF file using xarray.
@@ -101,26 +102,70 @@ def merge_netcdf_files(input_files, output_file):
     input_files (list of str): List of paths to the input NetCDF files.
     output_file (str): Path where the merged NetCDF file will be saved.
     """
-    try:
-        # Open multiple datasets 
-        ds_list = [xr.open_dataset(f) for f in input_files]
-        # Daily average Z500:
-        for ds in ds_list:
-            if 'Z500' in ds.data_vars:
-                ds['Z500'] = ds['Z500'].resample(time='1D').mean()
-            else:
-                print(f"Warning: 'Z500' variable not found in {ds.filepath()}")
 
-        merged_ds = xr.concat(ds_list, dim='time')
+    # Open dataset
+    ds = xr.open_dataset(input_file)
+    # Daily average Z500:
+    if 'z' in ds.data_vars:
+        ds['z'] = ds['z'].resample(time='1D').mean()
+    else:
+        print(f"Warning: 'z' variable not found in {ds.filepath()}")
+
+    # Save the merged dataset to a new NetCDF file
+    ds.to_netcdf(output_file)
+    print(f"Saved file into {output_file}")
+
+# ERA5_Z500_1940_2024 = '/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5/ERA5_Z500_1940-2024.nc'
+
+
+ERA5_Z500_1940_1970_daily = '/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5/ERA5_025deg_Z500_1940-1970_daily.nc'
+ERA5_Z500_1971_1999_daily = '/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5/ERA5_025deg_Z500_1971-1999_daily.nc'
+ERA5_Z500_2000_2024_daily = '/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5/ERA5_025deg_Z500_2000-2024_daily.nc'
+
+
+resample_netcdf_file(ERA5_Z500_1940_1970, ERA5_Z500_1940_1970_daily)
+# resample_netcdf_file(ERA5_Z500_1971_1999, ERA5_Z500_1971_1999_daily)
+# resample_netcdf_file(ERA5_Z500_2000_2024, ERA5_Z500_2000_2024_daily
+
+
+
+
+
+
+
+
+
+
+
+# def merge_netcdf_files(input_files, output_file):
+#     """
+#     Take daily average of 6 hourly Z500 data and merge into one NetCDF file.
+#     Merge multiple NetCDF files into a single NetCDF file using xarray.
+    
+#     Parameters:
+#     input_files (list of str): List of paths to the input NetCDF files.
+#     output_file (str): Path where the merged NetCDF file will be saved.
+#     """
+#     try:
+#         # Open multiple datasets 
+#         ds_list = [xr.open_dataset(f) for f in input_files]
+#         # Daily average Z500:
+#         for ds in ds_list:
+#             if 'Z500' in ds.data_vars:
+#                 ds['Z500'] = ds['Z500'].resample(time='1D').mean()
+#             else:
+#                 print(f"Warning: 'Z500' variable not found in {ds.filepath()}")
+
+#         merged_ds = xr.concat(ds_list, dim='time')
         
-        # Save the merged dataset to a new NetCDF file
-        merged_ds.to_netcdf(output_file)
-        print(f"Merged files into {output_file}")
+#         # Save the merged dataset to a new NetCDF file
+#         merged_ds.to_netcdf(output_file)
+#         print(f"Merged files into {output_file}")
         
-    except Exception as e:
-        print(f"Error merging files: {e}")
+#     except Exception as e:
+#         print(f"Error merging files: {e}")
 
-ERA5_Z500_1940_2024 = '/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5/ERA5_Z500_1940-2024.nc'
+# ERA5_Z500_1940_2024 = '/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5/ERA5_Z500_1940-2024.nc'
 
-merge_netcdf_files([ERA5_Z500_1940_1970, ERA5_Z500_1971_1999, ERA5_Z500_2000_2024], ERA5_Z500_1940_2024)
+# merge_netcdf_files([ERA5_Z500_1940_1970, ERA5_Z500_1971_1999, ERA5_Z500_2000_2024], ERA5_Z500_1940_2024)
 

@@ -16,6 +16,7 @@ import numpy as np
 from base.base_model import BaseModel
 import torch.nn.functional as F
 import torch.nn as nn
+from utils.filemethods import open_data_file
 
 
 def conv_couplet(in_channels, out_channels, act_fun, kernel_size, **kwargs):
@@ -167,6 +168,12 @@ class TorchModel(BaseModel):
         self.rescale_mu = RescaleLayer(self.target_std, self.target_mean)
         self.rescale_sigma = RescaleLayer(torch.tensor(1.0), torch.log(self.target_std))
 
+        # Mean Shift Addition Layer: 
+        if config["standardization"] == "fixed_climo":
+            statistics = open_data_file(str(config["databuilder"]["climotology_stats_path"]))
+            mean = statistics[config["target_var"]][0]
+            self.meanshift_mu = RescaleLayer(torch.tensor(1.0), mean)
+
         if "gamma" in config.get("freeze_id", []):
             self.rescale_gamma = RescaleLayer(torch.tensor(0.0), torch.tensor(0.0))
         else: 
@@ -240,6 +247,10 @@ class TorchModel(BaseModel):
             
             # rescaling layers
             mu_out = self.rescale_mu(mu_out)
+
+            # ADD CLIMATOLOGICAL MEAN BACK INTO OUTPUT MU
+            # if self.config["standardization"] == "fixed_climo":
+            #     mu_out = self.meanshift_mu(mu_out)
 
             sigma_out = self.rescale_sigma(sigma_out)
             sigma_out = torch.exp(sigma_out)

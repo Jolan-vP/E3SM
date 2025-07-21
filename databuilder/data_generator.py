@@ -18,6 +18,7 @@ Classes: ------------------
 
 """
 
+import gc
 import os
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
@@ -38,6 +39,7 @@ from analysis.analysis_metrics import save_pickle
 from utils.filemethods import open_data_file as open_data_file
 from itertools import islice
 import pandas as pd
+import gc
 
 
 # -----------------------------------------------------
@@ -76,9 +78,9 @@ class ClimateData:
         return self.d_train, self.d_val, self.d_test 
 
     def _create_data(self):  
-        if "ERA5" in self.config["data_source"]:
+        if "ERA5" in self.config["data_source"]: # ERA5 REANALYSIS DATA PROCESSING ---------------------------------------------------
             # input_ds = filemethods.get_netcdf_da(self.data_dir + "ERA5/ERA5_1x1_input_vars_1940-2023_regrid.nc")
-            input_ds = filemethods.get_netcdf_da(self.data_dir + "ERA5/ERA5_1x1_input_vars_1940-2023.nc")
+            input_ds = filemethods.get_netcdf_da(self.data_dir + "ERA5/ERA5_1x1_input_vars_P_TS_Z500_1940-2023_daily.nc")
 
             print("Process whole ERA5 dataset in one shot")
             f_dict_whole = self._process_data(input_ds)
@@ -101,33 +103,14 @@ class ClimateData:
             self.d_val.concat(f_dict_val) 
             self.d_test.concat(f_dict_test) 
 
-        elif self.config["data_source"] == "E3SM":
+        elif self.config["data_source"] == "E3SM": # E3SM ENSEMBLES DATA PROCESSING ---------------------------------------------------
             for iens, ens in enumerate(self.config["ensembles"]):
                 print("Opening .nc files")
-                if self.verbose:
-                    print(ens)
-                if self.config["input_years"] != [1850, 2014]:
-                    print(f"Input years are not 1850-2014, using {self.config['input_years']} as input years")
-            
-                    train_ds = filemethods.get_netcdf_da(self.data_dir + "input_vars.P_T_Z5.v2.LR.historical_merged_0101_0151.eam.h1.1685-2014.nc")
-
-                    validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.P_T_Z5.v2.LR.historical_0201.eam.h1.1850-2014_precip_mmday.nc")
-
-                    test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.P_T_Z5.v2.LR.historical_0201.eam.h1.1850-2014_precip_mmday.nc")
+                train_ds = filemethods.get_netcdf_da(self.data_dir +    "/input_vars.P_T_Z5.v2.LR.historical_0101.eam.h1.1850-2014_precip_mmday.nc")
+                validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.P_T_Z5.v2.LR.historical_0151.eam.h1.1850-2014_precip_mmday.nc")
+                test_ds = filemethods.get_netcdf_da(self.data_dir +     "/input_vars.P_T_Z5.v2.LR.historical_0201.eam.h1.1850-2014_precip_mmday.nc")
     
-                else:
-                    if ens == "ens1":
-                        train_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc")
-
-                    if ens == "ens2":
-                        validate_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0151.eam.h1.1850-2014.nc")
-
-                    elif ens == "ens3":
-                        test_ds = filemethods.get_netcdf_da(self.data_dir + "/input_vars.v2.LR.historical_0201.eam.h1.1850-2014.nc")
-            
-                    print(self.config["input_years"])
-                
-            if self.config["data_source"] != self.config["inference_data"]: 
+            if self.config["data_source"] != self.config["inference_data"]: # For Experiments with OUT OF DISTRIBUTION Inference - Process Inference Data
                 f_dict_train = SampleDict()
                 f_dict_val = SampleDict()
                 f_dict_test = SampleDict()
@@ -146,16 +129,16 @@ class ClimateData:
             else:
                 print("Processing Training")
                 f_dict_train = self._process_data(train_ds)
-                # f_dict_train['x'] = f_dict_train['x'].sel(time = slice(str(self.config["train_years"][0]), str(self.config["train_years"][1])))
-                # f_dict_train['y'] = f_dict_train['y'].sel(time = slice(str(self.config["train_years"][0]), str(self.config["train_years"][1])))
+                f_dict_train['x'] = f_dict_train['x'].sel(time = slice(str(self.config["train_years"][0]), str(self.config["train_years"][1])))
+                f_dict_train['y'] = f_dict_train['y'].sel(time = slice(str(self.config["train_years"][0]), str(self.config["train_years"][1])))
                 print("Processing validation")
                 f_dict_val = self._process_data(validate_ds)
-                # f_dict_val['x'] = f_dict_val['x'].sel(time = slice(str(self.config["val_years"][0]), str(self.config["val_years"][1])))
-                # f_dict_val['y'] = f_dict_val['y'].sel(time = slice(str(self.config["val_years"][0]), str(self.config["val_years"][1])))
+                f_dict_val['x'] = f_dict_val['x'].sel(time = slice(str(self.config["val_years"][0]), str(self.config["val_years"][1])))
+                f_dict_val['y'] = f_dict_val['y'].sel(time = slice(str(self.config["val_years"][0]), str(self.config["val_years"][1])))
                 print("Processing testing")
                 f_dict_test = self._process_data(test_ds)
-                # f_dict_test['x'] = f_dict_test['x'].sel(time = slice(str(self.config["test_years"][0]), str(self.config["test_years"][1])))
-                # f_dict_test['y'] = f_dict_test['y'].sel(time = slice(str(self.config["test_years"][0]), str(self.config["test_years"][1])))   
+                f_dict_test['x'] = f_dict_test['x'].sel(time = slice(str(self.config["test_years"][0]), str(self.config["test_years"][1])))
+                f_dict_test['y'] = f_dict_test['y'].sel(time = slice(str(self.config["test_years"][0]), str(self.config["test_years"][1])))   
             
 
             # print(f"magnitude of processed precip: {f_dict_train['x'][300:310, 10, 30, 0]}")
@@ -187,30 +170,35 @@ class ClimateData:
 
         f_dict = SampleDict() 
 
+        ## TRYING MEMORY EFFICIENT METHOD ******
+        input_vars_container = [None] * len(self.config["input_vars"])
+
         # (1) Isolate the individual dataset values of ds : PRECT, TS, etc. for INPUTS:
         if self.config["input_vars"] == "None": 
             pass
         else:
             for ivar, var in enumerate(self.config["input_vars"]):
                 if ivar == 0: # PRECIPITATION VARIABLE MUST ALWAYS BE FIRST VARIABLE IN DS TO BE LOADED!! FOR ALL DATASETS!!
-                    da = ds[var]
-                    print(f"shape of da: {da.shape}")
+                    # da = ds[var]
+                    input_vars_container[ivar] = ds[var]
+                    print(f"shape of da: {input_vars_container[ivar].shape}")
                     print("Isolating variables from Dataset")
-
-                    if len(self.config["input_vars"]) > 1: # If there is more than one input variable to process here
-                        da = da.expand_dims(dim={"channel": 1}, axis = -1)   # (2) Create a channel dimension in da
-                else: 
-                    da = xr.concat([da, ds[var]], dim = "channel")  # (3) Fill channel dim with var array
+                else:
+                    input_vars_container[ivar] = ds[var]
+                #     if len(self.config["input_vars"]) > 1: # If there is more than one input variable to process here
+                #         da = da.expand_dims(dim={"channel": 1}, axis = -1)   # (2) Create a channel dimension in da
+                # else: 
+                #     da = xr.concat([da, ds[var]], dim = "channel")  # (3) Fill channel dim with var array
       
-            da = da.rename('SAMPLES')
-            da.attrs['long_name'] = 'long_name'
-            da.attrs['units'] = 'units'
-            da.attrs['cell_methods'] = 'cell_methods'
+            # da = da.rename('SAMPLES')
+            # da.attrs['long_name'] = 'long_name'
+            # da.attrs['units'] = 'units'
+            # da.attrs['cell_methods'] = 'cell_methods'
 
         # For each input variable or data entity you would like to process: 
         for ikey, key in enumerate(f_dict):
             if key == "y" and self.config["target_var"] != "None":
-                print("Processing target output")
+                print("Processing target output") # PROCESSING TARGET ------------------------------------------
                 
                 f_dict[key] = ds[self.config["target_var"]]
                 
@@ -261,46 +249,40 @@ class ClimateData:
                         else: 
                             pass
 
-                        # print(data_masked[10, ...])
-                        # fig, ax = plt.subplots(1, 1, figsize=(8, 6), subplot_kw={'projection': ccrs.PlateCarree()})
-                        # ax.add_feature(cfeature.BORDERS, linewidth=0.3, edgecolor='black')
-                        # ax.add_feature(cfeature.STATES, linewidth=0.3, edgecolor='black')
-                        # ax.add_feature(cfeature.COASTLINE, linewidth=0.3, edgecolor='black')
-                        # data_masked_oneday = data_masked[10, ...]
-                        # data_masked_oneday.plot(ax=ax, transform=ccrs.PlateCarree(), cmap='PuOr_r')
-                        # ax.set_xticks(np.arange(-180, 181, 4), crs=ccrs.PlateCarree())
-                        # ax.set_yticks(np.arange(-90, 91, 4), crs=ccrs.PlateCarree())
-                        # ax.tick_params(axis = 'x', rotation = 45)
-                        # ax.set_ylim([30.5, 60.5])
-                        # ax.set_xlim([-200, -120])
-                        # # shrink cbar
-                        # plt.tight_layout()
-                        # plt.show()
+                        masked_for_plot = data_masked.isel(time = 10)
 
-                        # Create figure and axis
                         fig, ax = plt.subplots(1, 1, figsize=(8, 7), subplot_kw={'projection': ccrs.PlateCarree()})
-
-                        # Add map features
                         ax.add_feature(cfeature.BORDERS, linewidth=0.3, edgecolor='black')
                         ax.add_feature(cfeature.STATES, linewidth=0.3, edgecolor='black')
                         ax.add_feature(cfeature.COASTLINE, linewidth=0.3, edgecolor='black')
 
-                        lon_2d, lat_2d = np.meshgrid(data_masked.lon, data_masked.lat)
 
-                        # ax.set_ylim([30.5, 60.5])
-                        ax.set_extent([-180, -120, 30.5, 60.5], crs=ccrs.PlateCarree())
-                        ax.set_xlim([-180, -120])
-                        ax.set_xticks(np.arange(-180, -119, 4), crs=ccrs.PlateCarree())
+                        if self.config["target_var"] == "PRECT" or self.config["target_var"] == "tp":
+                            cmap_color = 'viridis_r'
+                            extent_region = [-135, -110, 36.5, 58.5]
+                            units = "mm/day"
+                        elif self.config["target_var"] == "Z500" or self.config["target_var"] == "z":
+                            cmap_color = "PuOr_r"
+                            extent_region = [-180, -120, 30.5, 60.5]
+                            units = "m"
+
+                        lon_2d, lat_2d = np.meshgrid(data_masked.lon, data_masked.lat)
+                        im = ax.pcolormesh(lon_2d, lat_2d, masked_for_plot.values, 
+                                transform=ccrs.PlateCarree(), 
+                                cmap=cmap_color)
+                        
+                        ax.set_extent(extent_region, crs=ccrs.PlateCarree())
+                        ax.set_xlim(extent_region[:2])
+                        ax.set_xticks(np.arange(extent_region[0], extent_region[1]+1, 4), crs=ccrs.PlateCarree())
                         ax.tick_params(axis='x', rotation=45)
                         ax.set_yticks(np.arange(32, 61, 4), crs=ccrs.PlateCarree())
                         gl = ax.gridlines(draw_labels=False, linewidth=0.5, alpha=0.3, linestyle='--')
 
-                        # Create custom colorbar with smaller size
                         from mpl_toolkits.axes_grid1 import make_axes_locatable
                         divider = make_axes_locatable(ax)
                         cax = divider.append_axes("right", size="3%", pad=0.1, axes_class=plt.Axes)
                         cbar = plt.colorbar(im, cax=cax)
-                        cbar.set_label('Geopotential Z at 500 mbar\npressure surface [m]')
+                        cbar.set_label(f'{self.config["target_var"]} ({units})', fontsize=12)
 
                         plt.tight_layout()
                         plt.savefig(self.figure_dir + str(self.expname) + "/" + str(self.expname) + "_target_masked.png", dpi=300)
@@ -314,9 +296,6 @@ class ClimateData:
                 # REMOVE SEASONAL CYCLE 
                 print("removing seasonal cycle")
                 f_dict[key] = self.trend_remove_seasonal_cycle(f_dict[key])
-                
-                # print(f"Shape of f_dict[key] after seasonal cycle removal: {f_dict[key].shape}")
-                # print(f_dict[key][500:540])
 
                 # ROLLING AVERAGE
                 print("rolling average")
@@ -324,11 +303,13 @@ class ClimateData:
                 
                 print("completed processing target")
                 print(f"shape of target is: {f_dict[key].shape}")
-            else: 
+
+
+            else: # PROCESSING INPUTS ---------------------------------------------------------------------------
                 if self.target_only is True:
                     print("Target only is true, skipping input processing")
                     pass
-                else:
+                else: # PROCESSING NETWORK INPUT VARIABLES
                     print("Processing inputs")
                     if len(self.config["input_vars"]) == 1:
                         f_dict[key] = da
@@ -346,24 +327,63 @@ class ClimateData:
                         f_dict[key] = self.rolling_ave(f_dict[key])
 
                     else:
-                        # LOAD f_dict dictionary with unprocessed channels of 'da'
-                        f_dict[key] = da 
-                
-                        ## EXTRACT REGION
-                        f_dict[key] = self._extractinputregion(f_dict[key])
 
-                        ## MASK LAND/OCEAN 
-                        f_dict[key] = self._masklandocean(f_dict[key])
+                        ## TRYING MEMORY EFFICIENT METHOD ******
+                        processed_channels = [None] * len(self.config["input_vars"])
 
-                        # REMOVE SEASONAL CYCLE
-                        for ichannel in range(f_dict[key].shape[-1]):
-                            f_dict[key][..., ichannel] = self.trend_remove_seasonal_cycle(f_dict[key][...,ichannel])
+                        for ivar, var_da in enumerate(input_vars_container):
+
+                            processed_var = var_da
+
+                            ## EXTRACT REGION
+                            processed_var = self._extractinputregion(processed_var)
+
+                            ## MASK LAND/OCEAN
+                            processed_var = self._masklandocean(processed_var)
+
+                            ## REMOVE SEASONAL CYCLE
+                            processed_var = self.trend_remove_seasonal_cycle(processed_var)
+
+                            ## ROLLING AVERAGE
+                            processed_var = self.rolling_ave(processed_var)
+
+                            # store in preallocated list: 
+                            processed_channels[ivar] = processed_var
+
+                            # clear memory
+                            del var_da, processed_var
+                            gc.collect()
+                            print(f"completed processing variable {ivar+1}, memory cleared")
+                        
+                        print("concatenating channels")
+
+                        for i, processed_var in enumerate(processed_channels):
+                            if i == 0:
+                                f_dict[key] = processed_var.expand_dims(dim={"channel": 1}, axis=-1)
+                            else:
+                                f_dict[key] = xr.concat([f_dict[key], processed_var], dim="channel")
+
+                        del processed_channels
+                        gc.collect()
+
+                        # # LOAD f_dict dictionary with unprocessed channels of 'da'
+                        # f_dict[key] = var_da
+
+                        # ## EXTRACT REGION
+                        # f_dict[key] = self._extractinputregion(f_dict[key])
+
+                        # ## MASK LAND/OCEAN 
+                        # f_dict[key] = self._masklandocean(f_dict[key])
+
+                        # # REMOVE SEASONAL CYCLE
+                        # for ichannel in range(f_dict[key].shape[-1]):
+                        #     f_dict[key][..., ichannel] = self.trend_remove_seasonal_cycle(f_dict[key][...,ichannel])
                     
-                        # checkplot = f_dict[key].sel(time = '1905-01-01')
-                        # checkplot[...,1].plot()
+                        # # checkplot = f_dict[key].sel(time = '1905-01-01')
+                        # # checkplot[...,1].plot()
 
-                        ## ROLLING AVERAGE 
-                        f_dict[key] = self.rolling_ave(f_dict[key])
+                        # ## ROLLING AVERAGE 
+                        # f_dict[key] = self.rolling_ave(f_dict[key])
                     
                     print(f"shape of input is : {f_dict[key].shape}")
                     # Confirmed smoothed, detrended, deseasonalized, anomalies of PRECT and TS
@@ -724,15 +744,17 @@ def uniform_dist(lowerbound, upperbound, n, expname, config):
 
     return dist
 
+def adjust_data_split(input_paths, config):
+    """
+    Stack processed ens1 + ens2 + ens3
+    Split data according to desired training, validation, and testing ratio
 
+    """
+    # Open ens1+ens2
+    ens1 = open_data_file(input_paths[0])
+    ens2 = open_data_file(input_paths[1])
 
-
-
-
-
-
-
-
+    
 
 
 # -----------------------------------------------------------------------------

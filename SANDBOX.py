@@ -50,7 +50,7 @@ from analysis import ENSO_indices_calculator
 import analysis.analysis_metrics as analysis_metrics
 from analysis.calc_climatology import precip_regime
 from utils.filemethods import create_folder
-from databuilder.data_generator import uniform_dist
+from databuilder.data_generator import uniform_dist, adjust_data_split
 from captum.attr import IntegratedGradients, Saliency
 from XAI.captum import compute_attributions, average_attributions, visualize_average_attributions
 from utils import utils
@@ -65,7 +65,7 @@ print(f"pytorch version = {torch.__version__}")
 # https://github.com/victoresque/pytorch-template/tree/master
 
 # ----CONFIG AND CLASS SETUP----------------------------------------------
-config = utils.get_config("exp134")
+config = utils.get_config("exp140")
 print(config["expname"])
 seed = config["seed_list"][0]
 
@@ -104,74 +104,86 @@ create_folder(output_folder_name)
 create_folder(figure_folder_name)
 
 # # # ---- DATA PROCESSING ----------------------------------------------------------------
-# # # # Check if input data is being processed from scratch or if it is being loaded from a previous experiment
+# # # Check if input data is being processed from scratch or if it is being loaded from a previous experiment
 
-# if config["input_data"] == "None": # Then input data must be processed FROM SCRATCH
-#     print("Processing input data from scratch")
-#     print(f"This is a {config['arch']['type']} model")
+if config["input_data"] == "None": # Then input data must be processed FROM SCRATCH
+    print("Processing input data from scratch")
+    print(f"This is a {config['arch']['type']} model")
 
-# #     d_train, d_val, d_test = data.fetch_data()
+    d_train, d_val, d_test = data.fetch_data()
+    print(f"Fetched d_train, d_val, d_test")
 
-# # # # #     # ---- FOR SIMPLE INPUTS ONLY : ----------------------------------------------
-# #     if config["arch"]["type"] == "basicnn":
-# #         # print(d_train['y'].shape)
-# #         target_savename1 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_train_TARGET.pkl"
-# #         with gzip.open(target_savename1, "wb") as fp:
-# #             pickle.dump(d_train, fp)
+    print("Computing data before pickling...")
+    d_train['x'] = d_train['x'].compute()
+    d_train['y'] = d_train['y'].compute()
+    d_val['x'] = d_val['x'].compute() 
+    d_val['y'] = d_val['y'].compute()
+    d_test['x'] = d_test['x'].compute()
+    d_test['y'] = d_test['y'].compute()
 
-# #         target_savename2 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_val_TARGET.pkl"
-# #         with gzip.open(target_savename2, "wb") as fp:
-# #             pickle.dump(d_val, fp)
+# # # #     # ---- FOR SIMPLE INPUTS ONLY : ----------------------------------------------
+    if config["arch"]["type"] == "basicnn":
+        # print(d_train['y'].shape)
+        target_savename1 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_train_TARGET.pkl"
+        with gzip.open(target_savename1, "wb") as fp:
+            pickle.dump(d_train, fp)
 
-# #         target_savename3 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_test_TARGET.pkl"
-# #         with gzip.open(target_savename3, "wb") as fp:
-# #             pickle.dump(d_test, fp)
+        target_savename2 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_val_TARGET.pkl"
+        with gzip.open(target_savename2, "wb") as fp:
+            pickle.dump(d_val, fp)
 
-# #         d_train, d_val, d_test = multi_input_data_organizer(config, target_savename1, target_savename2, target_savename3, MJO = True, ENSO = True, other = False)
+        target_savename3 = str(config["perlmutter_data_dir"]) + str(config["expname"]) + "_d_test_TARGET.pkl"
+        with gzip.open(target_savename3, "wb") as fp:
+            pickle.dump(d_test, fp)
+
+        d_train, d_val, d_test = multi_input_data_organizer(config, target_savename1, target_savename2, target_savename3, MJO = True, ENSO = True, other = False)
           
-# #         # confirm metadata is stored for both input and target
-# #         print(f" s_dict_train INPUT time {d_train['x'].time}")
-# #         print(f" s_dict_train TARGET time {d_train['y'].time}")
+        # confirm metadata is stored for both input and target
+        print(f" s_dict_train INPUT time {d_train['x'].time}")
+        print(f" s_dict_train TARGET time {d_train['y'].time}")
 
-# #         # confirm input structure: 
-# #         print(f"input shape: {d_train['x'].shape}")
-# #     else: 
-# #         pass
+        # confirm input structure: 
+        print(f"input shape: {d_train['x'].shape}")
+    else: 
+        pass
 
-# #     # Save full input data for the experiment: ----------------------------------
-#     # s_dict_savename1 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_train.pkl"
-#     # s_dict_savename2 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_val.pkl"
-#     # s_dict_savename3 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_test.pkl"
+    # Save full input data for the experiment: ----------------------------------
+    s_dict_savename1 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_train.pkl"
+    s_dict_savename2 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_val.pkl"
+    s_dict_savename3 = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_d_test.pkl"
 
-#     s_dict_savename1 = str(config["perlmutter_inputs_dir"]) + "exp111" + "_d_train.pkl"
-#     s_dict_savename2 = str(config["perlmutter_inputs_dir"]) + "exp111" + "_d_val.pkl"
-#     s_dict_savename3 = str(config["perlmutter_inputs_dir"]) + "exp111" + "_d_test.pkl"
+    print("Pickling d_train, d_val, d_test")
+    with gzip.open(s_dict_savename1, "wb") as fp:
+        pickle.dump(d_train, fp)
 
-#     # with gzip.open(s_dict_savename1, "wb") as fp:
-#     #     pickle.dump(d_train, fp)
+    with gzip.open(s_dict_savename2, "wb") as fp:
+        pickle.dump(d_val, fp)
 
-#     # with gzip.open(s_dict_savename2, "wb") as fp:
-#     #     pickle.dump(d_val, fp)
+    with gzip.open(s_dict_savename3, "wb") as fp:
+        pickle.dump(d_test, fp)
 
-#     # with gzip.open(s_dict_savename3, "wb") as fp:
-#     #     pickle.dump(d_test, fp)
+    # REARRANGE TRAIN/VAL/TEST SPLIT for Multi-Ensemble E3SM Data:   
+    # if (config["expname"][3:5] > 133) and (config["data_source"] == "E3SM"): 
+    #     paths = [s_dict_savename1, s_dict_savename2, s_dict_savename3]
+
+    #     adjust_data_split(paths, config)
 
 #     # Trim input data: Lead/lag, month selection ----------------------------------
-#     trimmed_trainfn_current_exp = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "train_dat.nc"
-#     trimmed_valfn_current_exp = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "val_dat.nc"
-#     trimmed_testfn_current_exp = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "test_dat.nc"
+    # trimmed_trainfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "train_dat.nc"
+    # trimmed_valfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "val_dat.nc"
+    # trimmed_testfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "test_dat.nc"
 
-#     train_dat_trimmed = universaldataloader(s_dict_savename1, config, target_only = False, repackage = True)
-#     train_dat_trimmed.to_netcdf(trimmed_trainfn_current_exp)
-#     print(f"Data saved to {trimmed_trainfn_current_exp}")
+    # train_dat_trimmed = universaldataloader(s_dict_savename1, config, target_only = False, repackage = True)
+    # train_dat_trimmed.to_netcdf(trimmed_trainfn)
+    # print(f"Data saved to {trimmed_trainfn}")
 
-#     val_dat_trimmed = universaldataloader(s_dict_savename2, config, target_only = False, repackage = True)
-#     val_dat_trimmed.to_netcdf(trimmed_valfn_current_exp)
-#     print(f"Data saved to {trimmed_valfn_current_exp}")
+    # val_dat_trimmed = universaldataloader(s_dict_savename2, config, target_only = False, repackage = True)
+    # val_dat_trimmed.to_netcdf(trimmed_valfn)
+    # print(f"Data saved to {trimmed_valfn}")
 
-#     test_dat_trimmed = universaldataloader(s_dict_savename3, config, target_only = False, repackage = True)
-#     test_dat_trimmed.to_netcdf(trimmed_testfn_current_exp)
-#     print(f"Data saved to {trimmed_testfn_current_exp}")
+    # test_dat_trimmed = universaldataloader(s_dict_savename3, config, target_only = False, repackage = True)
+    # test_dat_trimmed.to_netcdf(trimmed_testfn)
+    # print(f"Data saved to {trimmed_testfn}")
 
 #     if config["inference_data"] == "ERA5":
 #         # process whole ERA5 dataset in it's complete form to have for use in climatology later: 
@@ -181,52 +193,44 @@ create_folder(figure_folder_name)
 #         ERA5_trimmed_timeseries.to_netcdf(ERA5_trimmed_timeseries_fn)
 
 # elif "exp" in config["input_data"]: 
-#     # trimmed_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "train_dat.nc"
-#     # trimmed_valfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "val_dat.nc"
-#     # trimmed_testfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "test_dat.nc"
+#     trimmed_trainfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "train_dat.nc"
+#     trimmed_valfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "val_dat.nc"
+#     trimmed_testfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "test_dat.nc"
 
-#     # d_train = open_data_file(trimmed_trainfn)
-#     # d_val = open_data_file(trimmed_valfn)
-#     # d_test = open_data_file(trimmed_testfn)
+#     d_train = open_data_file(trimmed_trainfn)
+#     d_val = open_data_file(trimmed_valfn)
+#     d_test = open_data_file(trimmed_testfn)
     
-#     # print("Running EXP trim block")
-#     # print(config["databuilder"]["train_years"][1])
-#     # print(config["databuilder"]["val_years"][0])
-#     # print(config["databuilder"]["val_years"][1])
+#     print("Running EXP trim block")
+#     print(config["databuilder"]["train_years"][1])
+#     print(config["databuilder"]["val_years"][0])
+#     print(config["databuilder"]["val_years"][1])
 
-#     # d_train = d_train.sel(time = slice(str(config["databuilder"]["train_years"][0]), str(config["databuilder"]["train_years"][1])))
-#     # print(f"d_train x: {d_train['x'].time} d_train y: {d_train['y'].time}")
-#     # d_val = d_val.sel(time = slice(str(config["databuilder"]["val_years"][0]), str(config["databuilder"]["val_years"][1])))
-#     # print(f"d_val x: {d_val['x'].time} d_val y: {d_val['y'].time}")
-#     # d_test = d_test.sel(time = slice(str(config["databuilder"]["test_years"][0]), str(config["databuilder"]["test_years"][1])))
-#     # print(f"d_test x: {d_test['x'].time} d_test y: {d_test['y'].time}")   
+#     d_train = d_train.sel(time = slice(str(config["databuilder"]["train_years"][0]), str(config["databuilder"]["train_years"][1])))
+#     print(f"d_train x: {d_train['x'].time} d_train y: {d_train['y'].time}")
+#     d_val = d_val.sel(time = slice(str(config["databuilder"]["val_years"][0]), str(config["databuilder"]["val_years"][1])))
+#     print(f"d_val x: {d_val['x'].time} d_val y: {d_val['y'].time}")
+#     d_test = d_test.sel(time = slice(str(config["databuilder"]["test_years"][0]), str(config["databuilder"]["test_years"][1])))
+#     print(f"d_test x: {d_test['x'].time} d_test y: {d_test['y'].time}")   
 
-#     # trimmed_trainfn_current_exp = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_trimmed_" + "train_dat.nc"
-#     # trimmed_valfn_current_exp = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_trimmed_" + "val_dat.nc"
-#     # trimmed_testfn_current_exp = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_trimmed_" + "test_dat.nc"
+#     trimmed_trainfn_current_exp = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_trimmed_" + "train_dat.nc"
+#     trimmed_valfn_current_exp = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_trimmed_" + "val_dat.nc"
+#     trimmed_testfn_current_exp = str(config["perlmutter_inputs_dir"]) + str(config["expname"]) + "_trimmed_" + "test_dat.nc"
 
-#     # d_train.to_netcdf(trimmed_trainfn_current_exp)
-#     # print(f"Data saved to {trimmed_trainfn_current_exp}")
+#     d_train.to_netcdf(trimmed_trainfn_current_exp)
+#     print(f"Data saved to {trimmed_trainfn_current_exp}")
 
-#     # d_val.to_netcdf(trimmed_valfn_current_exp)
-#     # print(f"Data saved to {trimmed_valfn_current_exp}")
+#     d_val.to_netcdf(trimmed_valfn_current_exp)
+#     print(f"Data saved to {trimmed_valfn_current_exp}")
 
-#     # d_test.to_netcdf(trimmed_testfn_current_exp)
-#     # print(f"Data saved to {trimmed_testfn_current_exp}")
+#     d_test.to_netcdf(trimmed_testfn_current_exp)
+#     print(f"Data saved to {trimmed_testfn_current_exp}")
 
 #     trimmed_trainfn_current_exp = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "train_dat.nc"
 #     trimmed_valfn_current_exp = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "val_dat.nc"
 #     trimmed_testfn_current_exp = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "test_dat.nc"
-    
-#     if config["inference_data"] == "ERA5" or config["inference_data"] == "None":
-#         # process whole ERA5 dataset in it's complete form to have for use in climatology later: 
-#         ERA5_processed_timeseries = config["perlmutter_data_dir"] + "ERA5/ERA5_complete_processed_1940-2023.pkl"
-#         ERA5_trimmed_timeseries = universaldataloader(ERA5_processed_timeseries, config, target_only = True, repackage = True)
-#         ERA5_trimmed_timeseries_fn = "/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5/ERA5_processed_trimmed_1940-2023.nc"
-#         ERA5_trimmed_timeseries.to_netcdf(ERA5_trimmed_timeseries_fn)
 
-
-# # # # # --- Setup the Data for Training ---------------------------------------------
+# # # # # # --- Setup the Data for Training ---------------------------------------------
 # lagtime = config["databuilder"]["lagtime"] 
 # smoothing_length = config["databuilder"]["averaging_length"]
 
