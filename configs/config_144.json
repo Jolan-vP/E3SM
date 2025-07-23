@@ -2,7 +2,7 @@
     "device": "cpu",
     "seed_list": [7],
 
-    "input_data": "None",
+    "input_data": "exp144",
     "data_source": "ERA5", 
     "inference_data": "ERA5",
     "trained_model" : "None",
@@ -34,7 +34,7 @@
         "climatology_years" : [1981, 2010], 
         "standardization": "fixed_climo",
         "climatology_path": "/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_raw_climatology_TP_SKT_Z_1981-2010.nc",
-        "climatology_stats_path": "/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_raw_climo_stats_PRECT_Z500_TS_1981-2010.pkl", 
+        "climatology_stats_path": "/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl", 
         "analysis_years": [2018, 2023],
         "input_region": "None",
         "input_mask": ["None"],
@@ -59,7 +59,7 @@
 
     "arch": {
         "type": "cnn",
-        "n_inputchannel": 2,
+        "n_inputchannel": 3,
         "freeze_id" : "None",
         "circular_padding": [15, 15, 0, 0],
         "filters" : [32, 32], 

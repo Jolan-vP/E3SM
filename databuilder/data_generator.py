@@ -80,12 +80,12 @@ class ClimateData:
     def _create_data(self):  
         if "ERA5" in self.config["data_source"]: # ERA5 REANALYSIS DATA PROCESSING ---------------------------------------------------
             # input_ds = filemethods.get_netcdf_da(self.data_dir + "ERA5/ERA5_1x1_input_vars_1940-2023_regrid.nc")
-            input_ds = filemethods.get_netcdf_da(self.data_dir + "ERA5/ERA5_1x1_input_vars_P_TS_Z500_1940-2023_daily.nc")
+            input_ds = filemethods.get_netcdf_da(self.data_dir + "ERA5/ERA5_1x1_input_vars_P_TS_Z500_1940-2023_daily_m.nc")
 
             print("Process whole ERA5 dataset in one shot")
             f_dict_whole = self._process_data(input_ds)
             # save f_dict_whole for use later: 
-            save_pickle(f_dict_whole, self.data_dir + "ERA5/ERA5_complete_processed_1940-2023.pkl")
+            # save_pickle(f_dict_whole, self.data_dir + "ERA5/ERA5_complete_processed_1940-2023.pkl")
             print("Splitting data into train, val, and test sets")
 
             f_dict_train = SampleDict()

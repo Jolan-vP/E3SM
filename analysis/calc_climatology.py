@@ -52,7 +52,7 @@ def deriveclimatology(output, target, number_of_samples, config, climate_data=Fa
     else:
         climatology = target
 
-    print(f"Climatological Mean = {np.mean(climatology).item()}")
+    # print(f"Climatological Mean = {np.mean(climatology).item()}")
 
     extreme_samps = maximum_difference(output, target, required_samples= number_of_samples, tau_frozen=True)
 
@@ -68,7 +68,7 @@ def deriveclimatology(output, target, number_of_samples, config, climate_data=Fa
     )
 
     plt.plot(x_values, p, linewidth = 0.5 ) #label = samples
-    plt.xlabel("precipitation anomaly (mm/day)")
+    plt.xlabel(f"Standardized {config['databuilder']['target_var']} Anomaly")
     plt.ylabel("probability density")
     plt.title("Network Shash Prediction -" + str(config["expname"]))
     # plt.axvline(valset[:len(output)], color='r', linestyle='dashed', linewidth=1)

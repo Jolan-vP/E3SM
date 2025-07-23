@@ -30,7 +30,7 @@
         "test_years": [1940, 2023],
         "climatology_years" : [1940, 1980], 
         "climatology_path": "/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_raw_climatology_TP_SKT_Z_1981-2010.nc",
-        "climatology_stats_path": "/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_raw_climo_stats_PRECT_Z500_TS_1981-2010.pkl",  
+        "climatology_stats_path": "/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl",  
         "analysis_years": [1981, 2023],
         "input_region": "None",
         "input_mask": ["None"],

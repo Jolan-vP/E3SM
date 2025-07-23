@@ -1,4 +1,4 @@
-{"expname": "exp140",
+{"expname": "exp148",
     "device": "cpu",
     "seed_list": [7],
 
@@ -29,8 +29,8 @@
         "target_var": "PRECT",
         "input_years": [1850, 2014],
         "train_years": [1850, 2014],
-        "val_years": [1850, 2014],
-        "test_years": [1850, 2014], 
+        "val_years": [1850, 1931],
+        "test_years": [1932, 2014],
         "climatology_years" : [1981, 2010],
         "standardization": "fixed_climo",
         "climatology_path": "/pscratch/sd/p/plutzner/E3SM/bigdata/E3SM_raw_climatology_PRECT_TS_Z500_1981-2010.nc",
@@ -45,8 +45,8 @@
         "target_months": [10, 11, 12, 1, 2, 3],
         "averaging_length": 14,
         "lagtime": 14, 
-        "front_cutoff": 14, 
-        "back_cutoff": 14, 
+        "front_cutoff": 26, 
+        "back_cutoff": 26, 
         "CRPS_tolerance": 1e-7
         
     }, 

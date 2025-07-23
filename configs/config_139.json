@@ -41,7 +41,7 @@
         "target_mask": "None",
         "ensembles": "None",
         "ensemble_codes": ["None"],
-        "target_region": [38.5, 54.5, -133.5, -120.5],
+        "target_region": [35.5, 55.5, -175.5, -135.5],
         "target_months": [10, 11, 12, 1, 2, 3],
         "averaging_length": 0,
         "lagtime": 14, 

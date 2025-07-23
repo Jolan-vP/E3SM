@@ -18,7 +18,7 @@ from utils.utils import trim_nans
 from utils.utils import filter_months
 import calendar
 from datetime import date, timedelta
-import matplotlib as plt
+import matplotlib.pyplot as plt
 from databuilder.sampleclass import SampleDict
 import analysis.analysis_metrics as am
 
@@ -31,27 +31,45 @@ class CustomData(torch.utils.data.Dataset):
      
         dict_data = open_data_file(data_file)
 
-        self.input = dict_data["x"].values
-        self.target= dict_data["y"].values
+        self.input = dict_data["x"]
+        self.target= dict_data["y"]
+
+        # STANDARDIZE data using FIXED CLIMATOLOGY stats: 
+        climo_stats = open_data_file(str(config["databuilder"]["climatology_stats_path"]))
+        
+        # PRECT, TS, Z500   -or-    PRECT, TS
+        for i in range(len(config["databuilder"]["input_vars"])):
+            i_mean_input = climo_stats[config["databuilder"]["input_vars"][i]][0] 
+            i_std_input = climo_stats[config["databuilder"]["input_vars"][i]][1]
+            self.input[..., i] = (self.input[..., i] - i_mean_input) / i_std_input
+
+        i_mean_target = climo_stats[config["databuilder"]["target_var"]][2] 
+        i_std_target = climo_stats[config["databuilder"]["target_var"]][3]
+
+        self.target = (self.target - i_mean_target) / i_std_target
+
+        # plt.figure(figsize=(10, 5))
+        # plt.hist(self.target.values, bins = 100, color = "blue", alpha = 0.5, label = "Target")
+        # plt.title("Target Variable Distribution")
+        # plt.xlabel("Standardized Value")
+        # plt.ylabel("Frequency")
+        # plt.legend()
+        # plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + "/target_distribution" + str(which_set) + ".png")
+        # plt.close()
 
         print(f"shape of self.input: {self.input.shape}")
         #TODO: EVENTUALLY FIX!!
         if self.input.shape[1] > 180: 
             self.input = self.input[:, :180, ...]
             print(f"MODIFIED SELF.INPUT SHAPE: {self.input.shape}")
-        
-        # STANDARDIZE data using FIXED CLIMATOLOGY stats: 
-        climo_stats = open_data_file(str(config["databuilder"]["climatology_stats_path"]))
-        
-        # PRECT, TS, Z500   -or-    PRECT, TS
-        for i in range(len(config["databuilder"]["input_vars"])):
-            i_mean_input = 0 # climo_stats[config["databuilder"]["input_vars"][i]][0] # WANT TO MAINTAIN ANOMALIES AROUND ZERO
-            i_std_input = climo_stats[config["databuilder"]["input_vars"][i]][1]
-            self.input[..., i] = (self.input - i_mean_input) / i_std_input
 
-        i_mean_target = 0 # climo_stats[config["databuilder"]["target_var"]][0] # WANT TO MAINTAIN ANOMALIES AROUND ZERO
-        i_std_target = climo_stats[config["databuilder"]["target_var"]][1]
-        self.target = (self.target - i_mean_target) / i_std_target
+        self.input = self.input.values
+        self.target = self.target.values
+
+        print(f"input vals front: {self.input[:25]}\n")
+        print(f"target vals front: {self.target[:25]}\n")
+        print(f"input vals back: {self.input[-25:]}\n")
+        print(f"target vals back: {self.target[-25:]}\n")
 
         assert not np.any(np.isnan(self.input))
         assert not np.any(np.isnan(self.target))

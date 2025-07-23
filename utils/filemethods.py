@@ -22,10 +22,15 @@ def open_data_file(data_file):
 
     if "." in data_file:
         if data_file.endswith(".pkl"):
-            # Open the file using gzip and pickle
-            with gzip.open(data_file, "rb") as fp:
-                data = pickle.load(fp)
-            # print(f"Opened pickle file: {data_file}")
+            try:
+                # Open the file using gzip and pickle
+                with gzip.open(data_file, "rb") as fp:
+                    data = pickle.load(fp)
+            # except open without gzip: 
+            except (pickle.UnpicklingError, gzip.BadGzipFile) as e:
+                with open(data_file, "rb") as fp:
+                    data = pickle.load(fp)
+    
         elif data_file.endswith(".nc"):
             # Open the file as a NetCDF dataset using xarray
             data = xr.open_dataset(data_file)

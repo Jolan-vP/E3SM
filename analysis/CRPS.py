@@ -293,7 +293,7 @@ class CumulativeSum:
 
             cdf = cdf1 + (cdf2 - cdf1) * (target - x_values[x1]) / (x_values[x2] - x_values[x1])
             calculated_cdf_value = np.round(cdf, 6)
-         
+
             return calculated_cdf_value
 
         return cdf_function
@@ -329,7 +329,7 @@ def CRPScompare(crps_scores, crps_climatology_scores, config):
     print(f"Proportion of forecast CRPS that are lower than climatology: {better_than_climatology}%")
 
     # Plot CRPS comparison Histogram:
-    num_bins = 50
+    num_bins = 100
     min_value = 0
     max_value = 8
     bin_edges = np.linspace(min_value, max_value, num_bins)

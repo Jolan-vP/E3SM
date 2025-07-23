@@ -34,7 +34,7 @@
         "climatology_years" : [1981, 2010],
         "standardization": "fixed_climo",
         "climatology_path": "/pscratch/sd/p/plutzner/E3SM/bigdata/E3SM_raw_climatology_PRECT_TS_Z500_1981-2010.nc",
-        "climatology_stats_path": "/pscratch/sd/p/plutzner/E3SM/bigdata/E3SM_raw_climo_stats_PRECT_Z500_TS_1981-2010.pkl", 
+        "climatology_stats_path": "/pscratch/sd/p/plutzner/E3SM/bigdata/E3SM_processed_climo_stats_PRECT_Z500_TS_1981-2010.pkl", 
         "analysis_years": [1932, 2014],
         "input_region": "None",
         "input_mask": ["None"],
