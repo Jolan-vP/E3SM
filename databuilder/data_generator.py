@@ -346,6 +346,7 @@ class ClimateData:
 
                             ## ROLLING AVERAGE
                             processed_var = self.rolling_ave(processed_var)
+ 
 
                             # store in preallocated list: 
                             processed_channels[ivar] = processed_var
@@ -354,8 +355,15 @@ class ClimateData:
                             del var_da, processed_var
                             gc.collect()
                             print(f"completed processing variable {ivar+1}, memory cleared")
+
                         
                         print("concatenating channels")
+
+                        print("aligning with referenc coords")
+                        reference_coords = processed_channels[0].coords
+                        for i in range(1, len(processed_channels)):
+                            processed_channels[i] = processed_channels[i].reindex_like(processed_channels[0])
+
 
                         for i, processed_var in enumerate(processed_channels):
                             if i == 0:
