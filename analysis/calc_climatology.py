@@ -58,7 +58,7 @@ def deriveclimatology(output, target, number_of_samples, config, climate_data=Fa
 
     dist = Shash(extreme_samps)
 
-    x_values = np.linspace(np.min(climatology) - 2, np.max(climatology), 1000)
+    x_values = np.linspace(np.min(climatology) - 2 , np.max(climatology) + 3, 1000)
 
     p = dist.prob(x_values).numpy()
 

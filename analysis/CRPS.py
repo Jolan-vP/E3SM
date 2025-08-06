@@ -331,7 +331,7 @@ def CRPScompare(crps_scores, crps_climatology_scores, config):
     # Plot CRPS comparison Histogram:
     num_bins = 100
     min_value = 0
-    max_value = 8
+    max_value = max(np.max(crps_scores), np.max(crps_climatology_scores))
     bin_edges = np.linspace(min_value, max_value, num_bins)
 
     fig, ax = plt.subplots(1, 1, figsize=(8, 6))

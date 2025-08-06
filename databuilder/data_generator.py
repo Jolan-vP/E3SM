@@ -288,6 +288,10 @@ class ClimateData:
                         plt.savefig(self.figure_dir + str(self.expname) + "/" + str(self.expname) + "_target_masked.png", dpi=300)
                         plt.show()
 
+                        plt.close(fig)  # Add this!
+                        del fig, ax, im, masked_for_plot, lon_2d, lat_2d
+                        gc.collect()
+
                         f_dict[key] = data_masked.mean(['lat', 'lon'])
 
                 else:
@@ -335,6 +339,8 @@ class ClimateData:
 
                             processed_var = var_da
 
+                            input_vars_container[ivar] = None  # Clear input_vars_container to free more memory
+
                             ## EXTRACT REGION
                             processed_var = self._extractinputregion(processed_var)
 
@@ -373,25 +379,6 @@ class ClimateData:
 
                         del processed_channels
                         gc.collect()
-
-                        # # LOAD f_dict dictionary with unprocessed channels of 'da'
-                        # f_dict[key] = var_da
-
-                        # ## EXTRACT REGION
-                        # f_dict[key] = self._extractinputregion(f_dict[key])
-
-                        # ## MASK LAND/OCEAN 
-                        # f_dict[key] = self._masklandocean(f_dict[key])
-
-                        # # REMOVE SEASONAL CYCLE
-                        # for ichannel in range(f_dict[key].shape[-1]):
-                        #     f_dict[key][..., ichannel] = self.trend_remove_seasonal_cycle(f_dict[key][...,ichannel])
-                    
-                        # # checkplot = f_dict[key].sel(time = '1905-01-01')
-                        # # checkplot[...,1].plot()
-
-                        # ## ROLLING AVERAGE 
-                        # f_dict[key] = self.rolling_ave(f_dict[key])
                     
                     print(f"shape of input is : {f_dict[key].shape}")
                     # Confirmed smoothed, detrended, deseasonalized, anomalies of PRECT and TS

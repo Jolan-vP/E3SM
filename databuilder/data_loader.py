@@ -6,6 +6,7 @@ CustomData(torch.utils.data.Dataset)
 
 """
 
+import gc
 from torch.utils.data import Dataset
 import torch
 import numpy as np
@@ -66,11 +67,6 @@ class CustomData(torch.utils.data.Dataset):
         self.input = self.input.values
         self.target = self.target.values
 
-        print(f"input vals front: {self.input[:25]}\n")
-        print(f"target vals front: {self.target[:25]}\n")
-        print(f"input vals back: {self.input[-25:]}\n")
-        print(f"target vals back: {self.target[-25:]}\n")
-
         assert not np.any(np.isnan(self.input))
         assert not np.any(np.isnan(self.target))
 
@@ -121,6 +117,9 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
         if front_nans > 0 or back_nans > 0:
             input_trimmed = input[front_nans : -back_nans]
             target_trimmed = target[front_nans : -back_nans]
+
+            del data  # Clear original
+            gc.collect()
         else: 
             input_trimmed = input
             target_trimmed = target
@@ -128,6 +127,9 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
         # Apply lagtime adjustment
         input = input_trimmed[:-lagtime]
         target = target_trimmed[lagtime:]
+
+        del input_trimmed, target_trimmed  # Clear trimmed variables
+        gc.collect()
 
         print(f"input shape post lag: {input.shape}")
         print(f"target shape post lag: {target.shape}")
@@ -163,11 +165,10 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
         if selected_months != "None": 
             print(f"Filtering by months: {selected_months}")
             input_filtered, target_filtered = filter_months(selected_months, lagtime, input = input, target = target)
-            print(f"input filtered time: {input_filtered.time}")
-            print(f"target filtered time: {target_filtered.time}")
+             
+            del input, target  # Clear original
+            gc.collect()
 
-            print(f"input filtered shape: {input_filtered.shape}")
-            print(f"target filtered shape: {target_filtered.shape}")
         else: 
             print("Using input and target data from all year round")
             input_filtered = input
@@ -176,6 +177,9 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
         # Remove Smoothing-length FRONT nans from BOTH Input and Target
         input_mod_final = input_filtered[smoothing_length:]
         target_mod_final = target_filtered[smoothing_length:]
+
+        del input_filtered, target_filtered  # Clear filtered variables
+        gc.collect()
         
         # print(f"input_mod_final shape: {input_mod_final.shape}")
         # print(f"target_mod_final shape: {target_mod_final.shape}")

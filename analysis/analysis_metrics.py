@@ -329,10 +329,10 @@ def  IQR_success_discard_plot(shash_output, network_CRPS, climatology_CRPS, conf
     # plt.axhline(y=climatology_CRPS.mean(), color='grey', linestyle='--', label='CRPS Climatology Mean')
     plt.xlabel('IQR Percentile (% Data Remaining)')
     plt.ylabel('Proportion of Samples with Lower Network CRPS')
-    plt.ylim([min(avg_success_ratio) - 0.2, max(avg_success_ratio) + 0.1])
+    # plt.ylim([0, 0.5])
     plt.title('Increasing Confidence Success Ratio Discard Plot -' + str(config["expname"]))
     # plt.legend(loc = 'upper right')
-    plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + '_SuccessRatio_IQR_DiscardPlot.png', format='png', bbox_inches ='tight', transparent = True, dpi = 300) 
+    plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + '_SuccessRatio_IQR_DiscardPlot.png', format='png', bbox_inches ='tight', dpi = 300) 
 
     return percentiles, avg_success_ratio
 
@@ -769,7 +769,8 @@ def compositemapping(dates, mapinputs, config, keyword = None):
             icomposite_prect_norm = icomposite_prect / icomposite_prect_std
             icomposite_ts_norm = icomposite_ts / icomposite_ts_std
 
-        lats = np.linspace(-89.5, 89.5, 180) 
+        # lats = np.linspace(-89.5, 89.5, 180) 
+        lats = mapinputs.lat
         lons = mapinputs.lon
 
         if icomposite_prect_norm.max().item() > np.abs(icomposite_prect_norm.min().item()):
@@ -794,13 +795,13 @@ def compositemapping(dates, mapinputs, config, keyword = None):
         plt.figure()
         fig, ax = plt.subplots(2, 1, figsize=(14, 8),  subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
 
-        cf1 = ax[0].pcolormesh(lons, lats, icomposite_prect_norm, cmap='BrBG', transform=ccrs.PlateCarree(), vmin = vminp, vmax = vmaxp )
+        cf1 = ax[0].pcolormesh(lons, lats, icomposite_prect_norm, cmap='BrBG', transform=ccrs.PlateCarree(), vmin = vminp, vmax = vmaxp, shading = 'nearest' )
         ax[0].set_title(f'Normalized Precipitation Composite Map \n {keyword} Predictions')
         ax[0].coastlines()
         ax[0].set_xticks(np.arange(-180, 181, 60), crs=ccrs.PlateCarree())
         ax[0].set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree())
 
-        cf2 = ax[1].pcolormesh(lons, lats, icomposite_ts_norm, cmap='RdBu_r', transform=ccrs.PlateCarree(), vmin = vmint, vmax = vmaxt )
+        cf2 = ax[1].pcolormesh(lons, lats, icomposite_ts_norm, cmap='RdBu_r', transform=ccrs.PlateCarree(), vmin = vmint, vmax = vmaxt, shading = 'nearest' )
         ax[1].set_title(f'Normalized Temperature Composite Map \n {keyword} Predictions')
         ax[1].coastlines()
         ax[1].set_xticks(np.arange(-180, 181, 60), crs=ccrs.PlateCarree())
