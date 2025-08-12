@@ -93,8 +93,8 @@
         "perlmutter_model_dir": "/pscratch/sd/p/plutzner/E3SM/saved/models",
         "early_stopping":{
             "args":{
-                "patience": 25,
-                "min_delta": 0.00000001
+                "patience": 8,
+                "min_delta": 0.0001
             }
         }
     }

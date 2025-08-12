@@ -329,7 +329,7 @@ def  IQR_success_discard_plot(shash_output, network_CRPS, climatology_CRPS, conf
     # plt.axhline(y=climatology_CRPS.mean(), color='grey', linestyle='--', label='CRPS Climatology Mean')
     plt.xlabel('IQR Percentile (% Data Remaining)')
     plt.ylabel('Proportion of Samples with Lower Network CRPS')
-    # plt.ylim([0, 0.5])
+    plt.ylim([0.45, 0.8])
     plt.title('Increasing Confidence Success Ratio Discard Plot -' + str(config["expname"]))
     # plt.legend(loc = 'upper right')
     plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + '_SuccessRatio_IQR_DiscardPlot.png', format='png', bbox_inches ='tight', dpi = 300) 

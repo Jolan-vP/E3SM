@@ -2,7 +2,7 @@
     "device": "cpu",
     "seed_list": [7],
 
-    "input_data": "None",
+    "input_data": "exp156",
     "data_source": "ERA5", 
     "inference_data": "None",
     "trained_model" : "exp154",

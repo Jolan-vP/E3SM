@@ -49,15 +49,6 @@ class CustomData(torch.utils.data.Dataset):
 
         self.target = (self.target - i_mean_target) / i_std_target
 
-        # plt.figure(figsize=(10, 5))
-        # plt.hist(self.target.values, bins = 100, color = "blue", alpha = 0.5, label = "Target")
-        # plt.title("Target Variable Distribution")
-        # plt.xlabel("Standardized Value")
-        # plt.ylabel("Frequency")
-        # plt.legend()
-        # plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + "/target_distribution" + str(which_set) + ".png")
-        # plt.close()
-
         print(f"shape of self.input: {self.input.shape}")
         #TODO: EVENTUALLY FIX!!
         if self.input.shape[1] > 180: 
@@ -73,10 +64,28 @@ class CustomData(torch.utils.data.Dataset):
         assert len(self.input) == len(self.target)
 
         # SHUFFLE TARGET DATA : 
-        if config["data_loader"]["shuffle_target"] == "True":
-            print("Shuffling target data")
-            np.random.seed(config["seed_list"][0])
-            np.random.shuffle(self.target)
+        # if config["data_loader"]["shuffle_target"] == "True":
+        #     print("Shuffling target data")
+        #     np.random.seed(config["seed_list"][0])
+        #     np.random.shuffle(self.target)
+
+
+        # # DEBUGGING: Print first few samples before shuffling
+        # print("Before shuffle - first 3 input samples:")
+        # print(self.input[:3, 0, 0]) 
+
+        # # SHUFFLE INPUT DATA : 
+        # if which_set == 'training':
+        #     print("Shuffling input data")
+        #     np.random.seed(config["seed_list"][0])
+        #     indices = np.arange(len(self.input))
+        #     #TODO: check indices changing w/ each seed
+        #     np.random.shuffle(indices)
+        #     self.input = self.input[indices]
+        #     self.target = self.target[indices]
+
+        # print("After shuffle - first 3 input samples:")
+        # print(self.input[:3, 0, 0])
 
     def __len__(self):
         return len(self.target)

@@ -1,8 +1,8 @@
-{"expname": "exp159",
+{"expname": "exp166",
     "device": "cpu",
     "seed_list": [7],
 
-    "input_data": "exp159",
+    "input_data": "exp151",
     "data_source": "ERA5", 
     "inference_data": "ERA5",
     "trained_model" : "None",
@@ -28,14 +28,14 @@
         "network_inputs": ["tp", "skt", "z"],
         "target_var": "z",
         "input_years": [1940, 2023],
-        "train_years": [1946, 2004],
-        "val_years": [2005, 2023],
-        "test_years": [1940, 1945],
+        "train_years": [1940, 1998],
+        "val_years": [1999, 2017],
+        "test_years": [2018, 2023],
         "climatology_years" : [1981, 2010], 
         "standardization": "fixed_climo",
         "climatology_path": "/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_raw_climatology_TP_SKT_Z_1981-2010.nc",
         "climatology_stats_path": "/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl", 
-        "analysis_years": [1940, 1945],
+        "analysis_years": [2018, 2023],
         "input_region": "None",
         "input_mask": ["None"],
         "target_mask": "None",
@@ -66,9 +66,9 @@
         "kernel_size": [7, 3],
         "cnn_act": ["ReLU", "ReLU"],
 
-        "hiddens_block": [20, 20],
-        "hiddens_block_in": [141120],
-        "hiddens_block_act": ["ReLU"],
+        "hiddens_block": [1024, 256, 20],
+        "hiddens_block_in": [141120, 1024, 256],
+        "hiddens_block_act": ["ReLU", "ReLU", "ReLU"],
         "hiddens_block_out": 20,
 
         "hiddens_final_in": 20,
@@ -93,8 +93,8 @@
         "perlmutter_model_dir": "/pscratch/sd/p/plutzner/E3SM/saved/models",
         "early_stopping":{
             "args":{
-                "patience": 25,
-                "min_delta": 0.00000001
+                "patience": 8,
+                "min_delta": 0.0001
             }
         }
     }
