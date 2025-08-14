@@ -65,7 +65,7 @@ print(f"pytorch version = {torch.__version__}")
 # https://github.com/victoresque/pytorch-template/tree/master
 
 # ----CONFIG AND CLASS SETUP----------------------------------------------
-config = utils.get_config("exp171")
+config = utils.get_config("exp158")
 print(config["expname"])
 seed = config["seed_list"][0]
 

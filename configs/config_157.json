@@ -1,6 +1,6 @@
 {"expname": "exp157",
     "device": "cpu",
-    "seed_list": [8],
+    "seed_list": [57],
 
     "input_data": "exp154",
     "data_source": "E3SM", 
