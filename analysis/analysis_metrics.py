@@ -1816,3 +1816,27 @@ def pdf_comparison(pdfs, bin_centers, config, keyword = None):
 #         if network_crps[i] < climo_crps[i]:
 #             low_crps_dates[i] = time_coord.isel(time = i)
             
+
+# -------------------------------------------------------------------------------------------------------------
+# -------------- COMBINED EXPERIMENT ANALYSES -----------------------------------------------------------------
+
+def shash_bias_check(experiments):
+    """
+    Bias = The distance between the forecast and observation average values
+    
+    Check the bias of the SHASH parameters for each experiment in the list of experiments against the climatological mean 
+
+    Plot the mean of shash means for each experiment and the climatological mean and climatology histogram
+
+    """
+    if "OBS(OBS)" in experiments: 
+        obs_exp = experiments["OBS(OBS)"]
+    if "E3SM(OBS)" in experiments: 
+        e3sm_obs_exp = experiments["E3SM(OBS)"]
+    if "E3SM-short(OBS)" in experiments:
+        e3sm_short_obs_exp = experiments["E3SM-short(OBS)"]
+    if "E3SM(E3SM)" in experiments: 
+        e3sm_exp = experiments["E3SM(E3SM)"]
+    elif "E3SM-short(E3SM)" in experiments:
+        e3sm_short_exp = experiments["E3SM-short(E3SM)"]
+  

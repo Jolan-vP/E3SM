@@ -65,7 +65,7 @@ print(f"pytorch version = {torch.__version__}")
 # https://github.com/victoresque/pytorch-template/tree/master
 
 # ----CONFIG AND CLASS SETUP----------------------------------------------
-config = utils.get_config("exp158")
+config = utils.get_config("exp191")
 print(config["expname"])
 seed = config["seed_list"][0]
 
@@ -283,7 +283,7 @@ val_loader = torch.utils.data.DataLoader(
     drop_last=False
 )
 
-# # # # # # ## --- Setup the Model ----------------------------------------------------
+# # # # # # # ## --- Setup the Model ----------------------------------------------------
 
 # Check if model already exists: 
 if os.path.exists(str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'):
