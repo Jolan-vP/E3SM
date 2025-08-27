@@ -1,0 +1,30 @@
+
+_______________________________________________________________________________________________________
+     The Extreme-Scale Scientific Software Stack (E4S) is accessible via the
+Spack package manager.
+
+     In order to access the production stack, you will need to load a spack
+environment. Here are some tips to get started:
+
+
+     'spack env list' - List all Spack environments
+     'spack env activate gcc' - Activate the "gcc" Spack environment
+     'spack env status' - Display the active Spack environment
+     'spack load amrex' - Load the "amrex" Spack package into your user
+environment
+
+     For additional support, please refer to the following references:
+
+       NERSC E4S Documentation: https://docs.nersc.gov/applications/e4s/
+       E4S Documentation: https://e4s.readthedocs.io
+       Spack Documentation: https://spack.readthedocs.io/en/latest/
+       Spack Slack: https://spackpm.slack.com
+
+
+______________________________________________________________________________________________________
+     
+ Copyright (C) 1995-2019 - All Rights Reserved
+ University Corporation for Atmospheric Research
+ NCAR Command Language Version 6.6.2
+ The use of this software is governed by a License Agreement.
+ See http://www.ncl.ucar.edu/ for more details.

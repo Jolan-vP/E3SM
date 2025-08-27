@@ -1,0 +1,183 @@
+/var/spool/slurmd/job25830331/slurm_script: line 11: source: filename argument required
+source: usage: source filename [arguments]
+/var/spool/slurmd/job25830331/slurm_script: line 12: /global/common/software/e3sm/anaconda-envs/load_latest_e3sm_unified_pm-cpu.csh: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+slurmstepd: error: execve(): —cpu_bind=cores: No such file or directory
+srun: error: nid004997: tasks 0-127: Exited with exit code 2
+srun: Terminating StepId=25830331.0
+Invalid null command.
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1850-11.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1850-11.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1850-10.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1850-10.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1850-12.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1850-12.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1850-08.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1850-08.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1850-02.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1850-02.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1850-05.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1850-05.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1850-01.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1850-01.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1850-04.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1850-04.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1850-07.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1850-07.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1850-03.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1850-03.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1850-06.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1850-06.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+Output will be saved to: /pscratch/sd/p/plutzner/E3SM/E3SMv2data/member1/monthly_bilinear/v2.LR.historical_0101.eam.h0.1850-09.bil.nc
+Execute: Command not found.
+Input #00: /pscratch/sd/q/qinyi/E3SMv2_init/v2.LR.historical_0101/archive/atm/hist/v2.LR.historical_0101.eam.h0.1850-09.nc
+Map/Wgt  : /pscratch/sd/p/plma/shared/for_jolan/map_ne30pg2_to_cmip6_180x360_bilin.20230823.nc
+“PROGRAM COMPLETE”

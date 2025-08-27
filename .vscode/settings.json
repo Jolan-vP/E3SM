@@ -1,0 +1,6 @@
+{
+    "todo-tree.tree.showBadges": false,
+    "git.ignoreLimitWarning": true,
+    "explorer.sortOrder": "modified",
+    "python.REPL.enableREPLSmartSend": false
+}

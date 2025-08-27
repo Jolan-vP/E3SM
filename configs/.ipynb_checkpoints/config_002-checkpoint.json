@@ -1,0 +1,68 @@
+{"expname": "exp002",
+    "device": "gpu",
+    "seed_list": [7],
+
+    "data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/",
+    "figure_dir": "/pscratch/sd/p/plutzner/E3SM/visuals",
+    "model_dir": "/pscratch/sd/p/plutzner/E3SM/model",
+    "output_dir": "/pscratch/sd/p/plutzner/E3SM/saved/output",
+    "fig_dpi": 200,
+
+    "metrics": [
+        "custom", "custom", "custom"
+    ],
+
+    "criterion": "ShashNLL",
+
+    "databuilder": {
+        
+        "input_vars": ["RMM1", "RMM2", "NINO34"],
+        "input_region": "None",
+        "input_mask": ["None"],
+        "ensembles": ["ens1", "ens2", "ens3"],
+        "ensemble_codes": ["0101", "0151", "0201"],
+        "target_var": "PRECT",
+        "target_region": [47.6, 122.0],
+        "target_months": [4, 5, 6, 7, 8, 9],
+        "averaging_length": 7,
+        "lagtime": 14
+        
+    }, 
+
+    "dataloader": {
+
+        "data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/", 
+        "batch_size": 32
+    }, 
+
+    "arch": {
+        "type": "basicnn",
+        "circular_padding": [5, 5, 0, 0],
+        "n_inputchannel": 1,
+        "filters": [32, 32],
+        "kernel_size": [5, 3],
+        "basic_act": ["ReLU", "ReLU"],
+        "hiddens_block": [3, 3],
+        "hiddens_block_in": [3, 3],
+        "hiddens_block_act": ["ReLU", "ReLU"],
+        "hiddens_final": 4,
+        "hiddens_final_in": 3,
+        "hiddens_final_act": "ReLU"
+    }, 
+
+    "optimizer": {
+        "type": "Adam",
+        "args": "nan"
+    }, 
+
+    "trainer": {
+        "max_epochs": 30,
+        "save_dir": "/pscratch/sd/p/plutzner/E3SM/saved/saved_models/",
+        "early_stopping":{
+            "args":{
+                "patience": 5,
+                "min_delta": 0.02
+            }
+        }
+    }
+}
