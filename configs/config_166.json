@@ -1,0 +1,101 @@
+{"expname": "exp166",
+    "device": "cpu",
+    "seed_list": [7],
+
+    "input_data": "exp151",
+    "data_source": "ERA5", 
+    "inference_data": "ERA5",
+    "trained_model" : "None",
+    "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/",
+    "perlmutter_inputs_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",
+    "perlmutter_figure_dir": "/pscratch/sd/p/plutzner/E3SM/saved/figures/",
+    "perlmutter_model_dir": "/pscratch/sd/p/plutzner/E3SM/saved/models/",
+    "perlmutter_output_dir": "/pscratch/sd/p/plutzner/E3SM/saved/output/", 
+    "fig_dpi": 300,
+    
+    "metrics": [
+        "custom_mae", "iqr_capture", "sign_test"
+    ],
+
+    "criterion": "ShashNLL",
+
+    "databuilder": {
+        
+        "data_source": "ERA5",
+        "inference_data": "ERA5",
+
+        "input_vars": ["tp", "skt", "z"],
+        "network_inputs": ["tp", "skt", "z"],
+        "target_var": "z",
+        "input_years": [1940, 2023],
+        "train_years": [1940, 1998],
+        "val_years": [1999, 2017],
+        "test_years": [2018, 2023],
+        "climatology_years" : [1981, 2010], 
+        "standardization": "fixed_climo",
+        "climatology_path": "/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_raw_climatology_TP_SKT_Z_1981-2010.nc",
+        "climatology_stats_path": "/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl", 
+        "analysis_years": [2018, 2023],
+        "input_region": "None",
+        "input_mask": ["None"],
+        "target_mask": "None",
+        "ensembles": "None",
+        "ensemble_codes": ["None"],
+        "target_region": [28.5, 48.5, -165.5, -136.5],
+        "target_months": [10, 11, 12, 1, 2, 3],
+        "averaging_length": 0,
+        "lagtime": 14, 
+        "front_cutoff": 14, 
+        "back_cutoff": 14, 
+        "CRPS_tolerance": 1e-7
+        
+    }, 
+
+    "data_loader": {
+        "shuffle_target": "False",
+        "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",
+        "batch_size": 128
+    }, 
+
+    "arch": {
+        "type": "cnn",
+        "n_inputchannel": 3,
+        "freeze_id" : "None",
+        "circular_padding": [15, 15, 0, 0],
+        "filters" : [32, 32], 
+        "kernel_size": [7, 3],
+        "cnn_act": ["ReLU", "ReLU"],
+
+        "hiddens_block": [1024, 256, 20],
+        "hiddens_block_in": [141120, 1024, 256],
+        "hiddens_block_act": ["ReLU", "ReLU", "ReLU"],
+        "hiddens_block_out": 20,
+
+        "hiddens_final_in": 20,
+        "hiddens_final_out": 4,
+        "hiddens_final_act": "ReLU", 
+
+
+        "dropout": 0.60
+    }, 
+
+    "optimizer": {
+        "type": "Adam",
+        "args": {
+            "lr": 0.0000001,
+            "weight_decay": 0.0
+        }
+    },
+
+    "trainer": {
+        "max_epochs": 100,
+        "save_dir": "/Users/C830793391/Documents/Research/E3SM/saved/",
+        "perlmutter_model_dir": "/pscratch/sd/p/plutzner/E3SM/saved/models",
+        "early_stopping":{
+            "args":{
+                "patience": 8,
+                "min_delta": 0.0001
+            }
+        }
+    }
+}
