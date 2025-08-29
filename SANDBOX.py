@@ -65,7 +65,7 @@ print(f"pytorch version = {torch.__version__}")
 # https://github.com/victoresque/pytorch-template/tree/master
 
 # ----CONFIG AND CLASS SETUP----------------------------------------------
-config = utils.get_config("exp201")
+config = utils.get_config("exp205")
 print(config["expname"])
 seed = config["seed_list"][0]
 
@@ -283,120 +283,120 @@ val_loader = torch.utils.data.DataLoader(
     drop_last=False
 )
 
-# # # # # # # # ## --- Setup the Model ----------------------------------------------------
+# # # # # # # # # ## --- Setup the Model ----------------------------------------------------
 
-# Check if model already exists: 
-if os.path.exists(str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'):
-    print("Model already exists")
-    response = input("Would you like to load the model? (yes) \n or retrain from epoch 0 (no): ")
+# # Check if model already exists: 
+# if os.path.exists(str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'):
+#     print("Model already exists")
+#     response = input("Would you like to load the model? (yes) \n or retrain from epoch 0 (no): ")
 
-    if response == "yes":
-        path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
-        load_model_dict = torch.load(path)
-        state_dict = load_model_dict["model_state_dict"]
-        std_mean = load_model_dict["training_std_mean"]
-        model = TorchModel(
-            config=config["arch"],
-            target_mean=std_mean["trainset_target_mean"],
-            target_std=std_mean["trainset_target_std"],
-        )
-        model.load_state_dict(state_dict)
+#     if response == "yes":
+#         path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
+#         load_model_dict = torch.load(path)
+#         state_dict = load_model_dict["model_state_dict"]
+#         std_mean = load_model_dict["training_std_mean"]
+#         model = TorchModel(
+#             config=config["arch"],
+#             target_mean=std_mean["trainset_target_mean"],
+#             target_std=std_mean["trainset_target_std"],
+#         )
+#         model.load_state_dict(state_dict)
 
-    elif response == "no": # Model is being run from epoch 0 for the first time: 
-        model = TorchModel(
-            config=config["arch"],
-            target_mean=trainset.target.mean(axis=0),
-            target_std=trainset.target.std(axis=0),
-        )
-        std_mean = {"trainset_target_mean": trainset.target.mean(axis=0), "trainset_target_std": trainset.target.std(axis=0)}
+#     elif response == "no": # Model is being run from epoch 0 for the first time: 
+#         model = TorchModel(
+#             config=config["arch"],
+#             target_mean=trainset.target.mean(axis=0),
+#             target_std=trainset.target.std(axis=0),
+#         )
+#         std_mean = {"trainset_target_mean": trainset.target.mean(axis=0), "trainset_target_std": trainset.target.std(axis=0)}
       
-else: 
-    model = TorchModel(
-            config=config["arch"],
-            target_mean=trainset.target.mean(axis=0),
-            target_std=trainset.target.std(axis=0),
-        )
-    std_mean = {"trainset_target_mean": trainset.target.mean(axis=0), "trainset_target_std": trainset.target.std(axis=0)}
+# else: 
+#     model = TorchModel(
+#             config=config["arch"],
+#             target_mean=trainset.target.mean(axis=0),
+#             target_std=trainset.target.std(axis=0),
+#         )
+#     std_mean = {"trainset_target_mean": trainset.target.mean(axis=0), "trainset_target_std": trainset.target.std(axis=0)}
 
-model.freeze_layers(freeze_id="None")
-optimizer = getattr(torch.optim, config["optimizer"]["type"])(
-    model.parameters(), **config["optimizer"]["args"]
-)
-criterion = getattr(module_loss, config["criterion"])()
-metric_funcs = [getattr(module_metric, met) for met in config["metrics"]]
+# model.freeze_layers(freeze_id="None")
+# optimizer = getattr(torch.optim, config["optimizer"]["type"])(
+#     model.parameters(), **config["optimizer"]["args"]
+# )
+# criterion = getattr(module_loss, config["criterion"])()
+# metric_funcs = [getattr(module_metric, met) for met in config["metrics"]]
 
-# Build the trainer
-device = utils.prepare_device(config["device"])
-trainer = Trainer(
-    model,
-    criterion,
-    metric_funcs,
-    optimizer,
-    max_epochs=config["trainer"]["max_epochs"],
-    data_loader=train_loader,
-    validation_data_loader=val_loader,
-    device=device,
-    config=config,
-)
+# # Build the trainer
+# device = utils.prepare_device(config["device"])
+# trainer = Trainer(
+#     model,
+#     criterion,
+#     metric_funcs,
+#     optimizer,
+#     max_epochs=config["trainer"]["max_epochs"],
+#     data_loader=train_loader,
+#     validation_data_loader=val_loader,
+#     device=device,
+#     config=config,
+# )
 
-# # Visualize the model
-torchinfo.summary(
-    model,
-    [   trainset.input[: config["data_loader"]["batch_size"]].shape ],
-    verbose=1,
-    col_names=("input_size", "output_size", "num_params"),
-)
+# # # Visualize the model
+# torchinfo.summary(
+#     model,
+#     [   trainset.input[: config["data_loader"]["batch_size"]].shape ],
+#     verbose=1,
+#     col_names=("input_size", "output_size", "num_params"),
+# )
 
-# TRAIN THE MODEL
-model.to(device)
-trainer.fit(std_mean)
+# # TRAIN THE MODEL
+# model.to(device)
+# trainer.fit(std_mean)
 
-# Save the Model
-path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + ".pth"
-torch.save({
-            "model_state_dict" : model.state_dict(),
-            "training_std_mean" : std_mean,
-             }, path)
+# # Save the Model
+# path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + ".pth"
+# torch.save({
+#             "model_state_dict" : model.state_dict(),
+#             "training_std_mean" : std_mean,
+#              }, path)
 
-# Load the Model
-path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
+# # Load the Model
+# path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
 
-load_model_dict = torch.load(path)
+# load_model_dict = torch.load(path)
 
-state_dict = load_model_dict["model_state_dict"]
-std_mean = load_model_dict["training_std_mean"]
+# state_dict = load_model_dict["model_state_dict"]
+# std_mean = load_model_dict["training_std_mean"]
 
-model = TorchModel(
-    config=config["arch"],
-    target_mean=std_mean["trainset_target_mean"],
-    target_std=std_mean["trainset_target_std"],
-)
+# model = TorchModel(
+#     config=config["arch"],
+#     target_mean=std_mean["trainset_target_mean"],
+#     target_std=std_mean["trainset_target_std"],
+# )
 
-model.load_state_dict(state_dict)
-model.eval()
+# model.load_state_dict(state_dict)
+# model.eval()
 
-# Evaluate Training Metrics
-print(trainer.log.history.keys())
+# # Evaluate Training Metrics
+# print(trainer.log.history.keys())
 
-print(trainer.log.history.keys())
+# print(trainer.log.history.keys())
 
-plt.figure(figsize=(20, 4))
-for i, m in enumerate(("loss", *config["metrics"])):
-    plt.subplot(1, 4, i + 1)
-    plt.plot(trainer.log.history["epoch"], trainer.log.history[m], label=m)
-    plt.plot(
-        trainer.log.history["epoch"], trainer.log.history["val_" + m], label="val_" + m
-    )
-    plt.axvline(
-       x=trainer.early_stopper.best_epoch, linestyle="--", color="k", linewidth=0.75
-    )
-    plt.title(m)
-    plt.legend()
-plt.tight_layout()
-plt.savefig(config["perlmutter_figure_dir"] + str(config["expname"]) + "/" + str(config["expname"]) + "training_metrics.png", format = 'png', dpi = 200) 
+# plt.figure(figsize=(20, 4))
+# for i, m in enumerate(("loss", *config["metrics"])):
+#     plt.subplot(1, 4, i + 1)
+#     plt.plot(trainer.log.history["epoch"], trainer.log.history[m], label=m)
+#     plt.plot(
+#         trainer.log.history["epoch"], trainer.log.history["val_" + m], label="val_" + m
+#     )
+#     plt.axvline(
+#        x=trainer.early_stopper.best_epoch, linestyle="--", color="k", linewidth=0.75
+#     )
+#     plt.title(m)
+#     plt.legend()
+# plt.tight_layout()
+# plt.savefig(config["perlmutter_figure_dir"] + str(config["expname"]) + "/" + str(config["expname"]) + "training_metrics.png", format = 'png', dpi = 200) 
 
-# ------------------------------ Model Inference -------------------------------------------------------------
-# -------------------------------------------------------------------------------------------------------------
+# # ------------------------------ Model Inference -------------------------------------------------------------
+# # -------------------------------------------------------------------------------------------------------------
 
 if config["data_source"] == config["inference_data"] and config["input_data"] == "None":
     # Load the Model
@@ -1061,6 +1061,67 @@ analysis_metrics.save_pickle(plotting_data_dict, str(config["perlmutter_output_d
 # Open raw INPUT target data
 # nc_file = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/input_vars.v2.LR.historical_0101.eam.h1.1850-2014.nc')
 # precip_regime(nc_file, config)
+
+
+
+
+
+# X A I -----------------------------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------------------------------- 
+
+
+
+# # # Compute the average attributions
+# # print("Computing Average Attributions - IG") 
+# # print("Computing Average Attributions - DL")
+# # avg_attributions_DL = average_attributions(model, input_test_maps, sub_elnino, device, output_column, config, method="deeplift")
+# # print("Computing Average Attributions - S")
+# # avg_attributions_S = average_attributions(model, input_test_maps, sub_elnino, device, output_column, config, method="saliency")
+# # print(f"Average Attributions Shape: {avg_attributions_IG.shape}")
+
+# # Load the average attributions
+# avg_attributions_IG = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/average_attributions_integrated_gradients.pkl')
+# avg_attributions_DL = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/average_attributions_deeplift.pkl')
+# avg_attributions_S = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/average_attributions_saliency.pkl')
+
+# avg_attributions_P_DL = avg_attributions_DL[..., 0]  # Precipitation channel
+# avg_attributions_TS_DL = avg_attributions_DL[..., 1]  # Temperature channel
+
+# avg_attributions_P_S = avg_attributions_S[..., 0]  # Precipitation channel
+# avg_attributions_TS_S = avg_attributions_S[..., 1]  # Temperature channel
+
+# # Visualize the average attributions for each channel
+# # EL NINO --------
+# # average input map for given indices:    
+# ave_input_test_map_elnino_P = np.mean(input_test_maps[sub_elnino, ..., 0], axis=0)
+# ave_input_test_map_elnino_TS = np.mean(input_test_maps[sub_elnino, ..., 1], axis=0)
+
+# visualize_average_attributions(avg_attributions_P_IG, ave_input_test_map_elnino_P, config, keyword='El Nino Precip Anomalies - Integrated Gradients')
+# visualize_average_attributions(avg_attributions_TS_IG, ave_input_test_map_elnino_TS, config, keyword='El Nino Skin Temp Anomalies - Integrated Gradients')
+
+# visualize_average_attributions(avg_attributions_P_DL, ave_input_test_map_elnino_P, config, keyword='El Nino Precip Anomalies - DeepLift')
+# visualize_average_attributions(avg_attributions_TS_DL, ave_input_test_map_elnino_TS, config, keyword='El Nino Skin Temp Anomalies - DeepLift')
+
+# visualize_average_attributions(avg_attributions_P_S, ave_input_test_map_elnino_P, config, keyword='El Nino Precip Anomalies - Saliency')
+# visualize_average_attributions(avg_attributions_TS_S, ave_input_test_map_elnino_TS, config, keyword='El Nino Skin Temp Anomalies - Saliency')
+
+# # LA NINA --------
+# ave_input_test_map_lanina_P = np.mean(input_test_maps[sub_lanina, ..., 0], axis=0)
+# ave_input_test_map_lanina_TS = np.mean(input_test_maps[sub_lanina, ..., 1], axis=0)
+
+# visualize_average_attributions(avg_attributions_P_IG, ave_input_test_map_lanina_P, config, keyword='La Nina Precip Anomalies - Integrated Gradients')
+# visualize_average_attributions(avg_attributions_TS_IG, ave_input_test_map_lanina_TS, config, keyword='La Nina Skin Temp Anomalies - Integrated Gradients')
+
+# Z500 Geopotential Height ------
+# ave_input_test_map_elnino_Z500 = np.mean(Z500_complowCRPS_highconf[sub_elnino, ...], axis=0)
+# visualize_average_attributions(None, ave_input_test_map_elnino_Z500, config, keyword='El Nino Z500 Anomalies')
+
+
+
+
+
+
+
 
 
 

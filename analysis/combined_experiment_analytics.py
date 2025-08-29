@@ -394,151 +394,19 @@ def composite_inputmap_target(experiments, confidence_level = 50, keyword = None
 
 
     
-def COMPARE_composite_inputmap_target(experiments, confidence_level = 50, keyword = None):
-    """
-    For given confidence threshold, plot difference maps between two experiments and compare their target distributions.
-    """
-    exps = experiments
-    
-    # Ensure we have exactly 2 experiments
-    if len(exps) != 2:
-        raise ValueError("This function requires exactly 2 experiments for comparison")
-    
-    exp_names = list(exps.keys())
-    exp_codes = list(exps.values())
-
-    # convert confidence level
-    confidence_threshold = confidence_level / 100.0
-
-    colormaps = ["BrBG", "RdBu_r", "PuOr_r"]
-    vars = ["Total Precip", "Skin Temp", "Z500"]
-    units = ['(mm/day)', '(K)', '(m)']
-
-    # Create figure with 1x3 layout: 3 difference maps
-    fig, axs = plt.subplots(1, 3, figsize=(18, 5), 
-                           subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
-    
-    # Store composite data for both experiments
-    composite_data = {}
-    
-    for idx, (experiment_type, exp_name) in enumerate(exps.items()):
-        print(f'experiment type: {experiment_type}, exp name: {exp_name}')
-        
-        # Load the output and target data for all experiments
-        output = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_network_SHASH_parameters.pkl')
-
-        # input maps: 
-        if experiment_type == "E3SM-short(OBS)" or experiment_type == "E3SM(OBS)" or experiment_type == "E3SM-long(OBS)":
-            config = utils.get_config(exp_name)
-            input_data = config["input_data"]
-            input_maps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/{input_data}_trimmed_test_dat.nc')
-            input_maps = input_maps['x']
-        else:
-            input_maps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
-            input_maps = input_maps['x']
-
-        # Load climatology statistics: 
-        climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl')
-
-        # Load testing target data: 
-        target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
-        target = (target['y'] - climatology_stats['z'][2]) / climatology_stats['z'][3]
-
-        # Calculate IQR for each sample
-        iqr = iqr_basic(output)
-
-        # List IQR by percentile
-        percentiles = np.percentile(iqr, np.arange(0, 101, 1))
-
-        # Select samples whose IQR is smaller than the given confidence threshold
-        selected_indices = np.where(iqr <= percentiles[int(confidence_threshold * 100)])[0]
-
-        print(f"Experiment: {experiment_type}, Number of samples selected at {confidence_level}% confidence: {len(selected_indices)}")
-        if len(selected_indices) < 30:
-            print(f"Less than 30 samples selected for {experiment_type} at {confidence_level}% confidence")
-
-        # Extract corresponding target values (removed since we're not using histograms)
-        # selected_targets = target.values[selected_indices]
-        # selected_targets_all[experiment_type] = selected_targets
-        
-        # Calculate composite maps for each variable
-        composite_maps = []
-        for i in range(len(colormaps)):
-            mean_map = np.mean(input_maps[... , i].values[selected_indices, ...], axis=0)
-            composite_maps.append(mean_map)
-        
-        composite_data[experiment_type] = {
-            'maps': composite_maps,
-            'lon': input_maps['lon'],
-            'lat': input_maps['lat'],
-            'n_samples': len(selected_indices)
-        }
-    
-    # Calculate difference maps (second experiment minus first experiment)
-    exp1_name, exp2_name = exp_names[0], exp_names[1]
-    
-    for i in range(len(colormaps)):
-        cmap = colormaps[i]
-        
-        # Calculate difference map
-        diff_map = composite_data[exp2_name]['maps'][i] - composite_data[exp1_name]['maps'][i]
-        
-        # Set symmetric colorbar limits
-        abs_max = np.max(np.abs(diff_map))
-        vmin, vmax = -abs_max, abs_max
-        
-        # Create the difference map plot
-        axs[i].coastlines()
-        axs[i].add_feature(cfeature.BORDERS, linestyle=':')
-        im = axs[i].pcolormesh(composite_data[exp1_name]['lon'], 
-                              composite_data[exp1_name]['lat'], 
-                              diff_map, 
-                              transform=ccrs.PlateCarree(central_longitude=0),
-                              cmap=cmap, vmin=vmin, vmax=vmax)
-        
-        axs[i].set_title(f'{vars[i]} Difference\n({exp2_name} - {exp1_name})', fontsize=14)
-        cbar = fig.colorbar(im, ax=axs[i], orientation='vertical', shrink=0.5, fraction=0.03, pad=0.04)
-        cbar.set_label(units[i], fontsize=12)
-        
-        # Set global extent to show full map
-        axs[i].set_global()
-        
-        # Set consistent geographic ticks for all map plots
-        axs[i].set_xticks([-180, -120, -60, 0, 60, 120], crs=ccrs.PlateCarree())
-        axs[i].set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree(central_longitude=180))
-    
-    # Create overall title
-    plt.suptitle(f'Composite Difference Maps at {confidence_level}% Confidence Level\n'
-                f'({exp2_name} - {exp1_name})', fontsize=16)
-    plt.tight_layout()
-    
-    # Save figure
-    save_name = f'composite_DIFFERENCE_{confidence_level}percent_confidence_{exp_codes[1]}_minus_{exp_codes[0]}_Z500.png'
-    plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/{save_name}', 
-                format='png', dpi=250, bbox_inches='tight')
-    plt.close()
-    
-    print(f"Difference composite plot saved for {exp2_name} - {exp1_name}")
-
-
-
 # def COMPARE_composite_inputmap_target(experiments, confidence_level = 50, keyword = None):
 #     """
-#     For given confidence threshold, plot difference maps between two experiment types with multiple experiments each.
-#     Calculate mean composite maps for each experiment type, then compute the difference.
-    
-#     Args:
-#         experiments: Dict with experiment types as keys and lists of experiment names as values
-#                     e.g., {"OBS(OBS)": ["exp173", "exp174", ...], "E3SM-short(OBS)": ["exp189", "exp195", ...]}
+#     For given confidence threshold, plot difference maps between two experiments and compare their target distributions.
 #     """
 #     exps = experiments
     
-#     # Ensure we have exactly 2 experiment types
+#     # Ensure we have exactly 2 experiments
 #     if len(exps) != 2:
-#         raise ValueError("This function requires exactly 2 experiment types for comparison")
+#         raise ValueError("This function requires exactly 2 experiments for comparison")
     
-#     exp_type_names = list(exps.keys())
-    
+#     exp_names = list(exps.keys())
+#     exp_codes = list(exps.values())
+
 #     # convert confidence level
 #     confidence_threshold = confidence_level / 100.0
 
@@ -550,84 +418,70 @@ def COMPARE_composite_inputmap_target(experiments, confidence_level = 50, keywor
 #     fig, axs = plt.subplots(1, 3, figsize=(18, 5), 
 #                            subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
     
-#     # Store composite data for both experiment types
+#     # Store composite data for both experiments
 #     composite_data = {}
     
-#     for experiment_type, exp_list in exps.items():
-#         print(f'Processing experiment type: {experiment_type} with {len(exp_list)} experiments')
+#     for idx, (experiment_type, exp_name) in enumerate(exps.items()):
+#         print(f'experiment type: {experiment_type}, exp name: {exp_name}')
         
-#         # Store all composite maps for this experiment type
-#         all_composite_maps = [[] for _ in range(len(colormaps))]  # One list per variable
-#         total_samples = 0
+#         # Load the output and target data for all experiments
+#         output = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_network_SHASH_parameters.pkl')
+
+#         # input maps: 
+#         if experiment_type == "E3SM-short(OBS)" or experiment_type == "E3SM(OBS)" or experiment_type == "E3SM-long(OBS)":
+#             config = utils.get_config(exp_name)
+#             input_data = config["input_data"]
+#             input_maps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/{input_data}_trimmed_test_dat.nc')
+#             input_maps = input_maps['x']
+#         else:
+#             input_maps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
+#             input_maps = input_maps['x']
+
+#         # Load climatology statistics: 
+#         climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl')
+
+#         # Load testing target data: 
+#         target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
+#         target = (target['y'] - climatology_stats['z'][2]) / climatology_stats['z'][3]
+
+#         # Calculate IQR for each sample
+#         iqr = iqr_basic(output)
+
+#         # List IQR by percentile
+#         percentiles = np.percentile(iqr, np.arange(0, 101, 1))
+
+#         # Select samples whose IQR is smaller than the given confidence threshold
+#         selected_indices = np.where(iqr <= percentiles[int(confidence_threshold * 100)])[0]
+
+#         print(f"Experiment: {experiment_type}, Number of samples selected at {confidence_level}% confidence: {len(selected_indices)}")
+#         if len(selected_indices) < 30:
+#             print(f"Less than 30 samples selected for {experiment_type} at {confidence_level}% confidence")
+
+#         # Extract corresponding target values (removed since we're not using histograms)
+#         # selected_targets = target.values[selected_indices]
+#         # selected_targets_all[experiment_type] = selected_targets
         
-#         for exp_name in exp_list:
-#             print(f'  Processing experiment: {exp_name}')
-            
-#             # Load the output and target data for this experiment
-#             output = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_network_SHASH_parameters.pkl')
-
-#             # Load input maps based on experiment type
-#             if experiment_type in ["E3SM-short(OBS)", "E3SM(OBS)", "E3SM-long(OBS)"]:
-#                 config = utils.get_config(exp_name)
-#                 input_data = config["input_data"]
-#                 input_maps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/{input_data}_trimmed_test_dat.nc')
-#                 input_maps = input_maps['x']
-#             else:  # OBS(OBS) type experiments
-#                 input_maps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
-#                 input_maps = input_maps['x']
-
-#             # Load climatology statistics
-#             climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl')
-
-#             # Load testing target data
-#             target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
-#             target = (target['y'] - climatology_stats['z'][2]) / climatology_stats['z'][3]
-
-#             # Calculate IQR for each sample
-#             iqr = iqr_basic(output)
-
-#             # List IQR by percentile
-#             percentiles = np.percentile(iqr, np.arange(0, 101, 1))
-
-#             # Select samples whose IQR is smaller than the given confidence threshold
-#             selected_indices = np.where(iqr <= percentiles[int(confidence_threshold * 100)])[0]
-
-#             print(f"    Experiment: {exp_name}, Number of samples selected at {confidence_level}% confidence: {len(selected_indices)}")
-#             if len(selected_indices) < 30:
-#                 print(f"    WARNING: Less than 30 samples selected for {exp_name} at {confidence_level}% confidence")
-
-#             total_samples += len(selected_indices)
-            
-#             # Calculate composite maps for each variable for this experiment
-#             for i in range(len(colormaps)):
-#                 mean_map = np.mean(input_maps[... , i].values[selected_indices, ...], axis=0)
-#                 all_composite_maps[i].append(mean_map)
-        
-#         # Calculate mean composite maps across all experiments of this type
-#         mean_composite_maps = []
+#         # Calculate composite maps for each variable
+#         composite_maps = []
 #         for i in range(len(colormaps)):
-#             # Average across all experiments for this variable
-#             mean_composite_map = np.mean(all_composite_maps[i], axis=0)
-#             mean_composite_maps.append(mean_composite_map)
+#             mean_map = np.mean(input_maps[... , i].values[selected_indices, ...], axis=0)
+#             composite_maps.append(mean_map)
         
 #         composite_data[experiment_type] = {
-#             'maps': mean_composite_maps,
-#             'lon': input_maps['lon'],  # Using last loaded input_maps for coordinates
+#             'maps': composite_maps,
+#             'lon': input_maps['lon'],
 #             'lat': input_maps['lat'],
-#             'n_experiments': len(exp_list),
-#             'total_samples': total_samples
+#             'n_samples': len(selected_indices)
 #         }
-        
-#         print(f'Completed {experiment_type}: {len(exp_list)} experiments, {total_samples} total samples')
     
-#     # Calculate difference maps (second experiment type minus first experiment type)
-#     exp1_type, exp2_type = exp_type_names[0], exp_type_names[1]
+#     # Calculate difference maps (second experiment minus first experiment)
+#     exp1_name, exp2_name = exp_names[0], exp_names[1]
     
 #     for i in range(len(colormaps)):
 #         cmap = colormaps[i]
         
-#         # Calculate difference map (mean of exp2_type minus mean of exp1_type)
-#         diff_map = composite_data[exp2_type]['maps'][i] - composite_data[exp1_type]['maps'][i]
+#         # Calculate difference map
+#         diff_map = composite_data[exp2_name]['maps'][i] - composite_data[exp1_name]['maps'][i]
         
 #         # Set symmetric colorbar limits
 #         abs_max = np.max(np.abs(diff_map))
@@ -636,13 +490,13 @@ def COMPARE_composite_inputmap_target(experiments, confidence_level = 50, keywor
 #         # Create the difference map plot
 #         axs[i].coastlines()
 #         axs[i].add_feature(cfeature.BORDERS, linestyle=':')
-#         im = axs[i].pcolormesh(composite_data[exp1_type]['lon'], 
-#                               composite_data[exp1_type]['lat'], 
+#         im = axs[i].pcolormesh(composite_data[exp1_name]['lon'], 
+#                               composite_data[exp1_name]['lat'], 
 #                               diff_map, 
 #                               transform=ccrs.PlateCarree(central_longitude=0),
 #                               cmap=cmap, vmin=vmin, vmax=vmax)
         
-#         axs[i].set_title(f'{vars[i]} Difference\n({exp2_type} - {exp1_type})', fontsize=14)
+#         axs[i].set_title(f'{vars[i]} Difference\n({exp2_name} - {exp1_name})', fontsize=14)
 #         cbar = fig.colorbar(im, ax=axs[i], orientation='vertical', shrink=0.5, fraction=0.03, pad=0.04)
 #         cbar.set_label(units[i], fontsize=12)
         
@@ -653,25 +507,317 @@ def COMPARE_composite_inputmap_target(experiments, confidence_level = 50, keywor
 #         axs[i].set_xticks([-180, -120, -60, 0, 60, 120], crs=ccrs.PlateCarree())
 #         axs[i].set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree(central_longitude=180))
     
-#     # Create overall title with experiment counts
-#     exp1_count = composite_data[exp1_type]['n_experiments']
-#     exp2_count = composite_data[exp2_type]['n_experiments']
-#     plt.suptitle(f'Multi-Experiment Composite Difference Maps at {confidence_level}% Confidence Level\n'
-#                 f'{exp2_type} (n={exp2_count}) - {exp1_type} (n={exp1_count})', fontsize=16)
+#     # Create overall title
+#     plt.suptitle(f'Composite Difference Maps at {confidence_level}% Confidence Level\n'
+#                 f'({exp2_name} - {exp1_name})', fontsize=16)
 #     plt.tight_layout()
     
-#     # Create save name using experiment type names
-#     exp1_short = exp1_type.replace('(', '_').replace(')', '').replace('-', '_')
-#     exp2_short = exp2_type.replace('(', '_').replace(')', '').replace('-', '_')
-#     save_name = f'multi_composite_DIFFERENCE_{confidence_level}percent_confidence_{exp2_short}_minus_{exp1_short}_n{exp2_count}_vs_n{exp1_count}.png'
+#     # Save figure
+#     save_name = f'composite_DIFFERENCE_{confidence_level}percent_confidence_{exp_codes[1]}_minus_{exp_codes[0]}_Z500.png'
 #     plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/{save_name}', 
 #                 format='png', dpi=250, bbox_inches='tight')
 #     plt.close()
     
-#     print(f"Multi-experiment difference composite plot saved: {save_name}")
-#     print(f"Final comparison: {exp2_type} ({exp2_count} experiments) - {exp1_type} ({exp1_count} experiments)")
+#     print(f"Difference composite plot saved for {exp2_name} - {exp1_name}")
 
 
+
+def COMPARE_composite_inputmap_target(experiments, confidence_level_low = 20, confidence_level_high = 50, keyword = None):
+    """
+    For given confidence threshold range, plot difference maps between two experiment types with multiple experiments each.
+    Calculate mean composite maps for each experiment type, then compute the difference.
+    Now includes individual composite maps for each experiment type before showing differences.
+    
+    Args:
+        experiments: Dict with experiment types as keys and lists of experiment names as values
+                    e.g., {"OBS(OBS)": ["exp173", "exp174", ...], "E3SM-short(OBS)": ["exp189", "exp195", ...]}
+        confidence_level_low: Lower bound of confidence range (percentile)
+        confidence_level_high: Upper bound of confidence range (percentile)
+        keyword: Optional keyword for filename
+    """
+    exps = experiments
+    
+    # Ensure we have exactly 2 experiment types
+    if len(exps) != 2:
+        raise ValueError("This function requires exactly 2 experiment types for comparison")
+    
+    exp_type_names = list(exps.keys())
+    
+    # convert confidence levels
+    confidence_threshold_low = confidence_level_low / 100.0
+    confidence_threshold_high = confidence_level_high / 100.0
+    
+    # Validate confidence levels
+    if confidence_level_low >= confidence_level_high:
+        raise ValueError("confidence_level_low must be less than confidence_level_high")
+    if confidence_level_low < 0 or confidence_level_high > 100:
+        raise ValueError("Confidence levels must be between 0 and 100")
+
+    colormaps = ["BrBG", "RdBu_r", "PuOr_r"]
+    vars = ["Total Precip", "Skin Temp", "Z500"]
+    units = ['(mm/day)', '(K)', '(m)']
+
+    # Create figure with 3x3 layout: 
+    # Row 1: First experiment type composites
+    # Row 2: Second experiment type composites  
+    # Row 3: Difference maps
+    fig, axs = plt.subplots(3, 3, figsize=(18, 10), 
+                           subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
+    plt.subplots_adjust(hspace=0.3, wspace=0.2)
+    
+    # Store composite data for both experiment types
+    composite_data = {}
+    
+    for experiment_type, exp_list in exps.items():
+        print(f'Processing experiment type: {experiment_type} with {len(exp_list)} experiments')
+        
+        # Store all composite maps for this experiment type
+        all_composite_maps = [[] for _ in range(len(colormaps))]  # One list per variable
+        total_samples = 0
+
+        # Collect CRPS for confident and all samples
+        collect_crps_confident = []
+        collect_crps_all = []
+        selected_dates = []
+        
+        for exp_name in exp_list:
+            print(f'  Processing experiment: {exp_name}')
+            
+            # Load the output and target data for this experiment
+            output = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_network_SHASH_parameters.pkl')
+
+            # Load crps for experiment: 
+            crps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_CRPS_network_values.pkl')
+
+            # Load input maps based on experiment type
+            if experiment_type in ["E3SM-short(OBS)", "E3SM(OBS)", "E3SM-long(OBS)"]:
+                config = utils.get_config(exp_name)
+                input_data = config["input_data"]
+                input_maps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/{input_data}_trimmed_test_dat.nc')
+                input_maps = input_maps['x']
+            else:  # OBS(OBS) type experiments
+                input_maps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
+                input_maps = input_maps['x']
+
+            # Load climatology statistics
+            climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl')
+
+            # Load testing target data
+            target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
+            target = (target['y'] - climatology_stats['z'][2]) / climatology_stats['z'][3]
+
+            # Calculate IQR for each sample
+            iqr = iqr_basic(output)
+
+            # List IQR by percentile
+            percentiles = np.percentile(iqr, np.arange(0, 101, 1))
+
+            # Select samples whose IQR is within the given confidence range
+            lower_threshold = percentiles[int(confidence_threshold_low * 100)]
+            upper_threshold = percentiles[int(confidence_threshold_high * 100)]
+            
+            selected_indices = np.where((iqr >= lower_threshold) & (iqr <= upper_threshold))[0]
+
+            # keep selected dates for each experiment: 
+            selected_dates.append(np.unique(input_maps['time'].values[selected_indices]))
+
+
+            print(f"    Experiment: {exp_name}, Number of samples selected in {confidence_level_low}-{confidence_level_high}% confidence range: {len(selected_indices)}")
+            print(f"      IQR range: {lower_threshold:.4f} to {upper_threshold:.4f}")
+            if len(selected_indices) < 30:
+                print(f"    WARNING: Less than 30 samples selected for {exp_name} in {confidence_level_low}-{confidence_level_high}% confidence range")
+
+            total_samples += len(selected_indices)
+            
+            # Calculate composite maps for each variable for this experiment
+            for i in range(len(colormaps)):
+                mean_map = np.mean(input_maps[... , i].values[selected_indices, ...], axis=0)
+                all_composite_maps[i].append(mean_map)
+
+            # CRPS for confident indices and all samples
+            crps_selected = crps[selected_indices]
+
+            collect_crps_confident.extend(crps_selected)  # Add all confident CRPS values
+            collect_crps_all.extend(crps)                 # Add all CRPS values from this experiment
+            
+            # Print per-experiment stats for debugging
+            crps_selected_mean_this_exp = np.mean(crps_selected)
+            crps_all_mean_this_exp = np.mean(crps)
+            print(f"      This experiment - Confident CRPS mean: {crps_selected_mean_this_exp:.4f}, All CRPS mean: {crps_all_mean_this_exp:.4f}")
+
+        # Calculate mean composite maps across all experiments of this type
+        mean_composite_maps = []
+        for i in range(len(colormaps)):
+            # Average across all experiments for this variable
+            mean_composite_map = np.mean(all_composite_maps[i], axis=0)
+            mean_composite_maps.append(mean_composite_map)
+        
+        # Calculate mean CRPS across all experiments for this type
+        mean_crps_confident = np.mean(collect_crps_confident)
+        mean_crps_all = np.mean(collect_crps_all)
+        
+        composite_data[experiment_type] = {
+            'maps': mean_composite_maps,
+            'lon': input_maps['lon'],  # Using last loaded input_maps for coordinates
+            'lat': input_maps['lat'],
+            'n_experiments': len(exp_list),
+            'total_samples': total_samples,
+            'total_crps_persample_conf' : crps_selected,
+            'mean_crps_confident': mean_crps_confident,
+            'mean_crps_all': mean_crps_all,
+            'selected_dates': selected_dates
+        }
+        
+        print(f'Completed {experiment_type}: {len(exp_list)} experiments, {total_samples} total samples in {confidence_level_low}-{confidence_level_high}% range')
+        print(f'  Mean CRPS (confidence range): {mean_crps_confident:.4f}')
+        print(f'  Mean CRPS (all samples): {mean_crps_all:.4f}')
+        crps_comparison = "worse" if mean_crps_confident > mean_crps_all else "better"
+        crps_change = abs((mean_crps_all - mean_crps_confident) / mean_crps_all * 100)
+        print(f'  CRPS change: {crps_change:.2f}% {crps_comparison}')
+        print(f'Number of total selected dates: {len(selected_dates)} vs number of total processed predicitons: {total_samples}')
+
+    # Now plot all the maps
+    exp1_type, exp2_type = exp_type_names[0], exp_type_names[1]
+    
+    # Find global min/max for consistent color scaling within each variable
+    # Force zero to be at center by making limits symmetric
+    global_abs_maxs = []
+    for i in range(len(colormaps)):
+        all_values = np.concatenate([
+            composite_data[exp1_type]['maps'][i].flatten(),
+            composite_data[exp2_type]['maps'][i].flatten()
+        ])
+        abs_max = np.max(np.abs(all_values))  # Find maximum absolute value
+        global_abs_maxs.append(abs_max)
+    
+    for i in range(len(colormaps)):
+        cmap = colormaps[i]
+        
+        # Set symmetric colorbar limits for individual composites (zero at center)
+        abs_max_indiv = global_abs_maxs[i]
+        vmin_indiv = -abs_max_indiv
+        vmax_indiv = abs_max_indiv
+        
+        # Row 0: First experiment type composite
+        axs[0, i].coastlines()
+        axs[0, i].add_feature(cfeature.BORDERS, linestyle=':')
+        im1 = axs[0, i].pcolormesh(composite_data[exp1_type]['lon'], 
+                                   composite_data[exp1_type]['lat'], 
+                                   composite_data[exp1_type]['maps'][i], 
+                                   transform=ccrs.PlateCarree(central_longitude=0),
+                                   cmap=cmap, vmin=vmin_indiv, vmax=vmax_indiv)
+        
+        exp1_crps_conf = composite_data[exp1_type]['mean_crps_confident']
+        exp1_crps_all = composite_data[exp1_type]['mean_crps_all']
+        exp1_crps_change = ((exp1_crps_all - exp1_crps_conf) / exp1_crps_all * 100)
+        
+        title1_text = f'{vars[i]} - {exp1_type}\n'
+        title1_text += f'CRPS ({confidence_level_low}-{confidence_level_high}%): {exp1_crps_conf:.3f} | All: {exp1_crps_all:.3f} ({exp1_crps_change:+.1f}%)'
+        axs[0, i].set_title(title1_text, fontsize=10)
+        
+        cbar1 = fig.colorbar(im1, ax=axs[0, i], orientation='vertical', shrink=0.7, fraction=0.04, pad=0.02)
+        cbar1.set_label(units[i], fontsize=10)
+        axs[0, i].set_global()
+        axs[0, i].set_xticks([-180, -120, -60, 0, 60, 120], crs=ccrs.PlateCarree())
+        axs[0, i].set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree(central_longitude=180))
+        
+        # Row 1: Second experiment type composite
+        axs[1, i].coastlines()
+        axs[1, i].add_feature(cfeature.BORDERS, linestyle=':')
+        im2 = axs[1, i].pcolormesh(composite_data[exp2_type]['lon'], 
+                                   composite_data[exp2_type]['lat'], 
+                                   composite_data[exp2_type]['maps'][i], 
+                                   transform=ccrs.PlateCarree(central_longitude=0),
+                                   cmap=cmap, vmin=vmin_indiv, vmax=vmax_indiv)
+        
+        exp2_crps_conf = composite_data[exp2_type]['mean_crps_confident']
+        exp2_crps_all = composite_data[exp2_type]['mean_crps_all']
+        exp2_crps_change = ((exp2_crps_all - exp2_crps_conf) / exp2_crps_all * 100)
+        
+        title2_text = f'{vars[i]} - {exp2_type}\n'
+        title2_text += f'CRPS ({confidence_level_low}-{confidence_level_high}%): {exp2_crps_conf:.3f}'
+        axs[1, i].set_title(title2_text, fontsize=10)
+        
+        cbar2 = fig.colorbar(im2, ax=axs[1, i], orientation='vertical', shrink=0.7, fraction=0.04, pad=0.02)
+        cbar2.set_label(units[i], fontsize=10)
+        axs[1, i].set_global()
+        axs[1, i].set_xticks([-180, -120, -60, 0, 60, 120], crs=ccrs.PlateCarree())
+        axs[1, i].set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree(central_longitude=180))
+        
+        # Row 2: Difference map (exp2_type minus exp1_type)
+        diff_map = composite_data[exp2_type]['maps'][i] - composite_data[exp1_type]['maps'][i]
+        
+        # Set symmetric colorbar limits for difference
+        abs_max = np.max(np.abs(diff_map))
+        vmin_diff, vmax_diff = -abs_max, abs_max
+        
+        axs[2, i].coastlines()
+        axs[2, i].add_feature(cfeature.BORDERS, linestyle=':')
+        im3 = axs[2, i].pcolormesh(composite_data[exp1_type]['lon'], 
+                                   composite_data[exp1_type]['lat'], 
+                                   diff_map, 
+                                   transform=ccrs.PlateCarree(central_longitude=0),
+                                   cmap=cmap, vmin=vmin_diff, vmax=vmax_diff)
+        
+        title3_text = f'{vars[i]} Difference\n({exp2_type} - {exp1_type})'
+        axs[2, i].set_title(title3_text, fontsize=10)
+        
+        cbar3 = fig.colorbar(im3, ax=axs[2, i], orientation='vertical', shrink=0.7, fraction=0.04, pad=0.02)
+        cbar3.set_label(f'Δ{units[i]}', fontsize=10)
+        axs[2, i].set_global()
+        axs[2, i].set_xticks([-180, -120, -60, 0, 60, 120], crs=ccrs.PlateCarree())
+        axs[2, i].set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree(central_longitude=180))
+    
+    # Create overall title with experiment counts and CRPS comparison
+    exp1_count = composite_data[exp1_type]['n_experiments']
+    exp2_count = composite_data[exp2_type]['n_experiments']
+    
+    suptitle_text = f'Multi-Experiment Composite Analysis for {confidence_level_low}-{confidence_level_high}% Confidence Range\n'
+    suptitle_text += f'Top: {exp1_type} (n={exp1_count}) | Middle: {exp2_type} (n={exp2_count}) | Bottom: Difference\n'
+    
+    plt.suptitle(suptitle_text, fontsize=14, y=0.96)
+    plt.tight_layout()
+    
+    # Create save name using experiment type names
+    exp1_short = exp1_type.replace('(', '_').replace(')', '').replace('-', '_')
+    exp2_short = exp2_type.replace('(', '_').replace(')', '').replace('-', '_')
+    save_name = f'multi_composite_FULL_{confidence_level_low}to{confidence_level_high}percent_range_{exp1_short}_vs_{exp2_short}_n{exp1_count}_vs_n{exp2_count}_CRPS.png'
+    plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/{save_name}', 
+                format='png', dpi=250, bbox_inches='tight')
+    plt.close()
+    
+    print(f"\nMulti-experiment full composite plot saved: {save_name}")
+    print(f"Final comparison: {exp1_type} ({exp1_count} experiments) vs {exp2_type} ({exp2_count} experiments)")
+    print(f"Confidence range: {confidence_level_low}% to {confidence_level_high}% (selecting samples between these IQR percentiles)")
+    
+    # Print summary of CRPS results
+    print(f"\n=== CRPS SUMMARY ===")
+    print(f"{exp1_type}:")
+    print(f"  Confidence range ({confidence_level_low}-{confidence_level_high}%) CRPS: {composite_data[exp1_type]['mean_crps_confident']:.4f}")
+    print(f"  All samples CRPS: {composite_data[exp1_type]['mean_crps_all']:.4f}")
+    exp1_crps_change = ((composite_data[exp1_type]['mean_crps_all'] - composite_data[exp1_type]['mean_crps_confident']) / composite_data[exp1_type]['mean_crps_all'] * 100)
+    print(f"  Change: {exp1_crps_change:+.2f}%")
+    print(f"{exp2_type}:")
+    print(f"  Confidence range ({confidence_level_low}-{confidence_level_high}%) CRPS: {composite_data[exp2_type]['mean_crps_confident']:.4f}")
+    print(f"  All samples CRPS: {composite_data[exp2_type]['mean_crps_all']:.4f}")
+    exp2_crps_change = ((composite_data[exp2_type]['mean_crps_all'] - composite_data[exp2_type]['mean_crps_confident']) / composite_data[exp2_type]['mean_crps_all'] * 100)
+    print(f"  Change: {exp2_crps_change:+.2f}%")
+    
+    # Print CRPS difference
+    crps_diff = composite_data[exp2_type]['mean_crps_confident'] - composite_data[exp1_type]['mean_crps_confident']
+    print(f"\nCRPS Difference ({exp2_type} - {exp1_type}): {crps_diff:+.4f}")
+
+    plt.figure()
+    plt.scatter(composite_data[exp1_type]['selected_dates'], composite_data[exp1_type]['total_crps_persample_conf'], c='blue', label='CRPS')
+    plt.scatter(composite_data[exp2_type]['selected_dates'], composite_data[exp2_type]['total_crps_persample_conf'], c='orange', label='CRPS')
+    plt.xlabel('Date')
+    plt.ylabel('CRPS')
+    plt.title(f'CRPS over Time for {exp1_type} vs {exp2_type}')
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/CRPS_over_Time_{exp1_type}_vs_{exp2_type}.png', format='png', dpi=250, bbox_inches='tight')
+    
+    return composite_data
 
 
 
