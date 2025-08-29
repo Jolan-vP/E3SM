@@ -546,12 +546,7 @@ def COMPARE_composite_inputmap_target(experiments, confidence_level_low = 20, co
     # convert confidence levels
     confidence_threshold_low = confidence_level_low / 100.0
     confidence_threshold_high = confidence_level_high / 100.0
-    
-    # Validate confidence levels
-    if confidence_level_low >= confidence_level_high:
-        raise ValueError("confidence_level_low must be less than confidence_level_high")
-    if confidence_level_low < 0 or confidence_level_high > 100:
-        raise ValueError("Confidence levels must be between 0 and 100")
+    percentiles = np.linspace(100, 0, 21)
 
     colormaps = ["BrBG", "RdBu_r", "PuOr_r"]
     vars = ["Total Precip", "Skin Temp", "Z500"]
@@ -567,6 +562,8 @@ def COMPARE_composite_inputmap_target(experiments, confidence_level_low = 20, co
     
     # Store composite data for both experiment types
     composite_data = {}
+
+    selected_dates_allexps = []
     
     for experiment_type, exp_list in exps.items():
         print(f'Processing experiment type: {experiment_type} with {len(exp_list)} experiments')
@@ -589,6 +586,11 @@ def COMPARE_composite_inputmap_target(experiments, confidence_level_low = 20, co
             # Load crps for experiment: 
             crps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_CRPS_network_values.pkl')
 
+            # compare crps to IQR CRPS information: 
+            crps_iqr = open_data_file(f"/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_IQR_CRPS_discard.pkl")
+
+            print(f"crps iqr 80: {crps_iqr['avg_crps'][4]} crps iqr 60: {crps_iqr['avg_crps'][8]}")
+
             # Load input maps based on experiment type
             if experiment_type in ["E3SM-short(OBS)", "E3SM(OBS)", "E3SM-long(OBS)"]:
                 config = utils.get_config(exp_name)
@@ -608,18 +610,31 @@ def COMPARE_composite_inputmap_target(experiments, confidence_level_low = 20, co
 
             # Calculate IQR for each sample
             iqr = iqr_basic(output)
+            print(f"iqr min: {np.min(iqr)}, iqr max: {np.max(iqr)}, iqr median: {np.median(iqr)}")
 
             # List IQR by percentile
-            percentiles = np.percentile(iqr, np.arange(0, 101, 1))
+            iqr_percentiles = np.percentile(iqr, percentiles)
+            print(f"iqr percentiles: {iqr_percentiles}")
 
             # Select samples whose IQR is within the given confidence range
-            lower_threshold = percentiles[int(confidence_threshold_low * 100)]
-            upper_threshold = percentiles[int(confidence_threshold_high * 100)]
-            
+            iqr_sorted = np.argsort(iqr)
+            num_samps = len(iqr)
+            print(f"num samps = {num_samps}")
+            lower_threshold = iqr_sorted[int(num_samps * confidence_level_low/100)]
+            upper_threshold = iqr_sorted[int(num_samps * confidence_level_high/100)]
+            print(f"lower threshold: {lower_threshold}, upper threshold: {upper_threshold}")
+
             selected_indices = np.where((iqr >= lower_threshold) & (iqr <= upper_threshold))[0]
 
+            print(f"=== DEBUGGING {exp_name} ({experiment_type}) ===")
+            print(f"CRPS array length: {len(crps)}")
+            print(f"IQR array length: {len(iqr)}")
+            print(f"All CRPS mean: {np.mean(crps):.4f}")
+            print(f"All CRPS min-max: {np.min(crps):.4f} to {np.max(crps):.4f}")
+            print(f"Selected CRPS mean: {np.mean(crps[selected_indices]):.4f}")
+
             # keep selected dates for each experiment: 
-            selected_dates.append(np.unique(input_maps['time'].values[selected_indices]))
+            selected_dates_allexps.append(np.unique(input_maps['time'].values[selected_indices]))
 
 
             print(f"    Experiment: {exp_name}, Number of samples selected in {confidence_level_low}-{confidence_level_high}% confidence range: {len(selected_indices)}")
@@ -645,8 +660,9 @@ def COMPARE_composite_inputmap_target(experiments, confidence_level_low = 20, co
             crps_all_mean_this_exp = np.mean(crps)
             print(f"      This experiment - Confident CRPS mean: {crps_selected_mean_this_exp:.4f}, All CRPS mean: {crps_all_mean_this_exp:.4f}")
 
-        # Calculate mean composite maps across all experiments of this type
-        mean_composite_maps = []
+            # Calculate mean composite maps across all experiments of this type
+            mean_composite_maps = []
+
         for i in range(len(colormaps)):
             # Average across all experiments for this variable
             mean_composite_map = np.mean(all_composite_maps[i], axis=0)
@@ -662,19 +678,12 @@ def COMPARE_composite_inputmap_target(experiments, confidence_level_low = 20, co
             'lat': input_maps['lat'],
             'n_experiments': len(exp_list),
             'total_samples': total_samples,
-            'total_crps_persample_conf' : crps_selected,
+            'all_crps_confident': collect_crps_confident,
             'mean_crps_confident': mean_crps_confident,
             'mean_crps_all': mean_crps_all,
             'selected_dates': selected_dates
         }
         
-        print(f'Completed {experiment_type}: {len(exp_list)} experiments, {total_samples} total samples in {confidence_level_low}-{confidence_level_high}% range')
-        print(f'  Mean CRPS (confidence range): {mean_crps_confident:.4f}')
-        print(f'  Mean CRPS (all samples): {mean_crps_all:.4f}')
-        crps_comparison = "worse" if mean_crps_confident > mean_crps_all else "better"
-        crps_change = abs((mean_crps_all - mean_crps_confident) / mean_crps_all * 100)
-        print(f'  CRPS change: {crps_change:.2f}% {crps_comparison}')
-        print(f'Number of total selected dates: {len(selected_dates)} vs number of total processed predicitons: {total_samples}')
 
     # Now plot all the maps
     exp1_type, exp2_type = exp_type_names[0], exp_type_names[1]
@@ -789,34 +798,51 @@ def COMPARE_composite_inputmap_target(experiments, confidence_level_low = 20, co
     print(f"\nMulti-experiment full composite plot saved: {save_name}")
     print(f"Final comparison: {exp1_type} ({exp1_count} experiments) vs {exp2_type} ({exp2_count} experiments)")
     print(f"Confidence range: {confidence_level_low}% to {confidence_level_high}% (selecting samples between these IQR percentiles)")
-    
-    # Print summary of CRPS results
-    print(f"\n=== CRPS SUMMARY ===")
-    print(f"{exp1_type}:")
-    print(f"  Confidence range ({confidence_level_low}-{confidence_level_high}%) CRPS: {composite_data[exp1_type]['mean_crps_confident']:.4f}")
-    print(f"  All samples CRPS: {composite_data[exp1_type]['mean_crps_all']:.4f}")
-    exp1_crps_change = ((composite_data[exp1_type]['mean_crps_all'] - composite_data[exp1_type]['mean_crps_confident']) / composite_data[exp1_type]['mean_crps_all'] * 100)
-    print(f"  Change: {exp1_crps_change:+.2f}%")
-    print(f"{exp2_type}:")
-    print(f"  Confidence range ({confidence_level_low}-{confidence_level_high}%) CRPS: {composite_data[exp2_type]['mean_crps_confident']:.4f}")
-    print(f"  All samples CRPS: {composite_data[exp2_type]['mean_crps_all']:.4f}")
-    exp2_crps_change = ((composite_data[exp2_type]['mean_crps_all'] - composite_data[exp2_type]['mean_crps_confident']) / composite_data[exp2_type]['mean_crps_all'] * 100)
-    print(f"  Change: {exp2_crps_change:+.2f}%")
-    
-    # Print CRPS difference
-    crps_diff = composite_data[exp2_type]['mean_crps_confident'] - composite_data[exp1_type]['mean_crps_confident']
-    print(f"\nCRPS Difference ({exp2_type} - {exp1_type}): {crps_diff:+.4f}")
 
-    plt.figure()
-    plt.scatter(composite_data[exp1_type]['selected_dates'], composite_data[exp1_type]['total_crps_persample_conf'], c='blue', label='CRPS')
-    plt.scatter(composite_data[exp2_type]['selected_dates'], composite_data[exp2_type]['total_crps_persample_conf'], c='orange', label='CRPS')
-    plt.xlabel('Date')
-    plt.ylabel('CRPS')
-    plt.title(f'CRPS over Time for {exp1_type} vs {exp2_type}')
+    # Create better CRPS comparison plots
+    plt.figure(figsize=(12, 8))
+
+    # Get the CRPS arrays
+    exp1_crps_confident = np.array(composite_data[exp1_type]['all_crps_confident'])
+    exp2_crps_confident = np.array(composite_data[exp2_type]['all_crps_confident'])
+
+    # Subplot 1: Histogram comparison
+    bins_shared = np.linspace(min(exp1_crps_confident.min(), exp2_crps_confident.min()), max(exp1_crps_confident.max(), exp2_crps_confident.max()), 80)
+
+    plt.subplot(2, 2, 1)
+    plt.hist(exp1_crps_confident, bins=bins_shared, alpha=0.7, label=f'{exp1_type} (confident)', color='blue', density=True)
+    plt.hist(exp2_crps_confident, bins=bins_shared, alpha=0.7, label=f'{exp2_type} (confident)', color='orange', density=True)
+    plt.xlabel('CRPS')
+    plt.ylabel('Density')
+    plt.title(f'CRPS Distribution for Confident Samples ({confidence_level_low}-{confidence_level_high}%)')
     plt.legend()
+
+    # Subplot 2: Box plot comparison
+    plt.subplot(2, 2, 2)
+    plt.boxplot([exp1_crps_confident, exp2_crps_confident], 
+                labels=[exp1_type, exp2_type])
+    plt.ylabel('CRPS')
+    plt.title('CRPS Box Plot Comparison (Confident Samples)')
+    plt.xticks(rotation=45)
+
     plt.tight_layout()
-    plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/CRPS_over_Time_{exp1_type}_vs_{exp2_type}.png', format='png', dpi=250, bbox_inches='tight')
-    
+    plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/CRPS_Analysis_{exp1_type}_vs_{exp2_type}_proper_aggregation.png', 
+                format='png', dpi=250, bbox_inches='tight')
+    plt.close()  # Add this to close the figure
+
+    print(f"\n=== DEBUGGING {exp_name} ===")
+    print(f"Experiment type: {experiment_type}")
+    print(f"CRPS file being used: /pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_CRPS_network_values.pkl")
+    print(f"Total CRPS values loaded: {len(crps)}")
+    print(f"Total IQR values: {len(iqr)}")
+    print(f"All CRPS mean for this experiment: {np.mean(crps):.4f}")
+    print(f"Selected indices count: {len(selected_indices)}")
+    print(f"CRPS mean for selected indices: {np.mean(crps[selected_indices]):.4f}")
+    print(f"Expected range based on plot: OBS(OBS) ~0.42-0.48, E3SM-short(OBS) ~0.52-0.55")
+
+
+
+
     return composite_data
 
 

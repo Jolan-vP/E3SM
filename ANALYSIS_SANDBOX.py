@@ -85,7 +85,7 @@ exps = {
 
 # cea.combined_success_discard(exps, keyword = "OBS-OBS_E3SM_OBS")
 
-# cea.combined_CRPS_IQR_discard(exps, keyword = "OBS-OBS_E3SM_OBS")
+cea.combined_CRPS_IQR_discard(exps, keyword = "OBS-OBS_E3SM_OBS")
 
 # cea.IQR_distributions(exps, keyword = "OBS-OBS_E3SM_OBS")
 
@@ -99,4 +99,4 @@ inde_exps = {
 
 # cea.composite_inputmap_target(inde_exps, confidence_level= 20, keyword = "OBS_OBS")
 
-cea.COMPARE_composite_inputmap_target(exps, confidence_level_low= 20, confidence_level_high= 40, keyword = "OBS-OBS_E3SM-short_OBS")
+cea.COMPARE_composite_inputmap_target(exps, confidence_level_low= 60, confidence_level_high= 80, keyword = "OBS-OBS_E3SM-short_OBS")
