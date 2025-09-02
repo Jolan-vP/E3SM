@@ -1042,15 +1042,8 @@ analysis_metrics.save_pickle(plotting_data_dict, str(config["perlmutter_output_d
 
 # # Compute Integrated Gradients Composites: 
 
-# # CNN CRPS MJO4_EN
-# # select dates from the 3D array and select only the ones that are not None
-# MJO4_EN_dates = dates_array_by_phase[4, 0, :]
-# MJO4_EN_dates = [date for date in MJO4_EN_dates if date is not None]
 # avg_attributions_IG_MJO4_EN = average_attributions(model, input_test_maps, MJO4_EN_dates, device, output_column, config, method="integrated_gradients", keyword = "IG_MJO4_EN")
 
-
-# MJO8_LN_dates = dates_array_by_phase[8, 1, :]
-# MJO8_LN_dates = [date for date in MJO8_LN_dates if date is not None]
 # avg_attributions_IG_MJO4_EN = average_attributions(model, input_test_maps, MJO8_LN_dates, device, output_column, config, method="integrated_gradients", keyword = "IG_MJO8_LN")
 
 
@@ -1071,13 +1064,13 @@ analysis_metrics.save_pickle(plotting_data_dict, str(config["perlmutter_output_d
 
 
 
-# # # Compute the average attributions
-# # print("Computing Average Attributions - IG") 
-# # print("Computing Average Attributions - DL")
-# # avg_attributions_DL = average_attributions(model, input_test_maps, sub_elnino, device, output_column, config, method="deeplift")
-# # print("Computing Average Attributions - S")
-# # avg_attributions_S = average_attributions(model, input_test_maps, sub_elnino, device, output_column, config, method="saliency")
-# # print(f"Average Attributions Shape: {avg_attributions_IG.shape}")
+# Compute the average attributions
+print("Computing Average Attributions - IG") 
+print("Computing Average Attributions - DL")
+avg_attributions_DL = average_attributions(model, input_test_maps, sub_elnino, device, output_column, config, method="deeplift")
+print("Computing Average Attributions - S")
+avg_attributions_S = average_attributions(model, input_test_maps, sub_elnino, device, output_column, config, method="saliency")
+print(f"Average Attributions Shape: {avg_attributions_IG.shape}")
 
 # # Load the average attributions
 # avg_attributions_IG = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/average_attributions_integrated_gradients.pkl')

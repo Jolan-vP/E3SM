@@ -51,6 +51,7 @@ import analysis.analysis_metrics as analysis_metrics
 from analysis.calc_climatology import precip_regime
 from utils.filemethods import create_folder
 from databuilder.data_generator import uniform_dist, adjust_data_split
+import captum.attr
 from captum.attr import IntegratedGradients, Saliency
 from XAI.captum import compute_attributions, average_attributions, visualize_average_attributions
 from utils import utils
@@ -71,32 +72,37 @@ from analysis import combined_experiment_analytics as cea
 
 # keyword = "E3SM-long_E3SM-short_E3SM"
 
-# ------------------------------------------------------------------------------------  
-
-# OBS(OBS) vs E3SM(OBS) Success Ratio Discard Plot: 
-
 exps = {
     "E3SM-short(OBS)": ["exp189", "exp195", "exp196", "exp197", "exp198", "exp199"],
-    "OBS(OBS)": ["exp173", "exp174", "exp175", "exp176", "exp177", "exp178", "exp179", "exp180", "exp181", "exp182", "exp183", "exp184"]
+    # "OBS(OBS)": ["exp173", "exp174", "exp175", "exp176", "exp177", "exp178", "exp179", "exp180", "exp181", "exp182", "exp183", "exp184"]
     # "E3SM-long(OBS)": ["exp186", "exp187", "exp188", "exp203", "exp204", "exp205"]
     # "E3SM-short(E3SM)": ["exp185", "exp190", "exp191", "exp192", "exp193", "exp194"],
     # "E3SM-long(E3SM)": ["exp154", "exp157", "exp158", "exp200", "exp201", "exp202"]
 }
 
+# DISCARD PLOTS: # ------------------------------------------------------------------------------------  
+
 # cea.combined_success_discard(exps, keyword = "OBS-OBS_E3SM_OBS")
 
-cea.combined_CRPS_IQR_discard(exps, keyword = "OBS-OBS_E3SM_OBS")
+# cea.combined_CRPS_IQR_discard(exps, keyword = "OBS-OBS_E3SM_OBS")
 
 # cea.IQR_distributions(exps, keyword = "OBS-OBS_E3SM_OBS")
 
+# COMPOSITE MAPPING: # ------------------------------------------------------------------------------------  
 
 # Individual experiment plots: 
-inde_exps = {
-    "E3SM-short(OBS)": "exp196",
-    "OBS(OBS)": "exp181"
-    # "E3SM-long(OBS)": ["exp186", "exp187", "exp188"]
-}
+# inde_exps = {
+#     "E3SM-short(OBS)": "exp196",
+#     "OBS(OBS)": "exp181"
+#     # "E3SM-long(OBS)": ["exp186", "exp187", "exp188"]
+# }
 
 # cea.composite_inputmap_target(inde_exps, confidence_level= 20, keyword = "OBS_OBS")
 
-cea.COMPARE_composite_inputmap_target(exps, confidence_level_low= 60, confidence_level_high= 80, keyword = "OBS-OBS_E3SM-short_OBS")
+# cea.COMPARE_composite_inputmap_target(exps, confidence_level_low= 20, confidence_level_high= 40, keyword = "OBS-OBS_E3SM-short_OBS")
+
+## XAI / CAPTUM# ------------------------------------------------------------------------------------  
+
+# SELECT ONE EXP TYPE AT A TIME: 
+cea.XAI_confidence_compositing(exps, confidence_level_low = 20, confidence_level_high = 40, xai_method = 'integrated_gradients', keyword = "E3SM-short_OBS")
+
