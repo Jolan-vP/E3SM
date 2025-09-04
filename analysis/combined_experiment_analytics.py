@@ -17,6 +17,7 @@ from sklearn import datasets, model_selection
 import importlib as imp
 from glob import glob
 import random
+import analysis
 import shash.shash_torch
 from shash.shash_torch import Shash
 import pickle 
@@ -34,6 +35,7 @@ from utils.filemethods import open_data_file
 from utils.filemethods import filter_dates
 import matplotlib.cm as cm
 from analysis.analysis_metrics import load_pickle
+from analysis.analysis_metrics import save_pickle as save_pickle
 from matplotlib.colors import LinearSegmentedColormap
 from XAI.captum import average_attributions, visualize_average_attributions
 import torch
@@ -547,9 +549,6 @@ def COMPARE_composite_inputmap_target(experiments, confidence_level_low = 20, co
     
     exp_type_names = list(exps.keys())
     
-    # convert confidence levels
-    confidence_threshold_low = confidence_level_low / 100.0
-    confidence_threshold_high = confidence_level_high / 100.0
     percentiles = np.linspace(100, 0, 21)
 
     colormaps = ["BrBG", "RdBu_r", "PuOr_r"]
@@ -567,7 +566,7 @@ def COMPARE_composite_inputmap_target(experiments, confidence_level_low = 20, co
     # Store composite data for both experiment types
     composite_data = {}
 
-    selected_dates_allexps = []
+    selected_dates_allexps = {}
     
     for experiment_type, exp_list in exps.items():
         print(f'Processing experiment type: {experiment_type} with {len(exp_list)} experiments')
@@ -585,17 +584,12 @@ def COMPARE_composite_inputmap_target(experiments, confidence_level_low = 20, co
             # Load the output and target data for this experiment
             output = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_network_SHASH_parameters.pkl')
 
-            # Load crps for experiment: 
-            # crps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_CRPS_network_values.pkl')
-
             # compare crps to IQR CRPS information: 
             crps_iqr = open_data_file(f"/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_IQR_CRPS_discard.pkl")
 
             percentile_index_low = int(20 - (confidence_level_low / 5))
             percentile_index_high = int(20 - (confidence_level_high / 5))
             print(f"percentile index low {percentile_index_low}, high {percentile_index_high}")
-
-            print(f"crps iqr 80: {crps_iqr['avg_crps'][percentile_index_low]} crps iqr 60: {crps_iqr['avg_crps'][percentile_index_high]}")
 
             # Load input maps based on experiment type
             if experiment_type in ["E3SM-short(OBS)", "E3SM(OBS)", "E3SM-long(OBS)"]:
@@ -618,22 +612,16 @@ def COMPARE_composite_inputmap_target(experiments, confidence_level_low = 20, co
             iqr = iqr_basic(output)
             # print(f"iqr min: {np.min(iqr)}, iqr max: {np.max(iqr)}, iqr median: {np.median(iqr)}")
 
-            # List IQR by percentile
-            iqr_percentiles = np.percentile(iqr, percentiles)
-            # print(f"iqr percentiles: {iqr_percentiles}")
-
-            # Select samples whose IQR is within the given confidence range
-            iqr_sorted = np.argsort(iqr)
-            num_samps = len(iqr)
-
             lower_threshold = np.percentile(iqr, confidence_level_low)   
             upper_threshold = np.percentile(iqr, confidence_level_high) 
 
             selected_indices = np.where((iqr >= lower_threshold) & (iqr <= upper_threshold))[0]
+            selected_dates = input_maps['time'].values[selected_indices]
 
-            # keep selected dates for each experiment: 
-            selected_dates_allexps.append(np.unique(input_maps['time'].values[selected_indices]))
+            selected_dates_allexps[exp_name] = selected_dates
 
+            # # keep selected dates for each experiment: 
+            # selected_dates_allexps.append(np.unique(input_maps['time'].values[selected_indices]))
 
             print(f"    Experiment: {exp_name}, Number of samples selected in {confidence_level_low}-{confidence_level_high}% confidence range: {len(selected_indices)}")
             print(f"      IQR range: {lower_threshold:.4f} to {upper_threshold:.4f}")
@@ -670,10 +658,26 @@ def COMPARE_composite_inputmap_target(experiments, confidence_level_low = 20, co
             'total_samples': total_samples,
             'all_crps_confident': crps_iqr['avg_crps'][percentile_index_low:percentile_index_high],
             'mean_crps_confident': mean_crps_confident,
-            'mean_crps_all': mean_crps_all,
-            'selected_dates': selected_dates
+            'mean_crps_all': mean_crps_all, 
+            'selected_dates_per_exp': selected_dates_allexps
         }
-        
+    
+        # Save composite data to file: 
+        if experiment_type == "E3SM-short(OBS)": 
+            name_shorthand = "E3SMshort-OBS"
+        elif experiment_type == "OBS(OBS)":
+            name_shorthand = "OBS-OBS"
+        elif experiment_type == "E3SM(OBS)":
+            name_shorthand = "E3SM-OBS"
+        elif experiment_type == "E3SM-long(OBS)":
+            name_shorthand = "E3SMlong-OBS"
+        elif experiment_type == "E3SM-short(E3SM)":
+            name_shorthand = "E3SMshort-E3SM"
+        elif experiment_type == "E3SM-long(E3SM)":
+            name_shorthand = "E3SMlong-E3SM"
+             
+        composite_savename = f"/pscratch/sd/p/plutzner/E3SM/saved/output/COMBINED/{name_shorthand}_composite_data_{confidence_level_low}-{confidence_level_high}_all_vars.pkl"
+        save_pickle(composite_data[experiment_type], composite_savename)
 
     # Now plot all the maps
     exp1_type, exp2_type = exp_type_names[0], exp_type_names[1]
@@ -828,11 +832,7 @@ def XAI_confidence_compositing(experiments, confidence_level_low = 20, confidenc
     """    
     exps = experiments
     exp_type_names = list(exps.keys())
-    
-    # convert confidence levels
-    confidence_threshold_low = confidence_level_low / 100.0
-    confidence_threshold_high = confidence_level_high / 100.0
-    percentiles = np.linspace(100, 0, 21)
+
 
     colormaps = ["BrBG", "RdBu_r", "PuOr_r"]
     units = ['(mm/day)', '(K)', '(m)']
@@ -848,94 +848,98 @@ def XAI_confidence_compositing(experiments, confidence_level_low = 20, confidenc
     fig, axs = plt.subplots(5, 3, figsize=(18, 10), 
                            subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
     plt.subplots_adjust(hspace=0.3, wspace=0.2)
-    
-    # Store composite data for both experiment types
-    composite_data = {}
 
-    selected_dates_allexps = []
-        
-    # Store all composite maps for this experiment type
-    all_composite_maps = [[] for _ in range(len(colormaps))]  # One list per variable
-    total_samples = 0
+    experiment_counter = 0
+    all_composite_maps = []
 
-    # Collect CRPS for confident and all samples
-    selected_dates = []
+    total_experiments = sum(len(exp_list) for exp_list in exps.values())
+    avg_attr = np.zeros((total_experiments, 3, 4, 180, 360))
 
-    for iexp_name, (exp_type, exp_name) in enumerate(exps.items()):
-        print(f'  Processing experiment: {exp_name}')
-        config = utils.get_config({exp_name})
+    for iexp_type, (exp_type, exp_list) in enumerate(exps.items()):
+        print(f'Processing experiment type: {exp_type}')
+        # Load selected data for given confidence level: 
+        if exp_type == "E3SM-short(OBS)": 
+            name_shorthand = "E3SMshort-OBS"
+        elif exp_type == "OBS(OBS)":
+            name_shorthand = "OBS-OBS"
+        elif exp_type == "E3SM(OBS)":
+            name_shorthand = "E3SM-OBS"
+        elif exp_type == "E3SM-long(OBS)":
+            name_shorthand = "E3SMlong-OBS"
+        elif exp_type == "E3SM-short(E3SM)":
+            name_shorthand = "E3SMshort-E3SM"
+        elif exp_type == "E3SM-long(E3SM)":
+            name_shorthand = "E3SMlong-E3SM"
 
-        # OPEN ALL INPUTS -----------------------
-        # Load the output and target data for this experiment
-        output = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_network_SHASH_parameters.pkl')
+        if confidence_level_low == 20 and confidence_level_high == 40:
+            selected_data_fn = f"/pscratch/sd/p/plutzner/E3SM/saved/output/COMBINED/{name_shorthand}_composite_data_{confidence_level_low}-{confidence_level_high}_all_vars.pkl"
+            selected_data = open_data_file(selected_data_fn)
+        else: 
+            print("STOP: Must run composite comparison function with desired confidence levels first, then add to this if-statement.")
 
-        # compare crps to IQR CRPS information: 
-        crps_iqr = open_data_file(f"/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_IQR_CRPS_discard.pkl")
-
-        percentile_index_low = int(20 - (confidence_level_low / 5))
-        percentile_index_high = int(20 - (confidence_level_high / 5))
-
-        # Load input maps based on experiment type
-        if exp_type in ["E3SM-short(OBS)", "E3SM(OBS)", "E3SM-long(OBS)"]:
+        for iexp_name, exp_name in enumerate(exp_list):  # Add this inner loop
+            print(f'  Processing experiment: {exp_name}')
             config = utils.get_config(exp_name)
-            input_data = config["input_data"]
-            input_maps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/{input_data}_trimmed_test_dat.nc')
-            input_maps = input_maps['x']
-        else:  # OBS(OBS) type experiments
-            input_maps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
-            input_maps = input_maps['x']
 
-        # Load climatology statistics
-        climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl')
+            # OPEN ALL INPUTS -----------------------
+            # Load the output and target data for this experiment
+            output = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_network_SHASH_parameters.pkl')
 
-        # Load testing target data
-        target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
-        target = (target['y'] - climatology_stats['z'][2]) / climatology_stats['z'][3]
+            # compare crps to IQR CRPS information: 
+            crps_iqr = open_data_file(f"/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_IQR_CRPS_discard.pkl")
 
-        # Load Experiment Torch Model
-        path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
-        load_model_dict = torch.load(path)
-        state_dict = load_model_dict["model_state_dict"]
-        std_mean = load_model_dict["training_std_mean"]
-        device = utils.prepare_device(config["device"])
+            percentile_index_low = int(20 - (confidence_level_low / 5))
+            percentile_index_high = int(20 - (confidence_level_high / 5))
 
-        model = TorchModel(
-            config=config["arch"],
-            target_mean=std_mean["trainset_target_mean"],
-            target_std=std_mean["trainset_target_std"],
-        )
+            # Load input maps based on experiment type
+            if exp_type in ["E3SM-short(OBS)", "E3SM(OBS)", "E3SM-long(OBS)"]:
+                config = utils.get_config(exp_name)
+                input_data = config["input_data"]
+                input_maps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/{input_data}_trimmed_test_dat.nc')
+                input_maps = input_maps['x']
+            else:  # OBS(OBS) type experiments
+                input_maps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
+                input_maps = input_maps['x']
 
-        model.load_state_dict(state_dict)
-        model.eval()
+            # Load climatology statistics
+            climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl')
 
-        # CALCULATE BASIC QUANTITIES -----------------------
-        # Calculate IQR for each sample
-        iqr = iqr_basic(output)
+            # Load testing target data
+            target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
+            target = (target['y'] - climatology_stats['z'][2]) / climatology_stats['z'][3]
 
-        lower_threshold = np.percentile(iqr, confidence_level_low)   
-        upper_threshold = np.percentile(iqr, confidence_level_high) 
+            # Load Experiment Torch Model
+            # try opening model: 
+            try:
+                path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
+                load_model_dict = torch.load(path)
+            except: 
+                path = str(config["perlmutter_model_dir"]) + str(config["trained_model"]) + '.pth'
+                load_model_dict = torch.load(path)
 
-        selected_indices = np.where((iqr >= lower_threshold) & (iqr <= upper_threshold))[0]
-        selected_dates = input_maps['time'].values[selected_indices]
+            state_dict = load_model_dict["model_state_dict"]
+            std_mean = load_model_dict["training_std_mean"]
+            device = utils.prepare_device(config["device"])
 
-        # keep selected dates for each experiment: 
-        selected_dates_allexps.append(np.unique(input_maps['time'].values[selected_indices])) # TODO, COULD look at frequency of selected dates? Not just unique dates
+            model = TorchModel(
+                config=config["arch"],
+                target_mean=std_mean["trainset_target_mean"],
+                target_std=std_mean["trainset_target_std"],
+            )
 
-        total_samples += len(selected_indices)
+            model.load_state_dict(state_dict)
+            model.eval()
 
-        # CALCULATE XAI and INPUT MAPS MEANS per EXPERIMENT -----------------------
+            # CALCULATE XAI and INPUT MAPS MEANS per EXPERIMENT -----------------------
+            selected_dates = selected_data['selected_dates_per_exp'][exp_name]
 
-        # Calculate XAI mean attribution map for each experiment:
-        avg_attr = np.zeros((len(exps.items()), 3, 4, 180, 360))
+            for shash_param in range(4):  # Note: you have 4 SHASH params, not 3
+                result = average_attributions(model, input_maps, selected_dates, device, shash_param, config, method=xai_method, keyword=f"{confidence_level_low}-{confidence_level_high}_Confidence_ShashParam{shash_param}")
+                # Transpose to match expected shape: (180,360,3) -> (3,180,360)
+                # avg_attr[experiment_counter, :, shash_param, ...] = np.transpose(result, (2, 0, 1))
+                # TODO: FIX TRANSPOSE SO IT DOESN'T TRANSPOSE THE VARIABLES 
         
-        # Calculate composite maps for each variable for this experiment
-        for i in range(len(colormaps)):
-            mean_map = np.mean(input_maps[... , i].values[selected_indices, ...], axis=0)
-            all_composite_maps[i].append(mean_map)
-
-            for shash_param in range(3): # mu, sigma, gamma, tau
-                avg_attr[iexp_name, i, shash_param, ...] = average_attributions(model, input_maps, selected_dates, device, shash_param, config, method= xai_method, keyword = f"{confidence_level_low}-{confidence_level_high}_Confidence")
-
+        experiment_counter += 1
     # CALCULATE XAI and INPUT MAPS MEANS ACROSS ALL EXPERIMENTS -----------------------
 
     # Calculate mean composite maps across all experiments of this type
@@ -943,9 +947,8 @@ def XAI_confidence_compositing(experiments, confidence_level_low = 20, confidenc
     mean_composite_attr = np.zeros((3, 4, 180, 360))
 
     for i in range(len(colormaps)):
-        # Average across all experiments for this variable
-        mean_composite_map = np.mean(all_composite_maps[i], axis=0)
-        mean_composite_maps.append(mean_composite_map)
+        # Composite maps for each variable for this experiment
+        all_composite_maps[i] = selected_data[exp_type]['maps'][..., i]
 
         for shash_param in range(3):
             mean_composite_attr[i, shash_param, ...] = np.mean(avg_attr[..., shash_param, ...], axis=0)
@@ -964,7 +967,6 @@ def XAI_confidence_compositing(experiments, confidence_level_low = 20, confidenc
         'lon': input_maps['lon'],  # Using last loaded input_maps for coordinates
         'lat': input_maps['lat'],
         'n_experiments': len(exps.items()),
-        'total_samples': total_samples,
         'all_crps_confident': crps_iqr['avg_crps'][percentile_index_low:percentile_index_high],
         'mean_crps_confident': mean_crps_confident,
         'mean_crps_all': mean_crps_all,

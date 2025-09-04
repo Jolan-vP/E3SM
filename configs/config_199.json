@@ -55,7 +55,7 @@
 
     "arch": {
         "type": "cnn",
-        "n_inputchannel": 2,
+        "n_inputchannel": 3,
         "freeze_id" : "None",
         "circular_padding": [15, 15, 0, 0],
         "filters" : [32, 32], 
@@ -63,7 +63,7 @@
         "cnn_act": ["ReLU", "ReLU"],
 
         "hiddens_block": [20, 20],
-        "hiddens_block_in": [144256],
+        "hiddens_block_in": [141120],
         "hiddens_block_act": ["ReLU"],
         "hiddens_block_out": 20,
 

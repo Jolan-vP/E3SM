@@ -34,6 +34,9 @@ def compute_attributions(model, inputs, output_column, method="integrated_gradie
 
 # Function to compute and average attributions for a list of dates
 def average_attributions(model, input_maps, timestamps, device, output_column, config, method= None, keyword = None):
+    if input_maps.shape[1] > 180: 
+        input_maps = input_maps[:, :180, ...]
+
     # Convert inputs to tensor
     input_maps_filtered = input_maps.sel(time = timestamps)
     input_maps_tensor = torch.tensor(input_maps_filtered.values, dtype=torch.float32).to(device)
@@ -65,6 +68,8 @@ def average_attributions(model, input_maps, timestamps, device, output_column, c
             new_keyword = keyword + "_PRECT"
         elif channel == 1:
             new_keyword = keyword + "_SKINTEMP"
+        elif channel == 2:
+            new_keyword = keyword + "_Z500"
         visualize_average_attributions(avg_attributions_single_var, input_maps_single_var, config, new_keyword)
 
     return avg_attributions
@@ -92,9 +97,12 @@ def visualize_average_attributions(avg_attributions, input_map, config, keyword 
         if "PRECT" in keyword:
             cmap = 'BrBG'
             cbar_label = "Precipitation Anomaly (mm/day)"
-        else:
+        elif "TEMP" in keyword: 
             cmap = 'RdBu_r'
             cbar_label = "Skin Temperature Anomaly (K)"
+        elif "Z500" in keyword:
+            cmap = 'PuOr_r'
+            cbar_label = "Z500 Anomaly (m)"
 
         # vmin/vmax
         max_val_input = np.nanmax(np.abs(input_map))
@@ -117,6 +125,7 @@ def visualize_average_attributions(avg_attributions, input_map, config, keyword 
         ax.set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree())
 
         plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + '_average_attributions.png', format='png', bbox_inches ='tight', dpi = 250)
+        plt.close()
 
     else: 
         fig, ax = plt.subplots(1, 1, figsize=(5, 5), subplot_kw= {'projection': ccrs.PlateCarree(central_longitude=180)})
@@ -134,3 +143,4 @@ def visualize_average_attributions(avg_attributions, input_map, config, keyword 
         ax.set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree())
 
         plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + 'composite_attribution_map.png', format='png', bbox_inches ='tight', dpi = 250)
+        plt.close()
