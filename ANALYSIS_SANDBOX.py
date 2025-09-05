@@ -72,22 +72,25 @@ from analysis import combined_experiment_analytics as cea
 
 # keyword = "E3SM-long_E3SM-short_E3SM"
 
+# keyword = "OBS-OBS_OBS-E3SM"
+
 exps = {
-    "E3SM-short(OBS)": ["exp189", "exp195", "exp196", "exp197", "exp198", "exp199"],
-    "OBS(OBS)": ["exp173", "exp174", "exp175", "exp176", "exp177", "exp178", "exp179", "exp180", "exp181", "exp182", "exp183", "exp184"]
+    "OBS(OBS)": ["exp173", "exp174", "exp175", "exp176", "exp177", "exp178", "exp179", "exp180", "exp181", "exp182", "exp183", "exp184"],
+    "E3SM-short(OBS)": ["exp189", "exp195", "exp196", "exp197", "exp198", "exp199"]
     # "E3SM-long(OBS)": ["exp186", "exp187", "exp188", "exp203", "exp204", "exp205"]
     # "E3SM-short(E3SM)": ["exp185", "exp190", "exp191", "exp192", "exp193", "exp194"],
-    # "E3SM-long(E3SM)": ["exp154", "exp157", "exp158", "exp200", "exp201", "exp202"]
+    # "E3SM-long(E3SM)": ["exp154", "exp157", "exp158", "exp200", "exp201", "exp202"], 
+    # "OBS(E3SM)": ["exp206", "exp207", "exp208", "exp209", "exp210", "exp211", "exp212", "exp213", "exp214", "exp215", "exp216", "exp217"]
 }
 
 # DISCARD PLOTS: # ------------------------------------------------------------------------------------  
 
-# cea.combined_success_discard(exps, keyword = "OBS-OBS_E3SM_OBS")
+# cea.combined_success_discard(exps, keyword = "OBS-OBS_OBS-E3SM_E3SM-short-OBS")
 
-# cea.combined_CRPS_IQR_discard(exps, keyword = "OBS-OBS_E3SM_OBS")
+# cea.combined_CRPS_IQR_discard(exps, keyword = "OBS-OBS_OBS-E3SM_E3SM-short-OBS")
 
-# cea.IQR_distributions(exps, keyword = "OBS-OBS_E3SM_OBS")
-
+# cea.IQR_distributions(exps, keyword = "OBS-OBS_OBS-E3SM_E3SM-short-OBS")
+# # 
 # COMPOSITE MAPPING: # ------------------------------------------------------------------------------------  
 
 # Individual experiment plots: 
@@ -99,7 +102,7 @@ exps = {
 
 # cea.composite_inputmap_target(inde_exps, confidence_level= 20, keyword = "OBS_OBS")
 
-# cea.COMPARE_composite_inputmap_target(exps, confidence_level_low= 20, confidence_level_high= 40, keyword = "OBS-OBS_E3SM-short_OBS")
+cea.COMPARE_composite_inputmap_target(exps, confidence_level_low= 20, confidence_level_high= 40, keyword = "OBS-OBS_E3SM-short_OBS")
 
 ## XAI / CAPTUM# ------------------------------------------------------------------------------------  
 

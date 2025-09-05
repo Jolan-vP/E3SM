@@ -133,7 +133,9 @@ def combined_success_discard(experiments, keyword = None):
         i += 1
             
 
-    plt.legend()
+    leg = plt.legend()
+    for lh in leg.legendHandles: 
+            lh.set_alpha(1)
 
     plt.savefig('/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/combined_SuccessRatio_DiscardPlot_' + str(keyword) + '_Z500.png', format = 'png',  dpi = 250) 
 
@@ -184,9 +186,11 @@ def combined_CRPS_IQR_discard(experiments, keyword = None):
 
             if iexp == 0:
                 if experiment_type == "OBS(OBS)":
-                    plt.axhline(y=mean_climo_crps, color='grey', linestyle='--', label = f'OBS Baseline Mean CRPS', linewidth = 2)
-                if experiment_type == "E3SM-short(E3SM)":
-                    plt.axhline(y=mean_climo_crps, color='grey', linestyle='--', label = f'E3SM Baseline Mean CRPS', linewidth = 2)
+                    obs_obs_color = "#0d0887"
+                    plt.axhline(y=mean_climo_crps, color=obs_obs_color, linestyle='--', label = f'OBS Baseline Mean CRPS', linewidth = 2)
+                if experiment_type == "E3SM-short(E3SM)" or experiment_type == "OBS(E3SM)":
+                    e3sm_color = "#cc4778"
+                    plt.axhline(y=mean_climo_crps, color=e3sm_color, linestyle='--', label = f'E3SM Baseline Mean CRPS', linewidth = 2)
                 plt.plot(percentile_dict, crps_dict, label=f'{experiment_type}', alpha = 0.35, linewidth = 2.5, color = color_themes[i])
             else:
                 plt.plot(percentile_dict, crps_dict, alpha = 0.35, linewidth = 2.5, color = color_themes[i])
@@ -197,7 +201,10 @@ def combined_CRPS_IQR_discard(experiments, keyword = None):
         plt.xlim(101, 4)
         plt.title('Increasing Confidence CRPS Discard Plot')
         plt.tight_layout()
-        plt.legend()
+        leg = plt.legend()
+        for lh in leg.legendHandles: 
+            lh.set_alpha(1)
+
         i += 1
 
     plt.savefig('/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/CRPS_discard_plot_combined__' + str(keyword) + '_Z500.png', format = 'png',  dpi = 250)
@@ -249,16 +256,18 @@ def IQR_distributions(experiments, keyword = None):
 
             # histograms of IQR for each phase
             if iexp == 0:
-                plt.hist(iqr, bins=bin_edges, alpha=0.4, label=f'{experiment_type}', color = color_themes[i], density = True, histtype = 'step')
+                plt.hist(iqr, bins=bin_edges, alpha=0.5, label=f'{experiment_type}', color = color_themes[i], density = True, histtype = 'step')
             else:
-                plt.hist(iqr, bins=bin_edges, alpha=0.4, color = color_themes[i], density = True, histtype = 'step')
+                plt.hist(iqr, bins=bin_edges, alpha=0.5, color = color_themes[i], density = True, histtype = 'step')
 
         i += 1
             
         plt.xlabel('IQR')
         plt.ylabel('Density')
         plt.title('IQR Distribution Across Model Types')
-        plt.legend()
+        leg = plt.legend()
+        for lh in leg.legendHandles: 
+            lh.set_alpha(1)
 
     plt.savefig('/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/IQR_distribution_combined__' + str(keyword) + '_Z500.png', format = 'png',  dpi = 250)
 
@@ -845,7 +854,7 @@ def XAI_confidence_compositing(experiments, confidence_level_low = 20, confidenc
     new_cmap = LinearSegmentedColormap.from_list(cmap_name, colors, N=n_bins)
 
     # Create figure with 5x3 layout: Row 1: Composite Input Maps, Row 2: XAI attribution maps
-    fig, axs = plt.subplots(5, 3, figsize=(18, 10), 
+    fig, axs = plt.subplots(5, 3, figsize=(15, 15), 
                            subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
     plt.subplots_adjust(hspace=0.3, wspace=0.2)
 
@@ -853,7 +862,7 @@ def XAI_confidence_compositing(experiments, confidence_level_low = 20, confidenc
     all_composite_maps = []
 
     total_experiments = sum(len(exp_list) for exp_list in exps.values())
-    avg_attr = np.zeros((total_experiments, 3, 4, 180, 360))
+    avg_attr_all_experiments = np.zeros((total_experiments, 4, 180, 360, 3)) # num experiments per experiment type, 4 shash params, lat, lon, 3 variables
 
     for iexp_type, (exp_type, exp_list) in enumerate(exps.items()):
         print(f'Processing experiment type: {exp_type}')
@@ -933,25 +942,21 @@ def XAI_confidence_compositing(experiments, confidence_level_low = 20, confidenc
             # CALCULATE XAI and INPUT MAPS MEANS per EXPERIMENT -----------------------
             selected_dates = selected_data['selected_dates_per_exp'][exp_name]
 
-            for shash_param in range(4):  # Note: you have 4 SHASH params, not 3
-                result = average_attributions(model, input_maps, selected_dates, device, shash_param, config, method=xai_method, keyword=f"{confidence_level_low}-{confidence_level_high}_Confidence_ShashParam{shash_param}")
-                # Transpose to match expected shape: (180,360,3) -> (3,180,360)
-                # avg_attr[experiment_counter, :, shash_param, ...] = np.transpose(result, (2, 0, 1))
-                # TODO: FIX TRANSPOSE SO IT DOESN'T TRANSPOSE THE VARIABLES 
-        
+            for shash_param in range(4):  # Loop over SHASH parameters
+                avg_attr_all_experiments[experiment_counter, shash_param, ...] = average_attributions(model, input_maps, selected_dates, device, shash_param, config, method=xai_method, keyword=f"{confidence_level_low}-{confidence_level_high}_Confidence_ShashParam{shash_param}")
+         
         experiment_counter += 1
     # CALCULATE XAI and INPUT MAPS MEANS ACROSS ALL EXPERIMENTS -----------------------
 
-    # Calculate mean composite maps across all experiments of this type
-    mean_composite_maps = []
+    # Calculate mean composite attribution maps across all experiments of this type
     mean_composite_attr = np.zeros((3, 4, 180, 360))
 
-    for i in range(len(colormaps)):
-        # Composite maps for each variable for this experiment
-        all_composite_maps[i] = selected_data[exp_type]['maps'][..., i]
+    print(f" selected mean maps: {selected_data['maps']}")
+    print(f" selected mean maps: {len(selected_data['maps'])}")
 
-        for shash_param in range(3):
-            mean_composite_attr[i, shash_param, ...] = np.mean(avg_attr[..., shash_param, ...], axis=0)
+    for i in range(len(colormaps)):
+        for shash_param in range(4):
+            mean_composite_attr[i, shash_param, ...] = np.mean(avg_attr_all_experiments[:, shash_param, :, :, i], axis=0)
 
     # Calculate mean CRPS across all experiments for this type
     mean_crps_confident = np.mean(crps_iqr['avg_crps'][percentile_index_high:percentile_index_low])
@@ -963,7 +968,8 @@ def XAI_confidence_compositing(experiments, confidence_level_low = 20, confidenc
     # STORE ALL CALCULATED QUANTITIES -----------------------
     
     composite_data = {
-        'maps': mean_composite_maps,
+        'maps': selected_data['maps'],
+        'attr_maps': mean_composite_attr, 
         'lon': input_maps['lon'],  # Using last loaded input_maps for coordinates
         'lat': input_maps['lat'],
         'n_experiments': len(exps.items()),
@@ -974,15 +980,32 @@ def XAI_confidence_compositing(experiments, confidence_level_low = 20, confidenc
         'mean_composite_attr': mean_composite_attr
     }
 
-    for row in range(4):
-
+    # Pre-calculate vmin/vmax for each variable across all SHASH parameters
+    xai_vmin_vmax = []
+    for i in range(len(colormaps)):
+        # Get all attribution values for this variable across all SHASH parameters
+        all_attr_values = composite_data['mean_composite_attr'][i, :, :, :].flatten()
+        
+        # Option 1: Use percentiles to handle outliers
+        attr_vmin = np.percentile(all_attr_values, 5)
+        attr_vmax = np.percentile(all_attr_values, 95)
+        
+        # Option 2: Use symmetric scaling around zero (uncomment if preferred)
+        # attr_abs_max = max(abs(np.min(all_attr_values)), abs(np.max(all_attr_values)))
+        # attr_vmin = -attr_abs_max
+        # attr_vmax = attr_abs_max
+        
+        xai_vmin_vmax.append((attr_vmin, attr_vmax))
+    
+    for row in range(5):
         for i in range(len(colormaps)):
             cmap = colormaps[i]
-
+            
+            # First row: Input composite maps
             if row == 0: 
                 # set vmin and vmax to be symmetric around zero for diverging colormaps
-                vmin = np.min(composite_data['maps'])
-                vmax = np.max(composite_data['maps'])
+                vmin = np.min(composite_data['maps'][i])
+                vmax = np.max(composite_data['maps'][i])
                 abs_max = max(abs(vmin), abs(vmax))
                 vmin = -abs_max
                 vmax = abs_max
@@ -990,45 +1013,68 @@ def XAI_confidence_compositing(experiments, confidence_level_low = 20, confidenc
                 # Create the map plot
                 axs[row, i].coastlines()
                 axs[row, i].add_feature(cfeature.BORDERS, linestyle=':')
-                im = axs[row, i].pcolormesh(input_maps['lon'], input_maps['lat'], composite_data['maps'], transform=ccrs.PlateCarree(central_longitude= 0),cmap=cmap, vmin=vmin, vmax=vmax)
-                axs[row, i].set_title(f'{exp_type} Composite {vars[i]} Map')
-                cbar = fig.colorbar(im, ax=axs[0, i], orientation='vertical', shrink=0.6, fraction=0.02, pad=0.02)
-
+                im = axs[row, i].pcolormesh(input_maps['lon'], input_maps['lat'], 
+                                          composite_data['maps'][i], 
+                                          transform=ccrs.PlateCarree(central_longitude=0),
+                                          cmap=cmap, vmin=vmin, vmax=vmax)
+                axs[row, i].set_title(f'Composite {vars[i]} Map {units[i]}')
+                
+                # Add colorbar for input maps
+                cbar = fig.colorbar(im, ax=axs[row, i], orientation='vertical', 
+                                  shrink=0.6, fraction=0.02, pad=0.02)
+                
                 # Set global extent to show full map
                 axs[row, i].set_global()
                 
                 # Set consistent geographic ticks for all map plots
                 axs[row, i].set_xticks([-180, -120, -60, 0, 60, 120], crs=ccrs.PlateCarree())
-                axs[row, i].set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree(central_longitude = 180))
+                axs[row, i].set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree())
 
-            elif row > 0: 
+            # Rows 1-4: XAI attribution maps for each SHASH parameter
+            else: 
                 shash_index = row - 1
+                
+                # Use consistent vmin/vmax for this variable across all SHASH parameters
+                attr_vmin, attr_vmax = xai_vmin_vmax[i]
+                attr_data = composite_data['mean_composite_attr'][i, shash_index]
 
                 axs[row, i].coastlines()
                 axs[row, i].add_feature(cfeature.BORDERS, linestyle=':')
-                im = axs[row, i].pcolormesh(input_maps['lon'], input_maps['lat'], composite_data['mean_composite_attr'][i, shash_index], transform=ccrs.PlateCarree(central_longitude= 0),cmap=new_cmap, vmin=vmin, vmax=vmax)
-                axs[row, i].set_title(f'{exp_type} Composite {vars[i]} Map')
-                cbar = fig.colorbar(im, ax=axs[0, i], orientation='vertical', shrink=0.6, fraction=0.02, pad=0.02)
+                im = axs[row, i].pcolormesh(input_maps['lon'], input_maps['lat'], 
+                                          attr_data,
+                                          transform=ccrs.PlateCarree(central_longitude=0),
+                                          cmap=new_cmap, vmin=attr_vmin, vmax=attr_vmax)
+                
+                # Add SHASH parameter names for better clarity
+                shash_names = ['μ (location)', 'σ (scale)', 'ε (skewness)', 'δ (tailweight)']
+                axs[row, i].set_title(f'XAI Attribution: {vars[i]} → {shash_names[shash_index]}')
+                
+                # Add colorbar for XAI attribution maps
+                cbar = fig.colorbar(im, ax=axs[row, i], orientation='vertical', 
+                                  shrink=0.6, fraction=0.02, pad=0.02)
+                # cbar.set_label('Attribution Magnitude', rotation=270, labelpad=15)
 
                 # Set global extent to show full map
                 axs[row, i].set_global()
 
                 # Set consistent geographic ticks for all map plots
                 axs[row, i].set_xticks([-180, -120, -60, 0, 60, 120], crs=ccrs.PlateCarree())
-                axs[row, i].set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree(central_longitude = 180))
+                axs[row, i].set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree())
 
-
+    # Create a more descriptive title
+    exp_types_str = ', '.join(list(exps.keys()))
     suptitle_text = f'Multi-Experiment XAI Composite Analysis ({confidence_level_low}-{confidence_level_high}% Confidence Range)\n'
-    suptitle_text += f'{xai_method}'
+    suptitle_text += f'Method: {xai_method} | Experiments: {exp_types_str}'
     
-    plt.suptitle(suptitle_text, fontsize=14, y=0.96)
+    plt.suptitle(suptitle_text, fontsize=12, y=0.98)
     plt.tight_layout()
     
     save_name = f'{keyword}_composite_XAI_{confidence_level_low}to{confidence_level_high}_range_{xai_method}.png'
     plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/{save_name}', 
                 format='png', dpi=250, bbox_inches='tight')
     plt.close()
-
+    
+    return composite_data  # Return the data for potential further analysis
 
 
 

@@ -65,7 +65,7 @@ print(f"pytorch version = {torch.__version__}")
 # https://github.com/victoresque/pytorch-template/tree/master
 
 # ----CONFIG AND CLASS SETUP----------------------------------------------
-config = utils.get_config("exp205")
+config = utils.get_config("exp217")
 print(config["expname"])
 seed = config["seed_list"][0]
 
@@ -532,7 +532,7 @@ ERA5_Z500_climo_fn = '/pscratch/sd/p/plutzner/E3SM/bigdata/exp139_ERA5_processed
 E3SM_climo_stats_fn = '/pscratch/sd/p/plutzner/E3SM/bigdata/E3SM_processed_climo_stats_PRECT_Z500_TS_1981-2010.pkl'
 ERA5_climo_stats_fn = '/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl'
 
-if config["inference_data"] == "E3SM":
+if config["inference_data"] == "E3SM" or (config["inference_data"] == "None" and config["data_source"] == "E3SM"):
     if config["databuilder"]["target_var"] == "PRECT":
         climatology_dict = open_data_file(E3SM_precip_climo_fn)
         climatology_mean = open_data_file(E3SM_climo_stats_fn)["PRECT"][2]
@@ -541,7 +541,7 @@ if config["inference_data"] == "E3SM":
         climatology_dict = open_data_file(E3SM_Z500_climo_fn)
         climatology_mean = open_data_file(E3SM_climo_stats_fn)["Z500"][2]
         climatology_std = open_data_file(E3SM_climo_stats_fn)["Z500"][3]
-elif config["inference_data"] == "ERA5" or config["inference_data"] == "None":
+elif config["inference_data"] == "ERA5" or (config["inference_data"] == "None" and config["data_source"] == "ERA5"):
     if config["databuilder"]["target_var"] == "tp":
         climatology_dict = open_data_file(ERA5_precip_climo_fn)
         climatology_mean = open_data_file(ERA5_climo_stats_fn)["tp"][2]
@@ -595,11 +595,11 @@ CRPS.CRPScompare(CRPS_network, CRPS_climatology, config)
 # # # # # -------------------------------------------------------------------------------------------------------------
 
 # # Calculate ENSO Indices from ENSO Data:
-if config["data_source"] == "E3SM": 
+if "E3SM" in config["inference_data"]: 
     # Calculate ENSO Indices from Daily ENSO Data: 
     dailyENSOfn = '/pscratch/sd/p/plutzner/E3SM/bigdata/ENSO_Data/E3SM/ENSO_ne30pg2_HighRes/nino.member0201_daily_linterp_shifted.nc'
 
-elif config["data_source"] == "ERA5":
+elif config["inference_data"] == "ERA5" or config["inference_data"] == "None":
     dailyENSOfn = '/pscratch/sd/p/plutzner/E3SM/bigdata/ENSO_Data/OBS/nino34.long.anom_daily_linterp_shifted.nc'
     
 # Calculate enso indices for daily data based on EVALUATION DAY
@@ -1064,13 +1064,13 @@ analysis_metrics.save_pickle(plotting_data_dict, str(config["perlmutter_output_d
 
 
 
-# Compute the average attributions
-print("Computing Average Attributions - IG") 
-print("Computing Average Attributions - DL")
-avg_attributions_DL = average_attributions(model, input_test_maps, sub_elnino, device, output_column, config, method="deeplift")
-print("Computing Average Attributions - S")
-avg_attributions_S = average_attributions(model, input_test_maps, sub_elnino, device, output_column, config, method="saliency")
-print(f"Average Attributions Shape: {avg_attributions_IG.shape}")
+# # Compute the average attributions
+# print("Computing Average Attributions - IG") 
+# print("Computing Average Attributions - DL")
+# avg_attributions_DL = average_attributions(model, input_test_maps, sub_elnino, device, output_column, config, method="deeplift")
+# print("Computing Average Attributions - S")
+# avg_attributions_S = average_attributions(model, input_test_maps, sub_elnino, device, output_column, config, method="saliency")
+# print(f"Average Attributions Shape: {avg_attributions_IG.shape}")
 
 # # Load the average attributions
 # avg_attributions_IG = analysis_metrics.load_pickle(str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/average_attributions_integrated_gradients.pkl')

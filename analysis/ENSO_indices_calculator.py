@@ -134,14 +134,14 @@ def identify_nino_phases(nino34_filename, config, threshold=0.4, window=6, lagti
     - phase_array (numpy array): Array with 3 columns (El Niño, La Niña, Neutral) and rows corresponding to time steps.
     """
 
-    if config["data_source"] == "ERA5":
+    if config["inference_data"] == "ERA5" or (config["inference_data"] == "None" and config["data_source"] == "ERA5"):
         print("Data source is ERA5 - daily ENSO data")
         Nino34 = xr.open_dataset(nino34_filename)
         Nino34 = Nino34.value
         nino34_index = Nino34.sel(time=slice(str(config["databuilder"]["input_years"][0]), str(config["databuilder"]["input_years"][1])))
         window_length = window * 30  # 6 months of daily data
 
-    elif config["data_source"] == "E3SM":
+    elif config["inference_data"] == "E3SM" or (config["inference_data"] == "None" and config["data_source"] == "E3SM"):
         print("Data source is E3SM - daily ENSO data")
         Nino34 = xr.open_dataset(nino34_filename)
         Nino34 = Nino34.nino34
