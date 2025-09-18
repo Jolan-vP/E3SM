@@ -34,6 +34,7 @@ import pickle
 import gzip
 from model.metric import iqr_basic
 from analysis.analysis_metrics import maximum_difference
+import utils
 
 
 
@@ -175,3 +176,97 @@ def precip_regime(data, config):
     
     print(f"Median monthly precip: {np.nanmedian(ave_monthly_precip)}")
     print(f"Mean monthly precip: {np.nanmean(ave_monthly_precip)}")
+
+
+def Z500_regime(E3SM_data, ERA5_data): 
+    """
+    - pass data in as variable
+    - should be from training target data
+    """
+    config = utils.get_config("exp173")
+
+    Z500_baseline_E3SM = E3SM_data
+    Z500_baseline_ERA5 = ERA5_data
+
+    min_lat, max_lat = config["databuilder"]["target_region"][:2]
+    min_lon, max_lon = config["databuilder"]["target_region"][2:]
+
+    # Convert longitude from -180/180 to 0/360 if needed
+    if min_lon < 0:
+        min_lon += 360
+    if max_lon < 0:
+        max_lon += 360
+
+    if isinstance(Z500_baseline_E3SM, xr.DataArray):
+        mask_lon = (Z500_baseline_E3SM.lon >= min_lon) & (Z500_baseline_E3SM.lon <= max_lon)
+        mask_lat = (Z500_baseline_E3SM.lat >= min_lat) & (Z500_baseline_E3SM.lat <= max_lat)
+        Z500_regional_E3SM = Z500_baseline_E3SM.where(mask_lon & mask_lat, drop=True)
+
+    if isinstance(Z500_baseline_ERA5, xr.DataArray):
+        mask_lon = (Z500_baseline_ERA5.lon >= min_lon) & (Z500_baseline_ERA5.lon <= max_lon)
+        mask_lat = (Z500_baseline_ERA5.lat >= min_lat) & (Z500_baseline_ERA5.lat <= max_lat)
+        Z500_regional_ERA5 = Z500_baseline_ERA5.where(mask_lon & mask_lat, drop=True)
+
+    # average around target region 
+    Z500_regional_E3SM = Z500_regional_E3SM.mean(dim=['lat', 'lon'])
+    Z500_regional_ERA5 = Z500_regional_ERA5.mean(dim=['lat', 'lon'])
+
+    # divide precip data into months: 
+    max_size_E3SM = max((Z500_regional_E3SM.time.dt.month == i).sum().item() for i in range(1, 13))
+    max_size_ERA5 = max((Z500_regional_ERA5.time.dt.month == i).sum().item() for i in range(1, 13))
+    monthly_Z500_E3SM = np.full((12, max_size_E3SM), np.nan)
+    monthly_Z500_ERA5 = np.full((12, max_size_ERA5), np.nan)
+
+    ave_monthly_Z500_E3SM = np.full(12, np.nan)
+    ave_monthly_Z500_ERA5 = np.full(12, np.nan)
+
+    for i in range(1, 13):  # Months are 1-12
+        month_data_E3SM = Z500_regional_E3SM.sel(time=Z500_regional_E3SM.time.dt.month == i)
+        month_data_ERA5 = Z500_regional_ERA5.sel(time=Z500_regional_ERA5.time.dt.month == i)
+        if month_data_E3SM.values.size == 0: 
+            print(f"No data for month {i}")
+            continue
+        else:
+            monthly_Z500_E3SM[i-1, :month_data_E3SM.values.size] = month_data_E3SM.values
+        if month_data_ERA5.values.size == 0: 
+            print(f"No data for month {i}")
+            continue
+        else:
+            monthly_Z500_ERA5[i-1, :month_data_ERA5.values.size] = month_data_ERA5.values
+
+        ave_monthly_Z500_E3SM[i-1] = np.nanmean(monthly_Z500_E3SM[i-1])
+        ave_monthly_Z500_ERA5[i-1] = np.nanmean(monthly_Z500_ERA5[i-1])
+
+    median_E3SM = round(np.nanmedian(ave_monthly_Z500_E3SM), 2)
+    mean_E3SM = round(np.nanmean(ave_monthly_Z500_E3SM), 2)
+    median_ERA5 = round(np.nanmedian(ave_monthly_Z500_ERA5), 2)
+    mean_ERA5 = round(np.nanmean(ave_monthly_Z500_ERA5), 2)
+
+    # create histogram of baseline Z500 data by month of year: 
+    plt.figure()
+    months = np.arange(1, 13)
+    month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    # Set bar width and positions for side-by-side bars
+    bar_width = 0.35
+    x_pos_E3SM = months - bar_width/2
+    x_pos_ERA5 = months + bar_width/2
+
+    # Create side-by-side bars
+    plt.bar(x_pos_E3SM, ave_monthly_Z500_E3SM, width=bar_width, color="#0095cb", label="E3SM Baseline")
+    plt.bar(x_pos_ERA5, ave_monthly_Z500_ERA5, width=bar_width, color="#5401ba", label="ERA5 Baseline")
+
+    # Set x-axis ticks to be centered between the bar pairs
+    plt.xticks(months, month_names)
+    plt.ylim([5000, 6000])
+    plt.title("Raw Z500 by Month (1981-2010) | E3SM and ERA5")
+
+    # # Add horizontal lines for statistics
+    # plt.axhline(median_E3SM, color="#0d559c", linestyle=':', label=f"E3SM Median = {median_E3SM}")
+    # plt.axhline(mean_E3SM, color="#00256f", linestyle=':', label=f"E3SM Mean = {mean_E3SM}")
+    # plt.axhline(median_ERA5, color="#7c2ace", linestyle=':', label=f"ERA5 Median = {median_ERA5}")
+    # plt.axhline(mean_ERA5, color="#370160", linestyle=':', label=f"ERA5 Mean = {mean_ERA5}")
+
+    plt.legend()
+    plt.ylabel("Average Z500 (m)")
+    plt.savefig('/pscratch/sd/p/plutzner/E3SM/databuilder/Z500_by_month_E3SM_ERA5.png', format='png', bbox_inches='tight', dpi=300)
+    plt.show()

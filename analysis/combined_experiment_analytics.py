@@ -83,14 +83,13 @@ def combined_success_discard(experiments, keyword = None):
 
     color_themes = {
         0: "#3b528b", 
-        1: "#21918c", 
-        2: "#5ec962",
-        3: "#fde725",
+        1: "#019bba", 
+        2: "#33c316",
+        3: "#B6B309",
         }
     # color_themes = {
     #     0:  "#9335D1", 
-    #     1:  "#3451D4",
-    #     2:  "#2FB4C9",
+    #     1:  "#3451D445    #     2:  "#2FB4C9",
     #     3:  '#63BA31',
     #     4:  '#D4932A',
     #     5:  '#D03F6D'
@@ -118,9 +117,9 @@ def combined_success_discard(experiments, keyword = None):
             avg_success_ratio = discard_data['avg_success_ratio']
 
             if iexp == 0: 
-                plt.plot(percentiles, avg_success_ratio, color=color_themes[i], alpha = 0.35, label = f"{experiment_type}", linewidth = 2.5)
+                plt.plot(percentiles, avg_success_ratio, color=color_themes[i], alpha = 0.45, label = f"{experiment_type}", linewidth = 2.5)
             else: 
-                plt.plot(percentiles, avg_success_ratio, color=color_themes[i], alpha = 0.35, linewidth = 2.5)
+                plt.plot(percentiles, avg_success_ratio, color=color_themes[i], alpha = 0.45, linewidth = 2.5)
             # plt.fill_between(x = [0, 100], y1 = [0.5, 0.5], color = 'grey', alpha=0.03, edgecolor = None)
 
 
@@ -157,9 +156,9 @@ def combined_CRPS_IQR_discard(experiments, keyword = None):
 
     color_themes = {
         0: "#0d0887", 
-        1: "#7e03a8", 
-        2: "#cc4778",
-        3: "#f89540"
+        1: "#6e00b2", 
+        2: "#d0326c",
+        3: "#f97a0a"
     }
 
     i = 0
@@ -188,12 +187,12 @@ def combined_CRPS_IQR_discard(experiments, keyword = None):
                 if experiment_type == "OBS(OBS)":
                     obs_obs_color = "#0d0887"
                     plt.axhline(y=mean_climo_crps, color=obs_obs_color, linestyle='--', label = f'OBS Baseline Mean CRPS', linewidth = 2)
-                if experiment_type == "E3SM-short(E3SM)" or experiment_type == "OBS(E3SM)":
+                if experiment_type == "E3SM-short(E3SM)": #or experiment_type == "OBS(E3SM)":
                     e3sm_color = "#cc4778"
                     plt.axhline(y=mean_climo_crps, color=e3sm_color, linestyle='--', label = f'E3SM Baseline Mean CRPS', linewidth = 2)
-                plt.plot(percentile_dict, crps_dict, label=f'{experiment_type}', alpha = 0.35, linewidth = 2.5, color = color_themes[i])
+                plt.plot(percentile_dict, crps_dict, label=f'{experiment_type}', alpha = 0.4, linewidth = 2.5, color = color_themes[i])
             else:
-                plt.plot(percentile_dict, crps_dict, alpha = 0.35, linewidth = 2.5, color = color_themes[i])
+                plt.plot(percentile_dict, crps_dict, alpha = 0.4, linewidth = 2.5, color = color_themes[i])
 
         plt.xlabel('IQR Percentile (% Data Remaining)')
         plt.ylabel('Average CRPS')
@@ -256,9 +255,9 @@ def IQR_distributions(experiments, keyword = None):
 
             # histograms of IQR for each phase
             if iexp == 0:
-                plt.hist(iqr, bins=bin_edges, alpha=0.5, label=f'{experiment_type}', color = color_themes[i], density = True, histtype = 'step')
+                plt.hist(iqr, bins=bin_edges, alpha=0.1, label=f'{experiment_type}', color = color_themes[i], density = True) #, histtype = 'step')
             else:
-                plt.hist(iqr, bins=bin_edges, alpha=0.5, color = color_themes[i], density = True, histtype = 'step')
+                plt.hist(iqr, bins=bin_edges, alpha=0.1, color = color_themes[i], density = True) #, histtype = 'step')
 
         i += 1
             
@@ -270,9 +269,6 @@ def IQR_distributions(experiments, keyword = None):
             lh.set_alpha(1)
 
     plt.savefig('/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/IQR_distribution_combined__' + str(keyword) + '_Z500.png', format = 'png',  dpi = 250)
-
-
-
 
 
 
@@ -408,134 +404,6 @@ def composite_inputmap_target(experiments, confidence_level = 50, keyword = None
         plt.close()
 
 
-    
-# def COMPARE_composite_inputmap_target(experiments, confidence_level = 50, keyword = None):
-#     """
-#     For given confidence threshold, plot difference maps between two experiments and compare their target distributions.
-#     """
-#     exps = experiments
-    
-#     # Ensure we have exactly 2 experiments
-#     if len(exps) != 2:
-#         raise ValueError("This function requires exactly 2 experiments for comparison")
-    
-#     exp_names = list(exps.keys())
-#     exp_codes = list(exps.values())
-
-#     # convert confidence level
-#     confidence_threshold = confidence_level / 100.0
-
-#     colormaps = ["BrBG", "RdBu_r", "PuOr_r"]
-#     vars = ["Total Precip", "Skin Temp", "Z500"]
-#     units = ['(mm/day)', '(K)', '(m)']
-
-#     # Create figure with 1x3 layout: 3 difference maps
-#     fig, axs = plt.subplots(1, 3, figsize=(18, 5), 
-#                            subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
-    
-#     # Store composite data for both experiments
-#     composite_data = {}
-    
-#     for idx, (experiment_type, exp_name) in enumerate(exps.items()):
-#         print(f'experiment type: {experiment_type}, exp name: {exp_name}')
-        
-#         # Load the output and target data for all experiments
-#         output = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_network_SHASH_parameters.pkl')
-
-#         # input maps: 
-#         if experiment_type == "E3SM-short(OBS)" or experiment_type == "E3SM(OBS)" or experiment_type == "E3SM-long(OBS)":
-#             config = utils.get_config(exp_name)
-#             input_data = config["input_data"]
-#             input_maps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/{input_data}_trimmed_test_dat.nc')
-#             input_maps = input_maps['x']
-#         else:
-#             input_maps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
-#             input_maps = input_maps['x']
-
-#         # Load climatology statistics: 
-#         climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl')
-
-#         # Load testing target data: 
-#         target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
-#         target = (target['y'] - climatology_stats['z'][2]) / climatology_stats['z'][3]
-
-#         # Calculate IQR for each sample
-#         iqr = iqr_basic(output)
-
-#         # List IQR by percentile
-#         percentiles = np.percentile(iqr, np.arange(0, 101, 1))
-
-#         # Select samples whose IQR is smaller than the given confidence threshold
-#         selected_indices = np.where(iqr <= percentiles[int(confidence_threshold * 100)])[0]
-
-#         print(f"Experiment: {experiment_type}, Number of samples selected at {confidence_level}% confidence: {len(selected_indices)}")
-#         if len(selected_indices) < 30:
-#             print(f"Less than 30 samples selected for {experiment_type} at {confidence_level}% confidence")
-
-#         # Extract corresponding target values (removed since we're not using histograms)
-#         # selected_targets = target.values[selected_indices]
-#         # selected_targets_all[experiment_type] = selected_targets
-        
-#         # Calculate composite maps for each variable
-#         composite_maps = []
-#         for i in range(len(colormaps)):
-#             mean_map = np.mean(input_maps[... , i].values[selected_indices, ...], axis=0)
-#             composite_maps.append(mean_map)
-        
-#         composite_data[experiment_type] = {
-#             'maps': composite_maps,
-#             'lon': input_maps['lon'],
-#             'lat': input_maps['lat'],
-#             'n_samples': len(selected_indices)
-#         }
-    
-#     # Calculate difference maps (second experiment minus first experiment)
-#     exp1_name, exp2_name = exp_names[0], exp_names[1]
-    
-#     for i in range(len(colormaps)):
-#         cmap = colormaps[i]
-        
-#         # Calculate difference map
-#         diff_map = composite_data[exp2_name]['maps'][i] - composite_data[exp1_name]['maps'][i]
-        
-#         # Set symmetric colorbar limits
-#         abs_max = np.max(np.abs(diff_map))
-#         vmin, vmax = -abs_max, abs_max
-        
-#         # Create the difference map plot
-#         axs[i].coastlines()
-#         axs[i].add_feature(cfeature.BORDERS, linestyle=':')
-#         im = axs[i].pcolormesh(composite_data[exp1_name]['lon'], 
-#                               composite_data[exp1_name]['lat'], 
-#                               diff_map, 
-#                               transform=ccrs.PlateCarree(central_longitude=0),
-#                               cmap=cmap, vmin=vmin, vmax=vmax)
-        
-#         axs[i].set_title(f'{vars[i]} Difference\n({exp2_name} - {exp1_name})', fontsize=14)
-#         cbar = fig.colorbar(im, ax=axs[i], orientation='vertical', shrink=0.5, fraction=0.03, pad=0.04)
-#         cbar.set_label(units[i], fontsize=12)
-        
-#         # Set global extent to show full map
-#         axs[i].set_global()
-        
-#         # Set consistent geographic ticks for all map plots
-#         axs[i].set_xticks([-180, -120, -60, 0, 60, 120], crs=ccrs.PlateCarree())
-#         axs[i].set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree(central_longitude=180))
-    
-#     # Create overall title
-#     plt.suptitle(f'Composite Difference Maps at {confidence_level}% Confidence Level\n'
-#                 f'({exp2_name} - {exp1_name})', fontsize=16)
-#     plt.tight_layout()
-    
-#     # Save figure
-#     save_name = f'composite_DIFFERENCE_{confidence_level}percent_confidence_{exp_codes[1]}_minus_{exp_codes[0]}_Z500.png'
-#     plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/{save_name}', 
-#                 format='png', dpi=250, bbox_inches='tight')
-#     plt.close()
-    
-#     print(f"Difference composite plot saved for {exp2_name} - {exp1_name}")
-
-
 
 def COMPARE_composite_inputmap_target(experiments, confidence_level_low = 20, confidence_level_high = 40, keyword = None):
     """
@@ -632,10 +500,10 @@ def COMPARE_composite_inputmap_target(experiments, confidence_level_low = 20, co
             # # keep selected dates for each experiment: 
             # selected_dates_allexps.append(np.unique(input_maps['time'].values[selected_indices]))
 
-            print(f"    Experiment: {exp_name}, Number of samples selected in {confidence_level_low}-{confidence_level_high}% confidence range: {len(selected_indices)}")
-            print(f"      IQR range: {lower_threshold:.4f} to {upper_threshold:.4f}")
+            print(f"Experiment: {exp_name}, Number of samples selected in {confidence_level_low}-{confidence_level_high}% confidence range: {len(selected_indices)}")
+            print(f"IQR range: {lower_threshold:.4f} to {upper_threshold:.4f}")
             if len(selected_indices) < 30:
-                print(f"    WARNING: Less than 30 samples selected for {exp_name} in {confidence_level_low}-{confidence_level_high}% confidence range")
+                print(f"WARNING: Less than 30 samples selected for {exp_name} in {confidence_level_low}-{confidence_level_high}% confidence range")
 
             total_samples += len(selected_indices)
             
@@ -841,7 +709,7 @@ def XAI_confidence_compositing(experiments, confidence_level_low = 20, confidenc
     """    
     exps = experiments
     exp_type_names = list(exps.keys())
-
+    exp_types_str = ', '.join(exp_type_names)
 
     colormaps = ["BrBG", "RdBu_r", "PuOr_r"]
     units = ['(mm/day)', '(K)', '(m)']
@@ -853,8 +721,8 @@ def XAI_confidence_compositing(experiments, confidence_level_low = 20, confidenc
     cmap_name = "xai_purple"
     new_cmap = LinearSegmentedColormap.from_list(cmap_name, colors, N=n_bins)
 
-    # Create figure with 5x3 layout: Row 1: Composite Input Maps, Row 2: XAI attribution maps
-    fig, axs = plt.subplots(5, 3, figsize=(15, 15), 
+    # Create figure with 5x3 layout: Row 1: Composite Input Maps, Row 2-5: XAI attribution maps
+    fig, axs = plt.subplots(5, 3, figsize=(18, 18), 
                            subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
     plt.subplots_adjust(hspace=0.3, wspace=0.2)
 
@@ -946,27 +814,42 @@ def XAI_confidence_compositing(experiments, confidence_level_low = 20, confidenc
                 avg_attr_all_experiments[experiment_counter, shash_param, ...] = average_attributions(model, input_maps, selected_dates, device, shash_param, config, method=xai_method, keyword=f"{confidence_level_low}-{confidence_level_high}_Confidence_ShashParam{shash_param}")
          
         experiment_counter += 1
+    
     # CALCULATE XAI and INPUT MAPS MEANS ACROSS ALL EXPERIMENTS -----------------------
-
     # Calculate mean composite attribution maps across all experiments of this type
     mean_composite_attr = np.zeros((3, 4, 180, 360))
 
     print(f" selected mean maps: {selected_data['maps']}")
     print(f" selected mean maps: {len(selected_data['maps'])}")
 
+    # for i in range(len(colormaps)):
+    #     for shash_param in range(4):
+    #         mean_composite_attr[i, shash_param, ...] = np.mean(avg_attr_all_experiments[:, shash_param, :, :, i], axis=0)
+
+    # Normalize attribution maps so map contents sum to 1
     for i in range(len(colormaps)):
         for shash_param in range(4):
-            mean_composite_attr[i, shash_param, ...] = np.mean(avg_attr_all_experiments[:, shash_param, :, :, i], axis=0)
+            attr_map = np.mean(avg_attr_all_experiments[:, shash_param, :, :, i], axis=0)
+            
+            abs_attr_map = np.abs(attr_map)  # Take absolute values for normalization
+            total_attribution = np.sum(abs_attr_map)  # Sum of absolute attributions
+            
+            if total_attribution > 0:  # Avoid division by zero
+                # Normalize while preserving the original signs
+                normalized_attr_map = attr_map / total_attribution
+                print(f"Variable {vars[i]}, SHASH param {shash_param}: normalized sum = {np.sum(np.abs(normalized_attr_map)):.6f}")
+            else:
+                normalized_attr_map = attr_map
+                print(f"Variable {vars[i]}, SHASH param {shash_param}: zero attribution, no normalization")
+                
+            mean_composite_attr[i, shash_param, ...] = normalized_attr_map
+
 
     # Calculate mean CRPS across all experiments for this type
-    mean_crps_confident = np.mean(crps_iqr['avg_crps'][percentile_index_high:percentile_index_low])
-
-        # Calculate mean CRPS across all experiments for this type
     mean_crps_confident = np.mean(crps_iqr['avg_crps'][percentile_index_high:percentile_index_low])
     mean_crps_all = np.mean(crps_iqr['avg_crps'])
 
     # STORE ALL CALCULATED QUANTITIES -----------------------
-    
     composite_data = {
         'maps': selected_data['maps'],
         'attr_maps': mean_composite_attr, 
@@ -981,21 +864,24 @@ def XAI_confidence_compositing(experiments, confidence_level_low = 20, confidenc
     }
 
     # Pre-calculate vmin/vmax for each variable across all SHASH parameters
-    xai_vmin_vmax = []
+    xai_scales = []
     for i in range(len(colormaps)):
-        # Get all attribution values for this variable across all SHASH parameters
-        all_attr_values = composite_data['mean_composite_attr'][i, :, :, :].flatten()
-        
-        # Option 1: Use percentiles to handle outliers
-        attr_vmin = np.percentile(all_attr_values, 5)
-        attr_vmax = np.percentile(all_attr_values, 95)
-        
-        # Option 2: Use symmetric scaling around zero (uncomment if preferred)
-        # attr_abs_max = max(abs(np.min(all_attr_values)), abs(np.max(all_attr_values)))
-        # attr_vmin = -attr_abs_max
-        # attr_vmax = attr_abs_max
-        
-        xai_vmin_vmax.append((attr_vmin, attr_vmax))
+        first_three_attr_values = mean_composite_attr[:, :3, :, :].flatten()
+
+        # Get attribution values for tailweight parameter across ALL variables  
+        tailweight_attr_values = mean_composite_attr[:, 3, :, :].flatten()
+
+        # Calculate scales
+        first_three_vmin = np.percentile(first_three_attr_values, 5)
+        first_three_vmax = np.percentile(first_three_attr_values, 95)
+
+        tailweight_vmin = np.percentile(tailweight_attr_values, 5)
+        tailweight_vmax = np.percentile(tailweight_attr_values, 95)
+
+        xai_scales = {
+            'first_three': (first_three_vmin, first_three_vmax),
+            'tailweight': (tailweight_vmin, tailweight_vmax)
+        }
     
     for row in range(5):
         for i in range(len(colormaps)):
@@ -1034,9 +920,13 @@ def XAI_confidence_compositing(experiments, confidence_level_low = 20, confidenc
             else: 
                 shash_index = row - 1
                 
-                # Use consistent vmin/vmax for this variable across all SHASH parameters
-                attr_vmin, attr_vmax = xai_vmin_vmax[i]
-                attr_data = composite_data['mean_composite_attr'][i, shash_index]
+                if shash_index < 3:  # First three parameters (μ, σ, ε) - same scale for all 9 plots
+                    attr_vmin, attr_vmax = xai_scales['first_three']
+                else:  # Tailweight parameter (δ) - same scale across 3 variables in row 4
+                    attr_vmin, attr_vmax = xai_scales['tailweight']
+
+                    
+                attr_data = mean_composite_attr[i, shash_index]
 
                 axs[row, i].coastlines()
                 axs[row, i].add_feature(cfeature.BORDERS, linestyle=':')
@@ -1052,7 +942,7 @@ def XAI_confidence_compositing(experiments, confidence_level_low = 20, confidenc
                 # Add colorbar for XAI attribution maps
                 cbar = fig.colorbar(im, ax=axs[row, i], orientation='vertical', 
                                   shrink=0.6, fraction=0.02, pad=0.02)
-                # cbar.set_label('Attribution Magnitude', rotation=270, labelpad=15)
+                cbar.set_label('Normalized Attribution', rotation=270, labelpad=15)
 
                 # Set global extent to show full map
                 axs[row, i].set_global()
@@ -1062,7 +952,6 @@ def XAI_confidence_compositing(experiments, confidence_level_low = 20, confidenc
                 axs[row, i].set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree())
 
     # Create a more descriptive title
-    exp_types_str = ', '.join(list(exps.keys()))
     suptitle_text = f'Multi-Experiment XAI Composite Analysis ({confidence_level_low}-{confidence_level_high}% Confidence Range)\n'
     suptitle_text += f'Method: {xai_method} | Experiments: {exp_types_str}'
     
@@ -1074,34 +963,404 @@ def XAI_confidence_compositing(experiments, confidence_level_low = 20, confidenc
                 format='png', dpi=250, bbox_inches='tight')
     plt.close()
     
+    
     return composite_data  # Return the data for potential further analysis
 
 
 
-
-
-
-
-
-#---------------------------------------------------------------------------
-# future ideas: 
-# def shash_bias_check(experiments):
-#     """
-#     Bias = The distance between the forecast and observation average values
+def teleconnection_bias_analysis(experiments, confidence_level_low = 20, confidence_level_high = 0, keyword = None):
+    """
+    For given experiments, compute outputs and plots for the following functions: 
+    - monthly analysis 
+    - results by ENSO phase
+    - results by MJO phase
     
-#     Check the bias of the SHASH parameters for each experiment in the list of experiments against the climatological mean 
+    """
 
-#     Plot the mean of shash means for each experiment and the climatological mean and climatology histogram
+    exps = experiments
+    exp_type_names = list(exps.keys())
+    exp_types_str = ', '.join(exp_type_names)
+    
+    for exp_type, exp_list in exps.items():
+        print(f'Processing experiment type: {exp_type}')
 
-#     """
-#     if "OBS(OBS)" in experiments: 
-#         obs_exp = experiments["OBS(OBS)"]
-#     if "E3SM(OBS)" in experiments: 
-#         e3sm_obs_exp = experiments["E3SM(OBS)"]
-#     if "E3SM-short(OBS)" in experiments:
-#         e3sm_short_obs_exp = experiments["E3SM-short(OBS)"]
-#     if "E3SM(E3SM)" in experiments: 
-#         e3sm_exp = experiments["E3SM(E3SM)"]
-#     elif "E3SM-short(E3SM)" in experiments:
-#         e3sm_short_exp = experiments["E3SM-short(E3SM)"]
-  
+        # preallocate storage for monthly analysis outputs across experiments of this type
+        composite_iqr_by_month = [[] for _ in range(6)] # 6 months of interest: Oct-Mar
+
+        composite_monthly_analysis_output = np.zeros((len(exp_list), 6, 4))  # experiments, months, mean_crps, mean_iqr, mean_target, count
+
+        all_confident_dates = {}
+
+        for exp_name in exp_list:
+            print(f'  Processing experiment: {exp_name}')
+            
+            # Load the output and target data for this experiment
+            output = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_network_SHASH_parameters.pkl')
+
+            # compare crps to IQR CRPS information: 
+            crps_iqr = open_data_file(f"/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_IQR_CRPS_discard.pkl")
+
+            # open crps: 
+            crps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_CRPS_network_values.pkl')
+
+            # Load testing target data
+            if exp_type in ["E3SM-short(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)"]:
+                target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
+                # Load climatology statistics
+                climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl')#
+                target = (target['y'] - climatology_stats['z'][2]) / climatology_stats['z'][3]
+       
+            elif exp_type in ["E3SM-short(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)"]:
+                target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp185_trimmed_test_dat.nc')
+                climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/E3SM_processed_climo_stats_PRECT_Z500_TS_1981-2010.pkl')
+                target = (target['y'] - climatology_stats['Z500'][2]) / climatology_stats['Z500'][3]
+            
+            # target = (target['y'] - climatology_stats['z'][2]) / climatology_stats['z'][3]
+
+            ## CALCULATE IQR and Select Samples based on Confidence -------
+            iqr = iqr_basic(output)
+            percentiles = np.linspace(100, 0, 21)
+
+            avg_crps = []
+            avg_target = []
+            avg_iqr = []
+            sample_index = np.zeros((len(target), len(percentiles)))
+
+            # Sort by IQR
+            iqr_sorted_indices = np.argsort(iqr)
+            iqr_sorted = iqr[iqr_sorted_indices]
+            target_sorted = target[iqr_sorted_indices]
+            crps_sorted = crps[iqr_sorted_indices]
+
+            for ip, p in enumerate(percentiles):
+                # percentage of samples to keep for each round of the loop
+                num_to_keep = int(len(iqr_sorted) * p / 100)
+                
+                indices = iqr_sorted_indices[:num_to_keep]
+
+                if len(indices) == 0:
+                    avg_crps.append(np.nan)
+                    avg_target.append(np.nan)
+                    avg_iqr.append(np.nan)
+                else:
+                    avg_crps.append(np.mean(crps[indices]))
+                    avg_target.append(np.mean(target[indices]))
+                    avg_iqr.append(np.mean(iqr[indices]))
+                    sample_index[:len(indices), ip] = indices
+            
+            percentile_index_low = int(20 - (confidence_level_low / 5))
+            percentile_index_high = int(20 - (confidence_level_high / 5))
+            # print(f"percentile index low {percentile_index_low}, high {percentile_index_high}")
+            # print(f"confidence levels: {confidence_level_low}, {confidence_level_high}")
+
+            # Find unique indices in the columns corresponding to correct confidence levels
+            all_indices_to_low_index = sample_index[:, percentile_index_low]
+            indices_above_high_index = sample_index[:, percentile_index_high + 1] if (percentile_index_high + 1) < sample_index.shape[1] else np.array([])
+
+            # select samples that are within all_indices_to_low_index but NOT in indices_above_high_index
+            indices_within_confidence = np.setdiff1d(all_indices_to_low_index, indices_above_high_index)
+            dates_within_confidence = target.time[indices_within_confidence.astype(int)]
+
+            all_confident_dates[exp_name] = dates_within_confidence
+
+            selected_crps = crps[indices_within_confidence.astype(int)]
+            # print(f"selected crps: {np.mean(selected_crps)}")
+            selected_target = target.sel(time = dates_within_confidence)
+            selected_iqr = iqr[indices_within_confidence.astype(int)]
+
+            # Call monthly analysis function
+            iqr_by_month, crps_by_month, target_by_month, mean_data_by_month = monthly_analysis(selected_iqr, selected_crps, selected_target) 
+            months_of_interest = [10, 11, 12, 1, 2, 3]
+
+            # Aggregate monthly iqr analysis outputs across experiments of this type
+            for i, month_num in enumerate(months_of_interest):
+                    composite_iqr_by_month[i].append(iqr_by_month[month_num])
+
+            composite_monthly_analysis_output[exp_list.index(exp_name), :, :] = mean_data_by_month
+
+        mean_composite_monthly = np.mean(composite_monthly_analysis_output, axis=0)
+
+        # Plot IQR distributions, one per month, overlayed to see the difference in spread by month
+        plt.figure(figsize=(10, 6))
+        colors = ['#d73027', '#fc8d59', "#c8b47c", "#8b9a9f", "#4b9acb", "#1c58a6"]
+        labels = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar']
+
+        # Collect data for all months
+        all_month_data = []
+        month_colors = []
+        month_labels = []
+
+        for i in range(len(composite_iqr_by_month)):
+            if composite_iqr_by_month[i]:
+                # Flatten all experiments for this month into one dataset
+                flattened_month_data = [item for sublist in composite_iqr_by_month[i] for item in sublist]
+                all_month_data.append(flattened_month_data)
+                month_colors.append(colors[i])
+                month_labels.append(labels[i])
+
+        # Stacked Histogram of IQR distribution by month
+        plt.hist(all_month_data, bins=100, alpha=0.7, color=month_colors, 
+                histtype='bar', stacked=True, label=month_labels)
+
+        plt.xlabel('IQR Values')
+        plt.ylabel('Density')
+        plt.title(f'IQR Distribution by Month | {exp_type} \n Confidence Range: {confidence_level_low}-{confidence_level_high}%')
+        plt.xlim([0.75, 2])
+        plt.legend()
+        plt.show()
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/IQR_monthly_analysis_{exp_type}_{confidence_level_low}to{confidence_level_high}.png', format = 'png', dpi = 250)
+
+
+        # Temporal Distribution of selected samples by month using dates_within_confidence
+        fig, ax = plt.subplots()
+        fig.subplots_adjust(bottom=0.2)
+        plt.xticks(rotation=90) 
+        # for Fall months (Oct, Nov, Dec) 
+        fall_months = [10, 11, 12]
+        month_names = {10: 'Oct', 11: 'Nov', 12: 'Dec'}
+        month_positions = {10: 0, 11: 1, 12: 2}
+
+        # Define what constitutes a "large gap"
+        large_gap_threshold = 10  # days
+
+        # ============================================================================
+        # MAIN PLOT: Show gaps with different emphasis for large vs small gaps
+        # ============================================================================
+        fig, ax = plt.subplots(figsize=(15, 8))
+
+        # Colors for different seed experiments
+        seed_colors = plt.cm.viridis(np.linspace(0, 1, len(exp_list)))
+
+        large_gaps_count = 0
+        total_gaps_count = 0
+
+        for seed_idx, exp_name in enumerate(exp_list):
+            dates_within_fall = all_confident_dates[exp_name][all_confident_dates[exp_name].dt.month.isin(fall_months)]
+            
+            if len(dates_within_fall) > 0:
+                # Sort dates to ensure proper sequential analysis
+                dates_sorted = dates_within_fall.sortby(dates_within_fall)
+                
+                # Group by year to handle year boundaries properly
+                for year in np.unique(dates_sorted.dt.year.values):
+                    year_dates = dates_sorted[dates_sorted.dt.year == year]
+                    
+                    if len(year_dates) > 1:
+                        # Calculate day-of-year differences
+                        day_diffs = np.diff(year_dates.dt.dayofyear.values)
+                        
+                        # For dates that span across months, we need to handle them carefully
+                        for i, (date, gap) in enumerate(zip(year_dates[:-1], day_diffs)):
+                            month = date.dt.month.item()
+                            if month in fall_months:
+                                total_gaps_count += 1
+                                
+                                # Determine x-position based on month
+                                # Add small offset for each seed
+                                seed_offset = (seed_idx - len(exp_list)/2 + 0.5) * 0.08
+                                x_pos = month_positions[month] + seed_offset
+                                
+                                # Different visualization for large gaps vs normal gaps
+                                if gap >= large_gap_threshold:
+                                    large_gaps_count += 1
+                                    # Large gaps: prominent red stems
+                                    markerline, stemlines, baseline = ax.stem([x_pos], [gap], 
+                                                                            linefmt='red', markerfmt='ro', basefmt=' ')
+                                    stemlines.set_linewidth(3)
+                                    markerline.set_markersize(10)
+                                else:
+                                    # Small gaps: subtle stems
+                                    markerline, stemlines, baseline = ax.stem([x_pos], [gap], 
+                                                                    linefmt='-', markerfmt='o', basefmt=' ')
+                                    stemlines.set_linewidth(1)
+                                    markerline.set_markersize(5)
+                                    markerline.set_alpha(0.6)
+                                    stemlines.set_alpha(0.6)
+
+        # Add horizontal line to show large gap threshold
+        ax.axhline(y=large_gap_threshold, color='red', linestyle='--', alpha=0.7, 
+                label=f'Large Gap Threshold ({large_gap_threshold} days)')
+
+        # Customize the plot
+        ax.set_xticks([0, 1, 2])
+        ax.set_xticklabels(['Oct', 'Nov', 'Dec'])
+        ax.set_xlabel('Month', fontsize=12)
+        ax.set_ylabel('Days Between Sequential Confident Predictions', fontsize=12)
+        ax.set_title(f'Sequential Date Gaps in Fall Months | {exp_type}\n'
+                    f'Most dates are sequential (1-2 day gaps) with occasional large gaps (≥{large_gap_threshold} days)\n'
+                    f'Large gaps: {large_gaps_count}/{total_gaps_count} ({100*large_gaps_count/total_gaps_count:.1f}%)',
+                    fontsize=14)
+
+        ax.legend()
+        ax.grid(True, alpha=0.3)
+        ax.set_ylim(0, max(50, ax.get_ylim()[1]))  # Ensure we can see large gaps clearly
+
+        plt.tight_layout()
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/sequential_gaps_{exp_type}_{confidence_level_low}to{confidence_level_high}.png', 
+                    format='png', dpi=250)
+        plt.show()
+
+        # ============================================================================
+        # SUPPLEMENTARY PLOT: Histogram of gap sizes to show the distribution
+        # ============================================================================
+        fig, ax1 = plt.subplots(1, 1, figsize=(8, 5))
+
+        all_gaps = []
+        large_gaps = []
+
+        for exp_name in exp_list:
+            dates_within_fall = all_confident_dates[exp_name][all_confident_dates[exp_name].dt.month.isin(fall_months)]
+            
+            if len(dates_within_fall) > 0:
+                dates_sorted = dates_within_fall.sortby(dates_within_fall)
+                
+                for year in np.unique(dates_sorted.dt.year.values):
+                    year_dates = dates_sorted[dates_sorted.dt.year == year]
+                    
+                    if len(year_dates) > 1:
+                        day_diffs = np.diff(year_dates.dt.dayofyear.values)
+                        all_gaps.extend(day_diffs)
+                        large_gaps.extend([gap for gap in day_diffs if gap >= large_gap_threshold])
+
+        # Histogram of all gaps
+        ax1.hist(all_gaps, bins=range(1, 50), alpha=0.7, color='skyblue', edgecolor='black')
+        ax1.set_yscale('log')
+        ax1.axvline(x=large_gap_threshold, color='red', linestyle='--', 
+                label=f'Large Gap Threshold ({large_gap_threshold} days)')
+        ax1.set_xlabel('Gap Size (days)')
+        ax1.set_ylabel('Frequency')
+        ax1.set_ylim(0, 10**4)
+        ax1.set_title(f'Distribution of All Gap Sizes | {exp_type}\n Confidence Level: {confidence_level_low} to {confidence_level_high}')
+        ax1.legend()
+        ax1.grid(True, alpha=0.3)
+
+        plt.tight_layout()
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/gap_distribution_{exp_type}_{confidence_level_low}to{confidence_level_high}.png', 
+                    format='png', dpi=250)
+        plt.show()
+
+        # ============================================================================
+        # DETAILED ANALYSIS: Summary statistics
+        # ============================================================================
+        print(f"\n=== GAP ANALYSIS SUMMARY for {exp_type} ===")
+        print(f"Total number of gaps analyzed: {len(all_gaps)}")
+        print(f"Number of large gaps (≥{large_gap_threshold} days): {len(large_gaps)}")
+        print(f"Percentage of large gaps: {100*len(large_gaps)/len(all_gaps):.1f}%")
+        print(f"Most common gap size: {max(set(all_gaps), key=all_gaps.count)} days")
+        print(f"Mean gap size: {np.mean(all_gaps):.2f} days")
+        print(f"Median gap size: {np.median(all_gaps):.1f} days")
+        print(f"Sequential gaps (1 day): {all_gaps.count(1)} ({100*all_gaps.count(1)/len(all_gaps):.1f}%)")
+        print(f"Near-sequential gaps (1-2 days): {sum(1 for gap in all_gaps if gap <= 2)} ({100*sum(1 for gap in all_gaps if gap <= 2)/len(all_gaps):.1f}%)")
+
+        if large_gaps:
+            print(f"\nLarge gap statistics:")
+            print(f"Mean large gap size: {np.mean(large_gaps):.1f} days")
+            print(f"Max gap size: {max(large_gaps)} days")
+            print(f"Large gaps by month:")
+            
+            # Analyze which months have the most large gaps
+            large_gap_months = {month: 0 for month in fall_months}
+            for exp_name in exp_list:
+                dates_within_fall = all_confident_dates[exp_name][all_confident_dates[exp_name].dt.month.isin(fall_months)]
+                
+                if len(dates_within_fall) > 0:
+                    dates_sorted = dates_within_fall.sortby(dates_within_fall)
+                    
+                    for year in np.unique(dates_sorted.dt.year.values):
+                        year_dates = dates_sorted[dates_sorted.dt.year == year]
+                        
+                        if len(year_dates) > 1:
+                            day_diffs = np.diff(year_dates.dt.dayofyear.values)
+                            
+                            for date, gap in zip(year_dates[:-1], day_diffs):
+                                month = date.dt.month.item()
+                                if gap >= large_gap_threshold and month in fall_months:
+                                    large_gap_months[month] += 1
+            
+            for month in fall_months:
+                print(f"  {month_names[month]}: {large_gap_months[month]} large gaps")
+
+
+
+
+        # for exp_name in exp_list:
+        #     # select dates within fall months
+        #     dates_within_fall = all_confident_dates[exp_name][all_confident_dates[exp_name].dt.month.isin(fall_months)]
+        #     print(f"dates_within_fall: {dates_within_fall}")
+    
+        #     if len(dates_within_fall) > 0:
+        #         # check for dates within one year at a time: 
+        #         for year in np.unique(dates_within_fall.dt.year.values):
+        #             print(f"year: {year}")
+        #             dates_in_year = dates_within_fall[dates_within_fall.dt.year == year]
+        #             print(f"fall day of year: {dates_in_year.dt.dayofyear.values}")
+        #             fall_diffs = np.diff(dates_in_year.dt.dayofyear)
+        #             print(f"fall_diffs: {fall_diffs}")
+        #             # find dates associated with each value in fall_diffs
+        #             ax.stem(dates_in_year[:-1], fall_diffs, markerfmt=' ')
+                
+
+        #     # fall_group_lengths = np.diff(np.concatenate(([0], fall_chunks + 1, [len(dates_within_fall)])))
+        #     # max_fall_group_length = np.max(fall_group_lengths)
+        #     # mean_fall_group_length = np.mean(fall_group_lengths)
+
+        
+        # # plot group lenghts as histogram: 
+        # # plt.hist(fall_group_lengths, bins=20, color="#d75f27", alpha=0.7)
+        # plt.xlabel('Consecutive Days in Fall (Oct-Dec)')
+        # plt.ylabel('Count of Days between Confident Predictions')
+        # plt.title(f'Temporal Distribution of Selected Samples in Fall | {exp_type} \n Confidence Range: {confidence_level_low}-{confidence_level_high}%')
+        # plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/temporal_distribution_fall_{exp_type}_{confidence_level_low}to{confidence_level_high}.png', format = 'png', dpi = 250)
+
+        # Line Plot of mean CRPS, IQR, Target, and Sample Count by month
+        plt.figure(figsize=(8, 5))
+        month_positions = [0, 1, 2, 3, 4, 5]
+        month_labels = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar']
+        plt.plot(month_positions, mean_composite_monthly[:, 0], marker='o', label='Mean CRPS', color='#3b528b')
+        plt.plot(month_positions, mean_composite_monthly[:, 1], marker='o', label='Mean IQR (sigma)', color='#019bba')
+        plt.plot(month_positions, mean_composite_monthly[:, 2], marker='o', label='Mean Target (m)', color='#33c316')
+        # plt.bar(months, mean_composite_monthly[:, 3], alpha=0.3, label='Sample Count', color='gray')
+        plt.xlabel('Month')
+        plt.ylabel('Values')
+        plt.title(f'Monthly Analysis of CRPS, IQR, Target, and Sample Count | {exp_type} \n Confidence Range: {confidence_level_low}-{confidence_level_high}%')
+        plt.xticks(month_positions, month_labels)
+        plt.ylim([-0.3, 1.8])
+        plt.legend(loc = 'upper left')
+        plt.tight_layout()
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/monthly_analysis_{exp_type}_{confidence_level_low}to{confidence_level_high}.png', format = 'png', dpi = 250)
+
+            # Call ENSO phase analysis function
+            # enso_phase_analysis_output = enso_phase_analysis({exp_name: [exp_name]
+
+def monthly_analysis(iqr, crps, target):
+    """
+    For given experiments, plot mean CRPS, IQR, target value, and number of samples per month on plot vs month.
+    """
+
+    # select months of interest based on months found in target data: 
+    months_of_interest = [10, 11, 12, 1, 2, 3]
+    month_labels = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar']
+
+    iqr_by_month = {}
+    crps_by_month = {}
+    target_by_month = {}
+
+    data_by_month = np.zeros((len(months_of_interest), 4))  # month, mean_crps, mean_iqr, mean_target, count
+
+    for i, month in enumerate(months_of_interest):
+        # select by month using xarray
+        month_mask = (target.time.dt.month == month).values
+        if np.sum(month_mask) == 0:
+            pass
+
+        iqr_by_month[month] = iqr[month_mask]
+        crps_by_month[month] = crps[month_mask]
+        target_by_month[month] = target[month_mask]
+
+        data_by_month[i, 0] = np.mean(crps[month_mask])
+        data_by_month[i, 1] = np.mean(iqr[month_mask])
+        data_by_month[i, 2] = np.mean(target[month_mask])
+        data_by_month[i, 3] = np.sum(month_mask)
+
+
+    return iqr_by_month, crps_by_month, target_by_month, data_by_month

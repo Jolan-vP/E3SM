@@ -64,7 +64,19 @@ from analysis import combined_experiment_analytics as cea
 # print(f"xarray version = {xr.__version__}")
 # print(f"pytorch version = {torch.__version__}")
 
+# ---- Z500 Regime Analysis ----
+E3SM_baseline = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/input_vars.P_T_Z5.v2.LR.historical_0101.eam.h1.1850-2014_precip_mmday.nc')
+E3SM_Z500 = E3SM_baseline.sel(time = slice('1981-01-01', '2010-12-31'))
+E3SM_Z500 = E3SM_Z500.Z500
+print(f"shape E3SM_Z500 = {E3SM_Z500.shape}")
+
+ERA5_baseline = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_raw_climatology_TP_SKT_Z_1981-2010.nc')
+ERA5_Z500 = ERA5_baseline['z'] / 9.81
+print(f"shape ERA5_Z500 = {ERA5_Z500.shape}")
+
+analysis.calc_climatology.Z500_regime(E3SM_Z500, ERA5_Z500) 
 # ------------------------------------------------------------------------------------
+
 
 # keyword = "E3SM-short_E3SM-long_OBS"
 
@@ -75,22 +87,22 @@ from analysis import combined_experiment_analytics as cea
 # keyword = "OBS-OBS_OBS-E3SM"
 
 exps = {
-    "OBS(OBS)": ["exp173", "exp174", "exp175", "exp176", "exp177", "exp178", "exp179", "exp180", "exp181", "exp182", "exp183", "exp184"],
-    "E3SM-short(OBS)": ["exp189", "exp195", "exp196", "exp197", "exp198", "exp199"]
+    # "OBS(OBS)": ["exp173", "exp174", "exp175", "exp176", "exp177", "exp178", "exp179", "exp180", "exp181", "exp182", "exp183", "exp184"]
+    # "E3SM-short(OBS)": ["exp189", "exp195", "exp196", "exp197", "exp198", "exp199"]
     # "E3SM-long(OBS)": ["exp186", "exp187", "exp188", "exp203", "exp204", "exp205"]
-    # "E3SM-short(E3SM)": ["exp185", "exp190", "exp191", "exp192", "exp193", "exp194"],
+    # "E3SM-short(E3SM)": ["exp185", "exp190", "exp191", "exp192", "exp193", "exp194"]
     # "E3SM-long(E3SM)": ["exp154", "exp157", "exp158", "exp200", "exp201", "exp202"], 
-    # "OBS(E3SM)": ["exp206", "exp207", "exp208", "exp209", "exp210", "exp211", "exp212", "exp213", "exp214", "exp215", "exp216", "exp217"]
+    "OBS(E3SM)": ["exp206", "exp207", "exp208", "exp209", "exp210", "exp211", "exp212", "exp213", "exp214", "exp215", "exp216", "exp217"]
 }
 
 # DISCARD PLOTS: # ------------------------------------------------------------------------------------  
 
-# cea.combined_success_discard(exps, keyword = "OBS-OBS_OBS-E3SM_E3SM-short-OBS")
+# cea.combined_success_discard(exps, keyword = "OBS-OBS_OBS-E3SM_E3SM-short-OBS_E3SM-short-E3SM")
 
-# cea.combined_CRPS_IQR_discard(exps, keyword = "OBS-OBS_OBS-E3SM_E3SM-short-OBS")
+# cea.combined_CRPS_IQR_discard(exps, keyword = "OBS-OBS_OBS-E3SM_E3SM-short-OBS_E3SM-short-E3SM")
 
-# cea.IQR_distributions(exps, keyword = "OBS-OBS_OBS-E3SM_E3SM-short-OBS")
-# # 
+# cea.IQR_distributions(exps, keyword = "OBS-OBS_OBS-E3SM_E3SM-short-OBS_E3SM-short-E3SM")
+
 # COMPOSITE MAPPING: # ------------------------------------------------------------------------------------  
 
 # Individual experiment plots: 
@@ -102,10 +114,13 @@ exps = {
 
 # cea.composite_inputmap_target(inde_exps, confidence_level= 20, keyword = "OBS_OBS")
 
-cea.COMPARE_composite_inputmap_target(exps, confidence_level_low= 20, confidence_level_high= 40, keyword = "OBS-OBS_E3SM-short_OBS")
+# cea.COMPARE_composite_inputmap_target(exps, confidence_level_low= 20, confidence_level_high= 40, keyword = "OBS-OBS_E3SM-short_OBS")
 
 ## XAI / CAPTUM# ------------------------------------------------------------------------------------  
 
 # SELECT ONE EXP TYPE AT A TIME: 
-cea.XAI_confidence_compositing(exps, confidence_level_low = 20, confidence_level_high = 40, xai_method = 'integrated_gradients', keyword = "E3SM-short_OBS")
+# cea.XAI_confidence_compositing(exps, confidence_level_low = 20, confidence_level_high = 40, xai_method = 'integrated_gradients', keyword = "E3SM-short_OBS")
 
+## TELECONNECTIONS ANALYSIS # ------------------------------------------------------------------------------------
+
+cea.teleconnection_bias_analysis(exps, confidence_level_low = 20, confidence_level_high = 5, keyword = "OBS_E3SM")
