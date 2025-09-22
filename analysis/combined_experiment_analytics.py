@@ -40,6 +40,8 @@ from matplotlib.colors import LinearSegmentedColormap
 from XAI.captum import average_attributions, visualize_average_attributions
 import torch
 from model.build_model import TorchModel
+from analysis import analysis_metrics
+import databuilder.data_loader as data_loader
 
 import math
 import datetime
@@ -1208,7 +1210,7 @@ def anom_var_distributions(experiments, keyword = None):
     exps = experiments
 
     for exp_type, exp_list in exps.items():
-        mean_monthly_var = []
+  
         all_monthly_pos_anoms = []
         all_monthly_neg_anoms = []
 
@@ -1216,9 +1218,6 @@ def anom_var_distributions(experiments, keyword = None):
             print(f'  Processing experiment: {exp_name}')
             # Load the output and target data for this experiment
             output = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_network_SHASH_parameters.pkl')
-
-            # compare crps to IQR CRPS information: 
-            crps_iqr = open_data_file(f"/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_IQR_CRPS_discard.pkl")
 
             # open crps: 
             crps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_CRPS_network_values.pkl')
@@ -1274,7 +1273,7 @@ def anom_var_distributions(experiments, keyword = None):
             monthly_pos_iqr = []
             monthly_neg_iqr = []
             
-            for month in range(1, 13):  # months 1-12
+            for month in [1, 2, 3, 10, 11, 12]:  
                 month_mask = target['time.month'] == month
                 month_target = target[month_mask]
                 month_iqr = iqr[month_mask]
@@ -1348,68 +1347,54 @@ def plot_all_months_anomaly_histograms(all_monthly_pos_anoms, all_monthly_neg_an
     Plot stacked histograms of positive and negative anomaly counts vs IQR for specified months
     Creates 2x3 subplot layout for 6 months
     """
-    months_of_interest = {0: 10, 1: 11, 2: 12, 3: 1, 4: 2, 5: 3}  # Oct, Nov, Dec, Jan, Feb, Mar (1-indexed)    
-    month_names = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar']
+    months_of_interest = [1, 2, 3, 10, 11, 12]  
+    month_names = ['Jan', 'Feb', 'Mar', 'Oct', 'Nov', 'Dec']
     
     # Create figure with 2x3 subplots for 6 months
-    fig, axes = plt.subplots(2, 3, figsize=(15, 8))
-    axes = axes.flatten()  # Make it easier to iterate
+    fig, axes = plt.subplots(2, 3, figsize=(12, 7))
+    axes = axes.flatten()  
     
-    # Colors from viridis colormap
     import matplotlib.cm as cm
     viridis = cm.get_cmap('Purples')
-    neg_color = viridis(0.1)  # Dark purple
-    pos_color = viridis(0.7)  # Light purple
+    neg_color = viridis(0.8)  # Dark purple
+    pos_color = viridis(0.3)  # Light purple
     
     # Determine global IQR range for consistent binning across the 6 months of interest
     global_iqr_vals = []
-    for month_idx in months_of_interest:
+    for i_month, month_idx in enumerate(months_of_interest):
         month_pos_iqr = []
         month_neg_iqr = []
         
         for exp_idx in range(len(all_monthly_pos_anoms)):
-            month_pos = all_monthly_pos_anoms[exp_idx][month_idx]
-            month_neg = all_monthly_neg_anoms[exp_idx][month_idx]
-            
-            if len(month_pos) > 0:
-                month_pos_iqr.extend(month_pos.values if hasattr(month_pos, 'values') else month_pos)
-            if len(month_neg) > 0:
-                month_neg_iqr.extend(month_neg.values if hasattr(month_neg, 'values') else month_neg)
-        
+            month_pos = all_monthly_pos_anoms[exp_idx][i_month]
+            month_neg = all_monthly_neg_anoms[exp_idx][i_month]
+
         global_iqr_vals.extend(month_pos_iqr + month_neg_iqr)
     
     # Create global bins if we have data
     if len(global_iqr_vals) > 0:
         global_bins = np.linspace(min(global_iqr_vals), max(global_iqr_vals), 25)
     else:
-        global_bins = np.linspace(0, 1, 25)
-    
-    # TODO: FIX THE INDEXING AND FIGURE OUT WHY MISSING HISTOGRAM DATA!!
-    # Create mapping from plot position to data index
-    # If your data is ordered as [Jan, Feb, Mar, Oct, Nov, Dec]
-    # But you want to plot as [Oct, Nov, Dec, Jan, Feb, Mar]
-    data_index_mapping = [3, 4, 5, 0, 1, 2]  # Oct=3, Nov=4, Dec=5, Jan=0, Feb=1, Mar=2
+        global_bins = np.linspace(0.6, 1.9, 25)
     
     # Plot each of the 6 months of interest
     for plot_idx in range(6):  # 0 through 5 for the 6 months
         ax = axes[plot_idx]
-        data_idx = data_index_mapping[plot_idx]  # Get the correct data index
-        
+    
         # Combine all experiments' data for this month
         month_pos_iqr = []
         month_neg_iqr = []
         
         for exp_idx in range(len(all_monthly_pos_anoms)):
-            # Use data_idx to access the correct month data
-            month_pos = all_monthly_pos_anoms[exp_idx][data_idx]
-            month_neg = all_monthly_neg_anoms[exp_idx][data_idx]
-            
-            if len(month_pos) > 0:
-                month_pos_iqr.extend(month_pos.values if hasattr(month_pos, 'values') else month_pos)
-            if len(month_neg) > 0:
-                month_neg_iqr.extend(month_neg.values if hasattr(month_neg, 'values') else month_neg)
-        
-        # Create stacked histogram if we have data
+            month_pos = all_monthly_pos_anoms[exp_idx][plot_idx]
+            month_neg = all_monthly_neg_anoms[exp_idx][plot_idx]
+
+            month_pos_iqr.extend(month_pos.values if hasattr(month_pos, 'values') else month_pos)
+            month_neg_iqr.extend(month_neg.values if hasattr(month_neg, 'values') else month_neg)
+
+            global_iqr_vals.extend(month_pos_iqr + month_neg_iqr)
+
+        # Create stacked histogram
         if len(month_pos_iqr) > 0 or len(month_neg_iqr) > 0:
             # Always create both arrays, use empty arrays if no data
             plot_data = [
@@ -1433,6 +1418,7 @@ def plot_all_months_anomaly_histograms(all_monthly_pos_anoms, all_monthly_neg_an
                
         ax.set_title(month_names[plot_idx], fontsize=12)
         ax.grid(True, alpha=0.3)
+        ax.set_ylim([0, 5.15])
         
         # Only add labels to edge subplots to avoid clutter
         if plot_idx >= 3:  # Bottom row
@@ -1441,23 +1427,243 @@ def plot_all_months_anomaly_histograms(all_monthly_pos_anoms, all_monthly_neg_an
             ax.set_ylabel('Density', fontsize=10)
     
     # Add overall title and legend
-    fig.suptitle('Monthly Anomaly Distributions by IQR (6 Months of Interest)', fontsize=14, y=0.95)
+    fig.suptitle(f'Monthly Anomaly Distributions by IQR | {exp_type}', fontsize=14, y=0.95)
     
     # Create custom legend
     from matplotlib.patches import Patch
     legend_elements = [Patch(facecolor=neg_color, alpha=0.8, label='Negative Anomalies'),
                       Patch(facecolor=pos_color, alpha=0.8, label='Positive Anomalies')]
-    fig.legend(handles=legend_elements, loc='upper right', bbox_to_anchor=(0.98, 0.92))
+    fig.legend(handles=legend_elements, loc='upper right')
     
     plt.tight_layout()
     plt.subplots_adjust(top=0.88) 
     plt.savefig(f"/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/monthly_anomaly_histograms_{exp_type}.png",)
 
+    # Print proportion of positive vs negative anomalies for each month: 
+    for i_month, month_idx in enumerate(months_of_interest):
+        total_pos = sum(len(all_monthly_pos_anoms[exp_idx][i_month]) for exp_idx in range(len(exp_names)))
+        total_neg = sum(len(all_monthly_neg_anoms[exp_idx][i_month]) for exp_idx in range(len(exp_names)))
+        total = total_pos + total_neg
+        if total > 0:
+            pos_pct = (total_pos / total) * 100
+            neg_pct = (total_neg / total) * 100
+            print(f"Month {month_names[i_month]}: Positive Anomalies: {total_pos} ({pos_pct:.1f}%), Negative Anomalies: {total_neg} ({neg_pct:.1f}%)")
+        else:
+            print(f"Month {month_names[i_month]}: No anomalies found.")
 
 
 
 
 
+def m2m_sample_transfer(experiments, selection_method = 'confident_by_month', keyword = None):
+    """
+    Select samples from either OBS(OBS) or E3SM(E3SM) using variety of methods: 
+        - select most confident sample from each month from each random seed
+        - select most confident percentage of samples from total samples from each random seed
+        - select dates that are input by hand
+    
+    Run selected samples through opposing model type (OBS->E3SM or E3SM->OBS) and compare results to original model type.
+    
+    for EACH sample separately, plot: 
+        - First SHASH
+        - Second SHASH
+        - CRPS of first SHASH
+        - CRPS of second SHASH
+        - IQR of first SHASH
+        - IQR of second SHASH
+
+    Compute: 
+        - Which month of the year do samples come from
+        - ENSO phase of samples
+        - MJO phase of samples
+        - Target value of anomaly 
+
+    """
+
+    exps = experiments
+    exp_type_names = list(exps.keys())
+    exp_types_str = ', '.join(exp_type_names)
+    
+    for exp_type, exp_list in exps.items():
+        print(f'Processing experiment type: {exp_type}')
+        data_from_all_seeds1 = {}
+        data_from_all_seeds2 = {}
+        all_selected_indices = []
+
+        for exp_name in exp_list:
+            print(f'  Processing experiment: {exp_name}')
+            selected_samples = {}
+            config = utils.get_config(exp_name)
+            
+            # Load the output and target data for this experiment
+            output = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_network_SHASH_parameters.pkl')
+
+            # open crps: 
+            crps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_CRPS_network_values.pkl')
+
+                ## CALCULATE IQR and Select Samples based on Confidence -------
+            iqr = iqr_basic(output)
+            percentiles = np.linspace(100, 0, 21)
+            
+            # Load testing target data
+            if exp_type in ["E3SM-short(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)"]:
+                data_type = "OBS"
+                target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
+                climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl')
+                climatology_data = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/exp152_E3SM_processed_Z500_climatology_1981-2010.nc')
+                climatology_data = (climatology_data['y'] - climatology_stats['z'][2]) / climatology_stats['z'][3]
+                target = (target['y'] - climatology_stats['z'][2]) / climatology_stats['z'][3]
+        
+            elif exp_type in ["E3SM-short(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)"]:
+                data_type = "E3SM"
+                target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp185_trimmed_test_dat.nc')
+                climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/E3SM_processed_climo_stats_PRECT_Z500_TS_1981-2010.pkl')
+                climatology_data = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/exp153_ERA5_processed_Z500_climatology_1981-2010.nc')
+                climatology_data = (climatology_data['y'] - climatology_stats['Z500'][2]) / climatology_stats['Z500'][3]
+                target = (target['y'] - climatology_stats['Z500'][2]) / climatology_stats['Z500'][3]
+
+
+            if selection_method == 'confident_by_month':
+                # select most confident prediction from each month from each random seed
+                # Identify most confident sample from each month
+                selected_indices = []
+
+                for month in [1, 2, 3, 10, 11, 12]:  
+                    month_mask = target['time.month'] == month
+                    if np.sum(month_mask) == 0:
+                        continue
+
+                    month_iqr = iqr[month_mask]
+                    month_indices = np.where(month_mask)[0]
+
+                    # Find index of minimum IQR in this month
+                    min_iqr_idx = np.argmin(month_iqr)
+                    selected_indices.append(month_indices[min_iqr_idx]) # this collects from all months for this random seed
+            else: 
+                print(f"choose sample selection method or code another one up")
+
+            # identify target dates for these conf samples
+            selected_target_dates = target['time'][selected_indices]
+            # use lagtime to identify input dates for these conf samples
+            lagtime = config['databuilder']['lagtime']
+            selected_input_dates = selected_target_dates - np.timedelta64(lagtime, 'D')
+
+            selected_samples["output1"] = output[selected_indices]
+            selected_samples["target_date1"] = selected_target_dates
+            selected_samples["input_date1"] = selected_input_dates
+            selected_samples["iqr1"] = iqr[selected_indices]
+            selected_samples["crps1"] = crps[selected_indices]
+
+            # accumulate all selected indices from the test dataset: 
+            all_selected_indices.extend(selected_indices)
+
+            # print(f"selected indices: {selected_indices}")
+            # print(f"selected target dates: {selected_target_dates.values}")
+            # print(f"selected input dates: {selected_input_dates.values}")
+            # print(f"selected samples: output1: {selected_samples['output1']}")
+            
+            # ---- TODO identify ENSO and MJO phase of selected samples ----------------
+            # Open ENSO dates for E3SM vs OBS data: 
+            enso_dates_pkl = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_daily_enso_timestamps.pkl')
+            # check which key (category) each of the target dates falls into, and create a list with either "EN", "LN" or "N"
+            enso_phase = []
+            for date in selected_target_dates.values:
+                if date in enso_dates_pkl['El Nino']:
+                    enso_phase.append("EN")
+                elif date in enso_dates_pkl['La Nina']:
+                    enso_phase.append("LN")
+                else:
+                    enso_phase.append("N")
+
+            selected_samples["enso_phase"] = enso_phase
+
+            # MJO: 
+            phase_timestamps = analysis_metrics.mjo_timestamps(data_type, config)
+            selected_mjo_phase = phase_timestamps.sel(time=selected_target_dates)
+
+            selected_samples["mjo_phase"] = selected_mjo_phase
+            data_from_all_seeds1[str(exp_name)] = selected_samples
+
+        # print(f"all selected indices: {all_selected_indices}, len: {len(all_selected_indices)}")
+        
+        # Find corresponding samples in opposing model type: 
+        if exp_type in ["OBS(OBS)"]:
+            opposing_exp = "E3SM-short(OBS)"
+            models = ["exp189", "exp195", "exp196", "exp197", "exp198", "exp199"]
+        elif exp_type in ["E3SM-short(E3SM)"]: 
+            opposing_exp = "OBS(E3SM)"
+            models = ["exp206", "exp207", "exp208", "exp209", "exp210", "exp211", "exp212", "exp213", "exp214", "exp215", "exp216", "exp217"]
+
+        # For each selected sample from original model, find corresponding sample in opposing model using input date
+        # Collect all target dates from 'data_from_all_seeds[exp_name]["target_date1"]'
+        all_target1_dates = []
+        all_output1 = []
+        all_iqr1 = []
+        all_crps1 = []
+
+        for iexp, exp_name in enumerate(exp_list):
+            all_target1_dates.extend(data_from_all_seeds1[exp_name]["target_date1"].values)
+            all_output1.extend(data_from_all_seeds1[exp_name]["output1"])
+            all_iqr1.extend(data_from_all_seeds1[exp_name]["iqr1"])
+            all_crps1.extend(data_from_all_seeds1[exp_name]["crps1"])
+
+        for ood_model in models: 
+            print(f"  Processing opposing model: {ood_model}")
+            selected_samples = {}
+            config = utils.get_config(ood_model)
+            
+            # Load the output and target data for this experiment
+            output_ood = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{ood_model}/{ood_model}_network_SHASH_parameters.pkl')
+
+            # open crps: 
+            crps_ood = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{ood_model}/{ood_model}_CRPS_network_values.pkl')
+
+                ## CALCULATE IQR and Select Samples based on Confidence -------
+            iqr_ood = iqr_basic(output_ood)
+            percentiles = np.linspace(100, 0, 21)
+            
+            # Load testing target data
+            if opposing_exp in ["E3SM-short(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)"]:
+                target_ood = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
+                climatology_stats_ood = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl')#
+                target_ood = (target_ood['y'] - climatology_stats_ood['z'][2]) / climatology_stats_ood['z'][3]
+        
+            elif opposing_exp in ["E3SM-short(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)"]:
+                target_ood = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp185_trimmed_test_dat.nc')
+                climatology_stats_ood = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/E3SM_processed_climo_stats_PRECT_Z500_TS_1981-2010.pkl')
+                target_ood = (target_ood['y'] - climatology_stats_ood['Z500'][2]) / climatology_stats_ood['Z500'][3]
+
+            # use target_dates1 to identify results from other models for these conf samples
+            selected_samples["output2"] = output[all_selected_indices]
+            selected_samples["target_date2"] = all_target1_dates
+            selected_samples["input_date2"] = selected_input_dates
+            selected_samples["iqr2"] = iqr[all_selected_indices]
+            selected_samples["crps2"] = crps[all_selected_indices]
+            selected_samples["enso_phase2"] = data_from_all_seeds1[exp_list[0]]["enso_phase"]
+            selected_samples["mjo_phase2"] = data_from_all_seeds1[exp_list[0]]["mjo_phase"]
+
+            data_from_all_seeds2[str(ood_model)] = selected_samples
+
+        # ---- PLOTTING ---------------------------------------------------------
+        # for each sample, plot SHASH curves, climatology, CRPS, IQR for both models
+
+        # SUMMARY PLOT: 
+        # 4 panels: (1) shash curves (2) MJO phase distributions (3) ENSO phase distribution (4) target value distribution
+
+
+        # INDIVIDUAL PLOTS: 
+        # Select single random seed experiment to plot individual samples from
+        # 2 panels (1) shash curves (2) input map
+
+        
+
+
+        # plot summary statistics; distribution of MJO phase, ENSO phase for most confident sample by month in every random seed 
+        # plot distribution of target values for most confident sample by month in every random seed
+        # aggregate infromation across all random seeds (using append?)
+
+
+        
 
 
 
@@ -1655,3 +1861,60 @@ def plot_all_months_anomaly_histograms(all_monthly_pos_anoms, all_monthly_neg_an
         # plt.ylabel('Count of Days between Confident Predictions')
         # plt.title(f'Temporal Distribution of Selected Samples in Fall | {exp_type} \n Confidence Range: {confidence_level_low}-{confidence_level_high}%')
         # plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/temporal_distribution_fall_{exp_type}_{confidence_level_low}to{confidence_level_high}.png', format = 'png', dpi = 250)
+
+
+
+           # figure out storage of these variables from all random seed experiments together
+                # selected_samples["output1"] = output[selected_indices]
+                # selected_samples["target_date1"] = selected_target_dates
+                # selected_samples["input_date1"] = selected_input_dates
+                # selected_samples["iqr1"] = iqr[selected_indices]
+                # selected_samples["crps1"] = crps[selected_indices]
+
+
+            # # Prepare selected samples to go into dataloader: ['x'], ['y'], ['time'], etc... 
+            #     input_testfn = str(config["perlmutter_inputs_dir"]) + str(config["input_data"]) + "_trimmed_" + "test_dat.nc"
+            #     input_test_data = open_data_file(input_testfn)
+            #     input_test_data_trimmed = input_test_data.sel(time = selected_target_dates)
+            #     save_fn = '/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/{exp_name}_conf_monthly_selected_input_test_data.nc'
+            #     input_test_data_trimmed.to_netcdf(save_fn)
+
+            #     # NOW RUN SELECTED SAMPLES THROUGH OPPOSING MODEL TYPE -----------------
+            #     # Establish selected samples as an inference dataset usign dataloader: 
+            #     selected_inf_set = data_loader.CustomData(save_fn, config, which_set = 'testing')
+
+            #     if exp_type in ["OBS(OBS)"]:
+            #         opposing_exp_type = "E3SM-short(OBS)"
+            #         trained_model2_exp = "exp185" # seed 1 of E3SM-short(E3SM) models
+            #     elif exp_type in ["E3SM-short(E3SM)"]:
+            #         opposing_exp_type = "OBS(E3SM)"
+            #         trained_model2_exp = "exp173" # seed 1 of OBS(OBS) models
+
+            #     ood_config = utils.get_config(str(trained_model2_exp))
+            #     device = utils.prepare_device(ood_config["device"])
+                
+            #     # Load the Model
+            #     path = str(ood_config["perlmutter_model_dir"]) + str(trained_model2_exp) + '.pth'
+
+            #     load_model_dict = torch.load(path)
+
+            #     state_dict = load_model_dict["model_state_dict"]
+            #     std_mean = load_model_dict["training_std_mean"]
+
+            #     model = TorchModel(
+            #         config=ood_config["arch"],
+            #         target_mean=std_mean["trainset_target_mean"],
+            #         target_std=std_mean["trainset_target_std"],
+            #     )
+            
+            #     model.load_state_dict(state_dict)
+            #     model.eval()
+
+            #     with torch.inference_mode():
+            #         print(device)
+            #         ood_output = model.predict(dataset=selected_inf_set, batch_size=128, device=device)
+                
+            #     # Save Model Outputs
+            #     ood_model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(trained_model2_exp) + 'T_' + str(config["expname"]) + '_OOD_network_SHASH_parameters_CONFIDENT_SELECTION.pkl'
+            #     analysis_metrics.save_pickle(ood_output, ood_model_output)
+            #     # print(ood_output[:20]) # look at a small sample of the output data

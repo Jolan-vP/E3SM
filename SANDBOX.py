@@ -34,7 +34,6 @@ from databuilder.data_generator import ClimateData
 import model.loss as module_loss
 import model.metric as module_metric
 from databuilder.data_generator import multi_input_data_organizer
-import databuilder.data_loader as data_loader
 from utils.filemethods import open_data_file
 from trainer.trainer import Trainer
 from model.build_model import TorchModel

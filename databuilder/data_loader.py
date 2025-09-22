@@ -205,7 +205,7 @@ def universaldataloader(data_file, config, target_only = False, repackage = Fals
                 # print location of nans
                 print(np.where(np.isnan(input_mod_final)))
 
-    
+            # ALL TRIMMED DATA HAS COORDINATES OF THE TARGET DATA
             if len(input_mod_final.shape) == 4: 
                 data_dict = xr.Dataset({
                     "x": (["time", "lat", "lon", "channel"], input_mod_final.data),  

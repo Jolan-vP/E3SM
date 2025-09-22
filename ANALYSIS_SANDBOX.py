@@ -68,13 +68,13 @@ from analysis import combined_experiment_analytics as cea
 E3SM_baseline = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/input_vars.P_T_Z5.v2.LR.historical_0101.eam.h1.1850-2014_precip_mmday.nc')
 E3SM_Z500 = E3SM_baseline.sel(time = slice('1981-01-01', '2010-12-31'))
 E3SM_Z500 = E3SM_Z500.Z500
-print(f"shape E3SM_Z500 = {E3SM_Z500.shape}")
+# print(f"shape E3SM_Z500 = {E3SM_Z500.shape}")
 
 ERA5_baseline = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_raw_climatology_TP_SKT_Z_1981-2010.nc')
 ERA5_Z500 = ERA5_baseline['z'] / 9.81
-print(f"shape ERA5_Z500 = {ERA5_Z500.shape}")
+# print(f"shape ERA5_Z500 = {ERA5_Z500.shape}")
 
-analysis.calc_climatology.Z500_regime(E3SM_Z500, ERA5_Z500) 
+# analysis.calc_climatology.Z500_regime(E3SM_Z500, ERA5_Z500) 
 # ------------------------------------------------------------------------------------
 
 
@@ -87,12 +87,12 @@ analysis.calc_climatology.Z500_regime(E3SM_Z500, ERA5_Z500)
 # keyword = "OBS-OBS_OBS-E3SM"
 
 exps = {
-    # "OBS(OBS)": ["exp173", "exp174", "exp175", "exp176", "exp177", "exp178", "exp179", "exp180", "exp181", "exp182", "exp183", "exp184"]
+    "OBS(OBS)": ["exp173", "exp174", "exp175", "exp176", "exp177", "exp178", "exp179", "exp180", "exp181", "exp182", "exp183", "exp184"]
     # "E3SM-short(OBS)": ["exp189", "exp195", "exp196", "exp197", "exp198", "exp199"]
     # "E3SM-long(OBS)": ["exp186", "exp187", "exp188", "exp203", "exp204", "exp205"]
     # "E3SM-short(E3SM)": ["exp185", "exp190", "exp191", "exp192", "exp193", "exp194"]
     # "E3SM-long(E3SM)": ["exp154", "exp157", "exp158", "exp200", "exp201", "exp202"], 
-    "OBS(E3SM)": ["exp206", "exp207", "exp208", "exp209", "exp210", "exp211", "exp212", "exp213", "exp214", "exp215", "exp216", "exp217"]
+    # "OBS(E3SM)": ["exp206", "exp207", "exp208", "exp209", "exp210", "exp211", "exp212", "exp213", "exp214", "exp215", "exp216", "exp217"]
 }
 
 # DISCARD PLOTS: # ------------------------------------------------------------------------------------  
@@ -125,4 +125,6 @@ exps = {
 
 # cea.teleconnection_bias_analysis(exps, confidence_level_low = 20, confidence_level_high = 5, keyword = "OBS_E3SM")
 
-cea.anom_var_distributions(exps, keyword = "OBS_E3SM")
+# cea.anom_var_distributions(exps, keyword = "E3SM-short_OBS")
+
+cea.m2m_sample_transfer(exps, selection_method = 'confident_by_month', keyword = "OBS(OBS)")
