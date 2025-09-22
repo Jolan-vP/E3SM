@@ -1112,206 +1112,37 @@ def teleconnection_bias_analysis(experiments, confidence_level_low = 20, confide
 
 
         # Temporal Distribution of selected samples by month using dates_within_confidence
-        fig, ax = plt.subplots()
-        fig.subplots_adjust(bottom=0.2)
-        plt.xticks(rotation=90) 
-        # for Fall months (Oct, Nov, Dec) 
-        fall_months = [10, 11, 12]
-        month_names = {10: 'Oct', 11: 'Nov', 12: 'Dec'}
-        month_positions = {10: 0, 11: 1, 12: 2}
-
-        # Define what constitutes a "large gap"
-        large_gap_threshold = 10  # days
-
-        # ============================================================================
-        # MAIN PLOT: Show gaps with different emphasis for large vs small gaps
-        # ============================================================================
-        fig, ax = plt.subplots(figsize=(15, 8))
-
-        # Colors for different seed experiments
-        seed_colors = plt.cm.viridis(np.linspace(0, 1, len(exp_list)))
-
-        large_gaps_count = 0
-        total_gaps_count = 0
-
-        for seed_idx, exp_name in enumerate(exp_list):
-            dates_within_fall = all_confident_dates[exp_name][all_confident_dates[exp_name].dt.month.isin(fall_months)]
+        # def find_chunks(dates, max_gap=3):
+        #     """Find consecutive chunks in dates with gaps <= max_gap days"""
+        #     if len(dates) < 2:
+        #         return [len(dates)] if len(dates) == 1 else []
             
-            if len(dates_within_fall) > 0:
-                # Sort dates to ensure proper sequential analysis
-                dates_sorted = dates_within_fall.sortby(dates_within_fall)
-                
-                # Group by year to handle year boundaries properly
-                for year in np.unique(dates_sorted.dt.year.values):
-                    year_dates = dates_sorted[dates_sorted.dt.year == year]
-                    
-                    if len(year_dates) > 1:
-                        # Calculate day-of-year differences
-                        day_diffs = np.diff(year_dates.dt.dayofyear.values)
-                        
-                        # For dates that span across months, we need to handle them carefully
-                        for i, (date, gap) in enumerate(zip(year_dates[:-1], day_diffs)):
-                            month = date.dt.month.item()
-                            if month in fall_months:
-                                total_gaps_count += 1
-                                
-                                # Determine x-position based on month
-                                # Add small offset for each seed
-                                seed_offset = (seed_idx - len(exp_list)/2 + 0.5) * 0.08
-                                x_pos = month_positions[month] + seed_offset
-                                
-                                # Different visualization for large gaps vs normal gaps
-                                if gap >= large_gap_threshold:
-                                    large_gaps_count += 1
-                                    # Large gaps: prominent red stems
-                                    markerline, stemlines, baseline = ax.stem([x_pos], [gap], 
-                                                                            linefmt='red', markerfmt='ro', basefmt=' ')
-                                    stemlines.set_linewidth(3)
-                                    markerline.set_markersize(10)
-                                else:
-                                    # Small gaps: subtle stems
-                                    markerline, stemlines, baseline = ax.stem([x_pos], [gap], 
-                                                                    linefmt='-', markerfmt='o', basefmt=' ')
-                                    stemlines.set_linewidth(1)
-                                    markerline.set_markersize(5)
-                                    markerline.set_alpha(0.6)
-                                    stemlines.set_alpha(0.6)
-
-        # Add horizontal line to show large gap threshold
-        ax.axhline(y=large_gap_threshold, color='red', linestyle='--', alpha=0.7, 
-                label=f'Large Gap Threshold ({large_gap_threshold} days)')
-
-        # Customize the plot
-        ax.set_xticks([0, 1, 2])
-        ax.set_xticklabels(['Oct', 'Nov', 'Dec'])
-        ax.set_xlabel('Month', fontsize=12)
-        ax.set_ylabel('Days Between Sequential Confident Predictions', fontsize=12)
-        ax.set_title(f'Sequential Date Gaps in Fall Months | {exp_type}\n'
-                    f'Most dates are sequential (1-2 day gaps) with occasional large gaps (≥{large_gap_threshold} days)\n'
-                    f'Large gaps: {large_gaps_count}/{total_gaps_count} ({100*large_gaps_count/total_gaps_count:.1f}%)',
-                    fontsize=14)
-
-        ax.legend()
-        ax.grid(True, alpha=0.3)
-        ax.set_ylim(0, max(50, ax.get_ylim()[1]))  # Ensure we can see large gaps clearly
-
-        plt.tight_layout()
-        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/sequential_gaps_{exp_type}_{confidence_level_low}to{confidence_level_high}.png', 
-                    format='png', dpi=250)
-        plt.show()
-
-        # ============================================================================
-        # SUPPLEMENTARY PLOT: Histogram of gap sizes to show the distribution
-        # ============================================================================
-        fig, ax1 = plt.subplots(1, 1, figsize=(8, 5))
-
-        all_gaps = []
-        large_gaps = []
-
-        for exp_name in exp_list:
-            dates_within_fall = all_confident_dates[exp_name][all_confident_dates[exp_name].dt.month.isin(fall_months)]
+        #     day_diffs = np.diff(dates.dt.dayofyear.values)
+        #     chunks = []
+        #     chunk_start = 0
             
-            if len(dates_within_fall) > 0:
-                dates_sorted = dates_within_fall.sortby(dates_within_fall)
-                
-                for year in np.unique(dates_sorted.dt.year.values):
-                    year_dates = dates_sorted[dates_sorted.dt.year == year]
-                    
-                    if len(year_dates) > 1:
-                        day_diffs = np.diff(year_dates.dt.dayofyear.values)
-                        all_gaps.extend(day_diffs)
-                        large_gaps.extend([gap for gap in day_diffs if gap >= large_gap_threshold])
-
-        # Histogram of all gaps
-        ax1.hist(all_gaps, bins=range(1, 50), alpha=0.7, color='skyblue', edgecolor='black')
-        ax1.set_yscale('log')
-        ax1.axvline(x=large_gap_threshold, color='red', linestyle='--', 
-                label=f'Large Gap Threshold ({large_gap_threshold} days)')
-        ax1.set_xlabel('Gap Size (days)')
-        ax1.set_ylabel('Frequency')
-        ax1.set_ylim(0, 10**4)
-        ax1.set_title(f'Distribution of All Gap Sizes | {exp_type}\n Confidence Level: {confidence_level_low} to {confidence_level_high}')
-        ax1.legend()
-        ax1.grid(True, alpha=0.3)
-
-        plt.tight_layout()
-        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/gap_distribution_{exp_type}_{confidence_level_low}to{confidence_level_high}.png', 
-                    format='png', dpi=250)
-        plt.show()
-
-        # ============================================================================
-        # DETAILED ANALYSIS: Summary statistics
-        # ============================================================================
-        print(f"\n=== GAP ANALYSIS SUMMARY for {exp_type} ===")
-        print(f"Total number of gaps analyzed: {len(all_gaps)}")
-        print(f"Number of large gaps (≥{large_gap_threshold} days): {len(large_gaps)}")
-        print(f"Percentage of large gaps: {100*len(large_gaps)/len(all_gaps):.1f}%")
-        print(f"Most common gap size: {max(set(all_gaps), key=all_gaps.count)} days")
-        print(f"Mean gap size: {np.mean(all_gaps):.2f} days")
-        print(f"Median gap size: {np.median(all_gaps):.1f} days")
-        print(f"Sequential gaps (1 day): {all_gaps.count(1)} ({100*all_gaps.count(1)/len(all_gaps):.1f}%)")
-        print(f"Near-sequential gaps (1-2 days): {sum(1 for gap in all_gaps if gap <= 2)} ({100*sum(1 for gap in all_gaps if gap <= 2)/len(all_gaps):.1f}%)")
-
-        if large_gaps:
-            print(f"\nLarge gap statistics:")
-            print(f"Mean large gap size: {np.mean(large_gaps):.1f} days")
-            print(f"Max gap size: {max(large_gaps)} days")
-            print(f"Large gaps by month:")
+        #     for i, gap in enumerate(day_diffs):
+        #         if gap > max_gap:  # End current chunk
+        #             chunks.append(i + 1 - chunk_start)
+        #             chunk_start = i + 1
             
-            # Analyze which months have the most large gaps
-            large_gap_months = {month: 0 for month in fall_months}
-            for exp_name in exp_list:
-                dates_within_fall = all_confident_dates[exp_name][all_confident_dates[exp_name].dt.month.isin(fall_months)]
-                
-                if len(dates_within_fall) > 0:
-                    dates_sorted = dates_within_fall.sortby(dates_within_fall)
-                    
-                    for year in np.unique(dates_sorted.dt.year.values):
-                        year_dates = dates_sorted[dates_sorted.dt.year == year]
-                        
-                        if len(year_dates) > 1:
-                            day_diffs = np.diff(year_dates.dt.dayofyear.values)
-                            
-                            for date, gap in zip(year_dates[:-1], day_diffs):
-                                month = date.dt.month.item()
-                                if gap >= large_gap_threshold and month in fall_months:
-                                    large_gap_months[month] += 1
-            
-            for month in fall_months:
-                print(f"  {month_names[month]}: {large_gap_months[month]} large gaps")
+        #     # Add final chunk
+        #     chunks.append(len(dates) - chunk_start)
+        #     return chunks
 
+        # # Setup
+        # fall_months = [10, 11, 12]
+        # first_exp = exp_list[0]
+        # max_gap = 3
+        # target_year = 2013  # Pick a specific year that has data
 
+        # print(f"Analyzing consecutive chunks for experiment: {first_exp}")
 
-
-        # for exp_name in exp_list:
-        #     # select dates within fall months
-        #     dates_within_fall = all_confident_dates[exp_name][all_confident_dates[exp_name].dt.month.isin(fall_months)]
-        #     print(f"dates_within_fall: {dates_within_fall}")
-    
-        #     if len(dates_within_fall) > 0:
-        #         # check for dates within one year at a time: 
-        #         for year in np.unique(dates_within_fall.dt.year.values):
-        #             print(f"year: {year}")
-        #             dates_in_year = dates_within_fall[dates_within_fall.dt.year == year]
-        #             print(f"fall day of year: {dates_in_year.dt.dayofyear.values}")
-        #             fall_diffs = np.diff(dates_in_year.dt.dayofyear)
-        #             print(f"fall_diffs: {fall_diffs}")
-        #             # find dates associated with each value in fall_diffs
-        #             ax.stem(dates_in_year[:-1], fall_diffs, markerfmt=' ')
-                
-
-        #     # fall_group_lengths = np.diff(np.concatenate(([0], fall_chunks + 1, [len(dates_within_fall)])))
-        #     # max_fall_group_length = np.max(fall_group_lengths)
-        #     # mean_fall_group_length = np.mean(fall_group_lengths)
+        # # Get and filter dates
+        # dates_fall = all_confident_dates[first_exp]
+        # dates_fall = dates_fall[dates_fall.dt.month.isin(fall_months)]
 
         
-        # # plot group lenghts as histogram: 
-        # # plt.hist(fall_group_lengths, bins=20, color="#d75f27", alpha=0.7)
-        # plt.xlabel('Consecutive Days in Fall (Oct-Dec)')
-        # plt.ylabel('Count of Days between Confident Predictions')
-        # plt.title(f'Temporal Distribution of Selected Samples in Fall | {exp_type} \n Confidence Range: {confidence_level_low}-{confidence_level_high}%')
-        # plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/temporal_distribution_fall_{exp_type}_{confidence_level_low}to{confidence_level_high}.png', format = 'png', dpi = 250)
-
         # Line Plot of mean CRPS, IQR, Target, and Sample Count by month
         plt.figure(figsize=(8, 5))
         month_positions = [0, 1, 2, 3, 4, 5]
@@ -1364,3 +1195,463 @@ def monthly_analysis(iqr, crps, target):
 
 
     return iqr_by_month, crps_by_month, target_by_month, data_by_month
+
+
+
+def anom_var_distributions(experiments, keyword = None):
+    """
+    (1) Variance by month across all random seeds for given experiment type
+    (2) Stacked histogram of count of positive vs negative anomalies by month (October, November, December individually)    
+    
+    """
+
+    exps = experiments
+
+    for exp_type, exp_list in exps.items():
+        mean_monthly_var = []
+        all_monthly_pos_anoms = []
+        all_monthly_neg_anoms = []
+
+        for exp_name in exp_list:
+            print(f'  Processing experiment: {exp_name}')
+            # Load the output and target data for this experiment
+            output = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_network_SHASH_parameters.pkl')
+
+            # compare crps to IQR CRPS information: 
+            crps_iqr = open_data_file(f"/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_IQR_CRPS_discard.pkl")
+
+            # open crps: 
+            crps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_CRPS_network_values.pkl')
+
+             ## CALCULATE IQR and Select Samples based on Confidence -------
+            iqr = iqr_basic(output)
+            percentiles = np.linspace(100, 0, 21)
+            
+            # Load testing target data
+            if exp_type in ["E3SM-short(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)"]:
+                target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
+                # Load climatology statistics
+                climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl')#
+                target = (target['y'] - climatology_stats['z'][2]) / climatology_stats['z'][3]
+                target_label = "OBS"
+       
+            elif exp_type in ["E3SM-short(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)"]:
+                target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp185_trimmed_test_dat.nc')
+                climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/E3SM_processed_climo_stats_PRECT_Z500_TS_1981-2010.pkl')
+                target = (target['y'] - climatology_stats['Z500'][2]) / climatology_stats['Z500'][3]
+                target_label = "E3SM"
+
+            avg_crps = []
+            avg_target = []
+            avg_iqr = []
+            sample_index = np.zeros((len(target), len(percentiles)))
+
+            # Sort by IQR
+            iqr_sorted_indices = np.argsort(iqr)
+            iqr_sorted = iqr[iqr_sorted_indices]
+            target_sorted = target[iqr_sorted_indices]
+            crps_sorted = crps[iqr_sorted_indices]
+
+            for ip, p in enumerate(percentiles):
+                # percentage of samples to keep for each round of the loop
+                num_to_keep = int(len(iqr_sorted) * p / 100)
+                
+                indices = iqr_sorted_indices[:num_to_keep]
+
+                if len(indices) == 0:
+                    avg_crps.append(np.nan)
+                    avg_target.append(np.nan)
+                    avg_iqr.append(np.nan)
+                else:
+                    avg_crps.append(np.mean(crps[indices]))
+                    avg_target.append(np.mean(target[indices]))
+                    avg_iqr.append(np.mean(iqr[indices]))
+                    sample_index[:len(indices), ip] = indices
+
+            # Count positive and negative anomalies by month with their corresponding IQR values
+            monthly_pos_count = []
+            monthly_neg_count = []
+            monthly_pos_iqr = []
+            monthly_neg_iqr = []
+            
+            for month in range(1, 13):  # months 1-12
+                month_mask = target['time.month'] == month
+                month_target = target[month_mask]
+                month_iqr = iqr[month_mask]
+                
+                # Positive anomalies
+                pos_mask = month_target > 0
+                pos_count = pos_mask.sum().values
+                pos_iqr_vals = month_iqr[pos_mask]
+                
+                # Negative anomalies  
+                neg_mask = month_target < 0
+                neg_count = neg_mask.sum().values
+                neg_iqr_vals = month_iqr[neg_mask]
+                
+                monthly_pos_count.append(pos_count)
+                monthly_neg_count.append(neg_count)
+                monthly_pos_iqr.append(pos_iqr_vals)
+                monthly_neg_iqr.append(neg_iqr_vals)
+            
+            all_monthly_pos_anoms.append(monthly_pos_iqr)
+            all_monthly_neg_anoms.append(monthly_neg_iqr)
+
+        plot_all_months_anomaly_histograms(all_monthly_pos_anoms, all_monthly_neg_anoms, exp_list, exp_type)
+
+    target_ERA5 = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
+    # Load climatology statistics
+    climatology_stats_ERA5 = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl')
+    target_ERA5 = (target_ERA5['y'] - climatology_stats_ERA5['z'][2]) / climatology_stats_ERA5['z'][3]
+    target_ERA5_label = "OBS"
+       
+    target_E3SM = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp185_trimmed_test_dat.nc')
+    climatology_stats_E3SM = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/E3SM_processed_climo_stats_PRECT_Z500_TS_1981-2010.pkl')
+    target_E3SM = (target_E3SM['y'] - climatology_stats_E3SM['Z500'][2]) / climatology_stats_E3SM['Z500'][3]
+    target_E3SM_label = "E3SM"
+
+    # variance by month of target data:
+    monthly_variance_E3SM = target_E3SM.groupby('time.month').var(dim='time')
+    monthly_variance_ERA5 = target_ERA5.groupby('time.month').var(dim='time')
+
+    # Convert xarray to numpy array and handle scalar case
+    if hasattr(monthly_variance_E3SM, 'values'):
+        monthly_variance_E3SM = monthly_variance_E3SM.values  # Extract numpy array from xarray
+
+    # Handle the case where it might be a scalar after taking mean
+    if np.isscalar(monthly_variance_E3SM):
+        print(f"Warning: mean_monthly_var is a scalar: {monthly_variance_E3SM}")
+    else:
+        plt.figure(figsize=(8, 5))
+        months = [0, 1, 2, 3, 4, 5]  # Positions for Oct, Nov, Dec, Jan, Feb, Mar}
+        month_labels = ['Jan', 'Feb', 'Mar', 'Oct', 'Nov', 'Dec']
+        
+        # Now we can safely use len() on the numpy array
+        x_positions = list(range(len(monthly_variance_E3SM)))
+        plt.scatter(x_positions, monthly_variance_E3SM, label='E3SM')
+        plt.scatter(x_positions, monthly_variance_ERA5, label='ERA5')
+        plt.xlabel('Month')
+        plt.ylabel('Variance')
+        plt.title(f'Mean Monthly Variance of Target Variable | {target_label}')
+        plt.xticks(x_positions, month_labels[:len(monthly_variance_E3SM)])
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/monthly_variance_E3SMvsERA5.png', format='png', dpi=250)
+            
+
+
+
+
+
+def plot_all_months_anomaly_histograms(all_monthly_pos_anoms, all_monthly_neg_anoms, exp_names, exp_type):
+    """
+    Plot stacked histograms of positive and negative anomaly counts vs IQR for specified months
+    Creates 2x3 subplot layout for 6 months
+    """
+    months_of_interest = {0: 10, 1: 11, 2: 12, 3: 1, 4: 2, 5: 3}  # Oct, Nov, Dec, Jan, Feb, Mar (1-indexed)    
+    month_names = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar']
+    
+    # Create figure with 2x3 subplots for 6 months
+    fig, axes = plt.subplots(2, 3, figsize=(15, 8))
+    axes = axes.flatten()  # Make it easier to iterate
+    
+    # Colors from viridis colormap
+    import matplotlib.cm as cm
+    viridis = cm.get_cmap('Purples')
+    neg_color = viridis(0.1)  # Dark purple
+    pos_color = viridis(0.7)  # Light purple
+    
+    # Determine global IQR range for consistent binning across the 6 months of interest
+    global_iqr_vals = []
+    for month_idx in months_of_interest:
+        month_pos_iqr = []
+        month_neg_iqr = []
+        
+        for exp_idx in range(len(all_monthly_pos_anoms)):
+            month_pos = all_monthly_pos_anoms[exp_idx][month_idx]
+            month_neg = all_monthly_neg_anoms[exp_idx][month_idx]
+            
+            if len(month_pos) > 0:
+                month_pos_iqr.extend(month_pos.values if hasattr(month_pos, 'values') else month_pos)
+            if len(month_neg) > 0:
+                month_neg_iqr.extend(month_neg.values if hasattr(month_neg, 'values') else month_neg)
+        
+        global_iqr_vals.extend(month_pos_iqr + month_neg_iqr)
+    
+    # Create global bins if we have data
+    if len(global_iqr_vals) > 0:
+        global_bins = np.linspace(min(global_iqr_vals), max(global_iqr_vals), 25)
+    else:
+        global_bins = np.linspace(0, 1, 25)
+    
+    # TODO: FIX THE INDEXING AND FIGURE OUT WHY MISSING HISTOGRAM DATA!!
+    # Create mapping from plot position to data index
+    # If your data is ordered as [Jan, Feb, Mar, Oct, Nov, Dec]
+    # But you want to plot as [Oct, Nov, Dec, Jan, Feb, Mar]
+    data_index_mapping = [3, 4, 5, 0, 1, 2]  # Oct=3, Nov=4, Dec=5, Jan=0, Feb=1, Mar=2
+    
+    # Plot each of the 6 months of interest
+    for plot_idx in range(6):  # 0 through 5 for the 6 months
+        ax = axes[plot_idx]
+        data_idx = data_index_mapping[plot_idx]  # Get the correct data index
+        
+        # Combine all experiments' data for this month
+        month_pos_iqr = []
+        month_neg_iqr = []
+        
+        for exp_idx in range(len(all_monthly_pos_anoms)):
+            # Use data_idx to access the correct month data
+            month_pos = all_monthly_pos_anoms[exp_idx][data_idx]
+            month_neg = all_monthly_neg_anoms[exp_idx][data_idx]
+            
+            if len(month_pos) > 0:
+                month_pos_iqr.extend(month_pos.values if hasattr(month_pos, 'values') else month_pos)
+            if len(month_neg) > 0:
+                month_neg_iqr.extend(month_neg.values if hasattr(month_neg, 'values') else month_neg)
+        
+        # Create stacked histogram if we have data
+        if len(month_pos_iqr) > 0 or len(month_neg_iqr) > 0:
+            # Always create both arrays, use empty arrays if no data
+            plot_data = [
+                month_neg_iqr if len(month_neg_iqr) > 0 else [],
+                month_pos_iqr if len(month_pos_iqr) > 0 else []
+            ]
+            try:
+                ax.hist(plot_data, 
+                        bins=global_bins, 
+                        stacked=True,
+                        density=True,
+                        color=[neg_color, pos_color],
+                        alpha=0.8,
+                        edgecolor='black',
+                        linewidth=0.3)
+                print(f"  -> Successfully plotted month {plot_idx}")
+            except Exception as e:
+                print(f"  -> Error plotting month {plot_idx}: {e}")
+        else:
+            print(f"  -> No data for month {plot_idx}")
+               
+        ax.set_title(month_names[plot_idx], fontsize=12)
+        ax.grid(True, alpha=0.3)
+        
+        # Only add labels to edge subplots to avoid clutter
+        if plot_idx >= 3:  # Bottom row
+            ax.set_xlabel('IQR', fontsize=10)
+        if plot_idx % 3 == 0:  # Left column
+            ax.set_ylabel('Density', fontsize=10)
+    
+    # Add overall title and legend
+    fig.suptitle('Monthly Anomaly Distributions by IQR (6 Months of Interest)', fontsize=14, y=0.95)
+    
+    # Create custom legend
+    from matplotlib.patches import Patch
+    legend_elements = [Patch(facecolor=neg_color, alpha=0.8, label='Negative Anomalies'),
+                      Patch(facecolor=pos_color, alpha=0.8, label='Positive Anomalies')]
+    fig.legend(handles=legend_elements, loc='upper right', bbox_to_anchor=(0.98, 0.92))
+    
+    plt.tight_layout()
+    plt.subplots_adjust(top=0.88) 
+    plt.savefig(f"/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/monthly_anomaly_histograms_{exp_type}.png",)
+
+
+
+
+
+
+
+
+
+
+
+
+# -----------------------------------------------------------------------------------------------------
+# ------------------------------------------------- GARBAGE LAND ----------------------------------------
+
+        # ============================================================================
+        # MAIN PLOT: Show gaps with different emphasis for large vs small gaps
+        # ============================================================================
+        # fig, ax = plt.subplots(figsize=(15, 8))
+
+        # # Colors for different seed experiments
+        # seed_colors = plt.cm.viridis(np.linspace(0, 1, len(exp_list)))
+
+        # large_gaps_count = 0
+        # total_gaps_count = 0
+
+        # for seed_idx, exp_name in enumerate(exp_list):
+        #     dates_within_fall = all_confident_dates[exp_name][all_confident_dates[exp_name].dt.month.isin(fall_months)]
+            
+        #     if len(dates_within_fall) > 0:
+        #         # Sort dates to ensure proper sequential analysis
+        #         dates_sorted = dates_within_fall.sortby(dates_within_fall)
+                
+        #         # Group by year to handle year boundaries properly
+        #         for year in np.unique(dates_sorted.dt.year.values):
+        #             year_dates = dates_sorted[dates_sorted.dt.year == year]
+                    
+        #             if len(year_dates) > 1:
+        #                 # Calculate day-of-year differences
+        #                 day_diffs = np.diff(year_dates.dt.dayofyear.values)
+                        
+        #                 # For dates that span across months, we need to handle them carefully
+        #                 for i, (date, gap) in enumerate(zip(year_dates[:-1], day_diffs)):
+        #                     month = date.dt.month.item()
+        #                     if month in fall_months:
+        #                         total_gaps_count += 1
+                                
+        #                         # Determine x-position based on month
+        #                         # Add small offset for each seed
+        #                         seed_offset = (seed_idx - len(exp_list)/2 + 0.5) * 0.08
+        #                         x_pos = month_positions[month] + seed_offset
+                                
+        #                         # Different visualization for large gaps vs normal gaps
+        #                         if gap >= large_gap_threshold:
+        #                             large_gaps_count += 1
+        #                             # Large gaps: prominent red stems
+        #                             markerline, stemlines, baseline = ax.stem([x_pos], [gap], 
+        #                                                                     linefmt='red', markerfmt='ro', basefmt=' ')
+        #                             stemlines.set_linewidth(3)
+        #                             markerline.set_markersize(10)
+        #                         else:
+        #                             # Small gaps: subtle stems
+        #                             markerline, stemlines, baseline = ax.stem([x_pos], [gap], 
+        #                                                             linefmt='-', markerfmt='o', basefmt=' ')
+        #                             stemlines.set_linewidth(1)
+        #                             markerline.set_markersize(5)
+        #                             markerline.set_alpha(0.6)
+        #                             stemlines.set_alpha(0.6)
+
+        # # Add horizontal line to show large gap threshold
+        # ax.axhline(y=large_gap_threshold, color='red', linestyle='--', alpha=0.7, 
+        #         label=f'Large Gap Threshold ({large_gap_threshold} days)')
+
+        # # Customize the plot
+        # ax.set_xticks([0, 1, 2])
+        # ax.set_xticklabels(['Oct', 'Nov', 'Dec'])
+        # ax.set_xlabel('Month', fontsize=12)
+        # ax.set_ylabel('Days Between Sequential Confident Predictions', fontsize=12)
+        # ax.set_title(f'Sequential Date Gaps in Fall Months | {exp_type}\n'
+        #             f'Most dates are sequential (1-2 day gaps) with occasional large gaps (≥{large_gap_threshold} days)\n'
+        #             f'Large gaps: {large_gaps_count}/{total_gaps_count} ({100*large_gaps_count/total_gaps_count:.1f}%)',
+        #             fontsize=14)
+
+        # ax.legend()
+        # ax.grid(True, alpha=0.3)
+        # ax.set_ylim(0, max(50, ax.get_ylim()[1]))  # Ensure we can see large gaps clearly
+
+        # plt.tight_layout()
+        # plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/sequential_gaps_{exp_type}_{confidence_level_low}to{confidence_level_high}.png', 
+        #             format='png', dpi=250)
+        # plt.show()
+
+        # ============================================================================
+        # SUPPLEMENTARY PLOT: Histogram of gap sizes to show the distribution
+        # ============================================================================
+        # fig, ax1 = plt.subplots(1, 1, figsize=(8, 5))
+
+        # all_gaps = []
+        # large_gaps = []
+
+        # for exp_name in exp_list:
+        #     dates_within_fall = all_confident_dates[exp_name][all_confident_dates[exp_name].dt.month.isin(fall_months)]
+            
+        #     if len(dates_within_fall) > 0:
+        #         dates_sorted = dates_within_fall.sortby(dates_within_fall)
+                
+        #         for year in np.unique(dates_sorted.dt.year.values):
+        #             year_dates = dates_sorted[dates_sorted.dt.year == year]
+                    
+        #             if len(year_dates) > 1:
+        #                 day_diffs = np.diff(year_dates.dt.dayofyear.values)
+        #                 all_gaps.extend(day_diffs)
+        #                 large_gaps.extend([gap for gap in day_diffs if gap >= large_gap_threshold])
+
+        # # Histogram of all gaps
+        # ax1.hist(all_gaps, bins=range(1, 50), alpha=0.7, color='skyblue', edgecolor='black')
+        # ax1.set_yscale('log')
+        # ax1.axvline(x=large_gap_threshold, color='red', linestyle='--', 
+        #         label=f'Large Gap Threshold ({large_gap_threshold} days)')
+        # ax1.set_xlabel('Gap Size (days)')
+        # ax1.set_ylabel('Frequency')
+        # ax1.set_ylim(0, 10**4)
+        # ax1.set_title(f'Distribution of All Gap Sizes | {exp_type}\n Confidence Level: {confidence_level_low} to {confidence_level_high}')
+        # ax1.legend()
+        # ax1.grid(True, alpha=0.3)
+
+        # plt.tight_layout()
+        # plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/gap_distribution_{exp_type}_{confidence_level_low}to{confidence_level_high}.png', 
+        #             format='png', dpi=250)
+        # plt.show()
+
+        # ============================================================================
+        # DETAILED ANALYSIS: Summary statistics
+        # ============================================================================
+        # print(f"\n=== GAP ANALYSIS SUMMARY for {exp_type} ===")
+        # print(f"Total number of gaps analyzed: {len(all_gaps)}")
+        # print(f"Number of large gaps (≥{large_gap_threshold} days): {len(large_gaps)}")
+        # print(f"Percentage of large gaps: {100*len(large_gaps)/len(all_gaps):.1f}%")
+        # print(f"Most common gap size: {max(set(all_gaps), key=all_gaps.count)} days")
+        # print(f"Mean gap size: {np.mean(all_gaps):.2f} days")
+        # print(f"Median gap size: {np.median(all_gaps):.1f} days")
+        # print(f"Sequential gaps (1 day): {all_gaps.count(1)} ({100*all_gaps.count(1)/len(all_gaps):.1f}%)")
+        # print(f"Near-sequential gaps (1-2 days): {sum(1 for gap in all_gaps if gap <= 2)} ({100*sum(1 for gap in all_gaps if gap <= 2)/len(all_gaps):.1f}%)")
+
+        # if large_gaps:
+        #     print(f"\nLarge gap statistics:")
+        #     print(f"Mean large gap size: {np.mean(large_gaps):.1f} days")
+        #     print(f"Max gap size: {max(large_gaps)} days")
+        #     print(f"Large gaps by month:")
+            
+        #     # Analyze which months have the most large gaps
+        #     large_gap_months = {month: 0 for month in fall_months}
+        #     for exp_name in exp_list:
+        #         dates_within_fall = all_confident_dates[exp_name][all_confident_dates[exp_name].dt.month.isin(fall_months)]
+                
+        #         if len(dates_within_fall) > 0:
+        #             dates_sorted = dates_within_fall.sortby(dates_within_fall)
+                    
+        #             for year in np.unique(dates_sorted.dt.year.values):
+        #                 year_dates = dates_sorted[dates_sorted.dt.year == year]
+                        
+        #                 if len(year_dates) > 1:
+        #                     day_diffs = np.diff(year_dates.dt.dayofyear.values)
+                            
+        #                     for date, gap in zip(year_dates[:-1], day_diffs):
+        #                         month = date.dt.month.item()
+        #                         if gap >= large_gap_threshold and month in fall_months:
+        #                             large_gap_months[month] += 1
+            
+        #     for month in fall_months:
+        #         print(f"  {month_names[month]}: {large_gap_months[month]} large gaps")
+
+
+
+
+        # for exp_name in exp_list:
+        #     # select dates within fall months
+        #     dates_within_fall = all_confident_dates[exp_name][all_confident_dates[exp_name].dt.month.isin(fall_months)]
+        #     print(f"dates_within_fall: {dates_within_fall}")
+    
+        #     if len(dates_within_fall) > 0:
+        #         # check for dates within one year at a time: 
+        #         for year in np.unique(dates_within_fall.dt.year.values):
+        #             print(f"year: {year}")
+        #             dates_in_year = dates_within_fall[dates_within_fall.dt.year == year]
+        #             print(f"fall day of year: {dates_in_year.dt.dayofyear.values}")
+        #             fall_diffs = np.diff(dates_in_year.dt.dayofyear)
+        #             print(f"fall_diffs: {fall_diffs}")
+        #             # find dates associated with each value in fall_diffs
+        #             ax.stem(dates_in_year[:-1], fall_diffs, markerfmt=' ')
+                
+
+        #     # fall_group_lengths = np.diff(np.concatenate(([0], fall_chunks + 1, [len(dates_within_fall)])))
+        #     # max_fall_group_length = np.max(fall_group_lengths)
+        #     # mean_fall_group_length = np.mean(fall_group_lengths)
+
+        
+        # # plot group lenghts as histogram: 
+        # # plt.hist(fall_group_lengths, bins=20, color="#d75f27", alpha=0.7)
+        # plt.xlabel('Consecutive Days in Fall (Oct-Dec)')
+        # plt.ylabel('Count of Days between Confident Predictions')
+        # plt.title(f'Temporal Distribution of Selected Samples in Fall | {exp_type} \n Confidence Range: {confidence_level_low}-{confidence_level_high}%')
+        # plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/temporal_distribution_fall_{exp_type}_{confidence_level_low}to{confidence_level_high}.png', format = 'png', dpi = 250)

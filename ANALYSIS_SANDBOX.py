@@ -123,4 +123,6 @@ exps = {
 
 ## TELECONNECTIONS ANALYSIS # ------------------------------------------------------------------------------------
 
-cea.teleconnection_bias_analysis(exps, confidence_level_low = 20, confidence_level_high = 5, keyword = "OBS_E3SM")
+# cea.teleconnection_bias_analysis(exps, confidence_level_low = 20, confidence_level_high = 5, keyword = "OBS_E3SM")
+
+cea.anom_var_distributions(exps, keyword = "OBS_E3SM")

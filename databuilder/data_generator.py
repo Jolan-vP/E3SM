@@ -365,7 +365,7 @@ class ClimateData:
                         
                         print("concatenating channels")
 
-                        print("aligning with referenc coords")
+                        print("aligning with reference coords")
                         reference_coords = processed_channels[0].coords
                         for i in range(1, len(processed_channels)):
                             processed_channels[i] = processed_channels[i].reindex_like(processed_channels[0])
