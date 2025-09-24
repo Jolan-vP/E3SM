@@ -1887,8 +1887,8 @@ def mjo_timestamps(data_source, config):
             pickle.dump(phase_timestamps_str, f)
 
         # create xarray object with the time coordinate generated earlier and phases of array as single variable: 
-        phase_ds = xr.Dataset(
-            {'phase': (('time',), phases)},
+        phases_ds = xr.Dataset(
+            {'phase': (('time',), phases.astype(int))},
             coords={'time': time_array}
         )
 
