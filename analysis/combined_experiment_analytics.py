@@ -1455,7 +1455,7 @@ def plot_all_months_anomaly_histograms(all_monthly_pos_anoms, all_monthly_neg_an
 
 
 
-def m2m_sample_transfer(experiments, selection_method = 'confident_by_month', keyword = None):
+def m2m_sample_transfer(experiments, selection_method = 'confident_by_month', confidence = 20, keyword = None):
     """
     Select samples from either OBS(OBS) or E3SM(E3SM) using variety of methods: 
         - select most confident sample from each month from each random seed
@@ -1553,6 +1553,23 @@ def m2m_sample_transfer(experiments, selection_method = 'confident_by_month', ke
                     # Find index of minimum IQR in this month
                     min_iqr_idx = np.argmin(month_iqr)
                     selected_indices.append(month_indices[min_iqr_idx]) # this collects from all months for this random seed
+
+            elif selection_method == 'scaled_iqr_by_percentage': # scale IQR by day of year 
+                # create xarray object containing iqr and corresponding time coordinate: 
+                iqr_xr = xr.DataArray(iqr, coords=[target['time']], dims=["time"])
+                # scale iqr by day of year:
+                daily_iqr = iqr_xr.groupby('time.dayofyear').mean('time')
+                scaled_iqr = iqr_xr.groupby('time.dayofyear') / daily_iqr
+                #ungroup scaled_iqr: 
+                scaled_iqr = scaled_iqr.sortby('time')
+                print(f"iqr_xr.values: {iqr_xr.values}, scaled_iqr.values: {scaled_iqr.values}")
+                print(f"scaled iqr shape: {scaled_iqr.shape}")
+
+                # select narrowest percentage of scaled IQR based on confidence level: 
+                num_to_select = int(len(scaled_iqr) * (confidence / 100))
+                selected_indices = np.argsort(scaled_iqr.values)[:num_to_select]
+                print(f"selected {len(selected_indices)} samples based on scaled IQR by percentage")
+            
             else: 
                 print(f"choose sample selection method or code another one up")
 
@@ -1572,7 +1589,7 @@ def m2m_sample_transfer(experiments, selection_method = 'confident_by_month', ke
             selected_samples["output1"] = output[selected_indices]
             selected_samples["target_date1"] = selected_target_dates
             selected_samples["input_date1"] = selected_input_dates
-            selected_samples["iqr1"] = iqr[selected_indices]
+            selected_samples["iqr1"] = scaled_iqr[selected_indices] #TODO: IS SCALED IQR STILL GROUPED BY DATE?
             selected_samples["crps1"] = crps[selected_indices]
             selected_samples["input_maps1"] = input_maps.sel(time=selected_target_dates)
 
@@ -1717,6 +1734,8 @@ def m2m_sample_transfer(experiments, selection_method = 'confident_by_month', ke
             all_mjo_phases.extend(data_from_all_seeds1[exp_name]["mjo_phase"]["phase"].values)
         all_mjo_phases = np.array(all_mjo_phases)
         print(f" all mjo phases: {all_mjo_phases}")
+        print(f"length of mjo phases: {len(all_mjo_phases)}")
+        print(f"min mjo phase value: {np.min(all_mjo_phases)}, max mjo phase value: {np.max(all_mjo_phases)}")
         # print(f"all mjo phases: {all_mjo_phases}, type: {type(all_mjo_phases)}, len: {len(all_mjo_phases)}")
 
         # (3) ENSO phase distribution from selected_target_dates1
@@ -1727,7 +1746,7 @@ def m2m_sample_transfer(experiments, selection_method = 'confident_by_month', ke
         # print(f"all enso phases: {all_enso_phases}, type: {type(all_enso_phases)}, len: {len(all_enso_phases)}")
         # calculate frequency of enso phase relative to prevalence in total target dataset
 
-        def calculate_enso_reference_distribution(target, daily_enso_timestamps, config):
+        def calculate_enso_reference_distribution(climatology_data, daily_enso_timestamps, config):
             """Calculate ENSO phase ratios from the full target dataset"""
             
             def to_datetimeindex(dates):
@@ -1740,19 +1759,19 @@ def m2m_sample_transfer(experiments, selection_method = 'confident_by_month', ke
             neutral = to_datetimeindex(daily_enso_timestamps["Neutral"])
             
             # Get target dataset year range
-            target_start_year = target.time[0].dt.year.item()
-            target_end_year = target.time[-1].dt.year.item()
-            
+            climo_start_year = climatology_data.time[0].dt.year.item()
+            climo_end_year = climatology_data.time[-1].dt.year.item()
+
             # Filter ENSO dates to target year range
-            elnino = elnino[(pd.DatetimeIndex(elnino).year >= target_start_year) & 
-                        (pd.DatetimeIndex(elnino).year <= target_end_year)]
-            lanina = lanina[(pd.DatetimeIndex(lanina).year >= target_start_year) & 
-                        (pd.DatetimeIndex(lanina).year <= target_end_year)]
-            neutral = neutral[(pd.DatetimeIndex(neutral).year >= target_start_year) & 
-                            (pd.DatetimeIndex(neutral).year <= target_end_year)]
-            
-            total_samples = target.shape[0]
-            
+            elnino = elnino[(pd.DatetimeIndex(elnino).year >= climo_start_year) & 
+                        (pd.DatetimeIndex(elnino).year <= climo_end_year)]
+            lanina = lanina[(pd.DatetimeIndex(lanina).year >= climo_start_year) & 
+                        (pd.DatetimeIndex(lanina).year <= climo_end_year)]
+            neutral = neutral[(pd.DatetimeIndex(neutral).year >= climo_start_year) & 
+                            (pd.DatetimeIndex(neutral).year <= climo_end_year)]
+
+            total_samples = climatology_data.shape[0]
+
             # Calculate reference ratios
             elnino_ratio = len(elnino) / total_samples   # El Nino = phase 0
             lanina_ratio = len(lanina) / total_samples   # La Nina = phase 1  
@@ -1802,9 +1821,11 @@ def m2m_sample_transfer(experiments, selection_method = 'confident_by_month', ke
         ax1.set_ylim([0, 0.8])
         ax1.legend()
 
-        ax2.hist(all_mjo_phases, bins=np.arange(1, 9)-0.5, density=True, color='purple', alpha=0.7, edgecolor='black')
-        ax2.set_xticks(range(1, 9))
-        ax2.set_xticklabels(range(1, 9))
+        mjo_bins = np.arange(0.5, 9.5, 1)
+        print(f"mjo bins: {mjo_bins}")
+        ax2.hist(all_mjo_phases, bins=mjo_bins, density=True, color='purple', alpha=0.7, edgecolor='black')
+        ax2.set_xticks([1, 2, 3, 4, 5, 6, 7, 8])  # These will be at the bin centers
+        ax2.set_xticklabels([1, 2, 3, 4, 5, 6, 7, 8])
         ax2.set_xlabel('MJO Phase')
         ax2.set_ylabel('Density')
         ax2.set_title(f'MJO Phase Distribution')

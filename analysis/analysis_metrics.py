@@ -1833,72 +1833,12 @@ def mjo_timestamps(data_source, config):
         RMM1 = MJOda[:, 2]
         RMM2 = MJOda[:, 3]
 
-        # Create phase number output array
-        phases = np.zeros(len(time_array))
-        phaseqty = 9
-
-        # Identify which phase of MJO each data point is in
-        for samplecoord in range(0, len(RMM1)):
-
-            if not np.isnan(RMM1[samplecoord]):
-                dY = RMM2[samplecoord]
-                dX = RMM1[samplecoord]
-
-                angle_deg = np.rad2deg(np.arctan2(dY, dX))
-                if angle_deg < 0:
-                    angle_deg = 360 - np.abs(angle_deg)
-
-                amplitude = np.sqrt(RMM1[samplecoord]**2 + RMM2[samplecoord]**2)
-                assert amplitude >= 0
-
-                if amplitude <= 1:
-                    phases[samplecoord] = 0
-                elif angle_deg >= 0 and angle_deg < 45:
-                    phases[samplecoord] = 5
-                elif angle_deg >= 45 and angle_deg < 90:
-                    phases[samplecoord] = 6
-                elif angle_deg >= 90 and angle_deg < 135:
-                    phases[samplecoord] = 7
-                elif angle_deg >= 135 and angle_deg < 180:
-                    phases[samplecoord] = 8
-                elif angle_deg >= 180 and angle_deg < 225:
-                    phases[samplecoord] = 1
-                elif angle_deg >= 225 and angle_deg < 270:
-                    phases[samplecoord] = 2
-                elif angle_deg >= 270 and angle_deg < 315:
-                    phases[samplecoord] = 3
-                elif angle_deg >= 315 and angle_deg <= 360:
-                    phases[samplecoord] = 4
-                else:
-                    print(f"angle: {angle_deg}, amplitude: {amplitude}")
-                    raise ValueError("Sample does not fit into a phase (?)")
-                
-        # Collect timestamps for each phase
-        phase_timestamps = {}
-        for phase in range(phaseqty):
-            collected_phase_indices = np.where(phases == phase)[0]
-            phase_timestamps[phase] = time_array[collected_phase_indices] # Map indices to timestamps
-        
-        # Convert timestamps to strings for saving
-        phase_timestamps_str = {phase: [str(date) for date in dates] for phase, dates in phase_timestamps.items()}
-        
-        output_path = '/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/MJO_phase_timestamps_{data_source}.pkl'
-        with open(output_path, 'wb') as f:
-            pickle.dump(phase_timestamps_str, f)
-
-        # create xarray object with the time coordinate generated earlier and phases of array as single variable: 
-        phases_ds = xr.Dataset(
-            {'phase': (('time',), phases.astype(int))},
-            coords={'time': time_array}
-        )
-
     elif data_source == 'OBS':
         MJOfilename = '/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/rmm.74toRealtime.txt'
         # MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/mjo_combined_ERA20C_MJO_SatOBS_1900_2023.nc'
         MJOda = open_data_file(MJOfilename)
         MJOda = np.array(MJOda)
 
-        phases = MJOda[:, 5]
         # Isolate MJO timestamps based on the columns of the array
         start_year = int(MJOda[0, 0])
         start_month = int(MJOda[0, 1])
@@ -1910,12 +1850,67 @@ def mjo_timestamps(data_source, config):
         end = datetime.datetime(end_year, end_month, end_day)
         time_array = pd.date_range(start = start, end = end, freq = 'D')
 
-        phases_ds = xr.Dataset(
-            {'phase': (('time',), phases)},
-            coords={'time': time_array}
-        )
+        RMM1 = MJOda[:, 3]
+        RMM2 = MJOda[:, 4]
 
-        # print(f"phases_ds: {phases_ds}")
+    # Create phase number output array
+    phases = np.zeros(len(time_array))
+    phaseqty = 9
+
+    # Identify which phase of MJO each data point is in
+    for samplecoord in range(0, len(RMM1)):
+
+        if not np.isnan(RMM1[samplecoord]):
+            dY = RMM2[samplecoord]
+            dX = RMM1[samplecoord]
+
+            angle_deg = np.rad2deg(np.arctan2(dY, dX))
+            if angle_deg < 0:
+                angle_deg = 360 - np.abs(angle_deg)
+
+            amplitude = np.sqrt(RMM1[samplecoord]**2 + RMM2[samplecoord]**2)
+            assert amplitude >= 0
+
+            if amplitude <= 1:
+                phases[samplecoord] = 0
+            elif angle_deg >= 0 and angle_deg < 45:
+                phases[samplecoord] = 5
+            elif angle_deg >= 45 and angle_deg < 90:
+                phases[samplecoord] = 6
+            elif angle_deg >= 90 and angle_deg < 135:
+                phases[samplecoord] = 7
+            elif angle_deg >= 135 and angle_deg < 180:
+                phases[samplecoord] = 8
+            elif angle_deg >= 180 and angle_deg < 225:
+                phases[samplecoord] = 1
+            elif angle_deg >= 225 and angle_deg < 270:
+                phases[samplecoord] = 2
+            elif angle_deg >= 270 and angle_deg < 315:
+                phases[samplecoord] = 3
+            elif angle_deg >= 315 and angle_deg <= 360:
+                phases[samplecoord] = 4
+            else:
+                print(f"angle: {angle_deg}, amplitude: {amplitude}")
+                raise ValueError("Sample does not fit into a phase (?)")
+            
+    # Collect timestamps for each phase
+    phase_timestamps = {}
+    for phase in range(phaseqty):
+        collected_phase_indices = np.where(phases == phase)[0]
+        phase_timestamps[phase] = time_array[collected_phase_indices] # Map indices to timestamps
+    
+    # Convert timestamps to strings for saving
+    phase_timestamps_str = {phase: [str(date) for date in dates] for phase, dates in phase_timestamps.items()}
+    
+    output_path = '/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/MJO_phase_timestamps_{data_source}.pkl'
+    with open(output_path, 'wb') as f:
+        pickle.dump(phase_timestamps_str, f)
+
+    # create xarray object with the time coordinate generated earlier and phases of array as single variable: 
+    phases_ds = xr.Dataset(
+        {'phase': (('time',), phases.astype(int))},
+        coords={'time': time_array}
+    )
 
     return phases_ds
 
