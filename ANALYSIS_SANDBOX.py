@@ -97,9 +97,11 @@ exps = {
 
 # DISCARD PLOTS: # ------------------------------------------------------------------------------------  
 
-# cea.combined_success_discard(exps, keyword = "OBS-OBS_OBS-E3SM_E3SM-short-OBS_E3SM-short-E3SM")
+# cea.combined_success_discard(exps, keyword = "OBS-OBS_OBS-E3SM_E3SM-short-OBS_E3SM-short-E3SM", iqr_scaled = False)
+# cea.combined_success_discard(exps, keyword = "OBS-OBS_OBS-E3SM_E3SM-short-OBS_E3SM-short-E3SM", iqr_scaled = True)
 
-# cea.combined_CRPS_IQR_discard(exps, keyword = "OBS-OBS_OBS-E3SM_E3SM-short-OBS_E3SM-short-E3SM")
+# cea.combined_CRPS_IQR_discard(exps, keyword = "OBS-OBS_OBS-E3SM_E3SM-short-OBS_E3SM-short-E3SM", iqr_scaled = False)
+# cea.combined_CRPS_IQR_discard(exps, keyword = "OBS-OBS_OBS-E3SM_E3SM-short-OBS_E3SM-short-E3SM", iqr_scaled = True)
 
 # cea.IQR_distributions(exps, keyword = "OBS-OBS_OBS-E3SM_E3SM-short-OBS_E3SM-short-E3SM")
 
@@ -128,4 +130,7 @@ exps = {
 
 # cea.anom_var_distributions(exps, keyword = "E3SM-short_OBS")
 
-cea.m2m_sample_transfer(exps, selection_method = 'confident_by_month', keyword = "E3SM-short_E3SM")
+# cea.m2m_sample_transfer(exps, selection_method = 'scaled_iqr_by_percentage', confidence = 10, keyword = "OBS-OBS")
+
+cea.m2m_sample_transfer(exps, selection_method = 'scaled_iqr_by_percentage', confidence = 10, keyword = "E3SM-short_E3SM")
+

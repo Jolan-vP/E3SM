@@ -59,25 +59,6 @@ def combined_success_discard(experiments, keyword = None):
         "E3SM-short(E3SM)": [e3sm_short_exp1, e3sm_short_exp2, e3sm_short_exp3, ...]
     }
     """
-
-    # exps = {}
-
-    # if "OBS(OBS)" in experiments: 
-    #     obs_exp = experiments["OBS(OBS)"]
-    #     exps["OBS(OBS)"] = obs_exp
-    # if "E3SM(OBS)" in experiments: 
-    #     e3sm_obs_exp = experiments["E3SM(OBS)"]
-    #     exps["E3SM(OBS)"] = e3sm_obs_exp
-    # if "E3SM-short(OBS)" in experiments:
-    #     e3sm_short_obs_exp = experiments["E3SM-short(OBS)"]
-    #     exps["E3SM-short(OBS)"] = e3sm_short_obs_exp
-    # if "E3SM(E3SM)" in experiments: 
-    #     e3sm_exp = experiments["E3SM(E3SM)"]
-    #     exps["E3SM(E3SM)"] = e3sm_exp
-    # elif "E3SM-short(E3SM)" in experiments:
-    #     e3sm_short_exp = experiments["E3SM-short(E3SM)"]
-    #     exps["E3SM-short(E3SM)"] = e3sm_short_exp
-
     exps = experiments
 
     plt.figure(figsize=(7, 5))
@@ -89,13 +70,6 @@ def combined_success_discard(experiments, keyword = None):
         2: "#33c316",
         3: "#B6B309",
         }
-    # color_themes = {
-    #     0:  "#9335D1", 
-    #     1:  "#3451D445    #     2:  "#2FB4C9",
-    #     3:  '#63BA31',
-    #     4:  '#D4932A',
-    #     5:  '#D03F6D'
-    # }
 
     i = 0
     for experiment_type, exp_names in exps.items():
@@ -1455,7 +1429,7 @@ def plot_all_months_anomaly_histograms(all_monthly_pos_anoms, all_monthly_neg_an
 
 
 
-def m2m_sample_transfer(experiments, selection_method = 'confident_by_month', confidence = 20, keyword = None):
+def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentage', confidence = 20, keyword = None):
     """
     Select samples from either OBS(OBS) or E3SM(E3SM) using variety of methods: 
         - select most confident sample from each month from each random seed
@@ -1589,7 +1563,7 @@ def m2m_sample_transfer(experiments, selection_method = 'confident_by_month', co
             selected_samples["output1"] = output[selected_indices]
             selected_samples["target_date1"] = selected_target_dates
             selected_samples["input_date1"] = selected_input_dates
-            selected_samples["iqr1"] = scaled_iqr[selected_indices] #TODO: IS SCALED IQR STILL GROUPED BY DATE?
+            selected_samples["iqr1"] = scaled_iqr[selected_indices]
             selected_samples["crps1"] = crps[selected_indices]
             selected_samples["input_maps1"] = input_maps.sel(time=selected_target_dates)
 
@@ -1604,6 +1578,7 @@ def m2m_sample_transfer(experiments, selection_method = 'confident_by_month', co
             print(f"crps mean: {np.mean(selected_samples['crps1'])}, iqr mean: {np.mean(selected_samples['iqr1'])}, target mean: {np.mean(target[selected_indices])}")
             
             # ---- TODO identify ENSO and MJO phase of selected samples ----------------
+            ###### ENSO ########
             # Open ENSO dates for E3SM vs OBS data: 
             enso_dates_pkl = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_daily_enso_timestamps.pkl')
             # check which key (category) each of the target dates falls into, and create a list with either "EN", "LN" or "N"
@@ -1618,7 +1593,7 @@ def m2m_sample_transfer(experiments, selection_method = 'confident_by_month', co
 
             selected_samples["enso_phase"] = enso_phase
 
-            # MJO: 
+            ######## MJO ########
             phase_timestamps = analysis_metrics.mjo_timestamps(data_type, config)
 
             # selected_mjo_phase = phase_timestamps.sel(time=selected_target_dates)
@@ -1650,7 +1625,7 @@ def m2m_sample_transfer(experiments, selection_method = 'confident_by_month', co
         all_mjo_phases1 = []
 
         for iexp, exp_name in enumerate(exp_list):
-            all_target1_dates.extend(data_from_all_seeds1[exp_name]["target_date1"].values)
+            all_target1_dates.extend(data_from_all_seeds1[exp_name]["target_date1"])
             all_output1.extend(data_from_all_seeds1[exp_name]["output1"])
             all_iqr1.extend(data_from_all_seeds1[exp_name]["iqr1"])
             all_crps1.extend(data_from_all_seeds1[exp_name]["crps1"])
@@ -1671,6 +1646,13 @@ def m2m_sample_transfer(experiments, selection_method = 'confident_by_month', co
 
                 ## CALCULATE IQR and Select Samples based on Confidence -------
             iqr_ood = iqr_basic(output_ood)
+
+            if selection_method == 'scaled_iqr_by_percentage': # scale IQR by day of year
+                # create xarray object containing iqr and corresponding time coordinate: 
+                iqr_ood_xr = xr.DataArray(iqr_ood, coords=[target['time']], dims=["time"])
+                # scale iqr by day of year:
+                daily_iqr_ood = iqr_ood_xr.groupby('time.dayofyear').mean('time')
+                scaled_iqr_ood = iqr_ood_xr.groupby('time.dayofyear') / daily_iqr_ood
             
             # Load testing target data
             if opposing_exp in ["E3SM-short(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)"]:
@@ -1687,7 +1669,7 @@ def m2m_sample_transfer(experiments, selection_method = 'confident_by_month', co
             selected_samples["output2"] = output_ood[all_selected_indices]
             selected_samples["target_date2"] = all_target1_dates
             selected_samples["input_date2"] = selected_input_dates
-            selected_samples["iqr2"] = iqr_ood[all_selected_indices]
+            selected_samples["iqr2"] = scaled_iqr_ood[all_selected_indices]
             selected_samples["crps2"] = crps_ood[all_selected_indices]
             selected_samples["enso_phase2"] = data_from_all_seeds1[exp_list[0]]["enso_phase"]
             selected_samples["mjo_phase2"] = data_from_all_seeds1[exp_list[0]]["mjo_phase"]
@@ -1733,10 +1715,12 @@ def m2m_sample_transfer(experiments, selection_method = 'confident_by_month', co
         for exp_name in exp_list:
             all_mjo_phases.extend(data_from_all_seeds1[exp_name]["mjo_phase"]["phase"].values)
         all_mjo_phases = np.array(all_mjo_phases)
-        print(f" all mjo phases: {all_mjo_phases}")
-        print(f"length of mjo phases: {len(all_mjo_phases)}")
-        print(f"min mjo phase value: {np.min(all_mjo_phases)}, max mjo phase value: {np.max(all_mjo_phases)}")
+        # print(f" all mjo phases: {all_mjo_phases}")
+        # print(f"length of mjo phases: {len(all_mjo_phases)}")
+        # print(f"min mjo phase value: {np.min(all_mjo_phases)}, max mjo phase value: {np.max(all_mjo_phases)}")
         # print(f"all mjo phases: {all_mjo_phases}, type: {type(all_mjo_phases)}, len: {len(all_mjo_phases)}")
+        mjo_baseline_frequencies = analysis.analysis_metrics.baseline_mjo_frequencies(data_type)
+        print(f"mjo baseline frequencies: {mjo_baseline_frequencies}")
 
         # (3) ENSO phase distribution from selected_target_dates1
         all_enso_phases = []
@@ -1745,46 +1729,13 @@ def m2m_sample_transfer(experiments, selection_method = 'confident_by_month', co
         all_enso_phases = np.array(all_enso_phases)
         # print(f"all enso phases: {all_enso_phases}, type: {type(all_enso_phases)}, len: {len(all_enso_phases)}")
         # calculate frequency of enso phase relative to prevalence in total target dataset
-
-        def calculate_enso_reference_distribution(climatology_data, daily_enso_timestamps, config):
-            """Calculate ENSO phase ratios from the full target dataset"""
-            
-            def to_datetimeindex(dates):
-                # Convert cftime or other objects to strings, then to pandas datetime
-                return pd.DatetimeIndex([str(d) for d in dates])
-
-            # Convert ENSO timestamps to datetime64
-            elnino = to_datetimeindex(daily_enso_timestamps["El Nino"])
-            lanina = to_datetimeindex(daily_enso_timestamps["La Nina"])
-            neutral = to_datetimeindex(daily_enso_timestamps["Neutral"])
-            
-            # Get target dataset year range
-            climo_start_year = climatology_data.time[0].dt.year.item()
-            climo_end_year = climatology_data.time[-1].dt.year.item()
-
-            # Filter ENSO dates to target year range
-            elnino = elnino[(pd.DatetimeIndex(elnino).year >= climo_start_year) & 
-                        (pd.DatetimeIndex(elnino).year <= climo_end_year)]
-            lanina = lanina[(pd.DatetimeIndex(lanina).year >= climo_start_year) & 
-                        (pd.DatetimeIndex(lanina).year <= climo_end_year)]
-            neutral = neutral[(pd.DatetimeIndex(neutral).year >= climo_start_year) & 
-                            (pd.DatetimeIndex(neutral).year <= climo_end_year)]
-
-            total_samples = climatology_data.shape[0]
-
-            # Calculate reference ratios
-            elnino_ratio = len(elnino) / total_samples   # El Nino = phase 0
-            lanina_ratio = len(lanina) / total_samples   # La Nina = phase 1  
-            neutral_ratio = len(neutral) / total_samples # Neutral = phase 2
-            
-            # Return in order [EN, LN, N] to match your phase encoding (0, 1, 2)
-            return np.array([elnino_ratio, lanina_ratio, neutral_ratio])
-        
-        enso_reference_ratios = calculate_enso_reference_distribution(target, enso_dates_pkl, config)
-        print(f"enso reference ratios: {enso_reference_ratios}")
+        enso_baseline_frequencies = analysis.analysis_metrics.baseline_enso_frequencies(data_type)
+        print(f"ENSO baseline frequencies: {enso_baseline_frequencies}")
 
         # (4) Target value distribution from selected_target_dates1
-        selected_target_values = target.sel(time=all_target1_dates)
+        date_values = [date_da.values.item() for date_da in all_target1_dates]
+        selected_target_values = target.sel(time=date_values)
+        # selected_target_values = target.sel(time=all_target1_dates)
 
         # Mean IQR for all output1
         mean_iqr1 = np.mean(all_iqr1)
@@ -1798,74 +1749,102 @@ def m2m_sample_transfer(experiments, selection_method = 'confident_by_month', co
         mean_crps2 = np.mean(all_crps2)
         print(f"Mean CRPS for all output2: {mean_crps2}")
 
-        fig = plt.figure(figsize=(10, 12))
-
-        ax1 = fig.add_subplot(3, 2, 1)
-        ax2 = fig.add_subplot(3, 2, 2)
-        ax3 = fig.add_subplot(3, 2, 3)
-        ax4 = fig.add_subplot(3, 2, 4)
-        ax5 = fig.add_subplot(3, 2, 5)
-        ax = [ax1, ax2, ax3, ax4, ax5]
-
+        # Plot 1: SHASH Curves
+        fig1, ax1 = plt.subplots(figsize=(8, 6))
         ax1.hist(
-                climatology_data, x, density=True, color="silver", alpha=0.75, label="climatology"
-            )
-
-        ax1.plot(x, p1, linewidth = 0.5, color='blue')
-        ax1.plot(x, p2, linewidth = 0.5, color='orange')
-        ax1.plot(x, p1[:, 0], linewidth = 0.5, label = f"{base_exp}\nIQR: {mean_iqr1:.2f}\nCRPS: {mean_crps1:.2f}", color='blue')
-        ax1.plot(x, p2[:, 0], linewidth = 0.5, label = f"{opposing_exp}\nIQR: {mean_iqr2:.2f}\nCRPS: {mean_crps2:.2f}", color='orange')
+            climatology_data, x, density=True, color="silver", alpha=0.75, label="climatology"
+        )
+        ax1.plot(x, p1[:, 0], alpha = 0.4, linewidth=0.5, label=f"{base_exp}\nIQR: {mean_iqr1:.2f}\nCRPS: {mean_crps1:.2f}", color='#46039f')
+        ax1.plot(x, p2[:, 0], alpha = 0.4, linewidth=0.5, label=f"{opposing_exp}\nIQR: {mean_iqr2:.2f}\nCRPS: {mean_crps2:.2f}", color='#bd3786')
+        ax1.plot(x, p1, alpha= 0.4, linewidth=0.5, color='#46039f')
+        ax1.plot(x, p2, alpha= 0.4, linewidth=0.5, color='#bd3786')
         ax1.set_xlabel(f'Standardized {target_var} Anomaly')
         ax1.set_ylabel('Probability Density')
-        ax1.set_title(f'SHASH Curves')
+        ax1.set_title(f'SHASH Curves | {confidence}% Most Confident | {data_type}')  # Added data_type to title
         ax1.set_ylim([0, 0.8])
         ax1.legend()
+        plt.tight_layout()
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/shash_curves_{exp_type}_{confidence}.png', format='png', dpi=250)
+        plt.show()
 
-        mjo_bins = np.arange(0.5, 9.5, 1)
+        # Plot 2: MJO Phase Distribution
+        fig2, ax2 = plt.subplots(figsize=(8, 6))
+        mjo_bins = np.arange(-0.5, 9.5, 1)
         print(f"mjo bins: {mjo_bins}")
-        ax2.hist(all_mjo_phases, bins=mjo_bins, density=True, color='purple', alpha=0.7, edgecolor='black')
-        ax2.set_xticks([1, 2, 3, 4, 5, 6, 7, 8])  # These will be at the bin centers
-        ax2.set_xticklabels([1, 2, 3, 4, 5, 6, 7, 8])
+        ax2.hist(all_mjo_phases, bins=mjo_bins, density=True, color='#7201a8', alpha=0.7, edgecolor='black')
+        ax2.axhline(y=mjo_baseline_frequencies[0], color='#4D4D4D', xmin=0.05, xmax=0.15, linestyle='--', linewidth=1.5, label='Ratio of MJO Phase in All Samples')
+        ax2.axhline(y=mjo_baseline_frequencies[1], color='#4D4D4D', xmin=0.15, xmax=0.25, linestyle='--', linewidth=1.5)
+        ax2.axhline(y=mjo_baseline_frequencies[2], color='#4D4D4D', xmin=0.25, xmax=0.35, linestyle='--', linewidth=1.5)
+        ax2.axhline(y=mjo_baseline_frequencies[3], color='#4D4D4D', xmin=0.35, xmax=0.45, linestyle='--', linewidth=1.5)
+        ax2.axhline(y=mjo_baseline_frequencies[4], color='#4D4D4D', xmin=0.45, xmax=0.55, linestyle='--', linewidth=1.5)
+        ax2.axhline(y=mjo_baseline_frequencies[5], color='#4D4D4D', xmin=0.55, xmax=0.65, linestyle='--', linewidth=1.5)
+        ax2.axhline(y=mjo_baseline_frequencies[6], color='#4D4D4D', xmin=0.65, xmax=0.75, linestyle='--', linewidth=1.5)
+        ax2.axhline(y=mjo_baseline_frequencies[7], color='#4D4D4D', xmin=0.75, xmax=0.85, linestyle='--', linewidth=1.5)
+        ax2.axhline(y=mjo_baseline_frequencies[8], color='#4D4D4D', xmin=0.85, xmax=0.95, linestyle='--', linewidth=1.5)
+        ax2.set_xticks([0, 1, 2, 3, 4, 5, 6, 7, 8])
+        ax2.set_xticklabels([0, 1, 2, 3, 4, 5, 6, 7, 8])
         ax2.set_xlabel('MJO Phase')
         ax2.set_ylabel('Density')
-        ax2.set_title(f'MJO Phase Distribution')
+        ax2.set_title(f'MJO Phase Distribution | {confidence}% Most Confident | {data_type}')  # Added data_type to title
+        plt.tight_layout()
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mjo_phase_distribution_{exp_type}_{confidence}.png', format='png', dpi=250)
+        plt.show()
 
-        bin_edges = np.array([-0.5, 0.5, 1.5, 2.5])  # Bin edges
-        bin_centers = np.array([0, 1, 2])  # Bin centers for tick labels
-
-        ax3.hist(all_enso_phases, bins=bin_edges, density=True, color='grey', alpha=0.7, edgecolor='black')
-
+        # Plot 3: ENSO Phase Distribution
+        fig3, ax3 = plt.subplots(figsize=(8, 6))
+        bin_edges = np.array([-0.5, 0.5, 1.5, 2.5])
         bin_centers = np.array([0, 1, 2])
-        bar_width = 0.35
-
-        # Plot selected sample ratios as bars
-        ax3.axhline(y=enso_reference_ratios[0], color='k',  xmin = 0.05, xmax = 0.35 , linestyle='--', linewidth=1.5, label='Ratio of ENSO Phase in All Samples')
-        ax3.axhline(y=enso_reference_ratios[1], color='k',  xmin = 0.35, xmax = .65, linestyle='--', linewidth=1.5)
-        ax3.axhline(y=enso_reference_ratios[2], color='k', xmin = .66, xmax = 0.95,  linestyle='--', linewidth=1.5)
+        ax3.hist(all_enso_phases, bins=bin_edges, density=True, color='#fb9f3a', alpha=0.7, edgecolor='black')
+        ax3.axhline(y=enso_baseline_frequencies['El Nino'], color='#4D4D4D', xmin=0.05, xmax=0.35, linestyle='--', linewidth=1.5, label='Ratio of ENSO Phase in All Samples')
+        ax3.axhline(y=enso_baseline_frequencies['La Nina'], color='#4D4D4D', xmin=0.35, xmax=0.65, linestyle='--', linewidth=1.5)
+        ax3.axhline(y=enso_baseline_frequencies['Neutral'], color='#4D4D4D', xmin=0.66, xmax=0.95, linestyle='--', linewidth=1.5)
         ax3.set_ylim([0, 0.65])
         ax3.legend()
-        ax3.set_xticks(bin_centers)  # Position ticks at bin centers
+        ax3.set_xticks(bin_centers)
         ax3.set_xticklabels(['El Nino', 'La Nina', 'Neutral'])
         ax3.set_xlabel('ENSO Phase')
         ax3.set_ylabel('Density')
-        ax3.set_title(f'ENSO Phase Distribution')
+        ax3.set_title(f'ENSO Phase Distribution | {confidence}% Most Confident | {data_type}')  # Added data_type to title
+        plt.tight_layout()
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/enso_phase_distribution_{exp_type}_{confidence}.png', format='png', dpi=250)
+        plt.show()
 
-        ax4.hist(selected_target_values, bins=20, density=True, color='brown', alpha=0.7, edgecolor='black')
+        # Plot 4: Target Variable Anomaly Distribution
+        fig4, ax4 = plt.subplots(figsize=(8, 6))
+        ax4.hist(selected_target_values, bins=20, density=True, color='#0d0887', alpha=0.7, edgecolor='black')
         ax4.set_xlabel(f'Standardized {target_var} Anomaly')
         ax4.set_ylabel('Density')
-        ax4.set_title(f'Target {target_var} Anomaly Distribution')
+        ax4.set_title(f'Target {target_var} Anomaly Distribution | {confidence}% Most Confident | {data_type}')  # Added data_type to title
+        plt.tight_layout()
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/target_anomaly_distribution_{exp_type}_{confidence}.png', format='png', dpi=250)
+        plt.show()
 
+        # Plot 5: CRPS Distribution
+        fig5, ax5 = plt.subplots(figsize=(8, 6))
         shared_bins = np.linspace(min(min(all_crps1), min(all_crps2)), max(max(all_crps1), max(all_crps2)), 20)
-        ax5.hist(all_crps1, bins=shared_bins, density=True, color='blue', alpha=0.7, edgecolor='black', label=base_exp)
-        ax5.hist(all_crps2, bins=shared_bins, density=True, color='orange', alpha=0.7, edgecolor='black', label=opposing_exp)
+        ax5.hist(all_crps1, bins=shared_bins, density=True, color='#2a788e', alpha=0.7, edgecolor='black', label=base_exp)
+        ax5.hist(all_crps2, bins=shared_bins, density=True, color='#7ad151', alpha=0.7, edgecolor='black', label=opposing_exp)
         ax5.set_xlabel('CRPS')
         ax5.set_ylabel('Density')
-        ax5.set_title(f'CRPS Distribution')
+        ax5.set_title(f'CRPS Distribution | {confidence}% Most Confident | {data_type}')  # Added data_type to title
         ax5.legend()
-        
-        plt.suptitle(f'Summary of Most Confident Samples in each Month | {exp_type_names}', fontsize=16)
         plt.tight_layout()
-        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/summary_confident_by_month_{exp_type}.png', format='png', dpi=250)
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/crps_distribution_{exp_type}_{confidence}.png', format='png', dpi=250)
+        plt.show()
+
+        # Plot 6: check temporal distribution of most confident samples by month: 
+        date_values = np.array([date_da.values for date_da in all_target1_dates])
+        date_array = xr.DataArray(date_values, dims=['time'])
+        months = date_array.dt.month.values.tolist()
+        month_names = ['Jan', 'Feb', 'Mar', 'Oct', 'Nov', 'Dec']
+        month_counts = [months.count(m) for m in [1, 2, 3, 10, 11, 12]]
+        fig6, ax6 = plt.subplots(figsize=(8, 6))
+        ax6.bar(month_names, month_counts, color="#0d7e13", alpha=0.7, edgecolor='black')
+        ax6.set_xlabel('Month')
+        ax6.set_ylabel('Number of Selected Samples')
+        ax6.set_title(f'Temporal Distribution of Selected Samples by Month | {confidence}% Most Confident | {data_type}')  # Added data_type to title
+        plt.tight_layout()
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/temporal_distribution_{exp_type}_{confidence}.png', format='png', dpi=250)
 
         # INDIVIDUAL PLOTS: 
         # Select single random seed experiment to plot individual samples from
@@ -1873,6 +1852,7 @@ def m2m_sample_transfer(experiments, selection_method = 'confident_by_month', co
         # for first random seed in exp_list: 
         first_exp = exp_list[0]
         for i, date in enumerate(data_from_all_seeds1[first_exp]["target_date1"]):
+            print(f"lenght of data_from_all_seeds1[first_exp]['target_date1']: {len(data_from_all_seeds1[first_exp]['target_date1'])}")
             fig = plt.figure(figsize=(12, 6))
             # First panel: regular axis for SHASH curves
             ax0 = fig.add_subplot(2, 2, 1)
