@@ -129,7 +129,7 @@ exps = {
 # cea.teleconnection_bias_analysis(exps, confidence_level_low = 20, confidence_level_high = 5, keyword = "OBS_E3SM")
 
 # cea.anom_var_distributions(exps, keyword = "E3SM-short_OBS")
-
+# 
 # cea.m2m_sample_transfer(exps, selection_method = 'scaled_iqr_by_percentage', confidence = 10, keyword = "OBS-OBS")
 
 cea.m2m_sample_transfer(exps, selection_method = 'scaled_iqr_by_percentage', confidence = 10, keyword = "E3SM-short_E3SM")

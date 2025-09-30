@@ -1536,8 +1536,8 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
                 scaled_iqr = iqr_xr.groupby('time.dayofyear') / daily_iqr
                 #ungroup scaled_iqr: 
                 scaled_iqr = scaled_iqr.sortby('time')
-                print(f"iqr_xr.values: {iqr_xr.values}, scaled_iqr.values: {scaled_iqr.values}")
-                print(f"scaled iqr shape: {scaled_iqr.shape}")
+                # print(f"iqr_xr.values: {iqr_xr.values}, scaled_iqr.values: {scaled_iqr.values}")
+                # print(f"scaled iqr shape: {scaled_iqr.shape}")
 
                 # select narrowest percentage of scaled IQR based on confidence level: 
                 num_to_select = int(len(scaled_iqr) * (confidence / 100))
@@ -1567,6 +1567,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
             selected_samples["crps1"] = crps[selected_indices]
             selected_samples["input_maps1"] = input_maps.sel(time=selected_target_dates)
 
+            print(f" scaled IQR values: {selected_samples['iqr1'][:100]}")
 
             # accumulate all selected indices from the test dataset: 
             all_selected_indices.extend(selected_indices)
@@ -1623,6 +1624,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         all_input1 = []
         all_enso_phases1 = []
         all_mjo_phases1 = []
+        all_inputmaps1 = []
 
         for iexp, exp_name in enumerate(exp_list):
             all_target1_dates.extend(data_from_all_seeds1[exp_name]["target_date1"])
@@ -1720,7 +1722,12 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         # print(f"min mjo phase value: {np.min(all_mjo_phases)}, max mjo phase value: {np.max(all_mjo_phases)}")
         # print(f"all mjo phases: {all_mjo_phases}, type: {type(all_mjo_phases)}, len: {len(all_mjo_phases)}")
         mjo_baseline_frequencies = analysis.analysis_metrics.baseline_mjo_frequencies(data_type)
-        print(f"mjo baseline frequencies: {mjo_baseline_frequencies}")
+        # print(f"mjo baseline frequencies: {mjo_baseline_frequencies}")
+        if "OBS" in data_type:
+            mjo_ref_frequencies_all_data = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/mjo_phase_frequencies_ERA5_1940_2023.pkl')
+        elif "E3SM" in data_type:
+            mjo_ref_frequencies_all_data = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/mjo_frequencies_E3SM_1850_2014.pkl')
+
 
         # (3) ENSO phase distribution from selected_target_dates1
         all_enso_phases = []
@@ -1730,13 +1737,19 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         # print(f"all enso phases: {all_enso_phases}, type: {type(all_enso_phases)}, len: {len(all_enso_phases)}")
         # calculate frequency of enso phase relative to prevalence in total target dataset
         enso_baseline_frequencies = analysis.analysis_metrics.baseline_enso_frequencies(data_type)
-        print(f"ENSO baseline frequencies: {enso_baseline_frequencies}")
+        # print(f"ENSO baseline frequencies: {enso_baseline_frequencies}")
 
+        print(f'all target 1 values type: {type(all_target1_dates)}, examp: {all_target1_dates[0]}, type examp: {type(all_target1_dates[0])}')
         # (4) Target value distribution from selected_target_dates1
-        date_values = [date_da.values.item() for date_da in all_target1_dates]
-        selected_target_values = target.sel(time=date_values)
-        # selected_target_values = target.sel(time=all_target1_dates)
-
+        if "OBS" in data_type:
+            # Extract numpy.datetime64 values from DataArrays
+            date_values = [np.datetime64(date_da.values) for date_da in all_target1_dates]
+            print(f" date_values max date: {np.max(date_values)}, min date: {np.min(date_values)}")
+            selected_target_values = target.sel(time=date_values)
+        elif "E3SM" in data_type:
+            date_values = [date_da.values.item() for date_da in all_target1_dates]
+            selected_target_values = target.sel(time=date_values)
+        
         # Mean IQR for all output1
         mean_iqr1 = np.mean(all_iqr1)
         print(f"Mean IQR for all output1: {mean_iqr1}")
@@ -1772,17 +1785,18 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         mjo_bins = np.arange(-0.5, 9.5, 1)
         print(f"mjo bins: {mjo_bins}")
         ax2.hist(all_mjo_phases, bins=mjo_bins, density=True, color='#7201a8', alpha=0.7, edgecolor='black')
-        ax2.axhline(y=mjo_baseline_frequencies[0], color='#4D4D4D', xmin=0.05, xmax=0.15, linestyle='--', linewidth=1.5, label='Ratio of MJO Phase in All Samples')
-        ax2.axhline(y=mjo_baseline_frequencies[1], color='#4D4D4D', xmin=0.15, xmax=0.25, linestyle='--', linewidth=1.5)
-        ax2.axhline(y=mjo_baseline_frequencies[2], color='#4D4D4D', xmin=0.25, xmax=0.35, linestyle='--', linewidth=1.5)
-        ax2.axhline(y=mjo_baseline_frequencies[3], color='#4D4D4D', xmin=0.35, xmax=0.45, linestyle='--', linewidth=1.5)
-        ax2.axhline(y=mjo_baseline_frequencies[4], color='#4D4D4D', xmin=0.45, xmax=0.55, linestyle='--', linewidth=1.5)
-        ax2.axhline(y=mjo_baseline_frequencies[5], color='#4D4D4D', xmin=0.55, xmax=0.65, linestyle='--', linewidth=1.5)
-        ax2.axhline(y=mjo_baseline_frequencies[6], color='#4D4D4D', xmin=0.65, xmax=0.75, linestyle='--', linewidth=1.5)
-        ax2.axhline(y=mjo_baseline_frequencies[7], color='#4D4D4D', xmin=0.75, xmax=0.85, linestyle='--', linewidth=1.5)
-        ax2.axhline(y=mjo_baseline_frequencies[8], color='#4D4D4D', xmin=0.85, xmax=0.95, linestyle='--', linewidth=1.5)
+        ax2.axhline(y=mjo_ref_frequencies_all_data[0], color='#4D4D4D', xmin=0.05, xmax=0.148, linestyle=':', linewidth=1.5, label='Ratio of MJO Phase in All Samples')
+        ax2.axhline(y=mjo_ref_frequencies_all_data[1], color='#4D4D4D', xmin=0.15, xmax=0.248, linestyle=':', linewidth=1.5)
+        ax2.axhline(y=mjo_ref_frequencies_all_data[2], color='#4D4D4D', xmin=0.25, xmax=0.35, linestyle=':', linewidth=1.5)
+        ax2.axhline(y=mjo_ref_frequencies_all_data[3], color='#4D4D4D', xmin=0.35, xmax=0.45, linestyle=':', linewidth=1.5)
+        ax2.axhline(y=mjo_ref_frequencies_all_data[4], color='#4D4D4D', xmin=0.45, xmax=0.55, linestyle=':', linewidth=1.5)
+        ax2.axhline(y=mjo_ref_frequencies_all_data[5], color='#4D4D4D', xmin=0.55, xmax=0.65, linestyle=':', linewidth=1.5)
+        ax2.axhline(y=mjo_ref_frequencies_all_data[6], color='#4D4D4D', xmin=0.65, xmax=0.75, linestyle=':', linewidth=1.5)
+        ax2.axhline(y=mjo_ref_frequencies_all_data[7], color='#4D4D4D', xmin=0.752, xmax=0.85, linestyle=':', linewidth=1.5)
+        ax2.axhline(y=mjo_ref_frequencies_all_data[8], color='#4D4D4D', xmin=0.855, xmax=0.95, linestyle=':', linewidth=1.5)
         ax2.set_xticks([0, 1, 2, 3, 4, 5, 6, 7, 8])
         ax2.set_xticklabels([0, 1, 2, 3, 4, 5, 6, 7, 8])
+        ax2.set_ylim([0, 0.43])
         ax2.set_xlabel('MJO Phase')
         ax2.set_ylabel('Density')
         ax2.set_title(f'MJO Phase Distribution | {confidence}% Most Confident | {data_type}')  # Added data_type to title
@@ -1790,7 +1804,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mjo_phase_distribution_{exp_type}_{confidence}.png', format='png', dpi=250)
         plt.show()
 
-        # Plot 3: ENSO Phase Distribution
+        # Plot 3: ENSO Phase Distribution - RATIO
         fig3, ax3 = plt.subplots(figsize=(8, 6))
         bin_edges = np.array([-0.5, 0.5, 1.5, 2.5])
         bin_centers = np.array([0, 1, 2])
@@ -1807,7 +1821,24 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         ax3.set_title(f'ENSO Phase Distribution | {confidence}% Most Confident | {data_type}')  # Added data_type to title
         plt.tight_layout()
         plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/enso_phase_distribution_{exp_type}_{confidence}.png', format='png', dpi=250)
-        plt.show()
+
+        # Plot 3.5: ENSO Phase Distribution - COUNTS
+        fig, ax = plt.subplots(figsize=(8, 6))
+        bin_edges = np.array([-0.5, 0.5, 1.5, 2.5])
+        bin_centers = np.array([0, 1, 2])
+        ax.hist(all_enso_phases, bins=bin_edges, density=False, color="#d67a17", alpha=0.7, edgecolor='black')
+        # ax.axhline(y=enso_baseline_frequencies['El Nino'], color='#4D4D4D', xmin=0.05, xmax=0.35, linestyle='--', linewidth=1.5, label='Ratio of ENSO Phase in All Samples')
+        # ax.axhline(y=enso_baseline_frequencies['La Nina'], color='#4D4D4D', xmin=0.35, xmax=0.65, linestyle='--', linewidth=1.5)
+        # ax.axhline(y=enso_baseline_frequencies['Neutral'], color='#4D4D4D', xmin=0.66, xmax=0.95, linestyle='--', linewidth=1.5)
+        # ax.set_ylim([0, 0.65])
+        ax.legend()
+        ax.set_xticks(bin_centers)
+        ax.set_xticklabels(['El Nino', 'La Nina', 'Neutral'])
+        ax.set_xlabel('ENSO Phase')
+        ax.set_ylabel('Count')
+        ax.set_title(f'ENSO Phase Distribution | {confidence}% Most Confident | {data_type}')  # Added data_type to title
+        plt.tight_layout()
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/enso_phase_distribution_COUNTS_{exp_type}_{confidence}.png', format='png', dpi=250)
 
         # Plot 4: Target Variable Anomaly Distribution
         fig4, ax4 = plt.subplots(figsize=(8, 6))
@@ -1817,7 +1848,6 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         ax4.set_title(f'Target {target_var} Anomaly Distribution | {confidence}% Most Confident | {data_type}')  # Added data_type to title
         plt.tight_layout()
         plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/target_anomaly_distribution_{exp_type}_{confidence}.png', format='png', dpi=250)
-        plt.show()
 
         # Plot 5: CRPS Distribution
         fig5, ax5 = plt.subplots(figsize=(8, 6))
@@ -1833,9 +1863,15 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         plt.show()
 
         # Plot 6: check temporal distribution of most confident samples by month: 
-        date_values = np.array([date_da.values for date_da in all_target1_dates])
-        date_array = xr.DataArray(date_values, dims=['time'])
-        months = date_array.dt.month.values.tolist()
+        if "E3SM" in data_type:
+            date_values = [date_da.values.item() if hasattr(date_da.values, 'item') else date_da.values for date_da in all_target1_dates]
+            date_array = xr.DataArray(date_values, dims=['time'])
+            months = date_array.dt.month.values.tolist()
+        elif "OBS" in data_type:
+            date_values = [np.datetime64(date_da.values) for date_da in all_target1_dates]
+            # Convert to numpy array and extract months using numpy
+            date_array = np.array(date_values)
+            months = [date.astype('datetime64[M]').astype(int) % 12 + 1 for date in date_array]
         month_names = ['Jan', 'Feb', 'Mar', 'Oct', 'Nov', 'Dec']
         month_counts = [months.count(m) for m in [1, 2, 3, 10, 11, 12]]
         fig6, ax6 = plt.subplots(figsize=(8, 6))
@@ -1846,13 +1882,47 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         plt.tight_layout()
         plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/temporal_distribution_{exp_type}_{confidence}.png', format='png', dpi=250)
 
+        # Plot 7: Plot mean input maps from dates of interest: 
+        fig, ax = plt.subplots(1, 3, figsize=(18, 6), subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
+        variable_names = ['tp', 'skt', 'z'] if "OBS" in data_type else ['PRECT', 'TS', 'Z500']
+        cmap_list = ['BrBG', 'RdBu_r', 'PuOr_r']
+        vmin_list = np.zeros(3)
+        vmax_list = np.zeros(3)
+
+        for i in range(3):
+            # Calculate mean input map for variable i
+            input_maps_var = []
+            for exp_name in exp_list:
+                input_maps_var.append(data_from_all_seeds1[exp_name]["input_maps1"].sel(channel=i))
+
+            input_maps_var = xr.concat(input_maps_var, dim='time')
+            mean_input_map = input_maps_var.mean(dim='time')
+
+            vmin_list[i] = mean_input_map.min()
+            vmax_list[i] = -1 * (mean_input_map.min()) 
+
+            im = ax[i].pcolormesh(
+                mean_input_map['lon'],
+                mean_input_map['lat'],
+                mean_input_map,
+                cmap=cmap_list[i],
+                vmin=vmin_list[i],
+                vmax=vmax_list[i],
+                transform=ccrs.PlateCarree(central_longitude=0)
+            )
+            ax[i].coastlines()
+            ax[i].set_title(f'Mean Input Map: {variable_names[i]} | {confidence}% Most Confident | {data_type}')
+            plt.colorbar(im, ax=ax[i], orientation='horizontal', pad=0.05, label=f'{variable_names[i]} Anomaly')
+        plt.tight_layout()
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mean_input_maps_{exp_type}_{confidence}.png', format='png', dpi=250)
+
         # INDIVIDUAL PLOTS: 
         # Select single random seed experiment to plot individual samples from
         # 2 panels (1) shash curves (2) input map
         # for first random seed in exp_list: 
         first_exp = exp_list[0]
         for i, date in enumerate(data_from_all_seeds1[first_exp]["target_date1"]):
-            print(f"lenght of data_from_all_seeds1[first_exp]['target_date1']: {len(data_from_all_seeds1[first_exp]['target_date1'])}")
+            # print(f"lenght of data_from_all_seeds1[first_exp]['target_date1']: {len(data_from_all_seeds1[first_exp]['target_date1'])}")
             fig = plt.figure(figsize=(12, 6))
             # First panel: regular axis for SHASH curves
             ax0 = fig.add_subplot(2, 2, 1)
@@ -1891,7 +1961,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
             input_date_str = input_date_str[:10]
 
             output_params1 = data_from_all_seeds1[first_exp]["output1"]
-            output_params2 = data_from_all_seeds2[list(data_from_all_seeds2.keys())[0]]["output2"][:6]
+            output_params2 = data_from_all_seeds2[list(data_from_all_seeds2.keys())[0]]["output2"][:7]
             x = np.linspace(-5, 5, 100)
             dist1 = Shash(output_params1)
             dist2 = Shash(output_params2)

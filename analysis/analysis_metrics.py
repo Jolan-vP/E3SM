@@ -48,6 +48,9 @@ from utils.filemethods import filter_dates
 import matplotlib.cm as cm
 import utils
 import analysis
+import datetime
+from datetime import datetime
+import cftime
 
 import math
 import datetime
@@ -1903,7 +1906,7 @@ def mjo_timestamps(data_source, config):
     # Convert timestamps to strings for saving
     phase_timestamps_str = {phase: [str(date) for date in dates] for phase, dates in phase_timestamps.items()}
     
-    output_path = '/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/MJO_phase_timestamps_{data_source}.pkl'
+    output_path = f'/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/MJO_phase_timestamps_{data_source}.pkl'
     with open(output_path, 'wb') as f:
         pickle.dump(phase_timestamps_str, f)
 
@@ -1923,7 +1926,7 @@ def baseline_enso_frequencies(datatype = None):
     (3) Output reference frequencies for each phase
     
     """
-    
+
     if datatype == 'E3SM':
         dailyENSOfn = '/pscratch/sd/p/plutzner/E3SM/bigdata/ENSO_Data/E3SM/ENSO_ne30pg2_HighRes/nino.member0201_daily_linterp_shifted.nc'
         config_exp = "exp152"
@@ -1933,7 +1936,7 @@ def baseline_enso_frequencies(datatype = None):
         baseline_date_start = baseline_data.time[0]
         baseline_date_end = baseline_data.time[-1]
 
-    elif datatype == 'MJO':
+    elif datatype == 'OBS':
         dailyENSOfn = '/pscratch/sd/p/plutzner/E3SM/bigdata/ENSO_Data/OBS/nino34.long.anom_daily_linterp_shifted.nc'
         config_exp = "exp153"
 
@@ -1947,16 +1950,24 @@ def baseline_enso_frequencies(datatype = None):
     smoothing_length = config["databuilder"]["averaging_length"]  
 
     phases_dict = analysis.ENSO_indices_calculator.identify_nino_phases(dailyENSOfn, config, data_source = datatype, threshold = 0.4, window = 6, lagtime = lagtime, smoothing_length = smoothing_length)
-
-    # isolate phases_dict to dates of interest: 
-    baseline_phase_timestamps = {}
-    for phase, dates in phases_dict.items():
-        filtered_dates = [date for date in dates if baseline_date_start <= pd.Timestamp(date) <= baseline_date_end]
-        baseline_phase_timestamps[phase] = filtered_dates
+    print(f"phases dict keys: {phases_dict.keys()} for {datatype}")
+    # print(f"phases dict: {phases_dict} for {datatype}")
+    # baseline_phase_timestamps = {}
+    # for phase, dates in phases_dict.items():
+    #     filtered_dates = [date for date in dates if baseline_date_start <= date <= baseline_date_end]
+    #     baseline_phase_timestamps[phase] = filtered_dates
     
-    # Calculate frequency of each phase using density = 1
-    total_days = sum(len(dates) for dates in baseline_phase_timestamps.values())
-    enso_frequencies = {phase: len(dates) / total_days for phase, dates in baseline_phase_timestamps.items()}
+    # # Calculate frequency of each phase using density = 1
+    # total_days = sum(len(dates) for dates in baseline_phase_timestamps.values())
+    # enso_frequencies = {phase: len(dates) / total_days for phase, dates in baseline_phase_timestamps.items()}
+
+    # Calculate frequency of each phase for all dates in the dataset
+    total_days = sum(len(dates) for dates in phases_dict.values())
+    enso_frequencies = {phase: len(dates) / total_days for phase, dates in phases_dict.items()}
+
+    print(f"length of El Nino dates: {len(phases_dict['El Nino'])}")
+    print(f"length of La Nina dates: {len(phases_dict['La Nina'])}")
+    print(f"length of Neutral dates: {len(phases_dict['Neutral'])}")
 
     print(f"ENSO Frequencies: {enso_frequencies} for {datatype}")
 
@@ -1976,8 +1987,8 @@ def baseline_mjo_frequencies(datatype = None):
 
         baseline_data = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/exp152_E3SM_processed_Z500_climatology_1981-2010.nc')
         baseline_data = baseline_data['y']
-        baseline_date_start = baseline_data.time[0]
-        baseline_date_end = baseline_data.time[-1]
+        baseline_date_start = baseline_data.time[0].values
+        baseline_date_end = baseline_data.time[-1].values
 
         # Load MJO Indices
         MJOfilename = '/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/MJO_historical_0201_1850-2014.pkl'
@@ -2008,8 +2019,8 @@ def baseline_mjo_frequencies(datatype = None):
 
         baseline_data = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/exp153_ERA5_processed_Z500_climatology_1981-2010.nc')
         baseline_data = baseline_data['y']
-        baseline_date_start = baseline_data.time[0]
-        baseline_date_end = baseline_data.time[-1]
+        baseline_date_start = baseline_data.time[0].values
+        baseline_date_end = baseline_data.time[-1].values
 
         MJOfilename = '/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/rmm.74toRealtime.txt'
         # MJOsavename = '/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/mjo_combined_ERA20C_MJO_SatOBS_1900_2023.nc'
@@ -2076,12 +2087,12 @@ def baseline_mjo_frequencies(datatype = None):
         collected_phase_indices = np.where(phases == phase)[0]
         phase_timestamps[phase] = time_array[collected_phase_indices] # Map indices to timestamps
     
-    # Convert timestamps to strings for saving
-    phase_timestamps_str = {phase: [str(date) for date in dates] for phase, dates in phase_timestamps.items()}
+    # # Convert timestamps to strings for saving
+    # phase_timestamps_str = {phase: [str(date) for date in dates] for phase, dates in phase_timestamps.items()}
     
-    output_path = '/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/MJO_phase_timestamps_{data_source}.pkl'
-    with open(output_path, 'wb') as f:
-        pickle.dump(phase_timestamps_str, f)
+    # output_path = '/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/MJO_phase_timestamps_{data_source}.pkl'
+    # with open(output_path, 'wb') as f:
+    #     pickle.dump(phase_timestamps_str, f)
 
     # create xarray object with the time coordinate generated earlier and phases of array as single variable: 
     phases_ds = xr.Dataset(
@@ -2089,9 +2100,29 @@ def baseline_mjo_frequencies(datatype = None):
         coords={'time': time_array}
     )
 
-    phases_during_baseline = phases_ds.phase.sel(time=slice(
-    xr.coding.times.cftime_to_nptime(baseline_date_start),
-    xr.coding.times.cftime_to_nptime(baseline_date_end)))
+    # phases_during_baseline = phases_ds.phase.sel(time=slice(
+    # xr.coding.times.cftime_to_nptime(baseline_date_start),
+    # xr.coding.times.cftime_to_nptime(baseline_date_end)))
+
+    if isinstance(baseline_date_start, np.datetime64):
+        # ERA5 data: already numpy datetime
+        phases_during_baseline = phases_ds.phase.sel(
+            time=slice(baseline_date_start, baseline_date_end)
+        )
+    elif isinstance(baseline_date_start, cftime.datetime):
+        # E3SM data: need to convert cftime
+        phases_during_baseline = phases_ds.phase.sel(
+            time=slice(
+                xr.coding.times.cftime_to_nptime(baseline_date_start),
+                xr.coding.times.cftime_to_nptime(baseline_date_end)
+            )
+        )
+    else:
+        # Fallback: use string slicing
+        phases_during_baseline = phases_ds.phase.sel(
+            time=slice(str(baseline_date_start)[:10], str(baseline_date_end)[:10])
+        )
+
     phase_counts = np.array([np.sum(phases_during_baseline == phase) for phase in range(phaseqty)])
     phase_frequencies = phase_counts / np.sum(phase_counts)
     print(f"phase frequencies: {phase_frequencies}")
