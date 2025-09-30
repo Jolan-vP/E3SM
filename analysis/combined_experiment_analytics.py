@@ -1507,7 +1507,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
                     mean = climatology_stats[variable][0]
                     std = climatology_stats[variable][1]
                     input_maps.loc[dict(channel=l)] = (input_maps.sel(channel=l) - mean) / std
-                climatology_data = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/exp153_ERA5_processed_Z500_climatology_1981-2010.nc')
+                climatology_data = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/exp152_E3SM_processed_Z500_climatology_1981-2010.nc')
                 climatology_data = (climatology_data['y'] - climatology_stats['Z500'][2]) / climatology_stats['Z500'][3]
                 target = (target['y'] - climatology_stats['Z500'][2]) / climatology_stats['Z500'][3]
 
@@ -1567,8 +1567,6 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
             selected_samples["crps1"] = crps[selected_indices]
             selected_samples["input_maps1"] = input_maps.sel(time=selected_target_dates)
 
-            print(f" scaled IQR values: {selected_samples['iqr1'][:100]}")
-
             # accumulate all selected indices from the test dataset: 
             all_selected_indices.extend(selected_indices)
 
@@ -1576,7 +1574,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
             # print(f"selected target dates: {selected_target_dates.values}")
             # print(f"selected input dates: {selected_input_dates.values}")
             # print(f"selected samples: output1: {selected_samples['output1']}")
-            print(f"crps mean: {np.mean(selected_samples['crps1'])}, iqr mean: {np.mean(selected_samples['iqr1'])}, target mean: {np.mean(target[selected_indices])}")
+            # print(f"crps mean: {np.mean(selected_samples['crps1'])}, iqr mean: {np.mean(selected_samples['iqr1'])}, target mean: {np.mean(target[selected_indices])}")
             
             # ---- TODO identify ENSO and MJO phase of selected samples ----------------
             ###### ENSO ########
@@ -1634,7 +1632,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
             all_input1.extend(data_from_all_seeds1[exp_name]["input_date1"].values)
             all_enso_phases1.extend(data_from_all_seeds1[exp_name]["enso_phase"])
             all_mjo_phases1.extend(data_from_all_seeds1[exp_name]["mjo_phase"]["phase"].values)
-
+            
         for ood_model in models: 
             print(f"  Processing opposing model: {ood_model}")
             selected_samples = {}
@@ -1703,8 +1701,6 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         # 4 panels: (1) shash curves (2) MJO phase distributions (3) ENSO phase distribution (4) target value distribution
         # (1) shash curves from all output1 in one color, and all output2 in another color
         x = np.linspace(-5, 5, 100)
-        print(f"type output1: {type(all_output1)}, len: {len(all_output1)}")
-        print(f"type output2: {type(all_output2)}, len: {len(all_output2)}")
         all_output1 = np.array(all_output1)
         all_output2 = np.array(all_output2)
         dist1 = Shash(all_output1)
@@ -1739,7 +1735,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         enso_baseline_frequencies = analysis.analysis_metrics.baseline_enso_frequencies(data_type)
         # print(f"ENSO baseline frequencies: {enso_baseline_frequencies}")
 
-        print(f'all target 1 values type: {type(all_target1_dates)}, examp: {all_target1_dates[0]}, type examp: {type(all_target1_dates[0])}')
+        # print(f'all target 1 values type: {type(all_target1_dates)}, examp: {all_target1_dates[0]}, type examp: {type(all_target1_dates[0])}')
         # (4) Target value distribution from selected_target_dates1
         if "OBS" in data_type:
             # Extract numpy.datetime64 values from DataArrays
@@ -1915,6 +1911,97 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
             plt.colorbar(im, ax=ax[i], orientation='horizontal', pad=0.05, label=f'{variable_names[i]} Anomaly')
         plt.tight_layout()
         plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mean_input_maps_{exp_type}_{confidence}.png', format='png', dpi=250)
+
+        # Plot 8 : Plot mean input maps for each ENSO phase from most confident samples: 
+        enso_phases = ['EN', 'LN', 'N']
+        # select temperature input maps for each enso phase (channel = 1):
+        fig, ax = plt.subplots(1, 3, figsize=(18, 6), subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
+        for iphase, phase in enumerate(enso_phases):
+            input_maps_var = []
+            for exp_name in exp_list:
+                phase_mask = np.array(data_from_all_seeds1[exp_name]["enso_phase"]) == phase
+                input_maps_var.append(data_from_all_seeds1[exp_name]["input_maps1"].sel(channel=1).isel(time=phase_mask)) # channel 1 = temp (skt/TS)
+
+            input_maps_var = xr.concat(input_maps_var, dim='time')
+            if len(input_maps_var['time']) == 0:
+                print(f"No samples found for ENSO phase: {phase} in variable {variable_names[i]}")
+                continue
+            mean_input_map = input_maps_var.mean(dim='time')
+
+            abs_max = np.max(np.abs(mean_input_map))
+            vmin = -abs_max
+            vmax = abs_max 
+
+            im = ax[iphase].pcolormesh(
+                mean_input_map['lon'],
+                mean_input_map['lat'],
+                mean_input_map,
+                cmap=cmap_list[1],
+                vmin=vmin,
+                vmax=vmax,
+                transform=ccrs.PlateCarree(central_longitude=0)
+            )
+            ax[iphase].coastlines()
+            ax[iphase].set_title(f'Mean Input Map: {variable_names[1]} | ENSO: {phase} | {confidence}% Most Confident | {data_type}')
+            plt.colorbar(im, ax=ax[iphase], orientation='horizontal', pad=0.05, label=f'{variable_names[1]} Anomaly')
+            plt.tight_layout()
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mean_input_maps_{variable_names[1]}_ENSO_{exp_type}_{confidence}.png', format='png', dpi=250)
+
+
+        # PLOT 9: Histogram check of ENSO index strength
+        # Plot actual values of ENSO index for ALL samples and also for selected samples as histogram of "El Nino", "La Nina"
+        if data_type == "OBS":
+            print("Data source is ERA5 - daily ENSO data")
+            Nino34 = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/ENSO_Data/E3SM/ENSO_ne30pg2_HighRes/nino.member0201_daily_linterp_shifted.nc')
+            # Nino34 = Nino34.values
+            nino34_index = Nino34.sel(time=slice(str(config["databuilder"]["input_years"][0]), str(config["databuilder"]["input_years"][1])))
+
+        elif data_type == "E3SM":
+            print("Data source is E3SM - daily ENSO data")
+            Nino34 = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/ENSO_Data/OBS/nino34.long.anom_daily_linterp_shifted.nc')
+            Nino34 = Nino34.nino34 #TODO FIX ERROR WITH VAR NAME?
+            full_time = xr.cftime_range(start='1850-01-01', end='2014-12-31', freq='D', calendar='noleap')
+            Nino34 = Nino34.reindex(time=full_time)
+            nino34_index = Nino34.sel(time=slice(str(config["databuilder"]["input_years"][0]), str(config["databuilder"]["input_years"][1])))
+
+        # Collect index values for histogram of all samples:
+        plt.figure(figsize = (10, 7))
+        all_enso_values = {'El Nino': [], 'La Nina': [], 'Neutral': []}
+        for date in target['time'].values:
+            if date in enso_dates_pkl['El Nino']:
+                all_enso_values['El Nino'].append(nino34_index.sel(time=date).values) # TODO DATE TIME FORMAT ERROR WITH OBS
+            elif date in enso_dates_pkl['La Nina']:
+                all_enso_values['La Nina'].append(nino34_index.sel(time=date).values)
+            else:
+                all_enso_values['Neutral'].append(nino34_index.sel(time=date).values)
+
+        # collect index values for histogram from most confident selected target dates: 
+        selected_enso_values = {'El Nino': [], 'La Nina': [], 'Neutral': []}
+        for exp_name in exp_list:
+            selected_target_dates_exact = data_from_all_seeds1[exp_name]["target_date1"]
+            for date in selected_target_dates_exact:
+                if date in enso_dates_pkl['El Nino']:
+                    selected_enso_values['El Nino'].append(nino34_index.sel(time=date).values)
+                elif date in enso_dates_pkl['La Nina']:
+                    selected_enso_values['La Nina'].append(nino34_index.sel(time=date).values)
+                else:
+                    selected_enso_values['Neutral'].append(nino34_index.sel(time=date).values)
+        # Plot histograms
+        bins = np.linspace(-3, 3, 40)
+        plt.hist(all_enso_values['El Nino'], bins=bins, alpha=0.5, label='All Samples - El Nino', color='red', density=True)
+        plt.hist(all_enso_values['La Nina'], bins=bins, alpha=0.5, label='All Samples - La Nina', color='blue', density=True)
+        plt.hist(all_enso_values['Neutral'], bins=bins, alpha=0.5, label='All Samples - Neutral', color='gray', density=True)
+        plt.hist(selected_enso_values['El Nino'], bins=bins, alpha=0.9, label='Selected Samples - El Nino', color='darkred', density=True)
+        plt.hist(selected_enso_values['La Nina'], bins=bins, alpha=0.9, label='Selected Samples - La Nina', color='darkblue', density=True)
+        plt.hist(selected_enso_values['Neutral'], bins=bins, alpha=0.9, label='Selected Samples - Neutral', color='black', density=True)
+        plt.xlabel('Nino3.4 Index Value')
+        plt.ylabel('Density')
+        plt.title(f'ENSO Index Value Distribution | {confidence}% Most Confident | {data_type}')
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/enso_index_value_distribution_{exp_type}_{confidence}.png', format='png', dpi=250)
+        plt.show()
+        
 
         # INDIVIDUAL PLOTS: 
         # Select single random seed experiment to plot individual samples from

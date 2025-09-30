@@ -242,6 +242,19 @@ def identify_nino_phases(nino34_filename, config, data_source = None,  threshold
     else:
         print("Success: No overlapping dates found")
 
+    # After ENSO_dates_dict is built
+    print("Sample El Nino dates and Nino3.4 values:")
+    for d in ENSO_dates_dict['El Nino'][:10]:
+        idx = np.where(nino34_index.time.values == d)[0]
+        if len(idx) > 0:
+            print(f"{d}: {nino34_index.values[idx[0]]}")
+
+    print("Sample La Nina dates and Nino3.4 values:")
+    for d in ENSO_dates_dict['La Nina'][:10]:
+        idx = np.where(nino34_index.time.values == d)[0]
+        if len(idx) > 0:
+            print(f"{d}: {nino34_index.values[idx[0]]}")
+
     return ENSO_dates_dict
 
 

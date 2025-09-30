@@ -1950,7 +1950,7 @@ def baseline_enso_frequencies(datatype = None):
     smoothing_length = config["databuilder"]["averaging_length"]  
 
     phases_dict = analysis.ENSO_indices_calculator.identify_nino_phases(dailyENSOfn, config, data_source = datatype, threshold = 0.4, window = 6, lagtime = lagtime, smoothing_length = smoothing_length)
-    print(f"phases dict keys: {phases_dict.keys()} for {datatype}")
+    # print(f"phases dict keys: {phases_dict.keys()} for {datatype}")
     # print(f"phases dict: {phases_dict} for {datatype}")
     # baseline_phase_timestamps = {}
     # for phase, dates in phases_dict.items():
@@ -1965,11 +1965,11 @@ def baseline_enso_frequencies(datatype = None):
     total_days = sum(len(dates) for dates in phases_dict.values())
     enso_frequencies = {phase: len(dates) / total_days for phase, dates in phases_dict.items()}
 
-    print(f"length of El Nino dates: {len(phases_dict['El Nino'])}")
-    print(f"length of La Nina dates: {len(phases_dict['La Nina'])}")
-    print(f"length of Neutral dates: {len(phases_dict['Neutral'])}")
+    # print(f"length of El Nino dates: {len(phases_dict['El Nino'])}")
+    # print(f"length of La Nina dates: {len(phases_dict['La Nina'])}")
+    # print(f"length of Neutral dates: {len(phases_dict['Neutral'])}")
 
-    print(f"ENSO Frequencies: {enso_frequencies} for {datatype}")
+    # print(f"ENSO Frequencies: {enso_frequencies} for {datatype}")
 
     return enso_frequencies
 
@@ -2125,8 +2125,8 @@ def baseline_mjo_frequencies(datatype = None):
 
     phase_counts = np.array([np.sum(phases_during_baseline == phase) for phase in range(phaseqty)])
     phase_frequencies = phase_counts / np.sum(phase_counts)
-    print(f"phase frequencies: {phase_frequencies}")
-    print(f"Phase frequencies during baseline period {baseline_date_start} to {baseline_date_end}: {phase_frequencies}")
+    # print(f"phase frequencies: {phase_frequencies}")
+    # print(f"Phase frequencies during baseline period {baseline_date_start} to {baseline_date_end}: {phase_frequencies}")
 
     return phase_frequencies
 
