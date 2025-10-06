@@ -1580,6 +1580,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
             ###### ENSO ########
             # Open ENSO dates for E3SM vs OBS data: 
             enso_dates_pkl = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_daily_enso_timestamps.pkl')
+
             # check which key (category) each of the target dates falls into, and create a list with either "EN", "LN" or "N"
             enso_phase = []
             for date in selected_target_dates.values:
@@ -1740,7 +1741,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         if "OBS" in data_type:
             # Extract numpy.datetime64 values from DataArrays
             date_values = [np.datetime64(date_da.values) for date_da in all_target1_dates]
-            print(f" date_values max date: {np.max(date_values)}, min date: {np.min(date_values)}")
+            # print(f" date_values max date: {np.max(date_values)}, min date: {np.min(date_values)}")
             selected_target_values = target.sel(time=date_values)
         elif "E3SM" in data_type:
             date_values = [date_da.values.item() for date_da in all_target1_dates]
@@ -1777,65 +1778,259 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         plt.show()
 
         # Plot 2: MJO Phase Distribution
-        fig2, ax2 = plt.subplots(figsize=(8, 6))
-        mjo_bins = np.arange(-0.5, 9.5, 1)
-        print(f"mjo bins: {mjo_bins}")
-        ax2.hist(all_mjo_phases, bins=mjo_bins, density=True, color='#7201a8', alpha=0.7, edgecolor='black')
-        ax2.axhline(y=mjo_ref_frequencies_all_data[0], color='#4D4D4D', xmin=0.05, xmax=0.148, linestyle=':', linewidth=1.5, label='Ratio of MJO Phase in All Samples')
-        ax2.axhline(y=mjo_ref_frequencies_all_data[1], color='#4D4D4D', xmin=0.15, xmax=0.248, linestyle=':', linewidth=1.5)
-        ax2.axhline(y=mjo_ref_frequencies_all_data[2], color='#4D4D4D', xmin=0.25, xmax=0.35, linestyle=':', linewidth=1.5)
-        ax2.axhline(y=mjo_ref_frequencies_all_data[3], color='#4D4D4D', xmin=0.35, xmax=0.45, linestyle=':', linewidth=1.5)
-        ax2.axhline(y=mjo_ref_frequencies_all_data[4], color='#4D4D4D', xmin=0.45, xmax=0.55, linestyle=':', linewidth=1.5)
-        ax2.axhline(y=mjo_ref_frequencies_all_data[5], color='#4D4D4D', xmin=0.55, xmax=0.65, linestyle=':', linewidth=1.5)
-        ax2.axhline(y=mjo_ref_frequencies_all_data[6], color='#4D4D4D', xmin=0.65, xmax=0.75, linestyle=':', linewidth=1.5)
-        ax2.axhline(y=mjo_ref_frequencies_all_data[7], color='#4D4D4D', xmin=0.752, xmax=0.85, linestyle=':', linewidth=1.5)
-        ax2.axhline(y=mjo_ref_frequencies_all_data[8], color='#4D4D4D', xmin=0.855, xmax=0.95, linestyle=':', linewidth=1.5)
-        ax2.set_xticks([0, 1, 2, 3, 4, 5, 6, 7, 8])
-        ax2.set_xticklabels([0, 1, 2, 3, 4, 5, 6, 7, 8])
-        ax2.set_ylim([0, 0.43])
-        ax2.set_xlabel('MJO Phase')
-        ax2.set_ylabel('Density')
-        ax2.set_title(f'MJO Phase Distribution | {confidence}% Most Confident | {data_type}')  # Added data_type to title
+        counts = np.bincount(all_mjo_phases, minlength=9)
+        total = counts.sum()
+        densities = counts / total
+
+        phases = np.arange(0, 9)
+        phase_labels = [str(i) for i in phases]
+
+        fig, ax = plt.subplots(figsize=(8, 6))
+        bar_width = 0.8
+
+        # Bar plot for density
+        bars = ax.bar(phases, densities, width=bar_width, color="#7d4b94", alpha=0.7, edgecolor='black', label='Selected Samples')
+
+        # Reference lines for each phase
+        for i, freq in enumerate(mjo_ref_frequencies_all_data):
+            # Draw a horizontal line across the width of the bar for phase i
+            ax.hlines(y=freq, xmin=i - bar_width/2, xmax=i + bar_width/2, color="#3C3B3B", linewidth=2, linestyle='-', label='Reference' if i==0 else None)
+
+        ax.set_xticks(phases)
+        ax.set_xticklabels(phase_labels)
+        ax.set_ylim([0, max(densities.max(), np.max(mjo_ref_frequencies_all_data)) * 1.15])
+        ax.set_xlabel('MJO Phase')
+        ax.set_ylabel('Density')
+        ax.set_title('MJO Phase Distribution (including Phase 0)')
+        handles, labels = ax.get_legend_handles_labels()
+        # Only show one legend entry for the reference lines
+        if 'Reference' in labels:
+            idx = labels.index('Reference')
+            ax.legend([bars, handles[idx]], ['Selected Samples', 'Reference'])
+        else:
+            ax.legend()
         plt.tight_layout()
         plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mjo_phase_distribution_{exp_type}_{confidence}.png', format='png', dpi=250)
         plt.show()
 
+        # PLOT 9: Histogram check of ENSO index strength
+        # Plot actual values of ENSO index for ALL samples and also for selected samples as histogram of "El Nino", "La Nina"
+        if data_type == "E3SM":
+            print("Data source is E3SM - daily ENSO data")
+            Nino34 = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/ENSO_Data/E3SM/ENSO_ne30pg2_HighRes/nino.member0201_daily_linterp_shifted.nc')
+            Nino34 = Nino34.nino34
+            nino34_index = Nino34.sel(time=slice(str(config["databuilder"]["input_years"][0]), str(config["databuilder"]["input_years"][1])))
+
+        elif data_type == "OBS":
+            print("Data source is ERA5 - daily ENSO data")            
+            Nino34 = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/ENSO_Data/OBS/nino34.long.anom_daily_linterp_shifted.nc')
+            Nino34 = Nino34.value
+            # full_time = xr.cftime_range(start='1850-01-01', end='2024-12-31', freq='D', calendar='noleap')
+            # Nino34 = Nino34.reindex(time=full_time)
+            nino34_index = Nino34.sel(time=slice(str(config["databuilder"]["input_years"][0]), str(config["databuilder"]["input_years"][1])))
+        
+        # Collect index values for histogram of all samples:
+        all_enso_values = {'El Nino': [], 'La Nina': [], 'Neutral': []}
+
+        def safe_sel_nino34(nino34_index, date, data_type):
+            """
+            Selects the Nino3.4 index value for a given date, handling E3SM vs OBS time formats.
+            Returns np.nan if not found.
+            """
+            try:
+                if data_type == "E3SM":
+                    # Convert any date type to string 'YYYY-MM-DD'
+                    if hasattr(date, 'strftime'):
+                        date_str = date.strftime('%Y-%m-%d')
+                    elif hasattr(date, 'year') and hasattr(date, 'month') and hasattr(date, 'day'):
+                        date_str = f"{date.year:04d}-{date.month:02d}-{date.day:02d}"
+                    elif isinstance(date, (np.datetime64, pd.Timestamp)):
+                        date_str = pd.to_datetime(date).strftime('%Y-%m-%d')
+                    else:
+                        date_str = str(date)[:10]
+                    return nino34_index.sel(time=date_str).values.item()
+                else:
+                    # Use date directly for OBS/ERA5
+                    return nino34_index.sel(time=date).values.item()
+            except Exception as e:
+                # print(f"Date {date} not found in nino34_index, skipping. ({e})")
+                return np.nan
+
+        for date in target['time'].values:
+            # For ENSO phase assignment, compare as numpy.datetime64
+            if date in enso_dates_pkl['El Nino']:
+                phase = 'El Nino'
+            elif date in enso_dates_pkl['La Nina']:
+                phase = 'La Nina'
+            else:
+                phase = 'Neutral'
+            nino_val = safe_sel_nino34(nino34_index, date, data_type)
+            all_enso_values[phase].append(nino_val)
+
+        # collect index values for histogram from most confident selected target dates: 
+        selected_enso_values = {'El Nino': [], 'La Nina': [], 'Neutral': []}
+        for exp_name in exp_list:
+            selected_target_dates = data_from_all_seeds1[exp_name]["target_date1"]
+            for date in selected_target_dates.values:
+                if date in enso_dates_pkl['El Nino']:
+                    phase = 'El Nino'
+                elif date in enso_dates_pkl['La Nina']:
+                    phase = 'La Nina'
+                else:
+                    phase = 'Neutral'
+                nino_val = safe_sel_nino34(nino34_index, date, data_type)
+                selected_enso_values[phase].append(nino_val)
+                
+        # print(f"Number of selected El Nino samples: {len(selected_enso_values['El Nino'])}, La Nina samples: {len(selected_enso_values['La Nina'])}, Neutral samples: {len(selected_enso_values['Neutral'])}")
+        # print(f"Number of all El Nino samples: {len(all_enso_values['El Nino'])}, La  Nina samples: {len(all_enso_values['La Nina'])}, Neutral samples: {len(all_enso_values['Neutral'])}")
+        # print(f" type of selected_enso_values['El Nino']: {type(selected_enso_values['El Nino'])}, type of first element: {type(selected_enso_values['El Nino'][0])}")
+        # print(f"first few selected El Nino values: {selected_enso_values['El Nino'][:5]}")
+        # Plot histograms
+        plt.figure(figsize = (9, 6))
+        bins = np.linspace(-5, 5, 100)
+        plt.hist(all_enso_values['El Nino'], bins=bins, alpha=0.3, label=f'All Samples - El Nino (N = {len(all_enso_values["El Nino"])})', histtype = 'barstacked', color="#482878", density=True)
+        plt.hist(all_enso_values['La Nina'], bins=bins, alpha=0.3, label=f'All Samples - La Nina (N = {len(all_enso_values["La Nina"])})', histtype = 'barstacked', color="#26828e", density=True)
+        plt.hist(all_enso_values['Neutral'], bins=bins, alpha=0.3, label=f'All Samples - Neutral (N = {len(all_enso_values["Neutral"])})', histtype = 'barstacked', color="#b5de2b", density=True)
+        plt.xlabel('Nino3.4 Index Value')
+        plt.ylabel('Density')
+        plt.title(f'ENSO Index Value Distribution Across all {data_type} Data')
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/enso_index_value_distribution_{exp_type}_ALL_data.png', format='png', dpi=250)
+        
+        plt.figure(figsize = (9, 6))
+        bins = np.linspace(-5, 5, 100)
+        plt.hist(selected_enso_values['El Nino'], bins=bins, alpha=0.7, label=f'Selected Samples - El Nino (N = {len(selected_enso_values["El Nino"])})', histtype = 'barstacked', color="#482878", density=True)
+        plt.hist(selected_enso_values['La Nina'], bins=bins, alpha=0.7, label=f'Selected Samples - La Nina (N = {len(selected_enso_values["La Nina"])})', histtype = 'barstacked', color="#26828e", density=True)
+        plt.hist(selected_enso_values['Neutral'], bins=bins, alpha=0.7, label=f'Selected Samples - Neutral (N = {len(selected_enso_values["Neutral"])})', histtype = 'barstacked', color="#b5de2b", density=True)
+        plt.xlabel('Nino3.4 Index Value')
+        plt.ylabel('Density')
+        plt.title(f'ENSO Index Value Distribution For {confidence}% Most Confident | {data_type}')
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/enso_index_value_distribution_{exp_type}_{confidence}_most_confident.png', format='png', dpi=250)
+        
         # Plot 3: ENSO Phase Distribution - RATIO
         fig3, ax3 = plt.subplots(figsize=(8, 6))
         bin_edges = np.array([-0.5, 0.5, 1.5, 2.5])
         bin_centers = np.array([0, 1, 2])
-        ax3.hist(all_enso_phases, bins=bin_edges, density=True, color='#fb9f3a', alpha=0.7, edgecolor='black')
-        ax3.axhline(y=enso_baseline_frequencies['El Nino'], color='#4D4D4D', xmin=0.05, xmax=0.35, linestyle='--', linewidth=1.5, label='Ratio of ENSO Phase in All Samples')
-        ax3.axhline(y=enso_baseline_frequencies['La Nina'], color='#4D4D4D', xmin=0.35, xmax=0.65, linestyle='--', linewidth=1.5)
-        ax3.axhline(y=enso_baseline_frequencies['Neutral'], color='#4D4D4D', xmin=0.66, xmax=0.95, linestyle='--', linewidth=1.5)
-        ax3.set_ylim([0, 0.65])
-        ax3.legend()
+        bar_width = 0.4
+
+        sum_total_phases = len(selected_enso_values['El Nino']) + len(selected_enso_values['La Nina']) + len(selected_enso_values['Neutral'])
+        enso_phase_dist = [len(selected_enso_values['El Nino']) / sum_total_phases, 
+                        len(selected_enso_values['La Nina']) / sum_total_phases, 
+                        len(selected_enso_values['Neutral']) / sum_total_phases]
+
+        bars = ax3.bar(bin_centers, enso_phase_dist, width=bar_width, color='#fb9f3a', alpha=0.7, edgecolor='black')
+
+        # Reference lines for each ENSO phase
+        enso_phases = ['El Nino', 'La Nina', 'Neutral']
+        for i, phase in enumerate(enso_phases):
+            freq = enso_baseline_frequencies[phase]
+            # Draw a horizontal line across the width of the bar for phase i
+            ax3.hlines(y=freq, xmin=i - bar_width/2, xmax=i + bar_width/2, 
+                    color="#3C3B3B", linewidth=2, linestyle='-', 
+                    label='Reference' if i==0 else None)
+
+        ax3.set_ylim([0, max(max(enso_phase_dist), max(enso_baseline_frequencies.values())) * 1.15])
         ax3.set_xticks(bin_centers)
         ax3.set_xticklabels(['El Nino', 'La Nina', 'Neutral'])
         ax3.set_xlabel('ENSO Phase')
         ax3.set_ylabel('Density')
-        ax3.set_title(f'ENSO Phase Distribution | {confidence}% Most Confident | {data_type}')  # Added data_type to title
+        ax3.set_title(f'ENSO Phase Distribution | {confidence}% Most Confident | {data_type}')
+
+        # Legend with only one entry for reference lines
+        handles, labels = ax3.get_legend_handles_labels()
+        if 'Reference' in labels:
+            idx = labels.index('Reference')
+            ax3.legend([bars, handles[idx]], ['Selected Samples', 'Reference'])
+        else:
+            ax3.legend()
         plt.tight_layout()
         plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/enso_phase_distribution_{exp_type}_{confidence}.png', format='png', dpi=250)
 
-        # Plot 3.5: ENSO Phase Distribution - COUNTS
-        fig, ax = plt.subplots(figsize=(8, 6))
-        bin_edges = np.array([-0.5, 0.5, 1.5, 2.5])
-        bin_centers = np.array([0, 1, 2])
-        ax.hist(all_enso_phases, bins=bin_edges, density=False, color="#d67a17", alpha=0.7, edgecolor='black')
-        # ax.axhline(y=enso_baseline_frequencies['El Nino'], color='#4D4D4D', xmin=0.05, xmax=0.35, linestyle='--', linewidth=1.5, label='Ratio of ENSO Phase in All Samples')
-        # ax.axhline(y=enso_baseline_frequencies['La Nina'], color='#4D4D4D', xmin=0.35, xmax=0.65, linestyle='--', linewidth=1.5)
-        # ax.axhline(y=enso_baseline_frequencies['Neutral'], color='#4D4D4D', xmin=0.66, xmax=0.95, linestyle='--', linewidth=1.5)
-        # ax.set_ylim([0, 0.65])
-        ax.legend()
-        ax.set_xticks(bin_centers)
-        ax.set_xticklabels(['El Nino', 'La Nina', 'Neutral'])
-        ax.set_xlabel('ENSO Phase')
-        ax.set_ylabel('Count')
-        ax.set_title(f'ENSO Phase Distribution | {confidence}% Most Confident | {data_type}')  # Added data_type to title
-        plt.tight_layout()
-        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/enso_phase_distribution_COUNTS_{exp_type}_{confidence}.png', format='png', dpi=250)
+## -----------------
+## -----------------
+        # (3) ENSO phase distribution - CHECK EACH SEED SEPARATELY
+        all_enso_phases = []
+        for exp_name in exp_list:
+            all_enso_phases.extend(data_from_all_seeds1[exp_name]["enso_phase"])
+        all_enso_phases = np.array(all_enso_phases)
 
+        # Get baseline frequencies
+        enso_baseline_frequencies = analysis.analysis_metrics.baseline_enso_frequencies(data_type)
+        print(f"ENSO baseline frequencies: {enso_baseline_frequencies}")
+
+        # Create a figure with subplots for each random seed
+        n_seeds = len(exp_list)
+        fig, axes = plt.subplots(2, (n_seeds + 1) // 2, figsize=(15, 8))
+        axes = axes.flatten()
+
+        # Also store aggregate data for comparison
+        all_seed_ratios = {'El Nino': [], 'La Nina': [], 'Neutral': []}
+
+        for idx, exp_name in enumerate(exp_list):
+            ax = axes[idx]
+            
+            # Get ENSO phases for this seed
+            seed_enso_phases = np.array(data_from_all_seeds1[exp_name]["enso_phase"])
+            
+            # Count each phase
+            n_el_nino = np.sum(seed_enso_phases == "EN")
+            n_la_nina = np.sum(seed_enso_phases == "LN")
+            n_neutral = np.sum(seed_enso_phases == "N")
+            total = len(seed_enso_phases)
+            
+            # Calculate ratios
+            ratios = [n_el_nino / total, n_la_nina / total, n_neutral / total]
+            all_seed_ratios['El Nino'].append(ratios[0])
+            all_seed_ratios['La Nina'].append(ratios[1])
+            all_seed_ratios['Neutral'].append(ratios[2])
+            
+            print(f"{exp_name}: EN={n_el_nino}, LN={n_la_nina}, N={n_neutral}, Total={total}")
+            print(f"  Ratios: EN={ratios[0]:.3f}, LN={ratios[1]:.3f}, N={ratios[2]:.3f}")
+            
+            # Plot
+            bin_centers = np.array([0, 1, 2])
+            bar_width = 0.4
+            
+            bars = ax.bar(bin_centers, ratios, width=bar_width, color='#fb9f3a', alpha=0.7, edgecolor='black')
+            
+            # Reference lines for each ENSO phase
+            enso_phases = ['El Nino', 'La Nina', 'Neutral']
+            for i, phase in enumerate(enso_phases):
+                freq = enso_baseline_frequencies[phase]
+                ax.hlines(y=freq, xmin=i - bar_width/2, xmax=i + bar_width/2, 
+                        color="#3C3B3B", linewidth=2, linestyle='-', 
+                        label='Reference' if i==0 else None)
+            
+            ax.set_ylim([0, max(max(ratios), max(enso_baseline_frequencies.values())) * 1.15])
+            ax.set_xticks(bin_centers)
+            ax.set_xticklabels(['EN', 'LN', 'N'], fontsize=8)
+            ax.set_ylabel('Ratio', fontsize=8)
+            ax.set_title(f'{exp_name}\n(n={total})', fontsize=9)
+            if "OBS" in data_type:
+                ax.set_ylim([0, 0.6])
+            elif "E3SM" in data_type:
+                ax.set_ylim([0, 0.5])
+            
+            if idx == 0:
+                ax.legend(fontsize=7)
+
+        # Hide extra subplots if odd number of seeds
+        for idx in range(n_seeds, len(axes)):
+            axes[idx].set_visible(False)
+
+        plt.suptitle(f'ENSO Phase Distribution by Random Seed | {exp_type} | {confidence}% Confidence', 
+                    fontsize=12, y=1.00)
+        plt.tight_layout()
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/enso_frequency_by_seed_{exp_type}_{confidence}.png', 
+                    format='png', dpi=250, bbox_inches='tight')
+        plt.show()
+
+ ## -----------------
+ ## -----------------
+ 
         # Plot 4: Target Variable Anomaly Distribution
         fig4, ax4 = plt.subplots(figsize=(8, 6))
         ax4.hist(selected_target_values, bins=20, density=True, color='#0d0887', alpha=0.7, edgecolor='black')
@@ -1886,7 +2081,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         vmax_list = np.zeros(3)
 
         for i in range(3):
-            # Calculate mean input map for variable i
+            # Calculate mean input map for variable (prect, temp, Z)
             input_maps_var = []
             for exp_name in exp_list:
                 input_maps_var.append(data_from_all_seeds1[exp_name]["input_maps1"].sel(channel=i))
@@ -1894,8 +2089,14 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
             input_maps_var = xr.concat(input_maps_var, dim='time')
             mean_input_map = input_maps_var.mean(dim='time')
 
-            vmin_list[i] = mean_input_map.min()
-            vmax_list[i] = -1 * (mean_input_map.min()) 
+            # vmin_list[i] = mean_input_map.min()
+            # vmax_list[i] = -1 * (mean_input_map.min()) 
+            # if i == 1: 
+            #     vmin_list[i] = -1
+            #     vmax_list[i] = 1
+
+            vmin_list = [-0.3, -1, -0.6]
+            vmax_list = [0.3, 1, 0.6]
 
             im = ax[i].pcolormesh(
                 mean_input_map['lon'],
@@ -1948,60 +2149,6 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mean_input_maps_{variable_names[1]}_ENSO_{exp_type}_{confidence}.png', format='png', dpi=250)
 
 
-        # PLOT 9: Histogram check of ENSO index strength
-        # Plot actual values of ENSO index for ALL samples and also for selected samples as histogram of "El Nino", "La Nina"
-        if data_type == "OBS":
-            print("Data source is ERA5 - daily ENSO data")
-            Nino34 = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/ENSO_Data/E3SM/ENSO_ne30pg2_HighRes/nino.member0201_daily_linterp_shifted.nc')
-            # Nino34 = Nino34.values
-            nino34_index = Nino34.sel(time=slice(str(config["databuilder"]["input_years"][0]), str(config["databuilder"]["input_years"][1])))
-
-        elif data_type == "E3SM":
-            print("Data source is E3SM - daily ENSO data")
-            Nino34 = xr.open_dataset('/pscratch/sd/p/plutzner/E3SM/bigdata/ENSO_Data/OBS/nino34.long.anom_daily_linterp_shifted.nc')
-            Nino34 = Nino34.nino34 #TODO FIX ERROR WITH VAR NAME?
-            full_time = xr.cftime_range(start='1850-01-01', end='2014-12-31', freq='D', calendar='noleap')
-            Nino34 = Nino34.reindex(time=full_time)
-            nino34_index = Nino34.sel(time=slice(str(config["databuilder"]["input_years"][0]), str(config["databuilder"]["input_years"][1])))
-
-        # Collect index values for histogram of all samples:
-        plt.figure(figsize = (10, 7))
-        all_enso_values = {'El Nino': [], 'La Nina': [], 'Neutral': []}
-        for date in target['time'].values:
-            if date in enso_dates_pkl['El Nino']:
-                all_enso_values['El Nino'].append(nino34_index.sel(time=date).values) # TODO DATE TIME FORMAT ERROR WITH OBS
-            elif date in enso_dates_pkl['La Nina']:
-                all_enso_values['La Nina'].append(nino34_index.sel(time=date).values)
-            else:
-                all_enso_values['Neutral'].append(nino34_index.sel(time=date).values)
-
-        # collect index values for histogram from most confident selected target dates: 
-        selected_enso_values = {'El Nino': [], 'La Nina': [], 'Neutral': []}
-        for exp_name in exp_list:
-            selected_target_dates_exact = data_from_all_seeds1[exp_name]["target_date1"]
-            for date in selected_target_dates_exact:
-                if date in enso_dates_pkl['El Nino']:
-                    selected_enso_values['El Nino'].append(nino34_index.sel(time=date).values)
-                elif date in enso_dates_pkl['La Nina']:
-                    selected_enso_values['La Nina'].append(nino34_index.sel(time=date).values)
-                else:
-                    selected_enso_values['Neutral'].append(nino34_index.sel(time=date).values)
-        # Plot histograms
-        bins = np.linspace(-3, 3, 40)
-        plt.hist(all_enso_values['El Nino'], bins=bins, alpha=0.5, label='All Samples - El Nino', color='red', density=True)
-        plt.hist(all_enso_values['La Nina'], bins=bins, alpha=0.5, label='All Samples - La Nina', color='blue', density=True)
-        plt.hist(all_enso_values['Neutral'], bins=bins, alpha=0.5, label='All Samples - Neutral', color='gray', density=True)
-        plt.hist(selected_enso_values['El Nino'], bins=bins, alpha=0.9, label='Selected Samples - El Nino', color='darkred', density=True)
-        plt.hist(selected_enso_values['La Nina'], bins=bins, alpha=0.9, label='Selected Samples - La Nina', color='darkblue', density=True)
-        plt.hist(selected_enso_values['Neutral'], bins=bins, alpha=0.9, label='Selected Samples - Neutral', color='black', density=True)
-        plt.xlabel('Nino3.4 Index Value')
-        plt.ylabel('Density')
-        plt.title(f'ENSO Index Value Distribution | {confidence}% Most Confident | {data_type}')
-        plt.legend()
-        plt.tight_layout()
-        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/enso_index_value_distribution_{exp_type}_{confidence}.png', format='png', dpi=250)
-        plt.show()
-        
 
         # INDIVIDUAL PLOTS: 
         # Select single random seed experiment to plot individual samples from
@@ -2044,11 +2191,11 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
             target_date_str = format_date_string(target_date)
             input_date_str = format_date_string(input_date)
             # cut string to 9th digit: 
-            target_date_str = target_date_str[:10]
-            input_date_str = input_date_str[:10]
+            target_date_str = target_date_str
+            input_date_str = input_date_str
 
             output_params1 = data_from_all_seeds1[first_exp]["output1"]
-            output_params2 = data_from_all_seeds2[list(data_from_all_seeds2.keys())[0]]["output2"][:7]
+            output_params2 = data_from_all_seeds2[list(data_from_all_seeds2.keys())[0]]["output2"]
             x = np.linspace(-5, 5, 100)
             dist1 = Shash(output_params1)
             dist2 = Shash(output_params2)
@@ -2098,9 +2245,6 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
             plt.tight_layout()
             plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/individual_samples/sample_comparison_{target_date_str}_{first_exp}_vs_{list(data_from_all_seeds2.keys())[0]}.png', format='png', dpi=250)
 
-        # plot summary statistics; distribution of MJO phase, ENSO phase for most confident sample by month in every random seed
-        # plot distribution of target values for most confident sample by month in every random seed
-        # aggregate infromation across all random seeds (using append?)
 
 
         
