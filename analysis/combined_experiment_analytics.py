@@ -2150,8 +2150,328 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
 
 
 
+
+def m2m_sample_transfer_individual(experiments, selection_method = None, confidence = 20, keyword = None):
+    """
+    For either OBS(OBS) or E3SM(E3SM) experiments, identify samples in the IN-DISTRIBUTION model has low CRPS (lower quartile) AND 
+    where the OUT-OF-DISTRIBUTION model has high CRPS (upper quartile). From these samples, select 6 to plot SHASH curves + input maps.
+    Repeat for each random seed experiment.
+    Aggregate across all random seeds and plot summary statistics:
+    - SHASH curves for both models
+    - MJO phase distribution
+    - ENSO phase distribution
+    - Target value distribution
+    - CRPS distribution
+    - Temporal distribution of selected samples by month
+    - Mean input maps from dates of interest
+    """
+
+    exps = experiments
+    exp_type_names = list(exps.keys())
+    exp_types_str = ', '.join(exp_type_names)
+    
+    for exp_type, exp_list in exps.items():
+        print(f'Processing experiment type: {exp_type}')
+        ID_data_from_all_seeds = {}
+        OOD_data_from_all_seeds = {}
+        ID_all_selected_indices = []
+
+        for exp_name in exp_list:
+            print(f'  Processing experiment: {exp_name}')
+            ID_selected_samples = {}
+            config = utils.get_config(exp_name)
+            
+            # Load the output and target data for this experiment
+            output = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_network_SHASH_parameters.pkl')
+
+            # open crps: 
+            crps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_CRPS_network_values.pkl')
+
+                ## CALCULATE IQR and Select Samples based on Confidence -------
+            iqr = iqr_basic(output)
+            
+            # Load testing target data
+            if exp_type in ["E3SM-short(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)"]:
+                data_type = "OBS"
+                data_vars = ["tp", "skt", "z"]
+                target_var = config["databuilder"]["target_var"]
+                target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
+                input_unstandardized = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
+                input_maps = input_unstandardized['x']
+                climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl')
+                for l, variable in enumerate(data_vars):
+                    mean = climatology_stats[variable][0]
+                    std = climatology_stats[variable][1]
+                    input_maps.loc[dict(channel=l)] = (input_maps.sel(channel=l) - mean) / std
+                climatology_data = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/exp152_E3SM_processed_Z500_climatology_1981-2010.nc')
+                climatology_data = (climatology_data['y'] - climatology_stats['z'][2]) / climatology_stats['z'][3]
+                target = (target['y'] - climatology_stats['z'][2]) / climatology_stats['z'][3]
+        
+            elif exp_type in ["E3SM-short(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)"]:
+                data_type = "E3SM"
+                data_vars = ["PRECT", "TS", "Z500"]
+                target_var = config["databuilder"]["target_var"]
+                target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp185_trimmed_test_dat.nc')
+                input_unstandardized = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp185_trimmed_test_dat.nc')
+                input_maps = input_unstandardized['x']
+                climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/E3SM_processed_climo_stats_PRECT_Z500_TS_1981-2010.pkl')
+                for l, variable in enumerate(data_vars):
+                    mean = climatology_stats[variable][0]
+                    std = climatology_stats[variable][1]
+                    input_maps.loc[dict(channel=l)] = (input_maps.sel(channel=l) - mean) / std
+                climatology_data = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/exp152_E3SM_processed_Z500_climatology_1981-2010.nc')
+                climatology_data = (climatology_data['y'] - climatology_stats['Z500'][2]) / climatology_stats['Z500'][3]
+                target = (target['y'] - climatology_stats['Z500'][2]) / climatology_stats['Z500'][3]
+
+            # ID SAMPLE SELECTION LOGIC: 
+            # From each Random Seed: Identify where BOTH ID OUTPUT values had 25% lowest CRPS
+            if selection_method == "high_low_crps":
+                crps_threshold_low = np.percentile(crps, confidence)  # Lower quartile
+                ID_selected_indices = np.where(crps <= crps_threshold_low)[0]
+                print(f"    ID Selected {len(ID_selected_indices)} samples based on CRPS thresholds ({confidence}th percentile low)")
+                print(f"ID min crps all: {min(crps)}, max crps all: {max(crps)}")
+                print(f"ID min crps selected: {min(crps[ID_selected_indices])}, max crps selected: {max(crps[ID_selected_indices])}")
+
+            # scale IQR by day of year 
+            # create xarray object containing iqr and corresponding time coordinate: 
+            iqr_xr = xr.DataArray(iqr, coords=[target['time']], dims=["time"])
+            # scale iqr by day of year:
+            daily_iqr = iqr_xr.groupby('time.dayofyear').mean('time')
+            scaled_iqr = iqr_xr.groupby('time.dayofyear') / daily_iqr
+            #ungroup scaled_iqr: 
+            scaled_iqr = scaled_iqr.sortby('time')
+    
+            # identify target dates for these conf samples
+            ID_selected_target_dates = target['time'][ID_selected_indices]
+            if "E3SM" in data_type: 
+                ID_selected_target_dates_exact = pd.to_datetime([
+                f"{dt.year:04d}-{dt.month:02d}-{dt.day:02d}T{dt.hour:02d}:{dt.minute:02d}:{dt.second:02d}" 
+                for dt in ID_selected_target_dates.values])
+            else: 
+                ID_selected_target_dates_exact = ID_selected_target_dates
+
+            # use lagtime to identify input dates for these conf samples
+            lagtime = config['databuilder']['lagtime']
+            ID_selected_input_dates = ID_selected_target_dates - pd.Timedelta(days=lagtime)
+
+            ID_selected_samples["ID_output"] = output[ID_selected_indices]
+            ID_selected_samples["ID_target_date"] = ID_selected_target_dates
+            ID_selected_samples["ID_input_date"] = ID_selected_input_dates
+            ID_selected_samples["ID_iqr"] = scaled_iqr[ID_selected_indices]
+            ID_selected_samples["ID_crps"] = crps[ID_selected_indices]
+            ID_selected_samples["ID_input_maps"] = input_maps.sel(time=ID_selected_target_dates)
+
+            # accumulate all selected indices from the test dataset: 
+            ID_all_selected_indices.extend(ID_selected_indices)
+
+            ID_data_from_all_seeds[str(exp_name)] = ID_selected_samples
+
+        # Collect all data from across random seeds
+        all_ID_target_dates = []
+        all_ID_output = []
+        all_ID_iqr = []
+        all_ID_crps = []
+        all_ID_input = []
+
+
+        for iexp, exp_name in enumerate(exp_list):
+            all_ID_target_dates.extend(ID_data_from_all_seeds[exp_name]["ID_target_date"])
+            all_ID_output.extend(ID_data_from_all_seeds[exp_name]["ID_output"])
+            all_ID_iqr.extend(ID_data_from_all_seeds[exp_name]["ID_iqr"])
+            all_ID_crps.extend(ID_data_from_all_seeds[exp_name]["ID_crps"])
+            all_ID_input.extend(ID_data_from_all_seeds[exp_name]["ID_input_date"].values)
+
+        # print(f"all selected indices: {all_selected_indices}, len: {len(all_selected_indices)}")
+        
+        # Find corresponding samples in opposing model type: ------------------------------------------------
+        if exp_type in ["OBS(OBS)"]:
+            base_exp = "OBS(OBS)"
+            opposing_exp = "E3SM-short(OBS)"
+            models = ["exp189", "exp195", "exp196", "exp197", "exp198", "exp199"]
+        elif exp_type in ["E3SM-short(E3SM)"]: 
+            base_exp = "E3SM-short(E3SM)"
+            opposing_exp = "OBS(E3SM)"
+            models = ["exp206", "exp207", "exp208", "exp209", "exp210", "exp211", "exp212", "exp213", "exp214", "exp215", "exp216", "exp217"]
+
+        # For each selected sample from original model, find corresponding sample in opposing model using input data
+            
+        for ood_model in models: 
+            print(f"  Processing opposing model: {ood_model}")
+            OOD_selected_samples = {}
+            config = utils.get_config(ood_model)
+            
+            # Load the output and target data for this experiment
+            output_ood = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{ood_model}/{ood_model}_network_SHASH_parameters.pkl')
+
+            # open crps: 
+            crps_ood = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{ood_model}/{ood_model}_CRPS_network_values.pkl')
+
+                ## CALCULATE IQR and Select Samples based on Confidence -------
+            iqr_ood = iqr_basic(output_ood)
+
+            if selection_method == 'scaled_iqr_by_percentage': # scale IQR by day of year
+                # create xarray object containing iqr and corresponding time coordinate: 
+                iqr_ood_xr = xr.DataArray(iqr_ood, coords=[target['time']], dims=["time"])
+                # scale iqr by day of year:
+                daily_iqr_ood = iqr_ood_xr.groupby('time.dayofyear').mean('time')
+                scaled_iqr_ood = iqr_ood_xr.groupby('time.dayofyear') / daily_iqr_ood
+            
+            # Load testing target data
+            if opposing_exp in ["E3SM-short(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)"]:
+                target_ood = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
+                climatology_stats_ood = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl')#
+                target_ood = (target_ood['y'] - climatology_stats_ood['z'][2]) / climatology_stats_ood['z'][3]
+        
+            elif opposing_exp in ["E3SM-short(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)"]:
+                target_ood = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp185_trimmed_test_dat.nc')
+                climatology_stats_ood = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/E3SM_processed_climo_stats_PRECT_Z500_TS_1981-2010.pkl')
+                target_ood = (target_ood['y'] - climatology_stats_ood['Z500'][2]) / climatology_stats_ood['Z500'][3]
+
+
+            ## OOD SAMPLE SELECTION LOGIC: Identify where OOD OUTPUT values had 25% highest CRPS
+            if selection_method == "high_low_crps":
+                crps_threshold_high = np.percentile(crps, 100 - confidence)  # Upper quartile
+                OOD_selected_indices = np.where(crps >= crps_threshold_high)[0]
+                print(f" OOD min crps all: {np.min(crps)}, max crps all: {np.max(crps)}")
+                print(f" OOD     Selected {len(OOD_selected_indices)} samples based on CRPS {100-confidence}th percentile high)")
+                print(f" OOD min crps selected: {np.min(crps[OOD_selected_indices])}, max crps selected: {np.max(crps[OOD_selected_indices])}")
+
+            
+            
+            # select sample information from OOD model selections
+            OOD_selected_samples["OOD_output"] = output_ood[OOD_selected_indices]
+            OOD_selected_samples["OOD_target_dates"] = target_ood['time'][OOD_selected_indices]
+            # OOD_selected_samples["OOD_input_date"] = OOD_selected_input_dates
+            OOD_selected_samples["OOD_iqr"] = scaled_iqr_ood[OOD_selected_indices]
+            OOD_selected_samples["OOD_crps"] = crps_ood[OOD_selected_indices]
+
+            OOD_data_from_all_seeds[str(ood_model)] = OOD_selected_samples
+
+        all_OOD_target_dates = []
+        all_OOD_output = []
+        all_OOD_iqr = []
+        all_OOD_crps = []
+        all_OOD_input = []
+
+        for imod, ood_model in enumerate(models):
+            OOD_target_dates = OOD_data_from_all_seeds[ood_model]["OOD_target_dates"]
+            if hasattr(OOD_target_dates, 'values'):
+                all_OOD_target_dates.extend(OOD_target_dates.values)
+            else:
+                all_OOD_target_dates.extend(OOD_target_dates)
+            # all_target2_dates.extend(data_from_all_seeds2[str(ood_model)]["target_date2"].values)
+            all_OOD_output.extend(OOD_data_from_all_seeds[str(ood_model)]["OOD_output"])
+            all_OOD_iqr.extend(OOD_data_from_all_seeds[str(ood_model)]["OOD_iqr"])
+            all_OOD_crps.extend(OOD_data_from_all_seeds[str(ood_model)]["OOD_crps"])
+            all_OOD_input.extend(OOD_data_from_all_seeds[str(ood_model)]["OOD_input_date"].values)
+
+        # -----------------------------------------------------------------------
+        # From ID and OOD selected samples, identify dates that are common between both sets of selected samples
+        # and identify their corresponding output,iqr,crps,inputmaps, etc.. into new containers
+        
+
+
+
+
+
+
+
+        # ---- TODO identify ENSO and MJO phase of ID+OOD Selected Samples ----------------
+            ###### ENSO ########
+            # Open ENSO dates for E3SM vs OBS data: 
+            enso_dates_pkl = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_daily_enso_timestamps.pkl')
+
+            # check which key (category) each of the target dates falls into, and create a list with either "EN", "LN" or "N"
+            enso_phase = []
+            for date in ID_selected_target_dates.values:
+                if date in enso_dates_pkl['El Nino']:
+                    enso_phase.append("EN")
+                elif date in enso_dates_pkl['La Nina']:
+                    enso_phase.append("LN")
+                else:
+                    enso_phase.append("N")
+
+            selected_samples["enso_phase"] = enso_phase
+
+            ######## MJO ########
+            phase_timestamps = analysis_metrics.mjo_timestamps(data_type, config)
+
+            # selected_mjo_phase = phase_timestamps.sel(time=selected_target_dates)
+            selected_mjo_phase = phase_timestamps.sel(time=selected_target_dates_exact)
+
+            selected_samples["mjo_phase"] = selected_mjo_phase
+            data_from_all_seeds1[str(exp_name)] = selected_samples
+
+
+            all_ID_enso_phases = []
+            all_ID_mjo_phases = []
+            all_ID_inputmaps = []
+
+            for iexp, exp_name in enumerate(exp_list):
+                all_ID_enso_phases.extend(ID_data_from_all_seeds[exp_name]["ID_enso_phase"])
+                all_ID_mjo_phases.extend(ID_data_from_all_seeds[exp_name]["ID_mjo_phase"]["phase"].values)
+
+        #    OOD_selected_samples["OOD_enso_phase"] = data_from_all_seeds1[exp_list[0]]["enso_phase"]
+        #     OOD_selected_samples["OOD_mjo_phase"] = data_from_all_seeds1[exp_list[0]]["mjo_phase"]
+        #     OOD_selected_samples["OOD_input_maps"] = data_from_all_seeds1[exp_list[0]]["input_maps1"]
+
+        # ---- PLOTTING ---------------------------------------------------------
+
+        # SUMMARY PLOT: 
+        # 4 panels: (1) shash curves (2) MJO phase distributions (3) ENSO phase distribution (4) target value distribution
+        # (1) shash curves from all output1 in one color, and all output2 in another color
+        x = np.linspace(-5, 5, 100)
+        all_output1 = np.array(all_output1)
+        all_output2 = np.array(all_output2)
+        dist1 = Shash(all_output1)
+        dist2 = Shash(all_output2)
+        p1 = dist1.prob(x).numpy()
+        p2 = dist2.prob(x).numpy()
+
+        # (2) MJO phase distribution from selected_target_dates1
+        all_mjo_phases = []
+        for exp_name in exp_list:
+            all_mjo_phases.extend(data_from_all_seeds1[exp_name]["mjo_phase"]["phase"].values)
+        all_mjo_phases = np.array(all_mjo_phases)
+        # print(f" all mjo phases: {all_mjo_phases}")
+        # print(f"length of mjo phases: {len(all_mjo_phases)}")
+        # print(f"min mjo phase value: {np.min(all_mjo_phases)}, max mjo phase value: {np.max(all_mjo_phases)}")
+        # print(f"all mjo phases: {all_mjo_phases}, type: {type(all_mjo_phases)}, len: {len(all_mjo_phases)}")
+        mjo_baseline_frequencies = analysis.analysis_metrics.baseline_mjo_frequencies(data_type)
+        # print(f"mjo baseline frequencies: {mjo_baseline_frequencies}")
+        if "OBS" in data_type:
+            mjo_ref_frequencies_all_data = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/mjo_phase_frequencies_ERA5_1940_2023.pkl')
+        elif "E3SM" in data_type:
+            mjo_ref_frequencies_all_data = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/mjo_frequencies_E3SM_1850_2014.pkl')
+
+
+        # (3) ENSO phase distribution from selected_target_dates1
+        all_enso_phases = []
+        for exp_name in exp_list:
+            all_enso_phases.extend(data_from_all_seeds1[exp_name]["enso_phase"])
+        all_enso_phases = np.array(all_enso_phases)
+        # print(f"all enso phases: {all_enso_phases}, type: {type(all_enso_phases)}, len: {len(all_enso_phases)}")
+        # calculate frequency of enso phase relative to prevalence in total target dataset
+        enso_baseline_frequencies = analysis.analysis_metrics.baseline_enso_frequencies(data_type)
+        # print(f"ENSO baseline frequencies: {enso_baseline_frequencies}")
+
+        # print(f'all target 1 values type: {type(all_target1_dates)}, examp: {all_target1_dates[0]}, type examp: {type(all_target1_dates[0])}')
+        # (4) Target value distribution from selected_target_dates1
+        if "OBS" in data_type:
+            # Extract numpy.datetime64 values from DataArrays
+            date_values = [np.datetime64(date_da.values) for date_da in all_target1_dates]
+            # print(f" date_values max date: {np.max(date_values)}, min date: {np.min(date_values)}")
+            selected_target_values = target.sel(time=date_values)
+        elif "E3SM" in data_type:
+            date_values = [date_da.values.item() for date_da in all_target1_dates]
+            selected_target_values = target.sel(time=date_values)
+        
+
+
         # INDIVIDUAL PLOTS: 
-        # Select single random seed experiment to plot individual samples from
+        # 
+        #     - For these samples, select 6 to plot SHASH curves + input maps 
+        #     - Summary statistics for all selected samples: 
         # 2 panels (1) shash curves (2) input map
         # for first random seed in exp_list: 
         first_exp = exp_list[0]
