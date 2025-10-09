@@ -130,8 +130,10 @@ exps = {
 
 # cea.anom_var_distributions(exps, keyword = "E3SM-short_OBS")
 # 
-# cea.m2m_sample_transfer(exps, selection_method = 'scaled_iqr_by_percentage', confidence = 10, keyword = "OBS-OBS")
+cea.m2m_sample_transfer(exps, selection_method = 'scaled_iqr_by_percentage', confidence = 10, keyword = "OBS-OBS")
+
+# cea.m2m_sample_transfer(exps, selection_method = 'scaled_iqr_by_percentage', confidence = 10, keyword = "E3SM-OBS")
 
 # cea.m2m_sample_transfer(exps, selection_method = 'scaled_iqr_by_percentage', confidence = 10, keyword = "E3SM-short_E3SM")
 
-cea.m2m_sample_transfer_individual(exps, selection_method = 'high_low_crps', confidence = 20, keyword = "OBS-OBS")
+# cea.m2m_sample_transfer_individual(exps, selection_method = 'high_low_crps', confidence = 50, keyword = "OBS-OBS")
