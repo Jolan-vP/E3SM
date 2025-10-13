@@ -55,6 +55,15 @@ class CustomData(torch.utils.data.Dataset):
             self.input = self.input[:, :180, ...]
             print(f"MODIFIED SELF.INPUT SHAPE: {self.input.shape}")
 
+        # SCALE TARGET BY DAY OF YEAR VARIANCE: 
+        if config["data_loader"]["scale_target_variance"]: 
+            print("Scaling target by day of year variance")
+            daily_target_grouped = self.target.groupby('time.dayofyear').mean('time')
+            scaled_target = self.target.groupby('time.dayofyear') / daily_target_grouped
+            scaled_target = scaled_target.sortby('time')
+            self.target = scaled_target
+
+
         self.input = self.input.values
         self.target = self.target.values
 
@@ -62,6 +71,7 @@ class CustomData(torch.utils.data.Dataset):
         assert not np.any(np.isnan(self.target))
 
         assert len(self.input) == len(self.target)
+
 
         # SHUFFLE TARGET DATA : 
         # if config["data_loader"]["shuffle_target"] == "True":

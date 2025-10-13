@@ -236,13 +236,13 @@ def IQRdiscard_plot(networkoutput, target, crps_scores, crps_climatology_scores,
 
         # sample_index[:len(indices), ip] = indices
 
-    plt.figure()
-    plt.plot(percentiles, avg_iqr, color='tab:orange', label='IQR')
-    plt.xlabel('IQR Percentile (% Data Remaining)')
-    plt.ylabel('IQR')
-    plt.title(f'IQR Discard Plot \n {keyword}')
-    plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + str(confidence_label) + '_IQR_value_check.png', format='png', bbox_inches ='tight', dpi = 300)
-    plt.close()
+    # plt.figure()
+    # plt.plot(percentiles, avg_iqr, color='tab:orange', label='IQR')
+    # plt.xlabel('IQR Percentile (% Data Remaining)')
+    # plt.ylabel('IQR')
+    # plt.title(f'IQR Discard Plot \n {keyword}')
+    # plt.savefig(str(config["perlmutter_figure_dir"]) + str(config["expname"]) + '/' + str(keyword) + str(confidence_label) + '_IQR_value_check.png', format='png', bbox_inches ='tight', dpi = 300)
+    # plt.close()
 
     color = 'tab:blue'
     fig, ax1 = plt.subplots()
@@ -1832,7 +1832,6 @@ def mjo_timestamps(data_source, config):
         end_day = int(MJOda[-1, -1])
         end = datetime.datetime(end_year, end_month, end_day)
         time_array = pd.date_range(start = start, end = end, freq = 'D')
-        # print(f"time_array 1852: {time_array.loc[1852]}")
 
         RMM1 = MJOda[:, 2]
         RMM2 = MJOda[:, 3]

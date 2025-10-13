@@ -133,9 +133,9 @@ def combined_CRPS_IQR_discard(experiments, keyword = None):
 
     color_themes = {
         0: "#0d0887", 
-        1: "#6e00b2", 
-        2: "#d0326c",
-        3: "#f97a0a"
+        1: "#7d00b2", 
+        2: "#d90f0f",
+        3: "#f9910a"
     }
 
     i = 0
@@ -187,7 +187,7 @@ def combined_CRPS_IQR_discard(experiments, keyword = None):
 
 
 
-def IQR_distributions(experiments, keyword = None):
+def IQR_distributions_STEP_hist(experiments, keyword = None):
     """
     Plot the distribution of IQR values for a variety of experiments on the same plot. 
     """
@@ -232,9 +232,9 @@ def IQR_distributions(experiments, keyword = None):
 
             # histograms of IQR for each phase
             if iexp == 0:
-                plt.hist(iqr, bins=bin_edges, alpha=0.1, label=f'{experiment_type}', color = color_themes[i], density = True) #, histtype = 'step')
+                plt.hist(iqr, bins=bin_edges, alpha=0.6, label=f'{experiment_type}', color = color_themes[i], density = True, histtype = 'step')
             else:
-                plt.hist(iqr, bins=bin_edges, alpha=0.1, color = color_themes[i], density = True) #, histtype = 'step')
+                plt.hist(iqr, bins=bin_edges, alpha=0.6, color = color_themes[i], density = True, histtype = 'step')
 
         i += 1
             
@@ -245,9 +245,191 @@ def IQR_distributions(experiments, keyword = None):
         for lh in leg.legendHandles: 
             lh.set_alpha(1)
 
-    plt.savefig('/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/IQR_distribution_combined__' + str(keyword) + '_Z500.png', format = 'png',  dpi = 250)
+    plt.savefig('/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/IQR_distribution_combined_STEP_' + str(keyword) + '_Z500.png', format = 'png',  dpi = 250)
 
 
+def IQR_distributions_STACKED_hist(experiments, keyword = None):
+    """
+    Plot the distribution of IQR values for a variety of experiments on the same plot. 
+    """
+    plt.figure(figsize=(7, 5))
+
+    exps = experiments 
+
+    color_themes = {
+        0: "#0d0887", 
+        1: "#7e03a8", 
+        2: "#cc4778",
+        3: "#f89540", 
+        4: "#33c316",
+        5: "#019bba", 
+    }
+
+    i = 0
+
+    all_models_iqr = [] 
+    for i, (experiment_type, exp_names) in enumerate(exps.items()):
+        
+        all_seeds_iqr = []
+
+        N = np.empty(len(exp_names))
+
+        for iexp, exp in enumerate(exp_names):
+            # Load the output and target data for all experiments
+            output = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp}/{exp}_network_SHASH_parameters.pkl')
+
+            # Load climatologies: 
+            climatology = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/exp153_ERA5_processed_Z500_climatology_1981-2010.nc')
+
+            # Load climatology statistics: 
+            climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl')
+
+            # # Load testing target data: 
+            target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
+
+            max_value = ((np.max(climatology['y'].values) - climatology_stats['z'][2]) / climatology_stats['z'][3])
+            min_value = ((np.min(climatology['y'].values) - climatology_stats['z'][2]) / climatology_stats['z'][3])
+            x_values = np.linspace(min_value, max_value, 100)
+
+            # Calculate IQR for each sample in both experiments
+            iqr = iqr_basic(output)
+
+            all_seeds_iqr.append(iqr)
+
+            bins = 65
+            min_value = min(np.min(iqr), np.min(iqr))
+            max_value = max(np.max(iqr), np.max(iqr))
+            bin_edges = np.linspace(min_value, max_value, bins)
+
+            N[i] = len(iqr)
+
+        all_models_iqr.append(np.concatenate(all_seeds_iqr))
+        
+    # histograms of IQR for each phase
+    model_types = list(exps.keys())
+    colors = [color_themes[i] for i in range(len(model_types))]
+    plt.hist(all_models_iqr, bins=bin_edges, alpha=0.8, label=model_types, color = colors, density = True, histtype = 'barstacked', stacked = True)
+    i += 1
+        
+    plt.xlabel('IQR')
+    plt.ylabel('Density')
+    plt.title('IQR Distribution Across Model Types')
+    leg = plt.legend()
+    for lh in leg.legendHandles: 
+        lh.set_alpha(1)
+    plt.tight_layout()
+    plt.savefig('/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/IQR_distribution_combined_STACKED_' + str(keyword) + '_Z500.png', format = 'png',  dpi = 250)
+
+
+def CRPS_discard_scaled_IQR(experiments, keyword = None):
+    """
+    Discard plot of binned *scaled* IQR
+    IQR scaled by day-of-year IQR to help remove seasonal cycle in uncertainty.
+    """
+    exps = experiments
+
+    fig, ax = plt.subplots(figsize=(10, 7))
+
+    # color_themes = {
+    #     0: "#3b528b", 
+    #     1: "#019bba", 
+    #     2: "#2cb212",
+    #     3: "#B6A509",
+    # }
+    color_themes = {
+        0: "#0d0887", 
+        1: "#8b0ad5", 
+        2: "#d73666",
+        3: "#f89540"
+    }
+
+    for i, (exp_type, exp_list) in enumerate(exps.items()):
+        print(f'Processing experiment type: {exp_type}')
+
+        if exp_type in ["E3SM(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)"]:
+                data_type = "OBS"
+        elif exp_type in ["E3SM(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)"]:
+                data_type = "E3SM"
+        
+        #identify lengths for accurate preallocation: 
+        output_preall = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_list[0]}/{exp_list[0]}_network_SHASH_parameters.pkl')
+
+        all_crps = np.empty((len(exp_list), len(output_preall)))
+        all_scaled_iqr = np.empty((len(exp_list), len(output_preall)))
+
+        for iexp, exp_name in enumerate(exp_list):
+            print(f'  Processing experiment: {exp_name}')
+            
+            # Load the output and target data for this experiment
+            output = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_network_SHASH_parameters.pkl')
+
+
+            # open crps: 
+            crps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_CRPS_network_values.pkl')
+
+            climo_crps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_CRPS_climatology_values.pkl')
+            mean_climo_crps = np.mean(climo_crps)
+
+            # Load testing target data
+            if exp_type in ["E3SM(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)"]:
+                target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
+                # Load climatology statistics
+                climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl')#
+                target = (target['y'] - climatology_stats['z'][2]) / climatology_stats['z'][3]
+       
+            elif exp_type in ["E3SM(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)"]:
+                target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp185_trimmed_test_dat.nc')
+                climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/E3SM_processed_climo_stats_PRECT_Z500_TS_1981-2010.pkl')
+                target = (target['y'] - climatology_stats['Z500'][2]) / climatology_stats['Z500'][3]
+
+            # Calculate IQR: 
+            iqr = iqr_basic(output)
+            iqr_xr = xr.DataArray(iqr, coords=[target['time']], dims=["time"])
+            # scale iqr by day of year:
+            daily_iqr = iqr_xr.groupby('time.dayofyear').mean('time')
+            scaled_iqr = iqr_xr.groupby('time.dayofyear') / daily_iqr
+            #ungroup scaled_iqr: 
+            scaled_iqr = scaled_iqr.sortby('time')
+            
+            percentiles = np.linspace(100, 0, 21)
+
+            # Sort by IQR
+            scaled_iqr_sorted_indices = np.argsort(scaled_iqr.values)
+            scaled_iqr_sorted = scaled_iqr.isel(time=scaled_iqr_sorted_indices)
+
+            avg_crps = np.empty([len(exp_list), len(percentiles)])
+            avg_scaled_iqr = []
+            sample_index = np.zeros((len(scaled_iqr), len(percentiles)))
+
+            for ip, p in enumerate(percentiles):
+                # percentage of samples to keep for each round of the loop
+                num_to_keep = int(len(scaled_iqr_sorted) * p / 100)
+
+                indices = scaled_iqr_sorted_indices[:num_to_keep]
+
+                if len(indices) == 0:
+                    avg_crps[iexp, ip] = np.nan
+                    avg_scaled_iqr.append(np.nan)
+                else:
+                    avg_crps[iexp, ip] = np.mean(crps[indices])
+                    avg_scaled_iqr.append(np.mean(scaled_iqr[indices]))
+                    sample_index[:len(indices), ip] = indices
+
+            if iexp == 0:
+                ax.plot(percentiles, avg_crps[iexp], alpha = 0.65, linewidth = 2.5, color=color_themes[i], label = f'{exp_type}')
+            else:
+                ax.plot(percentiles, avg_crps[iexp], alpha = 0.65, linewidth = 2.5, color=color_themes[i])
+
+        if i in [0, 2]: 
+            ax.axhline(y=mean_climo_crps, color=color_themes[i], linestyle='--', label=f'CRPS Mean Climatology for {data_type}')
+
+        plt.gca().invert_xaxis()
+        ax.set_ylabel('Average CRPS')
+        ax.set_xlabel('Scaled IQR Percentile (% Data Remaining)')
+        ax.set_xlim([100, 1])
+        plt.tight_layout()
+        plt.legend()
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/CRPS_discard_scaled_IQR_Z500_{keyword}.png', format='png', dpi=250)
 
 
 
@@ -1427,6 +1609,209 @@ def plot_all_months_anomaly_histograms(all_monthly_pos_anoms, all_monthly_neg_an
             print(f"Month {month_names[i_month]}: No anomalies found.")
 
 
+def variance_analysis(experiments, keyword = None):
+    """
+    Epistemic Uncertainty Analysis : 
+    - Discard plot of CRPS vs Variance across random seeds for a given experiment type, comparing across experiment types: 
+        Experiments contains multiple experiment types
+        For each experiment type: 
+            - Load outputs from each random seed
+            - Make if block for how to calculate variance: 
+                If by np.var, calculate np.var across all random seeds for each output sample
+            - Create discard plot of CRPS mean (y axis) binned by variance across seeds (x axis) 
+            - Overlay all experiment types on one plot for comparison
+    """
+
+    exps = experiments
+
+    color_themes = {
+        0: "#0d0887", 
+        1: "#7d00b2", 
+        2: "#d03232",
+        3: "#f9910a"
+    }
+    fig1, ax1 = plt.subplots(figsize = (10, 7))
+    fig2, ax2 = plt.subplots(figsize = (10, 7))
+    fig4, ax4 = plt.subplots(figsize = (10, 7))
+
+    variance_all_model_types = []
+
+    for i, (exp_type, exp_list) in enumerate(exps.items()):
+        print(f'Processing experiment type: {exp_type}')
+
+        if exp_type in ["E3SM(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)"]:
+                data_type = "OBS"
+        elif exp_type in ["E3SM(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)"]:
+                data_type = "E3SM"
+        
+        #identify lengths for accurate preallocation: 
+        output_preall = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_list[0]}/{exp_list[0]}_network_SHASH_parameters.pkl')
+
+        all_crps = np.empty((len(exp_list), len(output_preall)))
+        all_mean_shash = np.empty((len(exp_list), len(output_preall)))
+
+        for iexp, exp_name in enumerate(exp_list):
+            print(f'  Processing experiment: {exp_name}')
+
+            # Load the output and target data for this experiment
+            output = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_network_SHASH_parameters.pkl')
+     
+            climo_crps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_CRPS_climatology_values.pkl')
+            mean_climo_crps = np.mean(climo_crps)
+
+            # DETERMINISTIC CALCULATION METHOD: Mean of Shash
+            output_SHASH = Shash(output)
+            network_mean_tensor = output_SHASH.mean()
+
+            # store mean shash values as numpy values: 
+            all_mean_shash[iexp] = network_mean_tensor.numpy()
+
+            # open crps: 
+            crps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_CRPS_network_values.pkl')
+
+            # print(f"crps shape: {crps.shape}, mean shash shape: {network_mean_tensor.shape}")
+
+            all_crps[iexp] = crps
+
+        # Calculate variance across random seeds for each sample
+        variance_across_seeds = np.var(all_mean_shash, axis=0)
+        # print(f"shape of variance: {variance_across_seeds.shape}")
+        variance_all_model_types.append(variance_across_seeds)
+
+        # FIGURE 4 : CRPS vs Variance as DISCARD Plot: 
+        percentiles = np.linspace(100, 0, 21)
+
+        plt.figure(fig4.number)
+        for iexp, exp_name in enumerate(exp_list):
+
+            avg_crps = np.empty([len(exp_list), len(percentiles)])
+            avg_variance = []
+            sample_index = np.zeros((len(variance_across_seeds), len(percentiles)))
+
+            # Sort by Variance
+            var_sorted_indices = np.argsort(variance_across_seeds)
+            var_sorted = variance_across_seeds[var_sorted_indices]
+
+            for ip, p in enumerate(percentiles):
+                # percentage of samples to keep for each round of the loop
+                num_to_keep = int(len(var_sorted) * p / 100)
+                
+                indices = var_sorted_indices[:num_to_keep]
+
+                if len(indices) == 0:
+                    avg_crps[iexp, ip] = np.nan
+                    avg_variance.append(np.nan)
+                else:
+                    avg_crps[iexp, ip] = np.mean(all_crps[iexp, indices])
+                    avg_variance.append(np.mean(variance_across_seeds[indices]))
+                    sample_index[:len(indices), ip] = indices
+
+                # print(f" percentile: {p}, avg variance: {avg_variance[-1]}")
+
+            if iexp == 0:
+                ax4.plot(percentiles, avg_crps[iexp], alpha = 0.4, linewidth = 2.5, color=color_themes[i], label = f'{exp_type}')
+            else:
+                ax4.plot(percentiles, avg_crps[iexp], alpha = 0.4, linewidth = 2.5, color=color_themes[i])
+
+        if i in [0, 2]: 
+            ax4.axhline(y=mean_climo_crps, color=color_themes[i], linestyle='--', label=f'CRPS Mean Climatology for {data_type}')
+
+        plt.gca().invert_xaxis()
+        ax4.set_ylabel('Average CRPS')
+        ax4.set_xlabel('Model Variance Percentile (% Data Remaining)')
+        ax4.set_xlim([100, 1])
+        plt.tight_layout()
+        plt.legend()
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/CRPS_vs_Variance_percentile_multiple_exps_DISCARD.png', format='png', dpi=250 )
+
+        # FIGURE 1 : Standard CRPS vs Variance Binned Plot
+        # Bin the variance values
+        n_bins = 15  # You can adjust the number of bins
+        bin_edges = np.linspace(np.min(variance_across_seeds), np.max(variance_across_seeds), n_bins + 1)
+        bin_indices = np.digitize(variance_across_seeds, bin_edges) - 1  # bins are 0-indexed
+
+        mean_crps_per_bin = np.full((len(exp_list), n_bins), np.nan)  # Initialize with NaN
+        bin_centers = np.array([(bin_edges[b] + bin_edges[b+1]) / 2 for b in range(n_bins)])
+
+        plt.figure(fig1.number) 
+
+        for exp in range(len(exp_list)):
+            for b in range(n_bins):
+                in_bin = bin_indices == b
+                if np.any(in_bin):
+                    mean_crps = np.mean(all_crps[exp, in_bin])
+                    mean_crps_per_bin[exp, b] = mean_crps
+
+            # Create mask to filter out empty bins (NaN values)
+            valid_mask = ~np.isnan(mean_crps_per_bin[exp])
+            valid_bin_centers = bin_centers[valid_mask]
+            valid_mean_crps = mean_crps_per_bin[exp, valid_mask]
+            
+            # print(f"bin centers shape: {valid_bin_centers.shape}")
+            # print(f"mean crps shape: {valid_mean_crps.shape}")
+            # print(f"exp: {exp}")
+            
+            if exp == 0:
+                ax1.plot(valid_bin_centers, valid_mean_crps, alpha=0.4, linewidth=2.5, 
+                        color=color_themes[i])
+                # Add invisible line with alpha=1 for legend only
+                ax1.plot([], [], alpha=1.0, linewidth=2.5, 
+                        color=color_themes[i], label=f"{exp_type}")
+                if i in [0, 1]: 
+                    ax1.axhline(y=mean_climo_crps, color=color_themes[i], linestyle='--', label=f'CRPS Mean Climatology for {data_type}')
+            else:
+                ax1.plot(valid_bin_centers, valid_mean_crps, alpha=0.4, linewidth=2.5, 
+                        color=color_themes[i])
+
+        plt.figure(fig1.number)
+        ax1.set_ylabel('CRPS')
+        ax1.set_xlabel('Variance')
+        ax2.set_xlim([0, 0.08])
+        plt.title(f'CRPS vs Variance Plot')
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/CRPS_vs_variance_multiple_exps.png', format = 'png', dpi = 250)
+
+    plt.figure(fig2.number)  
+    # Plot distribution of variance across model types: 
+    model_types = list(exps.keys())
+    colors = [color_themes[i] for i in range(len(model_types))]
+    ax2.hist(variance_all_model_types, bins=150, alpha=0.7, density=True, 
+         color=colors, label=model_types, 
+         stacked=True, histtype='barstacked')
+    ax2.set_ylabel('Density')
+    ax2.set_xlabel('Variance')
+    ax2.set_xlim([0, 0.08])
+    plt.title(f'Variance Distribution Across Random Seeds')
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/variance_distribution_multiple_exps_STACKED.png', 
+                format='png', dpi=250)
+    
+
+    fig3, axes = plt.subplots(nrows=4, ncols=1, figsize=(12, 12), sharex=True)
+    # Plot distribution of variance across model types: 
+    model_types = list(exps.keys())
+    colors = [color_themes[i] for i in range(len(model_types))]
+
+    for i, (variance_data, model_type) in enumerate(zip(variance_all_model_types, model_types)):
+        axes[i].hist(variance_data, bins=150, alpha=0.4, density=True, 
+                    linewidth=2, color=colors[i], edgecolor=colors[i], 
+                    histtype='stepfilled')
+        axes[i].set_ylabel('Density')
+        axes[i].set_title(f'{model_type}')
+        axes[i].grid(True, alpha=0.5, which='both', linestyle='-', linewidth=0.5)
+        axes[i].minorticks_on()
+        axes[i].grid(True, alpha=0.4, which='minor', linestyle=':', linewidth=0.5)
+        axes[i].set_xlim([0, 0.08])
+
+    # Only set xlabel on bottom subplot
+    axes[-1].set_xlabel('Variance')
+
+    plt.suptitle(f'Variance Distribution Across Random Seeds', fontsize=14, y=0.995)
+    plt.tight_layout()
+    plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/variance_distribution_multiple_exps_STEP.png', 
+                format='png', dpi=250)
 
 
 
@@ -1480,7 +1865,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
             iqr = iqr_basic(output)
             
             # Load testing target data
-            if exp_type in ["E3SM-short(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)"]:
+            if exp_type in ["E3SM(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)"]:
                 data_type = "OBS"
                 data_vars = ["tp", "skt", "z"]
                 target_var = config["databuilder"]["target_var"]
@@ -1496,7 +1881,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
                 climatology_data = (climatology_data['y'] - climatology_stats['z'][2]) / climatology_stats['z'][3]
                 target = (target['y'] - climatology_stats['z'][2]) / climatology_stats['z'][3]
         
-            elif exp_type in ["E3SM-short(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)"]:
+            elif exp_type in ["E3SM(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)"]:
                 data_type = "E3SM"
                 data_vars = ["PRECT", "TS", "Z500"]
                 target_var = config["databuilder"]["target_var"]
@@ -1608,10 +1993,10 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         # Find corresponding samples in opposing model type: 
         if exp_type in ["OBS(OBS)"]:
             base_exp = "OBS(OBS)"
-            opposing_exp = "E3SM-short(OBS)"
+            opposing_exp = "E3SM(OBS)"
             models = ["exp189", "exp195", "exp196", "exp197", "exp198", "exp199"]
-        elif exp_type in ["E3SM-short(E3SM)"]: 
-            base_exp = "E3SM-short(E3SM)"
+        elif exp_type in ["E3SM(E3SM)"]: 
+            base_exp = "E3SM(E3SM)"
             opposing_exp = "OBS(E3SM)"
             models = ["exp206", "exp207", "exp208", "exp209", "exp210", "exp211", "exp212", "exp213", "exp214", "exp215", "exp216", "exp217"]
 
@@ -1633,7 +2018,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
             all_crps1.extend(data_from_all_seeds1[exp_name]["crps1"])
             all_input1.extend(data_from_all_seeds1[exp_name]["input_date1"].values)
             all_enso_phases1.extend(data_from_all_seeds1[exp_name]["enso_phase"])
-            all_mjo_phases1.extend(data_from_all_seeds1[exp_name]["mjo_phase"]["phase"].values)
+            all_mjo_phases1.extend(data_from_all_seeds1[exp_name]["mjo_phase"]["phase"].values.tolist())
             
         for ood_model in models: 
             print(f"  Processing opposing model: {ood_model}")
@@ -1679,11 +2064,18 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
 
             # FIND MOST CONFIDENT OOD FOR INPUT MAP 
             num_to_select_confident_ood = int(len(scaled_iqr_ood) * (confidence / 100))
-            most_confident_ood_indices = np.argsort(scaled_iqr_ood.values)
-            selected_samples["most_confident_ood_indices"] = most_confident_ood_indices[:num_to_select_confident_ood]
-            print(f"selected {len(selected_samples['most_confident_ood_indices'])} most confident OOD samples based on scaled IQR by percentage")
-            confident_ood_input_maps = input_maps.sel(time=target_ood['time'][selected_samples["most_confident_ood_indices"]])
+            ood_iqr_indices = np.argsort(scaled_iqr_ood.values)
+            most_confident_ood_indices = ood_iqr_indices[:num_to_select_confident_ood]
+            most_confident_ood_dates = target_ood['time'][most_confident_ood_indices]
+            selected_samples["confident_ood_indices"] = most_confident_ood_indices
+            print(f"selected {len(selected_samples['confident_ood_indices'])} most confident OOD samples based on scaled IQR by percentage")
+            confident_ood_input_maps = input_maps.sel(time=most_confident_ood_dates)
+            confident_ood_crps = crps_ood[most_confident_ood_indices]
+
+
             selected_samples["confident_ood_input_maps"] = confident_ood_input_maps
+            selected_samples["confident_ood_target_dates"] = most_confident_ood_dates
+            selected_samples["confident_ood_crps"] = confident_ood_crps
 
             data_from_all_seeds2[str(ood_model)] = selected_samples
 
@@ -1693,6 +2085,8 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         all_crps2 = []
         all_input2 = []
         all_confident_ood_inputmaps = []
+        all_confident_ood_dates = []
+        all_confident_ood_crps = []
 
         for imod, ood_model in enumerate(models):
             target_dates = data_from_all_seeds2[ood_model]["target_date2"]
@@ -1706,6 +2100,8 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
             all_crps2.extend(data_from_all_seeds2[str(ood_model)]["crps2"])
             all_input2.extend(data_from_all_seeds2[str(ood_model)]["input_date2"].values)
             all_confident_ood_inputmaps.extend(data_from_all_seeds2[str(ood_model)]["confident_ood_input_maps"])
+            all_confident_ood_dates.extend(data_from_all_seeds2[str(ood_model)]["confident_ood_target_dates"].values)
+            all_confident_ood_crps.extend(data_from_all_seeds2[str(ood_model)]["confident_ood_crps"])
     
         # ---- PLOTTING ---------------------------------------------------------
 
@@ -1721,20 +2117,71 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         p2 = dist2.prob(x).numpy()
 
         # (2) MJO phase distribution from selected_target_dates1
-        all_mjo_phases = []
-        for exp_name in exp_list:
-            all_mjo_phases.extend(data_from_all_seeds1[exp_name]["mjo_phase"]["phase"].values)
-        all_mjo_phases = np.array(all_mjo_phases)
-        # print(f" all mjo phases: {all_mjo_phases}")
-        # print(f"length of mjo phases: {len(all_mjo_phases)}")
-        # print(f"min mjo phase value: {np.min(all_mjo_phases)}, max mjo phase value: {np.max(all_mjo_phases)}")
-        # print(f"all mjo phases: {all_mjo_phases}, type: {type(all_mjo_phases)}, len: {len(all_mjo_phases)}")
         mjo_baseline_frequencies = analysis.analysis_metrics.baseline_mjo_frequencies(data_type)
         # print(f"mjo baseline frequencies: {mjo_baseline_frequencies}")
         if "OBS" in data_type:
             mjo_ref_frequencies_all_data = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/mjo_phase_frequencies_ERA5_1940_2023.pkl')
         elif "E3SM" in data_type:
             mjo_ref_frequencies_all_data = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/mjo_frequencies_E3SM_1850_2014.pkl')
+
+
+        # (10) MJO phase distribution - CHECK EACH SEED SEPARATELY
+
+        # get baseline MJO frequencies: 
+        print(f"mjo_ref_frequencies_all_data: {mjo_ref_frequencies_all_data}")
+
+        # Create a figure with subplots for each random seed
+        n_seeds = len(exp_list)
+        fig, axes = plt.subplots(2, (n_seeds + 1) // 2, figsize=(15, 8))
+        axes = axes.flatten()
+
+        phases = np.arange(0, 9)
+        phase_labels = [str(i) for i in phases]
+        bar_width = 0.8
+
+        # Plot for each seed
+        for idx, exp_name in enumerate(exp_list):
+            ax = axes[idx]
+            
+            # Get MJO phases for this seed
+            seed_mjo_phases = data_from_all_seeds1[exp_name]["mjo_phase"].phase.values
+            
+            # Count each phase
+            counts = np.bincount(seed_mjo_phases, minlength=9)
+            total = counts.sum()
+            densities = counts / total
+            
+            # Bar plot for density
+            bars = ax.bar(phases, densities, width=bar_width, color="#7d4b94", alpha=0.7, 
+                        edgecolor='black', label='Selected Samples' if idx == 0 else None)
+            
+            # Reference lines for each phase
+            for i, freq in enumerate(mjo_ref_frequencies_all_data):
+                ax.hlines(y=freq, xmin=i - bar_width/2, xmax=i + bar_width/2, 
+                        color="#3C3B3B", linewidth=2, linestyle='-', 
+                        label='Reference' if (idx == 0 and i == 0) else None)
+            
+            ax.set_ylim([0, max(densities.max(), np.max(mjo_ref_frequencies_all_data)) * 1.15])
+            ax.set_xticks(phases)
+            ax.set_xticklabels(phase_labels, fontsize=8)
+            ax.set_ylabel('Density', fontsize=8)
+            ax.set_title(f'{exp_name}\n(n={total})', fontsize=9)
+            ax.grid(True, alpha=0.3)
+            
+            if idx == 0:
+                ax.legend(fontsize=7)
+
+        # Hide extra subplots if odd number of seeds
+        for idx in range(n_seeds, len(axes)):
+            axes[idx].set_visible(False)
+
+        plt.suptitle(f'MJO Phase Distribution by Random Seed | {exp_type} | {confidence}% Confidence', 
+                    fontsize=12, y=1.00)
+        plt.tight_layout()
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mjo_phase_distribution_by_seed_{exp_type}_{confidence}.png', 
+                    format='png', dpi=250, bbox_inches='tight')
+
+
 
 
         # (3) ENSO phase distribution from selected_target_dates1
@@ -1789,6 +2236,10 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         plt.show()
 
         # Plot 2: MJO Phase Distribution
+        all_mjo_phases = []
+        for exp_name in exp_list:
+            all_mjo_phases.extend(data_from_all_seeds1[exp_name]["mjo_phase"]["phase"].values.tolist())
+        all_mjo_phases = np.array(all_mjo_phases)
         counts = np.bincount(all_mjo_phases, minlength=9)
         total = counts.sum()
         densities = counts / total
@@ -2190,6 +2641,20 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
                 input_maps_var2.append(data_from_all_seeds2[ood_model]["confident_ood_input_maps"].sel(channel=i))
             input_maps_var2 = xr.concat(input_maps_var2, dim='time')
             mean_input_map2 = input_maps_var2.mean(dim='time')
+
+            # Compare input dates from most confident samples between OBS(OBS) and E3SM(OBS):
+            # are they the same dates? how much overlap? 
+            overlap_dates = np.intersect1d(
+                np.concatenate([data_from_all_seeds1[exp_name]["target_date1"].values for exp_name in exp_list]),
+                np.concatenate([data_from_all_seeds2[ood_model]["confident_ood_target_dates"].values for ood_model in models])
+            )
+            print(f"Number of overlapping target dates between OBS(OBS) and E3SM(OBS) most confident samples: {len(overlap_dates)}")
+            print(f"Length of OBS(OBS) most confident samples: {len(np.concatenate([data_from_all_seeds1[exp_name]['target_date1'].values for exp_name in exp_list]))}")
+            print(f"Length of E3SM(OBS) most confident samples: {len(np.concatenate([data_from_all_seeds2[ood_model]['confident_ood_target_dates'].values for ood_model in models]))}")
+            print(f"CRPS of overlapping dates in OBS(OBS): {np.mean([data_from_all_seeds1[exp_name]['crps1'] for exp_name in exp_list])}")
+            print(f"CRPS of overlapping dates in E3SM(OBS): {np.mean([data_from_all_seeds2[ood_model]['confident_ood_crps'] for ood_model in models])}")
+            
+            # print(f"Overlapping dates: {overlap_dates}")
 
             # Calculate difference
             diff_map = mean_input_map1 - mean_input_map2

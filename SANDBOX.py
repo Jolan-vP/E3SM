@@ -64,7 +64,7 @@ print(f"pytorch version = {torch.__version__}")
 # https://github.com/victoresque/pytorch-template/tree/master
 
 # ----CONFIG AND CLASS SETUP----------------------------------------------
-config = utils.get_config("exp217")
+config = utils.get_config("exp219")
 print(config["expname"])
 seed = config["seed_list"][0]
 
@@ -284,115 +284,115 @@ val_loader = torch.utils.data.DataLoader(
 
 # # # # # # # # # ## --- Setup the Model ----------------------------------------------------
 
-# # Check if model already exists: 
-# if os.path.exists(str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'):
-#     print("Model already exists")
-#     response = input("Would you like to load the model? (yes) \n or retrain from epoch 0 (no): ")
+# Check if model already exists: 
+if os.path.exists(str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'):
+    print("Model already exists")
+    response = input("Would you like to load the model? (yes) \n or retrain from epoch 0 (no): ")
 
-#     if response == "yes":
-#         path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
-#         load_model_dict = torch.load(path)
-#         state_dict = load_model_dict["model_state_dict"]
-#         std_mean = load_model_dict["training_std_mean"]
-#         model = TorchModel(
-#             config=config["arch"],
-#             target_mean=std_mean["trainset_target_mean"],
-#             target_std=std_mean["trainset_target_std"],
-#         )
-#         model.load_state_dict(state_dict)
+    if response == "yes":
+        path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
+        load_model_dict = torch.load(path)
+        state_dict = load_model_dict["model_state_dict"]
+        std_mean = load_model_dict["training_std_mean"]
+        model = TorchModel(
+            config=config["arch"],
+            target_mean=std_mean["trainset_target_mean"],
+            target_std=std_mean["trainset_target_std"],
+        )
+        model.load_state_dict(state_dict)
 
-#     elif response == "no": # Model is being run from epoch 0 for the first time: 
-#         model = TorchModel(
-#             config=config["arch"],
-#             target_mean=trainset.target.mean(axis=0),
-#             target_std=trainset.target.std(axis=0),
-#         )
-#         std_mean = {"trainset_target_mean": trainset.target.mean(axis=0), "trainset_target_std": trainset.target.std(axis=0)}
+    elif response == "no": # Model is being run from epoch 0 for the first time: 
+        model = TorchModel(
+            config=config["arch"],
+            target_mean=trainset.target.mean(axis=0),
+            target_std=trainset.target.std(axis=0),
+        )
+        std_mean = {"trainset_target_mean": trainset.target.mean(axis=0), "trainset_target_std": trainset.target.std(axis=0)}
       
-# else: 
-#     model = TorchModel(
-#             config=config["arch"],
-#             target_mean=trainset.target.mean(axis=0),
-#             target_std=trainset.target.std(axis=0),
-#         )
-#     std_mean = {"trainset_target_mean": trainset.target.mean(axis=0), "trainset_target_std": trainset.target.std(axis=0)}
+else: 
+    model = TorchModel(
+            config=config["arch"],
+            target_mean=trainset.target.mean(axis=0),
+            target_std=trainset.target.std(axis=0),
+        )
+    std_mean = {"trainset_target_mean": trainset.target.mean(axis=0), "trainset_target_std": trainset.target.std(axis=0)}
 
-# model.freeze_layers(freeze_id="None")
-# optimizer = getattr(torch.optim, config["optimizer"]["type"])(
-#     model.parameters(), **config["optimizer"]["args"]
-# )
-# criterion = getattr(module_loss, config["criterion"])()
-# metric_funcs = [getattr(module_metric, met) for met in config["metrics"]]
+model.freeze_layers(freeze_id="None")
+optimizer = getattr(torch.optim, config["optimizer"]["type"])(
+    model.parameters(), **config["optimizer"]["args"]
+)
+criterion = getattr(module_loss, config["criterion"])()
+metric_funcs = [getattr(module_metric, met) for met in config["metrics"]]
 
-# # Build the trainer
-# device = utils.prepare_device(config["device"])
-# trainer = Trainer(
-#     model,
-#     criterion,
-#     metric_funcs,
-#     optimizer,
-#     max_epochs=config["trainer"]["max_epochs"],
-#     data_loader=train_loader,
-#     validation_data_loader=val_loader,
-#     device=device,
-#     config=config,
-# )
+# Build the trainer
+device = utils.prepare_device(config["device"])
+trainer = Trainer(
+    model,
+    criterion,
+    metric_funcs,
+    optimizer,
+    max_epochs=config["trainer"]["max_epochs"],
+    data_loader=train_loader,
+    validation_data_loader=val_loader,
+    device=device,
+    config=config,
+)
 
-# # # Visualize the model
-# torchinfo.summary(
-#     model,
-#     [   trainset.input[: config["data_loader"]["batch_size"]].shape ],
-#     verbose=1,
-#     col_names=("input_size", "output_size", "num_params"),
-# )
+# # Visualize the model
+torchinfo.summary(
+    model,
+    [   trainset.input[: config["data_loader"]["batch_size"]].shape ],
+    verbose=1,
+    col_names=("input_size", "output_size", "num_params"),
+)
 
-# # TRAIN THE MODEL
-# model.to(device)
-# trainer.fit(std_mean)
+# TRAIN THE MODEL
+model.to(device)
+trainer.fit(std_mean)
 
-# # Save the Model
-# path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + ".pth"
-# torch.save({
-#             "model_state_dict" : model.state_dict(),
-#             "training_std_mean" : std_mean,
-#              }, path)
+# Save the Model
+path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + ".pth"
+torch.save({
+            "model_state_dict" : model.state_dict(),
+            "training_std_mean" : std_mean,
+             }, path)
 
-# # Load the Model
-# path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
+# Load the Model
+path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
 
-# load_model_dict = torch.load(path)
+load_model_dict = torch.load(path)
 
-# state_dict = load_model_dict["model_state_dict"]
-# std_mean = load_model_dict["training_std_mean"]
+state_dict = load_model_dict["model_state_dict"]
+std_mean = load_model_dict["training_std_mean"]
 
-# model = TorchModel(
-#     config=config["arch"],
-#     target_mean=std_mean["trainset_target_mean"],
-#     target_std=std_mean["trainset_target_std"],
-# )
+model = TorchModel(
+    config=config["arch"],
+    target_mean=std_mean["trainset_target_mean"],
+    target_std=std_mean["trainset_target_std"],
+)
 
-# model.load_state_dict(state_dict)
-# model.eval()
+model.load_state_dict(state_dict)
+model.eval()
 
-# # Evaluate Training Metrics
-# print(trainer.log.history.keys())
+# Evaluate Training Metrics
+print(trainer.log.history.keys())
 
-# print(trainer.log.history.keys())
+print(trainer.log.history.keys())
 
-# plt.figure(figsize=(20, 4))
-# for i, m in enumerate(("loss", *config["metrics"])):
-#     plt.subplot(1, 4, i + 1)
-#     plt.plot(trainer.log.history["epoch"], trainer.log.history[m], label=m)
-#     plt.plot(
-#         trainer.log.history["epoch"], trainer.log.history["val_" + m], label="val_" + m
-#     )
-#     plt.axvline(
-#        x=trainer.early_stopper.best_epoch, linestyle="--", color="k", linewidth=0.75
-#     )
-#     plt.title(m)
-#     plt.legend()
-# plt.tight_layout()
-# plt.savefig(config["perlmutter_figure_dir"] + str(config["expname"]) + "/" + str(config["expname"]) + "training_metrics.png", format = 'png', dpi = 200) 
+plt.figure(figsize=(20, 4))
+for i, m in enumerate(("loss", *config["metrics"])):
+    plt.subplot(1, 4, i + 1)
+    plt.plot(trainer.log.history["epoch"], trainer.log.history[m], label=m)
+    plt.plot(
+        trainer.log.history["epoch"], trainer.log.history["val_" + m], label="val_" + m
+    )
+    plt.axvline(
+       x=trainer.early_stopper.best_epoch, linestyle="--", color="k", linewidth=0.75
+    )
+    plt.title(m)
+    plt.legend()
+plt.tight_layout()
+plt.savefig(config["perlmutter_figure_dir"] + str(config["expname"]) + "/" + str(config["expname"]) + "training_metrics.png", format = 'png', dpi = 200) 
 
 # # ------------------------------ Model Inference -------------------------------------------------------------
 # # -------------------------------------------------------------------------------------------------------------
