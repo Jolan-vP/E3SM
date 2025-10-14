@@ -58,8 +58,8 @@ class CustomData(torch.utils.data.Dataset):
         # SCALE TARGET BY DAY OF YEAR VARIANCE: 
         if config["data_loader"]["scale_target_variance"]: 
             print("Scaling target by day of year variance")
-            daily_target_grouped = self.target.groupby('time.dayofyear').mean('time')
-            scaled_target = self.target.groupby('time.dayofyear') / daily_target_grouped
+            daily_target_grouped_var = self.target.groupby('time.dayofyear').var('time')
+            scaled_target = self.target.groupby('time.dayofyear') / daily_target_grouped_var
             scaled_target = scaled_target.sortby('time')
             self.target = scaled_target
 

@@ -1,6 +1,6 @@
-{"expname": "exp218",
+{"expname": "exp220",
     "device": "cpu",
-    "seed_list": [18],
+    "seed_list": [20],
 
     "input_data": "exp173",
     "data_source": "ERA5", 

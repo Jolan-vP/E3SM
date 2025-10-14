@@ -1726,7 +1726,7 @@ def variance_analysis(experiments, keyword = None):
 
         # FIGURE 1 : Standard CRPS vs Variance Binned Plot
         # Bin the variance values
-        n_bins = 15  # You can adjust the number of bins
+        n_bins = 21  # You can adjust the number of bins
         bin_edges = np.linspace(np.min(variance_across_seeds), np.max(variance_across_seeds), n_bins + 1)
         bin_indices = np.digitize(variance_across_seeds, bin_edges) - 1  # bins are 0-indexed
 
@@ -1757,7 +1757,7 @@ def variance_analysis(experiments, keyword = None):
                 # Add invisible line with alpha=1 for legend only
                 ax1.plot([], [], alpha=1.0, linewidth=2.5, 
                         color=color_themes[i], label=f"{exp_type}")
-                if i in [0, 1]: 
+                if i in [0, 2]: 
                     ax1.axhline(y=mean_climo_crps, color=color_themes[i], linestyle='--', label=f'CRPS Mean Climatology for {data_type}')
             else:
                 ax1.plot(valid_bin_centers, valid_mean_crps, alpha=0.4, linewidth=2.5, 
@@ -1766,7 +1766,8 @@ def variance_analysis(experiments, keyword = None):
         plt.figure(fig1.number)
         ax1.set_ylabel('CRPS')
         ax1.set_xlabel('Variance')
-        ax2.set_xlim([0, 0.08])
+        ax1.set_xlim([0, 0.025])
+        ax1.set_ylim([0.35, 1.2])
         plt.title(f'CRPS vs Variance Plot')
         plt.legend()
         plt.tight_layout()

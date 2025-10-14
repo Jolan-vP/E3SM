@@ -93,8 +93,8 @@ exps = {
     "OBS(E3SM)": ["exp206", "exp207", "exp208", "exp209", "exp210", "exp211", "exp212", "exp213", "exp214", "exp215", "exp216", "exp217"] 
     # "E3SM-long(OBS)": ["exp186", "exp187", "exp188", "exp203", "exp204", "exp205"], 
     # "E3SM-long(E3SM)": ["exp154", "exp157", "exp158", "exp200", "exp201", "exp202"], 
-    # "E3SM(E3SM)sv": ["exp219", "exp223", "exp224"], 
-    # "OBS(OBS)sv": ["exp218", "exp220", "exp221", "exp222"]
+    # "E3SM(E3SM)sv": ["exp219"], 
+    # "OBS(OBS)sv": ["exp218", "exp220", "exp221"]
 }
 
 # DISCARD PLOTS: # ------------------------------------------------------------------------------------  
@@ -105,7 +105,7 @@ exps = {
 # cea.combined_CRPS_IQR_discard(exps, keyword = "OBS-OBS_OBS-E3SM_E3SM-short-OBS_E3SM-short-E3SM", iqr_scaled = False)
 # cea.combined_CRPS_IQR_discard(exps, keyword = "OBS-OBS_OBS-E3SM_E3SM-short-OBS_E3SM-short-E3SM", iqr_scaled = True)
 
-cea.CRPS_discard_scaled_IQR(exps, keyword = "multiple_exps")
+# cea.CRPS_discard_scaled_IQR(exps, keyword = "multiple_exps")
 
 # cea.IQR_distributions_STEP_hist(exps, keyword = "ID_OOD_E3SM_OBS")
 # cea.IQR_distributions_STACKED_hist(exps, keyword = "ID_OOD_E3SM_OBS")
@@ -151,4 +151,4 @@ cea.CRPS_discard_scaled_IQR(exps, keyword = "multiple_exps")
 
 # EPISTEMIC UNCERTAINTY ANALYSIS # ------------------------------------------------------------------------------------
 
-# cea.variance_analysis(exps, keyword = "E3SM-E3SM_E3SM-OBS")
+cea.variance_analysis(exps, keyword = "E3SM-E3SM_E3SM-OBS")

@@ -553,6 +553,13 @@ elif config["inference_data"] == "ERA5" or (config["inference_data"] == "None" a
 climatology_unstandardized = climatology_dict['y'] 
 climatology = (climatology_unstandardized - climatology_mean) / climatology_std # STANDARDIZE CLIMATOLOGY USING FIXED CLIMATOLOGY STATS
 
+if config["data_loader"]["scale_target_variance"]: 
+    print("* * Scaling Climatology by DOY Variance for Analysis * *")
+    daily_climo_grouped_var = climatology.groupby('time.dayofyear').var('time')
+    scaled_climatology = climatology.groupby('time.dayofyear') / daily_climo_grouped_var
+    scaled_climatology = scaled_climatology.sortby('time')
+    climatology = scaled_climatology
+
 plt.figure(figsize = (10, 6))
 plt.hist(climatology_unstandardized, bins = 50, alpha = 0.5, color = 'orange')
 plt.hist(climatology, bins = 50, alpha = 0.5, color = 'teal')
@@ -563,6 +570,13 @@ test_inputs = open_data_file(input_testfn)
 target = test_inputs['y']
 
 target = (target - climatology_mean) / climatology_std # STANDARDIZING TARGET USING FIXED CLIMATOLOGY STATS (Just like the input variables were standardized)
+
+if config["data_loader"]["scale_target_variance"]: 
+    print("* * Scaling Target by DOY Variance for Analysis * *")
+    daily_target_grouped_var = target.groupby('time.dayofyear').var('time')
+    scaled_target = target.groupby('time.dayofyear') / daily_target_grouped_var
+    scaled_target = scaled_target.sortby('time')
+    target = scaled_target
 
 print(f"Target shape: {target.shape}")
 
