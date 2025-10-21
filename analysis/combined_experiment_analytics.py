@@ -2110,6 +2110,76 @@ def variance_analysis(experiments, keyword = None):
                 plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mjo_phase_distribution_E3SM-OBS_high_var_INIT_day.png', format='png', dpi=250)
                 plt.close()
 
+            # Composite difference plot: El Nino High variance to El Nino all other samples
+            # en_dates_in_test and high_var dates overlap: 
+            overlapping_en_dates = np.array([date for date in en_dates_in_test.values if date in high_variance_dates.values])
+            # en_dates_in_test and non_high_var_dates overlap:
+            overlapping_non_high_en_dates = np.array([date for date in en_dates_in_test.values if date in non_high_var_dates.values])
+
+            high_var_en_input_maps = input_maps.sel(time=overlapping_en_dates)
+            high_var_en_input_map_mean = high_var_en_input_maps.mean(dim='time')
+            non_high_var_en_input_maps = input_maps.sel(time=overlapping_non_high_en_dates)
+            non_high_var_en_input_map_mean = non_high_var_en_input_maps.mean(dim='time')
+
+            en_diff_input_map = high_var_en_input_map_mean - non_high_var_en_input_map_mean
+
+            fig, ax = plt.subplots(3, 3, figsize=(15, 11), subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
+            variable_names = ['tp', 'skt', 'z'] if "OBS" in data_type else ['PRECT', 'TS', 'Z500']
+            cmap_list = ['BrBG', 'RdBu_r', 'PuOr_r']
+            vmin_list = np.zeros(3)
+            vmax_list = np.zeros(3)
+
+            # Plot three rows of maps: (1st row) High variance el ninos (2nd row) non-high variance el ninos (3rd row) difference
+            for i in range(3):
+                vmin_list = [-1, -1.5, -1.5]
+                vmax_list = [1, 1.5, 1.5]
+
+                # High Variance El Nino
+                im1 = ax[0, i].pcolormesh(
+                    high_var_en_input_map_mean['lon'],
+                    high_var_en_input_map_mean['lat'],
+                    high_var_en_input_map_mean[..., i],
+                    cmap=cmap_list[i],
+                    vmin=vmin_list[i],
+                    vmax=vmax_list[i],
+                    transform=ccrs.PlateCarree(central_longitude=0)
+                )
+                ax[0, i].coastlines()
+                ax[0, i].set_title(f'High Variance El Nino Input Map: {variable_names[i]} \n N = {len(overlapping_en_dates)}')
+                plt.colorbar(im1, ax=ax[0, i], orientation='horizontal', pad=0.05, label=f'{variable_names[i]} Anomaly')
+
+                # Non-High Variance El Nino
+                im2 = ax[1, i].pcolormesh(
+                    non_high_var_en_input_map_mean['lon'],
+                    non_high_var_en_input_map_mean['lat'],
+                    non_high_var_en_input_map_mean[..., i],
+                    cmap=cmap_list[i],
+                    vmin=vmin_list[i],
+                    vmax=vmax_list[i],
+                    transform=ccrs.PlateCarree(central_longitude=0)
+                )
+                ax[1, i].coastlines()
+                ax[1, i].set_title(f'Non-High Variance El Nino Input Map: {variable_names[i]} \n N = {len(overlapping_non_high_en_dates)}')
+                plt.colorbar(im2, ax=ax[1, i], orientation='horizontal', pad=0.05, label=f'{variable_names[i]} Anomaly')
+
+                # Difference Map
+                im3 = ax[2, i].pcolormesh(
+                    en_diff_input_map['lon'],
+                    en_diff_input_map['lat'],
+                    en_diff_input_map[..., i],
+                    cmap=cmap_list[i],
+                    vmin=vmin_list[i],
+                    vmax=vmax_list[i],
+                    transform=ccrs.PlateCarree(central_longitude=0)
+                )
+                ax[2, i].coastlines()
+                ax[2, i].set_title(f'Difference Map (High Var - Non-High Var): {variable_names[i]}')
+                plt.colorbar(im3, ax=ax[2, i], orientation='horizontal', pad=0.05, label=f'{variable_names[i]} Anomaly')
+            plt.tight_layout()
+            plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/enso_high_var_vs_non_high_var_input_maps_E3SM-OBS.png', format='png', dpi=250)
+            plt.close()
+            
+            
             # Composite Plot of Input Maps: SIMPLE MEAN
             combined_input_maps = xr.concat(all_input_maps_high_var, dim='time')
             mean_input_map = combined_input_maps.mean(dim='time')
@@ -2141,104 +2211,104 @@ def variance_analysis(experiments, keyword = None):
             plt.close()
 
             # PLOT: Non High Variance Input Map Signals: 
-            combined_high_var_input_maps = xr.concat(all_input_maps_high_var, dim='time')
-            print(f"length of combined high var input maps time dim: {combined_high_var_input_maps.time.shape}")
-            combined_non_high_var_input_maps = xr.concat(all_input_maps_non_high_var, dim='time')
-            print(f"length of combined non high var input maps time dim: {combined_non_high_var_input_maps.time.shape}")
-            mean_high_var_input_map = combined_high_var_input_maps.mean(dim='time')
-            mean_non_high_var_input_map = combined_non_high_var_input_maps.mean(dim='time')
-            mean_diff_input_map = mean_high_var_input_map - mean_non_high_var_input_map
+            # combined_high_var_input_maps = xr.concat(all_input_maps_high_var, dim='time')
+            # print(f"length of combined high var input maps time dim: {combined_high_var_input_maps.time.shape}")
+            # combined_non_high_var_input_maps = xr.concat(all_input_maps_non_high_var, dim='time')
+            # print(f"length of combined non high var input maps time dim: {combined_non_high_var_input_maps.time.shape}")
+            # mean_high_var_input_map = combined_high_var_input_maps.mean(dim='time')
+            # mean_non_high_var_input_map = combined_non_high_var_input_maps.mean(dim='time')
+            # mean_diff_input_map = mean_high_var_input_map - mean_non_high_var_input_map
 
-            fig, ax = plt.subplots(1, 3, figsize=(18, 6), subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
-            variable_names = ['tp', 'skt', 'z'] if "OBS" in data_type else ['PRECT', 'TS', 'Z500']
-            cmap_list = ['BrBG', 'RdBu_r', 'PuOr_r']
-            vmin_list = np.zeros(3)
-            vmax_list = np.zeros(3)
+            # fig, ax = plt.subplots(1, 3, figsize=(18, 6), subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
+            # variable_names = ['tp', 'skt', 'z'] if "OBS" in data_type else ['PRECT', 'TS', 'Z500']
+            # cmap_list = ['BrBG', 'RdBu_r', 'PuOr_r']
+            # vmin_list = np.zeros(3)
+            # vmax_list = np.zeros(3)
 
-            for i in range(3):
-                vmin_list = [-0.7, -1, -1]
-                vmax_list = [0.7, 1, 1]
+            # for i in range(3):
+            #     vmin_list = [-0.7, -1, -1]
+            #     vmax_list = [0.7, 1, 1]
 
-                im = ax[i].pcolormesh(
-                    mean_non_high_var_input_map['lon'],
-                    mean_non_high_var_input_map['lat'],
-                    mean_non_high_var_input_map[..., i],
-                    cmap=cmap_list[i],
-                    vmin=vmin_list[i],
-                    vmax=vmax_list[i],
-                    transform=ccrs.PlateCarree(central_longitude=0)
-                )
-                ax[i].coastlines()
-                ax[i].set_title(f'Mean Non-High Variance Input Map: {variable_names[i]} | E3SM(OBS) \n Variance <= {var_lim}')
-                plt.colorbar(im, ax=ax[i], orientation='horizontal', pad=0.05, label=f'{variable_names[i]} Anomaly')
-            plt.tight_layout()
-            plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/non_high_var_composite_maps_E3SM-OBS.png', format='png', dpi=250)
-            plt.close()
+            #     im = ax[i].pcolormesh(
+            #         mean_non_high_var_input_map['lon'],
+            #         mean_non_high_var_input_map['lat'],
+            #         mean_non_high_var_input_map[..., i],
+            #         cmap=cmap_list[i],
+            #         vmin=vmin_list[i],
+            #         vmax=vmax_list[i],
+            #         transform=ccrs.PlateCarree(central_longitude=0)
+            #     )
+            #     ax[i].coastlines()
+            #     ax[i].set_title(f'Mean Non-High Variance Input Map: {variable_names[i]} | E3SM(OBS) \n Variance <= {var_lim}')
+            #     plt.colorbar(im, ax=ax[i], orientation='horizontal', pad=0.05, label=f'{variable_names[i]} Anomaly')
+            # plt.tight_layout()
+            # plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/non_high_var_composite_maps_E3SM-OBS.png', format='png', dpi=250)
+            # plt.close()
 
              # PLOT: LOW Variance Input Map Signals: 
-            combined_low_var_input_maps = xr.concat(all_input_maps_low_var, dim='time')
-            mean_low_var_input_map = combined_low_var_input_maps.mean(dim='time')
-            print(f"length of combined high var input maps time dim: {combined_high_var_input_maps.time.shape}")
+            # combined_low_var_input_maps = xr.concat(all_input_maps_low_var, dim='time')
+            # mean_low_var_input_map = combined_low_var_input_maps.mean(dim='time')
+            # print(f"length of combined high var input maps time dim: {combined_high_var_input_maps.time.shape}")
 
-            fig, ax = plt.subplots(1, 3, figsize=(18, 6), subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
-            variable_names = ['tp', 'skt', 'z'] if "OBS" in data_type else ['PRECT', 'TS', 'Z500']
-            cmap_list = ['BrBG', 'RdBu_r', 'PuOr_r']
-            vmin_list = np.zeros(3)
-            vmax_list = np.zeros(3)
+            # fig, ax = plt.subplots(1, 3, figsize=(18, 6), subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
+            # variable_names = ['tp', 'skt', 'z'] if "OBS" in data_type else ['PRECT', 'TS', 'Z500']
+            # cmap_list = ['BrBG', 'RdBu_r', 'PuOr_r']
+            # vmin_list = np.zeros(3)
+            # vmax_list = np.zeros(3)
 
-            for i in range(3):
-                vmin_list = [-0.7, -1, -1]
-                vmax_list = [0.7, 1, 1]
+            # for i in range(3):
+            #     vmin_list = [-0.7, -1, -1]
+            #     vmax_list = [0.7, 1, 1]
 
-                im = ax[i].pcolormesh(
-                    mean_low_var_input_map['lon'],
-                    mean_low_var_input_map['lat'],
-                    mean_low_var_input_map[..., i],
-                    cmap=cmap_list[i],
-                    vmin=vmin_list[i],
-                    vmax=vmax_list[i],
-                    transform=ccrs.PlateCarree(central_longitude=0)
-                )
-                ax[i].coastlines()
-                ax[i].set_title(f'Mean Low Variance Input Map: {variable_names[i]} | E3SM(OBS) \n Bottom 20% Variance')
-                plt.colorbar(im, ax=ax[i], orientation='horizontal', pad=0.05, label=f'{variable_names[i]} Anomaly')
-            plt.tight_layout()
-            plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/low_var_composite_maps_E3SM-OBS.png', format='png', dpi=250)
-            plt.close()
+            #     im = ax[i].pcolormesh(
+            #         mean_low_var_input_map['lon'],
+            #         mean_low_var_input_map['lat'],
+            #         mean_low_var_input_map[..., i],
+            #         cmap=cmap_list[i],
+            #         vmin=vmin_list[i],
+            #         vmax=vmax_list[i],
+            #         transform=ccrs.PlateCarree(central_longitude=0)
+            #     )
+            #     ax[i].coastlines()
+            #     ax[i].set_title(f'Mean Low Variance Input Map: {variable_names[i]} | E3SM(OBS) \n Bottom 20% Variance')
+            #     plt.colorbar(im, ax=ax[i], orientation='horizontal', pad=0.05, label=f'{variable_names[i]} Anomaly')
+            # plt.tight_layout()
+            # plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/low_var_composite_maps_E3SM-OBS.png', format='png', dpi=250)
+            # plt.close()
 
 
             # Difference Plot : High Var Input Maps vs Low Var Input Maps! 
-            combined_high_var_input_maps = xr.concat(all_input_maps_high_var, dim='time')
-            combined_non_high_var_input_maps = xr.concat(all_input_maps_non_high_var, dim='time')
-            mean_high_var_input_map = combined_high_var_input_maps.mean(dim='time')
-            mean_non_high_var_input_map = combined_non_high_var_input_maps.mean(dim='time')
-            mean_diff_input_map = mean_high_var_input_map - mean_non_high_var_input_map
+            # combined_high_var_input_maps = xr.concat(all_input_maps_high_var, dim='time')
+            # combined_non_high_var_input_maps = xr.concat(all_input_maps_non_high_var, dim='time')
+            # mean_high_var_input_map = combined_high_var_input_maps.mean(dim='time')
+            # mean_non_high_var_input_map = combined_non_high_var_input_maps.mean(dim='time')
+            # mean_diff_input_map = mean_high_var_input_map - mean_non_high_var_input_map
 
-            fig, ax = plt.subplots(1, 3, figsize=(18, 6), subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
-            variable_names = ['tp', 'skt', 'z'] if "OBS" in data_type else ['PRECT', 'TS', 'Z500']
-            cmap_list = ['BrBG', 'RdBu_r', 'PuOr_r']
-            vmin_list = np.zeros(3)
-            vmax_list = np.zeros(3)
+            # fig, ax = plt.subplots(1, 3, figsize=(18, 6), subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
+            # variable_names = ['tp', 'skt', 'z'] if "OBS" in data_type else ['PRECT', 'TS', 'Z500']
+            # cmap_list = ['BrBG', 'RdBu_r', 'PuOr_r']
+            # vmin_list = np.zeros(3)
+            # vmax_list = np.zeros(3)
 
-            for i in range(3):
-                vmin_list = [-0.7, -1, -1]
-                vmax_list = [0.7, 1, 1]
+            # for i in range(3):
+            #     vmin_list = [-0.7, -1, -1]
+            #     vmax_list = [0.7, 1, 1]
 
-                im = ax[i].pcolormesh(
-                    mean_input_map['lon'],
-                    mean_input_map['lat'],
-                    mean_diff_input_map[..., i],
-                    cmap=cmap_list[i],
-                    vmin=vmin_list[i],
-                    vmax=vmax_list[i],
-                    transform=ccrs.PlateCarree(central_longitude=0)
-                )
-                ax[i].coastlines()
-                ax[i].set_title(f'Mean Difference Input Map: {variable_names[i]} | E3SM(OBS) \n Variance > {var_lim} - Variance <= {var_lim}')
-                plt.colorbar(im, ax=ax[i], orientation='horizontal', pad=0.05, label=f'{variable_names[i]} Anomaly')
-            plt.tight_layout()
-            plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/high_var_composite_DIFF_maps_E3SM-OBS.png', format='png', dpi=250)
-            plt.close()
+            #     im = ax[i].pcolormesh(
+            #         mean_input_map['lon'],
+            #         mean_input_map['lat'],
+            #         mean_diff_input_map[..., i],
+            #         cmap=cmap_list[i],
+            #         vmin=vmin_list[i],
+            #         vmax=vmax_list[i],
+            #         transform=ccrs.PlateCarree(central_longitude=0)
+            #     )
+            #     ax[i].coastlines()
+            #     ax[i].set_title(f'Mean Difference Input Map: {variable_names[i]} | E3SM(OBS) \n Variance > {var_lim} - Variance <= {var_lim}')
+            #     plt.colorbar(im, ax=ax[i], orientation='horizontal', pad=0.05, label=f'{variable_names[i]} Anomaly')
+            # plt.tight_layout()
+            # plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/high_var_composite_DIFF_maps_E3SM-OBS.png', format='png', dpi=250)
+            # plt.close()
             
 
 
@@ -2415,9 +2485,9 @@ def variance_analysis_success_plot(experiments, keyword = None):
 
             print(f'Processing experiment type: {exp_type}')
 
-            if exp_type in ["E3SM(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)"]:
+            if exp_type in ["E3SM(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)", "OBS(OBS)sv"]:
                     data_type = "OBS"
-            elif exp_type in ["E3SM(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)"]:
+            elif exp_type in ["E3SM(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)", "E3SM(E3SM)sv"]:
                     data_type = "E3SM"
             
             #identify lengths for accurate preallocation: 
@@ -2435,10 +2505,10 @@ def variance_analysis_success_plot(experiments, keyword = None):
                 # open crps: 
                 crps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_CRPS_network_values.pkl')
 
-                if exp_type in ["E3SM(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)"]:
+                if exp_type in ["E3SM(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)", "OBS(OBS)sv"]:
                     target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
             
-                elif exp_type in ["E3SM(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)"]:
+                elif exp_type in ["E3SM(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)", "E3SM(E3SM)sv"]:
                     target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp185_trimmed_test_dat.nc')
         
                 climo_crps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_CRPS_climatology_values.pkl')
@@ -2685,6 +2755,11 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
                 selected_indices = np.argsort(scaled_iqr.values)[:num_to_select]
                 print(f"selected {len(selected_indices)} samples based on scaled IQR by percentage")
             
+            elif selection_method == 'simple_iqr_percentage':
+                # select narrowest percentage of IQR based on confidence level: 
+                num_to_select = int(len(iqr) * (confidence / 100))
+                selected_indices = np.argsort(iqr)[:num_to_select]
+                print(f"selected {len(selected_indices)} samples based on simple IQR by percentage")
             else: 
                 print(f"choose sample selection method or code another one up")
 
@@ -2699,6 +2774,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
                 for dt in (selected_target_dates - pd.Timedelta(days=config['databuilder']['lagtime'])).values])
             else: 
                 selected_target_dates_exact = selected_target_dates
+                selected_input_dates_exact = selected_target_dates - pd.Timedelta(days=config['databuilder']['lagtime'])
 
             # use lagtime to identify input dates for these conf samples
             lagtime = config['databuilder']['lagtime']
@@ -2707,9 +2783,12 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
             selected_samples["output1"] = output[selected_indices]
             selected_samples["target_date1"] = selected_target_dates
             selected_samples["input_date1"] = selected_input_dates
-            selected_samples["iqr1"] = scaled_iqr[selected_indices]
             selected_samples["crps1"] = crps[selected_indices]
             selected_samples["input_maps1"] = input_maps.sel(time=selected_target_dates)
+            if selection_method == 'scaled_iqr_by_percentage':
+                selected_samples["iqr1"] = scaled_iqr[selected_indices]
+            elif selection_method == 'simple_iqr_percentage':
+                selected_samples["iqr1"] = iqr[selected_indices]
 
             # accumulate all selected indices from the test dataset: 
             all_selected_indices.extend(selected_indices)
@@ -2803,6 +2882,9 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
                 # scale iqr by day of year:
                 daily_iqr_ood = iqr_ood_xr.groupby('time.dayofyear').mean('time')
                 scaled_iqr_ood = iqr_ood_xr.groupby('time.dayofyear') / daily_iqr_ood
+
+            elif selection_method == 'simple_iqr_percentage':
+                pass
             
             # Load testing target data
             if opposing_exp in ["E3SM-short(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)"]:
@@ -2819,22 +2901,34 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
             selected_samples["output2"] = output_ood[all_selected_indices]
             selected_samples["target_date2"] = all_target1_dates
             selected_samples["input_date2"] = selected_input_dates
-            selected_samples["iqr2"] = scaled_iqr_ood[all_selected_indices]
             selected_samples["crps2"] = crps_ood[all_selected_indices]
             selected_samples["enso_phase2"] = data_from_all_seeds1[exp_list[0]]["enso_phase"]
             selected_samples["mjo_phase2"] = data_from_all_seeds1[exp_list[0]]["mjo_phase"]
             selected_samples["input_maps2"] = data_from_all_seeds1[exp_list[0]]["input_maps1"]
 
-            # FIND MOST CONFIDENT OOD FOR INPUT MAP 
-            num_to_select_confident_ood = int(len(scaled_iqr_ood) * (confidence / 100))
-            ood_iqr_indices = np.argsort(scaled_iqr_ood.values)
-            most_confident_ood_indices = ood_iqr_indices[:num_to_select_confident_ood]
-            most_confident_ood_dates = target_ood['time'][most_confident_ood_indices]
-            selected_samples["confident_ood_indices"] = most_confident_ood_indices
-            print(f"selected {len(selected_samples['confident_ood_indices'])} most confident OOD samples based on scaled IQR by percentage")
-            confident_ood_input_maps = input_maps.sel(time=most_confident_ood_dates)
-            confident_ood_crps = crps_ood[most_confident_ood_indices]
+            if selection_method == 'scaled_iqr_by_percentage':
+                selected_samples["iqr2"] = scaled_iqr_ood[all_selected_indices]
+                # FIND MOST CONFIDENT OOD FOR INPUT MAP 
+                num_to_select_confident_ood = int(len(scaled_iqr_ood) * (confidence / 100))
+                ood_iqr_indices = np.argsort(scaled_iqr_ood.values)
+                most_confident_ood_indices = ood_iqr_indices[:num_to_select_confident_ood]
+                most_confident_ood_dates = target_ood['time'][most_confident_ood_indices]
+                selected_samples["confident_ood_indices"] = most_confident_ood_indices
+                print(f"selected {len(selected_samples['confident_ood_indices'])} most confident OOD samples based on scaled IQR by percentage")
+                confident_ood_input_maps = input_maps.sel(time=most_confident_ood_dates)
+                confident_ood_crps = crps_ood[most_confident_ood_indices]
 
+            elif selection_method == 'simple_iqr_percentage':
+                selected_samples["iqr2"] = iqr_ood[all_selected_indices]
+                # FIND MOST CONFIDENT OOD FOR INPUT MAP 
+                num_to_select_confident_ood = int(len(iqr_ood) * (confidence / 100))
+                ood_iqr_indices = np.argsort(iqr_ood)
+                most_confident_ood_indices = ood_iqr_indices[:num_to_select_confident_ood]
+                most_confident_ood_dates = target_ood['time'][most_confident_ood_indices]
+                selected_samples["confident_ood_indices"] = most_confident_ood_indices
+                print(f"selected {len(selected_samples['confident_ood_indices'])} most confident OOD samples based on simple IQR by percentage")
+                confident_ood_input_maps = input_maps.sel(time=most_confident_ood_dates)
+                confident_ood_crps = crps_ood[most_confident_ood_indices]
 
             selected_samples["confident_ood_input_maps"] = confident_ood_input_maps
             selected_samples["confident_ood_target_dates"] = most_confident_ood_dates
@@ -2940,7 +3034,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         plt.suptitle(f'MJO Phase Distribution by Random Seed | {exp_type} | {confidence}% Confidence', 
                     fontsize=12, y=1.00)
         plt.tight_layout()
-        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mjo_phase_distribution_by_seed_{exp_type}_{confidence}.png', 
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mjo_phase_distribution_by_seed_{exp_type}_{confidence}_{keyword}.png', 
                     format='png', dpi=250, bbox_inches='tight')
 
          ### MJO phase distribution INITIALIZATION DAY - CHECK EACH SEED SEPARATELY
@@ -2996,7 +3090,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         plt.suptitle(f'MJO Phase Distribution by Random Seed on Initialization Day | {exp_type} | {confidence}% Confidence', 
                     fontsize=12, y=1.00)
         plt.tight_layout()
-        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mjo_phase_distribution_by_seed_{exp_type}_{confidence}_INIT_day.png', 
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mjo_phase_distribution_by_seed_{exp_type}_{confidence}_INIT_day_{keyword}.png', 
                     format='png', dpi=250, bbox_inches='tight')
 
 
@@ -3048,7 +3142,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         ax1.set_ylim([0, 0.8])
         ax1.legend()
         plt.tight_layout()
-        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/shash_curves_{exp_type}_{confidence}.png', format='png', dpi=250)
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/shash_curves_{exp_type}_{confidence}_{keyword}.png', format='png', dpi=250)
         plt.show()
 
         # Plot 2: MJO Phase Distribution - VERIFICATION DAY
@@ -3088,7 +3182,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         else:
             ax.legend()
         plt.tight_layout()
-        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mjo_phase_distribution_{exp_type}_{confidence}.png', format='png', dpi=250)
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mjo_phase_distribution_{exp_type}_{confidence}_{keyword}.png', format='png', dpi=250)
         plt.show()
 
         # Plot 2: MJO Phase Distribution - INITIALIZATION DAY
@@ -3128,7 +3222,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         else:
             ax.legend()
         plt.tight_layout()
-        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mjo_phase_distribution_{exp_type}_{confidence}_INIT_day.png', format='png', dpi=250)
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mjo_phase_distribution_{exp_type}_{confidence}_INIT_day_{keyword}.png', format='png', dpi=250)
         plt.show()
 
 
@@ -3215,7 +3309,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         plt.title(f'ENSO Index Value Distribution Across all {data_type} Data')
         plt.legend()
         plt.tight_layout()
-        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/enso_index_value_distribution_{exp_type}_ALL_data.png', format='png', dpi=250)
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/enso_index_value_distribution_{exp_type}_ALL_data_{keyword}.png', format='png', dpi=250)
         
         plt.figure(figsize = (9, 6))
         bins = np.linspace(-5, 5, 100)
@@ -3227,7 +3321,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         plt.title(f'ENSO Index Value Distribution For {confidence}% Most Confident | {data_type}')
         plt.legend()
         plt.tight_layout()
-        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/enso_index_value_distribution_{exp_type}_{confidence}_most_confident.png', format='png', dpi=250)
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/enso_index_value_distribution_{exp_type}_{confidence}_most_confident_{keyword}.png', format='png', dpi=250)
         
         # Plot 3: ENSO Phase Distribution - RATIO
         fig3, ax3 = plt.subplots(figsize=(8, 6))
@@ -3266,7 +3360,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         else:
             ax3.legend()
         plt.tight_layout()
-        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/enso_phase_distribution_{exp_type}_{confidence}.png', format='png', dpi=250)
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/enso_phase_distribution_{exp_type}_{confidence}_{keyword}.png', format='png', dpi=250)
 
 ## -----------------
 ## -----------------
@@ -3340,7 +3434,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         plt.suptitle(f'ENSO Phase Distribution by Random Seed | {exp_type} | {confidence}% Confidence', 
                     fontsize=12, y=1.00)
         plt.tight_layout()
-        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/enso_frequency_by_seed_{exp_type}_{confidence}.png', 
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/enso_frequency_by_seed_{exp_type}_{confidence}_{keyword}.png', 
                     format='png', dpi=250, bbox_inches='tight')
         plt.show()
 
@@ -3354,7 +3448,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         ax4.set_ylabel('Density')
         ax4.set_title(f'Target {target_var} Anomaly Distribution | {confidence}% Most Confident | {data_type}')  # Added data_type to title
         plt.tight_layout()
-        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/target_anomaly_distribution_{exp_type}_{confidence}.png', format='png', dpi=250)
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/target_anomaly_distribution_{exp_type}_{confidence}_{keyword}.png', format='png', dpi=250)
 
         # Plot 5: CRPS Distribution
         fig5, ax5 = plt.subplots(figsize=(8, 6))
@@ -3366,7 +3460,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         ax5.set_title(f'CRPS Distribution | {confidence}% Most Confident | {data_type}')  # Added data_type to title
         ax5.legend()
         plt.tight_layout()
-        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/crps_distribution_{exp_type}_{confidence}.png', format='png', dpi=250)
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/crps_distribution_{exp_type}_{confidence}_{keyword}.png', format='png', dpi=250)
         plt.show()
 
         # Plot 6: check temporal distribution of most confident samples by month: 
@@ -3387,7 +3481,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         ax6.set_ylabel('Number of Selected Samples')
         ax6.set_title(f'Temporal Distribution of Selected Samples by Month | {confidence}% Most Confident | {data_type}')  # Added data_type to title
         plt.tight_layout()
-        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/temporal_distribution_{exp_type}_{confidence}.png', format='png', dpi=250)
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/temporal_distribution_{exp_type}_{confidence}_{keyword}.png', format='png', dpi=250)
 
         # Plot 7: Plot mean input maps from dates of interest: 
         fig, ax = plt.subplots(1, 3, figsize=(18, 6), subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
@@ -3427,7 +3521,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
             ax[i].set_title(f'Mean Input Map: {variable_names[i]} | {confidence}% Most Confident | {data_type}')
             plt.colorbar(im, ax=ax[i], orientation='horizontal', pad=0.05, label=f'{variable_names[i]} Anomaly')
         plt.tight_layout()
-        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mean_input_maps_{exp_type}_{confidence}.png', format='png', dpi=250)
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mean_input_maps_{exp_type}_{confidence}_{keyword}.png', format='png', dpi=250)
 
         # PLOT Mean Input Maps for Most Confident OOD Samples - compare SST pattern! 
         fig, ax = plt.subplots(1, 3, figsize=(18, 6), subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
@@ -3467,7 +3561,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
             ax[i].set_title(f'Mean Input Map: {variable_names[i]} | Most Confident OOD Samples | {data_type}')
             plt.colorbar(im, ax=ax[i], orientation='horizontal', pad=0.05, label=f'{variable_names[i]} Anomaly')
         plt.tight_layout()
-        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mean_input_maps_{variable_names[i]}_OOD_most_confident_{exp_type}_{confidence}.png', format='png', dpi=250)
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mean_input_maps_{variable_names[i]}_OOD_most_confident_{exp_type}_{confidence}_{keyword}.png', format='png', dpi=250)
 
         # PLOT DIFFERENCE MAP BETWEEN OBS(OBS) MOST CONFIDENT AND E3SM(OBS) MOST CONFIDENT SAMPLES: 
         fig, ax = plt.subplots(1, 3, figsize=(18, 6), subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
@@ -3534,7 +3628,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
             ax[i].set_title(f'Difference in Mean Input Map: {variable_names[i]} \n (IN-dist) - (OO-dist) \n {confidence}% Most Confident | {data_type}')
             plt.colorbar(im, ax=ax[i], orientation='horizontal', pad=0.05, label=f'{variable_names[i]} Anomaly Difference')
         plt.tight_layout()
-        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/difference_mean_input_maps_OBS_vs_E3SM_{exp_type}_{confidence}.png', format='png', dpi=250)
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/difference_mean_input_maps_OBS_vs_E3SM_{exp_type}_{confidence}_{keyword}.png', format='png', dpi=250)
 
         # Plot 8 : Plot mean input maps for each ENSO phase from most confident samples: 
         enso_phases = ['EN', 'LN', 'N']
@@ -3569,7 +3663,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
             ax[iphase].set_title(f'Mean Input Map: {variable_names[1]} | ENSO: {phase} | {confidence}% Most Confident | {data_type}')
             plt.colorbar(im, ax=ax[iphase], orientation='horizontal', pad=0.05, label=f'{variable_names[1]} Anomaly')
             plt.tight_layout()
-        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mean_input_maps_{variable_names[1]}_ENSO_{exp_type}_{confidence}.png', format='png', dpi=250)
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mean_input_maps_{variable_names[1]}_ENSO_{exp_type}_{confidence}_{keyword}.png', format='png', dpi=250)
 
 
 def extract_datetime64(date):

@@ -87,14 +87,14 @@ ERA5_Z500 = ERA5_baseline['z'] / 9.81
 # keyword = "OBS-OBS_OBS-E3SM"
 
 exps = {
-    "OBS(OBS)": ["exp173", "exp174", "exp175", "exp176", "exp177", "exp178", "exp179", "exp180", "exp181", "exp182", "exp183", "exp184"],
-    "E3SM(OBS)": ["exp189", "exp195", "exp196", "exp197", "exp198", "exp199"],
-    "E3SM(E3SM)": ["exp185", "exp190", "exp191", "exp192", "exp193", "exp194"],
-    "OBS(E3SM)": ["exp206", "exp207", "exp208", "exp209", "exp210", "exp211", "exp212", "exp213", "exp214", "exp215", "exp216", "exp217"] 
+    # "OBS(OBS)": ["exp173", "exp174", "exp175", "exp176", "exp177", "exp178", "exp179", "exp180", "exp181", "exp182", "exp183", "exp184"]
+    # "E3SM(OBS)": ["exp189", "exp195", "exp196", "exp197", "exp198", "exp199"],
+    # "E3SM(E3SM)": ["exp185", "exp190", "exp191", "exp192", "exp193", "exp194"]
+    # "OBS(E3SM)": ["exp206", "exp207", "exp208", "exp209", "exp210", "exp211", "exp212", "exp213", "exp214", "exp215", "exp216", "exp217"] 
     # "E3SM-long(OBS)": ["exp186", "exp187", "exp188", "exp203", "exp204", "exp205"], 
     # "E3SM-long(E3SM)": ["exp154", "exp157", "exp158", "exp200", "exp201", "exp202"], 
-    # "E3SM(E3SM)sv": ["exp219"], 
-    # "OBS(OBS)sv": ["exp218", "exp220", "exp221"]
+    "E3SM(E3SM)sv": ["exp219"], 
+    "OBS(OBS)sv": ["exp218", "exp220", "exp221"]
 }
 
 # DISCARD PLOTS: # ------------------------------------------------------------------------------------  
@@ -109,7 +109,7 @@ exps = {
 
 # cea.combined_success_discard_scaled_IQR(exps, keyword = "OBS_exps_scaled_CRPS")
 
-# cea.variance_analysis_success_plot(exps, keyword = "all_exps")
+cea.variance_analysis_success_plot(exps, keyword = "all_exps")
 
 # cea.IQR_distributions_STEP_hist(exps, keyword = "ID_OOD_E3SM_OBS")
 # cea.IQR_distributions_STACKED_hist(exps, keyword = "ID_OOD_E3SM_OBS")
@@ -140,7 +140,7 @@ exps = {
 
 # cea.anom_var_distributions(exps, keyword = "E3SM-short_OBS")
 # 
-# cea.m2m_sample_transfer(exps, selection_method = 'scaled_iqr_by_percentage', confidence = 10, keyword = "OBS-OBS")
+# cea.m2m_sample_transfer(exps, selection_method = 'simple_iqr_percentage', confidence = 10, keyword = "unscaled_IQR")
 
 # cea.m2m_sample_transfer(exps, selection_method = 'scaled_iqr_by_percentage', confidence = 10, keyword = "E3SM-OBS")
 
@@ -154,4 +154,4 @@ exps = {
 
 # EPISTEMIC UNCERTAINTY ANALYSIS # ------------------------------------------------------------------------------------
 
-cea.variance_analysis(exps, keyword = "all_exps") #TODO redo with all exps
+# cea.variance_analysis(exps, keyword = "all_exps") #TODO redo with all exps
