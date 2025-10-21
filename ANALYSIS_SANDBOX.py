@@ -105,7 +105,11 @@ exps = {
 # cea.combined_CRPS_IQR_discard(exps, keyword = "OBS-OBS_OBS-E3SM_E3SM-short-OBS_E3SM-short-E3SM", iqr_scaled = False)
 # cea.combined_CRPS_IQR_discard(exps, keyword = "OBS-OBS_OBS-E3SM_E3SM-short-OBS_E3SM-short-E3SM", iqr_scaled = True)
 
-# cea.CRPS_discard_scaled_IQR(exps, keyword = "multiple_exps")
+# cea.CRPS_discard_scaled_IQR(exps, keyword = "OBS_exps_scaled_CRPS")
+
+# cea.combined_success_discard_scaled_IQR(exps, keyword = "OBS_exps_scaled_CRPS")
+
+# cea.variance_analysis_success_plot(exps, keyword = "all_exps")
 
 # cea.IQR_distributions_STEP_hist(exps, keyword = "ID_OOD_E3SM_OBS")
 # cea.IQR_distributions_STACKED_hist(exps, keyword = "ID_OOD_E3SM_OBS")
@@ -136,7 +140,7 @@ exps = {
 
 # cea.anom_var_distributions(exps, keyword = "E3SM-short_OBS")
 # 
-# cea.m2m_sample_transfer(exps, selection_method = 'scaled_iqr_by_percentage', confidence = 20, keyword = "OBS-OBS")
+# cea.m2m_sample_transfer(exps, selection_method = 'scaled_iqr_by_percentage', confidence = 10, keyword = "OBS-OBS")
 
 # cea.m2m_sample_transfer(exps, selection_method = 'scaled_iqr_by_percentage', confidence = 10, keyword = "E3SM-OBS")
 
@@ -148,7 +152,6 @@ exps = {
 
 
 
-
 # EPISTEMIC UNCERTAINTY ANALYSIS # ------------------------------------------------------------------------------------
 
-cea.variance_analysis(exps, keyword = "E3SM-E3SM_E3SM-OBS")
+cea.variance_analysis(exps, keyword = "all_exps") #TODO redo with all exps

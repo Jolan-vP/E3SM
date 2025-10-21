@@ -328,7 +328,7 @@ def CRPS_discard_scaled_IQR(experiments, keyword = None):
     """
     exps = experiments
 
-    fig, ax = plt.subplots(figsize=(10, 7))
+    fig, ax = plt.subplots(figsize=(8, 6))
 
     # color_themes = {
     #     0: "#3b528b", 
@@ -344,92 +344,235 @@ def CRPS_discard_scaled_IQR(experiments, keyword = None):
     }
 
     for i, (exp_type, exp_list) in enumerate(exps.items()):
-        print(f'Processing experiment type: {exp_type}')
 
-        if exp_type in ["E3SM(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)"]:
-                data_type = "OBS"
-        elif exp_type in ["E3SM(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)"]:
-                data_type = "E3SM"
-        
-        #identify lengths for accurate preallocation: 
-        output_preall = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_list[0]}/{exp_list[0]}_network_SHASH_parameters.pkl')
+        if i in [0, 3]:
+            print(f'Processing experiment type: {exp_type}')
 
-        all_crps = np.empty((len(exp_list), len(output_preall)))
-        all_scaled_iqr = np.empty((len(exp_list), len(output_preall)))
-
-        for iexp, exp_name in enumerate(exp_list):
-            print(f'  Processing experiment: {exp_name}')
-            
-            # Load the output and target data for this experiment
-            output = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_network_SHASH_parameters.pkl')
-
-
-            # open crps: 
-            crps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_CRPS_network_values.pkl')
-
-            climo_crps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_CRPS_climatology_values.pkl')
-            mean_climo_crps = np.mean(climo_crps)
-
-            # Load testing target data
             if exp_type in ["E3SM(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)"]:
-                target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
-                # Load climatology statistics
-                climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl')#
-                target = (target['y'] - climatology_stats['z'][2]) / climatology_stats['z'][3]
-       
+                    data_type = "OBS"
             elif exp_type in ["E3SM(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)"]:
-                target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp185_trimmed_test_dat.nc')
-                climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/E3SM_processed_climo_stats_PRECT_Z500_TS_1981-2010.pkl')
-                target = (target['y'] - climatology_stats['Z500'][2]) / climatology_stats['Z500'][3]
-
-            # Calculate IQR: 
-            iqr = iqr_basic(output)
-            iqr_xr = xr.DataArray(iqr, coords=[target['time']], dims=["time"])
-            # scale iqr by day of year:
-            daily_iqr = iqr_xr.groupby('time.dayofyear').mean('time')
-            scaled_iqr = iqr_xr.groupby('time.dayofyear') / daily_iqr
-            #ungroup scaled_iqr: 
-            scaled_iqr = scaled_iqr.sortby('time')
+                    data_type = "E3SM"
             
-            percentiles = np.linspace(100, 0, 21)
+            #identify lengths for accurate preallocation: 
+            output_preall = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_list[0]}/{exp_list[0]}_network_SHASH_parameters.pkl')
 
-            # Sort by IQR
-            scaled_iqr_sorted_indices = np.argsort(scaled_iqr.values)
-            scaled_iqr_sorted = scaled_iqr.isel(time=scaled_iqr_sorted_indices)
+            all_crps = np.empty((len(exp_list), len(output_preall)))
+            all_scaled_iqr = np.empty((len(exp_list), len(output_preall)))
 
-            avg_crps = np.empty([len(exp_list), len(percentiles)])
-            avg_scaled_iqr = []
-            sample_index = np.zeros((len(scaled_iqr), len(percentiles)))
+            for iexp, exp_name in enumerate(exp_list):
+                print(f'  Processing experiment: {exp_name}')
+                
+                # Load the output and target data for this experiment
+                output = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_network_SHASH_parameters.pkl')
 
-            for ip, p in enumerate(percentiles):
-                # percentage of samples to keep for each round of the loop
-                num_to_keep = int(len(scaled_iqr_sorted) * p / 100)
+                # open crps: 
+                crps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_CRPS_network_values.pkl')
 
-                indices = scaled_iqr_sorted_indices[:num_to_keep]
+                climo_crps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_CRPS_climatology_values.pkl') 
+                mean_climo_crps = np.mean(climo_crps)
 
-                if len(indices) == 0:
-                    avg_crps[iexp, ip] = np.nan
-                    avg_scaled_iqr.append(np.nan)
+                # Load testing target data
+                if exp_type in ["E3SM(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)"]:
+                    target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
+                    # Load climatology statistics
+                    climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl')#
+                    target = (target['y'] - climatology_stats['z'][2]) / climatology_stats['z'][3]
+        
+                elif exp_type in ["E3SM(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)"]:
+                    target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp185_trimmed_test_dat.nc')
+                    climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/E3SM_processed_climo_stats_PRECT_Z500_TS_1981-2010.pkl')
+                    target = (target['y'] - climatology_stats['Z500'][2]) / climatology_stats['Z500'][3]
+
+                # Scale Climo CRPS by day of year mean: 
+                climo_crps_xr = xr.DataArray(climo_crps, coords=[target['time']], dims=["time"])
+                daily_climo_crps = climo_crps_xr.groupby('time.dayofyear').mean('time')
+                scaled_climo_crps = climo_crps_xr.groupby('time.dayofyear') / daily_climo_crps
+                scaled_climo_crps = scaled_climo_crps.sortby('time')
+                mean_climo_crps = np.mean(scaled_climo_crps)
+
+                # Calculate IQR: 
+                iqr = iqr_basic(output)
+                iqr_xr = xr.DataArray(iqr, coords=[target['time']], dims=["time"])
+                # scale iqr by day of year mean:
+                daily_iqr = iqr_xr.groupby('time.dayofyear').mean('time')
+                scaled_iqr = iqr_xr.groupby('time.dayofyear') / daily_iqr
+                #ungroup scaled_iqr: 
+                scaled_iqr = scaled_iqr.sortby('time')
+
+                # Scale CRPS by day of year as well: 
+                crps_xr = xr.DataArray(crps, coords=[target['time']], dims=["time"])
+                # scale crps by day of year mean:
+                daily_crps = crps_xr.groupby('time.dayofyear').mean('time')
+                scaled_crps = crps_xr.groupby('time.dayofyear') / daily_crps
+                scaled_crps = scaled_crps.sortby('time')
+                crps = scaled_crps.values
+                
+                percentiles = np.linspace(100, 0, 21)
+
+                # Sort by IQR
+                scaled_iqr_sorted_indices = np.argsort(scaled_iqr.values)
+                scaled_iqr_sorted = scaled_iqr.isel(time=scaled_iqr_sorted_indices)
+
+                avg_crps = np.empty([len(exp_list), len(percentiles)])
+                avg_scaled_iqr = []
+                sample_index = np.zeros((len(scaled_iqr), len(percentiles)))
+
+                for ip, p in enumerate(percentiles):
+                    # percentage of samples to keep for each round of the loop
+                    num_to_keep = int(len(scaled_iqr_sorted) * p / 100)
+
+                    indices = scaled_iqr_sorted_indices[:num_to_keep]
+
+                    if len(indices) == 0:
+                        avg_crps[iexp, ip] = np.nan
+                        avg_scaled_iqr.append(np.nan)
+                    else:
+                        avg_crps[iexp, ip] = np.mean(crps[indices])
+                        avg_scaled_iqr.append(np.mean(scaled_iqr[indices]))
+                        sample_index[:len(indices), ip] = indices
+
+                if iexp == 0:
+                    ax.plot(percentiles, avg_crps[iexp], alpha = 0.65, linewidth = 2.5, color=color_themes[i], label = f'{exp_type}')
                 else:
-                    avg_crps[iexp, ip] = np.mean(crps[indices])
-                    avg_scaled_iqr.append(np.mean(scaled_iqr[indices]))
-                    sample_index[:len(indices), ip] = indices
+                    ax.plot(percentiles, avg_crps[iexp], alpha = 0.65, linewidth = 2.5, color=color_themes[i])
 
-            if iexp == 0:
-                ax.plot(percentiles, avg_crps[iexp], alpha = 0.65, linewidth = 2.5, color=color_themes[i], label = f'{exp_type}')
-            else:
-                ax.plot(percentiles, avg_crps[iexp], alpha = 0.65, linewidth = 2.5, color=color_themes[i])
+            if i in [0, 2]: 
+                ax.axhline(y=mean_climo_crps, color=color_themes[i], linestyle='--', label=f'CRPS Mean Climatology for {data_type}')
 
-        if i in [0, 2]: 
-            ax.axhline(y=mean_climo_crps, color=color_themes[i], linestyle='--', label=f'CRPS Mean Climatology for {data_type}')
+            plt.gca().invert_xaxis()
+            ax.set_ylabel('Average Scaled CRPS')
+            ax.set_xlabel('Scaled IQR Percentile (% Data Remaining)')
+            ax.set_xlim([100, 1])
+            plt.tight_layout()
+            plt.legend()
+            plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/CRPS_discard_scaled_IQR_Z500_{keyword}.png', format='png', dpi=250)
 
-        plt.gca().invert_xaxis()
-        ax.set_ylabel('Average CRPS')
-        ax.set_xlabel('Scaled IQR Percentile (% Data Remaining)')
-        ax.set_xlim([100, 1])
-        plt.tight_layout()
-        plt.legend()
-        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/CRPS_discard_scaled_IQR_Z500_{keyword}.png', format='png', dpi=250)
+def combined_success_discard_scaled_IQR(experiments, keyword = None):
+    """
+    Discard plot of success ratio vs IQR percentile for variety of experiments
+
+    experiments = {
+        "OBS(OBS)": [obs_exp1, obs_exp2, obs_exp3, ...], 
+        "E3SM(OBS)": [e3sm_obs_exp1, e3sm_obs_exp2, e3sm_obs_exp3, ...],
+        "E3SM(E3SM)": [e3sm_exp1, e3sm_exp2, e3sm_exp3, ...],
+        "E3SM-short(OBS)": [e3sm_short_obs_exp1, e3sm_short_obs_exp2, e3sm_short_obs_exp3, ...],
+        "E3SM-short(E3SM)": [e3sm_short_exp1, e3sm_short_exp2, e3sm_short_exp3, ...]
+    }
+    """
+    exps = experiments
+
+    fig, ax = plt.subplots(figsize = (8, 6))
+    plt.gca().invert_xaxis()  # high confidence = low IQR = right side of plot
+
+    color_themes = {
+        0: "#3b528b", 
+        1: "#019bba", 
+        2: "#33c316",
+        3: "#B6B309",
+        }
+    for i, (exp_type, exp_list) in enumerate(exps.items()):
+
+        if i in [0, 3]:
+                print(f'Processing experiment type: {exp_type}')
+
+                if exp_type in ["E3SM(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)"]:
+                        data_type = "OBS"
+                elif exp_type in ["E3SM(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)"]:
+                        data_type = "E3SM"
+
+                for iexp, exp_name in enumerate(exp_list):
+                    print(f'  Processing experiment: {exp_name}')
+                    
+                    # Load the output and target data for this experiment
+                    output = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_network_SHASH_parameters.pkl')
+
+                    # open crps: 
+                    crps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_CRPS_network_values.pkl')
+
+                    climo_crps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_CRPS_climatology_values.pkl') 
+                    mean_climo_crps = np.mean(climo_crps)
+
+                    # Load testing target data
+                    if exp_type in ["E3SM(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)"]:
+                        target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
+                        # Load climatology statistics
+                        climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl')#
+                        target = (target['y'] - climatology_stats['z'][2]) / climatology_stats['z'][3]
+            
+                    elif exp_type in ["E3SM(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)"]:
+                        target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp185_trimmed_test_dat.nc')
+                        climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/E3SM_processed_climo_stats_PRECT_Z500_TS_1981-2010.pkl')
+                        target = (target['y'] - climatology_stats['Z500'][2]) / climatology_stats['Z500'][3]
+
+                    # Scale Climo CRPS by day of year mean: 
+                    climo_crps_xr = xr.DataArray(climo_crps, coords=[target['time']], dims=["time"])
+                    daily_climo_crps = climo_crps_xr.groupby('time.dayofyear').mean('time')
+                    scaled_climo_crps = climo_crps_xr.groupby('time.dayofyear') / daily_climo_crps
+                    scaled_climo_crps = scaled_climo_crps.sortby('time')
+                    mean_climo_crps = np.mean(scaled_climo_crps)
+
+                    # Calculate IQR: 
+                    iqr = iqr_basic(output)
+                    iqr_xr = xr.DataArray(iqr, coords=[target['time']], dims=["time"])
+                    # scale iqr by day of year mean:
+                    daily_iqr = iqr_xr.groupby('time.dayofyear').mean('time')
+                    scaled_iqr = iqr_xr.groupby('time.dayofyear') / daily_iqr
+                    #ungroup scaled_iqr: 
+                    scaled_iqr = scaled_iqr.sortby('time')
+
+                    # Scale CRPS by day of year as well: 
+                    crps_xr = xr.DataArray(crps, coords=[target['time']], dims=["time"])
+                    # scale crps by day of year mean:
+                    daily_crps = crps_xr.groupby('time.dayofyear').mean('time')
+                    scaled_crps = crps_xr.groupby('time.dayofyear') / daily_crps
+                    scaled_crps = scaled_crps.sortby('time')
+                    crps = scaled_crps.values
+                    
+                    percentiles = np.linspace(100, 0, 21)
+
+                    # Sort by IQR
+                    scaled_iqr_sorted_indices = np.argsort(scaled_iqr.values)
+                    scaled_iqr_sorted = scaled_iqr.isel(time=scaled_iqr_sorted_indices)
+
+                    avg_success_ratio = np.empty([len(exp_list), len(percentiles)])
+                    avg_scaled_iqr = []
+                    sample_index = np.zeros((len(scaled_iqr), len(percentiles)))
+
+                    for ip, p in enumerate(percentiles):
+                        # percentage of samples to keep for each round of the loop
+                        num_to_keep = int(len(scaled_iqr_sorted) * p / 100)
+
+                        indices = scaled_iqr_sorted_indices[:num_to_keep]
+
+                        if len(indices) == 0:
+                            avg_success_ratio[iexp, ip] = np.nan
+                            avg_scaled_iqr.append(np.nan)
+                        else:
+                            success_ratio = np.sum(crps[indices] < scaled_climo_crps[indices]) / len(indices)
+                            avg_success_ratio[iexp, ip] = success_ratio
+                            sample_index[:len(indices), ip] = indices      
+
+                    if iexp == 0:
+                        ax.plot(percentiles, avg_success_ratio[iexp], alpha = 0.65, linewidth = 2.5, color=color_themes[i], label = f'{exp_type}')
+                    else:
+                        ax.plot(percentiles, avg_success_ratio[iexp], alpha = 0.65, linewidth = 2.5, color=color_themes[i])
+
+                if i in [0, 2]: 
+                    ax.axhline(y=mean_climo_crps, color=color_themes[i], linestyle='--', label=f'CRPS Mean Climatology for {data_type}')
+
+
+                ax.set_xlabel('Scaled IQR Percentile (% Data Remaining)')
+                ax.set_ylabel('Proportion of Samples with Lower SCALED Network CRPS')
+                ax.set_ylim(0.5, 0.70)
+                ax.set_xlim(101, 4)
+                ax.set_title('Increasing Confidence Success Ratio Discard Plot')
+                plt.tight_layout()
+                
+        leg = plt.legend()
+        for lh in leg.legendHandles: 
+                lh.set_alpha(1)
+
+        plt.savefig('/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/combined_SuccessRatio_DiscardPlot_scaled_IQR' + str(keyword) + '_Z500.png', format = 'png',  dpi = 250) 
 
 
 
@@ -561,8 +704,6 @@ def composite_inputmap_target(experiments, confidence_level = 50, keyword = None
         plt.tight_layout()
         plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/composite_inputmaps_target_{confidence_level}percent_confidence_'+ str(exp_name) + '_Z500.png', format='png', dpi=250, bbox_inches='tight')
         plt.close()
-
-
 
 def COMPARE_composite_inputmap_target(experiments, confidence_level_low = 20, confidence_level_high = 40, keyword = None):
     """
@@ -859,6 +1000,35 @@ def COMPARE_composite_inputmap_target(experiments, confidence_level_low = 20, co
     # plt.close()  # Add this to close the figure
 
     return composite_data
+
+# def composite_input_maps_variance(experiments, keyword = None):
+#     """
+#     For E3SM(OBS), select the high variance samples and plot composite input maps for those samples. 
+#     Clustering analysis to identify different clusters of input maps. 
+#     Frequency analysis for MJO and ENSO phases within those specific samples. 
+
+#     """
+#     exps = experiments
+#     exp_type_names = list(exps.keys())
+
+#     colormaps = ["BrBG", "RdBu_r", "PuOr_r"]
+#     units = ['(mm/day)', '(K)', '(m)']
+#     vars = ["Total Precip", "Skin Temp", "Z500"]
+
+#     for iexp_type, (exp_type, exp_list) in enumerate(exps.items()):
+#         print(f'Processing experiment type: {exp_type}')
+
+#         if exp_type in ["E3SM(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)"]:
+#                     data_type = "OBS"
+#             elif exp_type in ["E3SM(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)"]:
+#                     data_type = "E3SM"
+
+#         for iexp_name, exp_name in enumerate(exp_list):  # Add this inner loop
+#             print(f'  Processing experiment: {exp_name}')
+#             config = utils.get_config(exp_name)
+
+            
+
 
 
 def XAI_confidence_compositing(experiments, confidence_level_low = 20, confidence_level_high = 40, xai_method = 'integrated_gradients', keyword = None):
@@ -1675,10 +1845,404 @@ def variance_analysis(experiments, keyword = None):
 
         # Calculate variance across random seeds for each sample
         variance_across_seeds = np.var(all_mean_shash, axis=0)
-        # print(f"shape of variance: {variance_across_seeds.shape}")
+        print(f"shape of variance: {variance_across_seeds.shape}")
         variance_all_model_types.append(variance_across_seeds)
+        print(f"shape of variance of all model types: {len(variance_all_model_types)}")
 
-        # FIGURE 4 : CRPS vs Variance as DISCARD Plot: 
+        # FIGURE: Variance Analysis of E3SM(OBS) : ---------------
+        if exp_type in ["E3SM(OBS)"]: 
+            # Analyze the high variance samples in E3SM(OBS)
+            # Select high variance samples based on threshold:
+            var_lim = 0.02
+            high_variance_indices = np.where(variance_across_seeds > var_lim)[0]
+            non_high_variance_indices = np.unique(np.setdiff1d(np.arange(variance_across_seeds.shape[0]), high_variance_indices))
+            # how many samples is 20% of the data: 
+            sample_size_lim = 0.2 * variance_across_seeds.shape[0]
+            # find low variance indices corresponding to the lowest 20% of variance values:
+            low_variance_indices = np.argsort(variance_across_seeds)[:int(sample_size_lim)]
+            print(f"number of low variance indices: {len(low_variance_indices)}")
+
+
+
+            all_input_maps_high_var = []
+            all_input_maps_non_high_var = []
+            all_input_maps_low_var = []
+
+            for iexp, exp_name in enumerate(exp_list):
+                config = utils.get_config(exp_name)
+                # Open Target: 
+                target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
+                # Load climatology statistics
+                climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl')#
+                target = (target['y'] - climatology_stats['z'][2]) / climatology_stats['z'][3]
+                data_type = "OBS"
+
+                high_variance_dates = target.time[high_variance_indices]
+                print(f"length of high var dates: {len(high_variance_dates)}")
+                non_high_var_dates = target.time[non_high_variance_indices]
+                print(f"length of non high var dates: {len(non_high_var_dates)}")
+                low_variance_dates = target.time[low_variance_indices]
+
+                # Open Input Maps: 
+                input_map_unstandardized = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
+                input_maps = input_map_unstandardized['x']
+                climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl')
+                data_vars = ['tp', 'skt', 'z']
+                for l, variable in enumerate(data_vars):
+                    mean = climatology_stats[variable][0]
+                    std = climatology_stats[variable][1]
+                    input_maps.loc[dict(channel=l)] = (input_maps.sel(channel=l) - mean) / std
+
+                high_var_input_maps = input_maps.sel(time = high_variance_dates)
+                non_high_var_input_maps = input_maps.sel(time = non_high_var_dates)
+                low_var_input_maps = input_maps.sel(time = low_variance_dates)
+
+                # Composite Plot of Input Maps: SIMPLE MEAN
+                all_input_maps_high_var.append(high_var_input_maps)
+                all_input_maps_non_high_var.append(non_high_var_input_maps)
+                all_input_maps_low_var.append(low_var_input_maps)
+
+                # Analyze ENSO in Selected Dates: 
+                enso_dates_pkl = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_daily_enso_timestamps.pkl')
+                enso_baseline_frequencies = analysis.analysis_metrics.baseline_enso_frequencies(data_type)
+
+                # check which key (category) each of the target dates falls into, and create a list with either "EN", "LN" or "N"
+                enso_phase = []
+                for date in high_variance_dates.values:
+                    if date in enso_dates_pkl['El Nino']:
+                        enso_phase.append("EN")
+                    elif date in enso_dates_pkl['La Nina']:
+                        enso_phase.append("LN")
+                    else:
+                        enso_phase.append("N")
+
+                # print(f"El Nino proportion in high variance dates: {enso_phase.count('EN')/len(enso_phase)*100:.1f}%")
+                # print(f"La Nina proportion in high variance dates: {enso_phase.count('LN')/len(enso_phase)*100:.1f}%")
+                # print(f"Neutral proportion in high variance dates: {enso_phase.count('N')/len(enso_phase)*100:.1f}%")
+                # Print percentage of El Nino dates in the high_variance_dates relative to all El Nino dates in the entire test set: 
+                total_EN_dates = len(enso_dates_pkl['El Nino'])
+                total_LN_dates = len(enso_dates_pkl['La Nina'])
+                total_N_dates = len(enso_dates_pkl['Neutral'])
+                # find total length of dates in test set years: 
+                test_dates = target.time
+                # length of enso dates in test set:
+                # ignore if enso_dates_pkl date is leap day:
+                en_dates = enso_dates_pkl['El Nino']
+                ln_dates = enso_dates_pkl['La Nina']
+                n_dates = enso_dates_pkl['Neutral']
+
+                non_leap_EN_dates = [
+                    date for date in enso_dates_pkl['El Nino']
+                    if not (date.astype('datetime64[M]').astype(int) % 12 + 1 == 2 and 
+                            (date.astype('datetime64[D]') - date.astype('datetime64[M]')).astype(int) + 1 == 29)]
+                non_leap_LN_dates = [
+                    date for date in enso_dates_pkl['La Nina']
+                    if not (date.astype('datetime64[M]').astype(int) % 12 + 1 == 2 and 
+                            (date.astype('datetime64[D]') - date.astype('datetime64[M]')).astype(int) + 1 == 29)]
+                non_leap_N_dates = [
+                    date for date in enso_dates_pkl['Neutral']
+                    if not (date.astype('datetime64[M]').astype(int) % 12 + 1 == 2 and 
+                            (date.astype('datetime64[D]') - date.astype('datetime64[M]')).astype(int) + 1 == 29)]
+                
+                # dates must fall within min and max of test_dates: 
+                non_leap_EN_dates = [date for date in non_leap_EN_dates if date >= test_dates.min() and date <= test_dates.max()]
+                non_leap_LN_dates = [date for date in non_leap_LN_dates if date >= test_dates.min() and date <= test_dates.max()]
+                non_leap_N_dates = [date for date in non_leap_N_dates if date >= test_dates.min() and date <= test_dates.max()]
+
+                en_dates_in_test = test_dates.sel(time=non_leap_EN_dates)
+                ln_dates_in_test = test_dates.sel(time=non_leap_LN_dates)
+                n_dates_in_test = test_dates.sel(time=non_leap_N_dates)
+
+                print(f"El Nino proportion in high variance dates relative to all El Nino dates in test set: {enso_phase.count('EN')/len(en_dates_in_test)*100:.1f}% ({enso_phase.count('EN')} out of {len(en_dates_in_test)})")
+                print(f"La Nina proportion in high variance dates relative to all La Nina dates in test set: {enso_phase.count('LN')/len(ln_dates_in_test)*100:.1f}% ({enso_phase.count('LN')} out of {len(ln_dates_in_test)})")
+                print(f"Neutral proportion in high variance dates relative to all Neutral dates in test set: {enso_phase.count('N')/len(n_dates_in_test)*100:.1f}% ({enso_phase.count('N')} out of {len(n_dates_in_test)})")
+
+                # ENSO Figure 1: Relative proportion of high var samples 
+                fig, ax_enso = plt.subplots(figsize=(8, 6))
+                bin_edges = np.array([-0.5, 0.5, 1.5, 2.5])
+                bin_centers = np.array([0, 1, 2])
+                bar_width = 0.4
+
+                num_LN = enso_phase.count('LN')
+                num_EN = enso_phase.count('EN')
+                num_N = enso_phase.count('N')
+                sum_total_phases = num_EN + num_LN + num_N
+                enso_phase_dist = [num_EN / sum_total_phases, 
+                                num_LN / sum_total_phases, 
+                                num_N / sum_total_phases]
+
+                bars = ax_enso.bar(bin_centers, enso_phase_dist, width=bar_width, color="#fbc13a", alpha=0.7, edgecolor='black')
+
+                # Reference lines for each ENSO phase
+                enso_phases = ['El Nino', 'La Nina', 'Neutral']
+                for i, phase in enumerate(enso_phases):
+                    freq = enso_baseline_frequencies[phase]
+                    # Draw a horizontal line across the width of the bar for phase i
+                    ax_enso.hlines(y=freq, xmin=i - bar_width/2, xmax=i + bar_width/2, 
+                            color="#3C3B3B", linewidth=2, linestyle='-', 
+                            label='Reference' if i==0 else None)
+
+                ax_enso.set_ylim([0, max(max(enso_phase_dist), max(enso_baseline_frequencies.values())) * 1.15])
+                ax_enso.set_xticks(bin_centers)
+                ax_enso.set_xticklabels(['El Nino', 'La Nina', 'Neutral'])
+                ax_enso.set_xlabel('ENSO Phase')
+                ax_enso.set_ylabel('Density')
+                ax_enso.set_title(f'ENSO Phase Distribution | E3SM(OBS) High Variance Samples')
+
+                # Legend with only one entry for reference lines
+                handles, labels = ax_enso.get_legend_handles_labels()
+                if 'Reference' in labels:
+                    idx = labels.index('Reference')
+                    ax_enso.legend([bars, handles[idx]], ['Selected Samples', 'Reference'])
+                else:
+                    ax_enso.legend()
+                plt.tight_layout()
+                plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/enso_phase_distribution_E3SM-OBS_high_var.png', format='png', dpi=250)
+                plt.close()
+
+                # ENSO Figure 2:  Difference plot between high var EN and all other EN:
+                fig, ax_enso2 = plt.subplots(figsize=(8, 6))
+
+
+                ######## MJO @ VERIFICATION DAY ########
+                phase_timestamps = analysis_metrics.mjo_timestamps(data_type, config)
+                selected_mjo_phases = phase_timestamps.sel(time=high_variance_dates)
+
+                if "OBS" in data_type:
+                    mjo_ref_frequencies_all_data = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/mjo_phase_frequencies_ERA5_1940_2023.pkl')
+                elif "E3SM" in data_type:
+                    mjo_ref_frequencies_all_data = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/mjo_frequencies_E3SM_1850_2014.pkl')
+
+                counts = np.bincount(selected_mjo_phases["phase"], minlength=9)
+                total = counts.sum()
+                densities = counts / total
+
+                phases = np.arange(0, 9)
+                phase_labels = [str(i) for i in phases]
+
+                fig, ax_mjo = plt.subplots(figsize=(8, 6))
+                bar_width = 0.8
+
+                # Bar plot for density
+                bars = ax_mjo.bar(phases, densities, width=bar_width, color="#9c4781", alpha=0.7, edgecolor='black', label='Selected Samples')
+
+                # Reference lines for each phase
+                for i, freq in enumerate(mjo_ref_frequencies_all_data):
+                    # Draw a horizontal line across the width of the bar for phase i
+                    ax_mjo.hlines(y=freq, xmin=i - bar_width/2, xmax=i + bar_width/2, color="#3C3B3B", linewidth=2, linestyle='-', label='Reference' if i==0 else None)
+
+                ax_mjo.set_xticks(phases)
+                ax_mjo.set_xticklabels(phase_labels)
+                ax_mjo.set_ylim([0, max(densities.max(), np.max(mjo_ref_frequencies_all_data)) * 1.15])
+                ax_mjo.set_xlabel('MJO Phase')
+                ax_mjo.set_ylabel('Density')
+                ax_mjo.set_title('MJO Phase Distribution for High Variance E3SM(OBS) Samples')
+                handles, labels = ax_mjo.get_legend_handles_labels()
+                # Only show one legend entry for the reference lines
+                if 'Reference' in labels:
+                    idx = labels.index('Reference')
+                    ax_mjo.legend([bars, handles[idx]], ['Selected Samples', 'Reference'])
+                else:
+                    ax_mjo.legend()
+                plt.tight_layout()
+                plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mjo_phase_distribution_E3SM-OBS_high_var.png', format='png', dpi=250)
+        
+
+                ######## MJO @ INITIALIZATION DAY ########
+
+                high_variance_input_dates = high_variance_dates - np.timedelta64(config['databuilder']['lagtime'])
+                high_var_dates = high_variance_input_dates.astype('datetime64[D]')
+                phase_dates = phase_timestamps.time.astype('datetime64[D]')
+
+                # Find valid dates that exist in both
+                valid_mask = np.isin(high_var_dates, phase_dates)
+                valid_high_var_dates = high_var_dates[valid_mask]
+
+                print(f"Using {valid_mask.sum()} of {len(high_var_dates)} high variance dates")
+
+                # Select only valid dates
+                input_mjo_phases = phase_timestamps.sel(time=valid_high_var_dates)
+
+
+                # print(f"phase timestamps time range: {phase_timestamps.time.min().values} to {phase_timestamps.time.max().values}")
+                # print(f"phase timesteps type: {type(phase_timestamps.time.values[0])}")
+                # print(f"high variance input dates range: {high_variance_input_dates.min().values} to {high_variance_input_dates.max().values}")
+                # print(f"high var dates type: {type(high_variance_input_dates.values[0])}")
+                # input_mjo_phases = phase_timestamps.sel(time=high_variance_input_dates)
+
+                if "OBS" in data_type:
+                    mjo_ref_frequencies_all_data = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/mjo_phase_frequencies_ERA5_1940_2023.pkl')
+                elif "E3SM" in data_type:
+                    mjo_ref_frequencies_all_data = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/mjo_frequencies_E3SM_1850_2014.pkl')
+
+                counts = np.bincount(input_mjo_phases["phase"], minlength=9)
+                total = counts.sum()
+                densities = counts / total
+
+                phases = np.arange(0, 9)
+                phase_labels = [str(i) for i in phases]
+
+                fig, ax_mjo = plt.subplots(figsize=(8, 6))
+                bar_width = 0.8
+
+                # Bar plot for density
+                bars = ax_mjo.bar(phases, densities, width=bar_width, color="#4a479c", alpha=0.7, edgecolor='black', label='Selected Samples')
+
+                # Reference lines for each phase
+                for i, freq in enumerate(mjo_ref_frequencies_all_data):
+                    # Draw a horizontal line across the width of the bar for phase i
+                    ax_mjo.hlines(y=freq, xmin=i - bar_width/2, xmax=i + bar_width/2, color="#3C3B3B", linewidth=2, linestyle='-', label='Reference' if i==0 else None)
+
+                ax_mjo.set_xticks(phases)
+                ax_mjo.set_xticklabels(phase_labels)
+                ax_mjo.set_ylim([0, max(densities.max(), np.max(mjo_ref_frequencies_all_data)) * 1.15])
+                ax_mjo.set_xlabel('MJO Phase')
+                ax_mjo.set_ylabel('Density')
+                ax_mjo.set_title('MJO Phase Distribution for High Variance E3SM(OBS) Samples \n Initialization Day')
+                handles, labels = ax_mjo.get_legend_handles_labels()
+                # Only show one legend entry for the reference lines
+                if 'Reference' in labels:
+                    idx = labels.index('Reference')
+                    ax_mjo.legend([bars, handles[idx]], ['Selected Samples', 'Reference'])
+                else:
+                    ax_mjo.legend()
+                plt.tight_layout()
+                plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mjo_phase_distribution_E3SM-OBS_high_var_INIT_day.png', format='png', dpi=250)
+                plt.close()
+
+            # Composite Plot of Input Maps: SIMPLE MEAN
+            combined_input_maps = xr.concat(all_input_maps_high_var, dim='time')
+            mean_input_map = combined_input_maps.mean(dim='time')
+
+            fig, ax = plt.subplots(1, 3, figsize=(18, 6), subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
+            variable_names = ['tp', 'skt', 'z'] if "OBS" in data_type else ['PRECT', 'TS', 'Z500']
+            cmap_list = ['BrBG', 'RdBu_r', 'PuOr_r']
+            vmin_list = np.zeros(3)
+            vmax_list = np.zeros(3)
+
+            for i in range(3):
+                vmin_list = [-0.7, -1, -1]
+                vmax_list = [0.7, 1, 1]
+
+                im = ax[i].pcolormesh(
+                    mean_input_map['lon'],
+                    mean_input_map['lat'],
+                    mean_input_map[..., i],
+                    cmap=cmap_list[i],
+                    vmin=vmin_list[i],
+                    vmax=vmax_list[i],
+                    transform=ccrs.PlateCarree(central_longitude=0)
+                )
+                ax[i].coastlines()
+                ax[i].set_title(f'Mean Input Map: {variable_names[i]} | High Variance E3SM(OBS) > {var_lim}')
+                plt.colorbar(im, ax=ax[i], orientation='horizontal', pad=0.05, label=f'{variable_names[i]} Anomaly')
+            plt.tight_layout()
+            plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/high_var_composite_input_maps_E3SM-OBS.png', format='png', dpi=250)
+            plt.close()
+
+            # PLOT: Non High Variance Input Map Signals: 
+            combined_high_var_input_maps = xr.concat(all_input_maps_high_var, dim='time')
+            print(f"length of combined high var input maps time dim: {combined_high_var_input_maps.time.shape}")
+            combined_non_high_var_input_maps = xr.concat(all_input_maps_non_high_var, dim='time')
+            print(f"length of combined non high var input maps time dim: {combined_non_high_var_input_maps.time.shape}")
+            mean_high_var_input_map = combined_high_var_input_maps.mean(dim='time')
+            mean_non_high_var_input_map = combined_non_high_var_input_maps.mean(dim='time')
+            mean_diff_input_map = mean_high_var_input_map - mean_non_high_var_input_map
+
+            fig, ax = plt.subplots(1, 3, figsize=(18, 6), subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
+            variable_names = ['tp', 'skt', 'z'] if "OBS" in data_type else ['PRECT', 'TS', 'Z500']
+            cmap_list = ['BrBG', 'RdBu_r', 'PuOr_r']
+            vmin_list = np.zeros(3)
+            vmax_list = np.zeros(3)
+
+            for i in range(3):
+                vmin_list = [-0.7, -1, -1]
+                vmax_list = [0.7, 1, 1]
+
+                im = ax[i].pcolormesh(
+                    mean_non_high_var_input_map['lon'],
+                    mean_non_high_var_input_map['lat'],
+                    mean_non_high_var_input_map[..., i],
+                    cmap=cmap_list[i],
+                    vmin=vmin_list[i],
+                    vmax=vmax_list[i],
+                    transform=ccrs.PlateCarree(central_longitude=0)
+                )
+                ax[i].coastlines()
+                ax[i].set_title(f'Mean Non-High Variance Input Map: {variable_names[i]} | E3SM(OBS) \n Variance <= {var_lim}')
+                plt.colorbar(im, ax=ax[i], orientation='horizontal', pad=0.05, label=f'{variable_names[i]} Anomaly')
+            plt.tight_layout()
+            plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/non_high_var_composite_maps_E3SM-OBS.png', format='png', dpi=250)
+            plt.close()
+
+             # PLOT: LOW Variance Input Map Signals: 
+            combined_low_var_input_maps = xr.concat(all_input_maps_low_var, dim='time')
+            mean_low_var_input_map = combined_low_var_input_maps.mean(dim='time')
+            print(f"length of combined high var input maps time dim: {combined_high_var_input_maps.time.shape}")
+
+            fig, ax = plt.subplots(1, 3, figsize=(18, 6), subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
+            variable_names = ['tp', 'skt', 'z'] if "OBS" in data_type else ['PRECT', 'TS', 'Z500']
+            cmap_list = ['BrBG', 'RdBu_r', 'PuOr_r']
+            vmin_list = np.zeros(3)
+            vmax_list = np.zeros(3)
+
+            for i in range(3):
+                vmin_list = [-0.7, -1, -1]
+                vmax_list = [0.7, 1, 1]
+
+                im = ax[i].pcolormesh(
+                    mean_low_var_input_map['lon'],
+                    mean_low_var_input_map['lat'],
+                    mean_low_var_input_map[..., i],
+                    cmap=cmap_list[i],
+                    vmin=vmin_list[i],
+                    vmax=vmax_list[i],
+                    transform=ccrs.PlateCarree(central_longitude=0)
+                )
+                ax[i].coastlines()
+                ax[i].set_title(f'Mean Low Variance Input Map: {variable_names[i]} | E3SM(OBS) \n Bottom 20% Variance')
+                plt.colorbar(im, ax=ax[i], orientation='horizontal', pad=0.05, label=f'{variable_names[i]} Anomaly')
+            plt.tight_layout()
+            plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/low_var_composite_maps_E3SM-OBS.png', format='png', dpi=250)
+            plt.close()
+
+
+            # Difference Plot : High Var Input Maps vs Low Var Input Maps! 
+            combined_high_var_input_maps = xr.concat(all_input_maps_high_var, dim='time')
+            combined_non_high_var_input_maps = xr.concat(all_input_maps_non_high_var, dim='time')
+            mean_high_var_input_map = combined_high_var_input_maps.mean(dim='time')
+            mean_non_high_var_input_map = combined_non_high_var_input_maps.mean(dim='time')
+            mean_diff_input_map = mean_high_var_input_map - mean_non_high_var_input_map
+
+            fig, ax = plt.subplots(1, 3, figsize=(18, 6), subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
+            variable_names = ['tp', 'skt', 'z'] if "OBS" in data_type else ['PRECT', 'TS', 'Z500']
+            cmap_list = ['BrBG', 'RdBu_r', 'PuOr_r']
+            vmin_list = np.zeros(3)
+            vmax_list = np.zeros(3)
+
+            for i in range(3):
+                vmin_list = [-0.7, -1, -1]
+                vmax_list = [0.7, 1, 1]
+
+                im = ax[i].pcolormesh(
+                    mean_input_map['lon'],
+                    mean_input_map['lat'],
+                    mean_diff_input_map[..., i],
+                    cmap=cmap_list[i],
+                    vmin=vmin_list[i],
+                    vmax=vmax_list[i],
+                    transform=ccrs.PlateCarree(central_longitude=0)
+                )
+                ax[i].coastlines()
+                ax[i].set_title(f'Mean Difference Input Map: {variable_names[i]} | E3SM(OBS) \n Variance > {var_lim} - Variance <= {var_lim}')
+                plt.colorbar(im, ax=ax[i], orientation='horizontal', pad=0.05, label=f'{variable_names[i]} Anomaly')
+            plt.tight_layout()
+            plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/high_var_composite_DIFF_maps_E3SM-OBS.png', format='png', dpi=250)
+            plt.close()
+            
+
+
+        # FIGURE : CRPS vs Variance as DISCARD Plot: --------------
         percentiles = np.linspace(100, 0, 21)
 
         plt.figure(fig4.number)
@@ -1723,8 +2287,9 @@ def variance_analysis(experiments, keyword = None):
         plt.tight_layout()
         plt.legend()
         plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/CRPS_vs_Variance_percentile_multiple_exps_DISCARD.png', format='png', dpi=250 )
+        plt.close()
 
-        # FIGURE 1 : Standard CRPS vs Variance Binned Plot
+        # FIGURE : Standard CRPS vs Variance Binned Plot -----------------
         # Bin the variance values
         n_bins = 21  # You can adjust the number of bins
         bin_edges = np.linspace(np.min(variance_across_seeds), np.max(variance_across_seeds), n_bins + 1)
@@ -1739,7 +2304,7 @@ def variance_analysis(experiments, keyword = None):
             for b in range(n_bins):
                 in_bin = bin_indices == b
                 if np.any(in_bin):
-                    mean_crps = np.mean(all_crps[exp, in_bin])
+                    mean_crps = np.mean(all_crps[exp, in_bin]) 
                     mean_crps_per_bin[exp, b] = mean_crps
 
             # Create mask to filter out empty bins (NaN values)
@@ -1772,6 +2337,7 @@ def variance_analysis(experiments, keyword = None):
         plt.legend()
         plt.tight_layout()
         plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/CRPS_vs_variance_multiple_exps.png', format = 'png', dpi = 250)
+        plt.close()
 
     plt.figure(fig2.number)  
     # Plot distribution of variance across model types: 
@@ -1813,7 +2379,195 @@ def variance_analysis(experiments, keyword = None):
     plt.tight_layout()
     plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/variance_distribution_multiple_exps_STEP.png', 
                 format='png', dpi=250)
+    plt.close()
 
+
+def variance_analysis_success_plot(experiments, keyword = None):
+    """
+    Epistemic Uncertainty Analysis : 
+    - Discard plot of CRPS vs Variance across random seeds for a given experiment type, comparing across experiment types: 
+        Experiments contains multiple experiment types
+        For each experiment type: 
+            - Load outputs from each random seed
+            - Make if block for how to calculate variance: 
+                If by np.var, calculate np.var across all random seeds for each output sample
+            - Create discard plot of CRPS mean (y axis) binned by variance across seeds (x axis) 
+            - Overlay all experiment types on one plot for comparison
+    """
+
+    exps = experiments
+
+    color_themes = {
+        0: "#3b528b", 
+        1: "#019bba", 
+        2: "#33c316",
+        3: "#B6B309",
+        }
+    
+    fig1, ax1 = plt.subplots(figsize = (8, 6))
+    fig4, ax4 = plt.subplots(figsize = (8, 6))
+
+    variance_all_model_types = []
+
+    for i, (exp_type, exp_list) in enumerate(exps.items()):
+
+        if i in [0, 1, 2, 3]:
+
+            print(f'Processing experiment type: {exp_type}')
+
+            if exp_type in ["E3SM(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)"]:
+                    data_type = "OBS"
+            elif exp_type in ["E3SM(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)"]:
+                    data_type = "E3SM"
+            
+            #identify lengths for accurate preallocation: 
+            output_preall = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_list[0]}/{exp_list[0]}_network_SHASH_parameters.pkl')
+
+            all_crps = np.empty((len(exp_list), len(output_preall)))
+            all_mean_shash = np.empty((len(exp_list), len(output_preall)))
+
+            for iexp, exp_name in enumerate(exp_list):
+                print(f'  Processing experiment: {exp_name}')
+
+                # Load the output and target data for this experiment
+                output = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_network_SHASH_parameters.pkl')
+
+                # open crps: 
+                crps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_CRPS_network_values.pkl')
+
+                if exp_type in ["E3SM(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)"]:
+                    target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
+            
+                elif exp_type in ["E3SM(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)"]:
+                    target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp185_trimmed_test_dat.nc')
+        
+                climo_crps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_CRPS_climatology_values.pkl')
+                # Scale Climo CRPS by day of year mean: 
+                climo_crps_xr = xr.DataArray(climo_crps, coords=[target['time']], dims=["time"])
+                daily_climo_crps = climo_crps_xr.groupby('time.dayofyear').mean('time')
+                scaled_climo_crps = climo_crps_xr.groupby('time.dayofyear') / daily_climo_crps
+                scaled_climo_crps = scaled_climo_crps.sortby('time')
+                mean_climo_crps = np.mean(scaled_climo_crps)
+
+                # Scale CRPS by day of year as well: 
+                crps_xr = xr.DataArray(crps, coords=[target['time']], dims=["time"])
+                # scale crps by day of year mean:
+                daily_crps = crps_xr.groupby('time.dayofyear').mean('time')
+                scaled_crps = crps_xr.groupby('time.dayofyear') / daily_crps
+                scaled_crps = scaled_crps.sortby('time')
+                crps = scaled_crps.values
+
+                # DETERMINISTIC CALCULATION METHOD: Mean of Shash
+                output_SHASH = Shash(output)
+                network_mean_tensor = output_SHASH.mean()
+
+                # store mean shash values as numpy values: 
+                all_mean_shash[iexp] = network_mean_tensor.numpy()
+
+                # print(f"crps shape: {crps.shape}, mean shash shape: {network_mean_tensor.shape}")
+
+                all_crps[iexp] = crps
+
+            # Calculate variance across random seeds for each sample
+            variance_across_seeds = np.var(all_mean_shash, axis=0)
+            # print(f"shape of variance: {variance_across_seeds.shape}")
+            variance_all_model_types.append(variance_across_seeds)
+
+            # FIGURE 4 : CRPS vs Variance as DISCARD Plot: 
+            percentiles = np.linspace(100, 0, 21)
+
+            plt.figure(fig4.number)
+            for iexp, exp_name in enumerate(exp_list):
+
+                avg_success_ratio = np.empty([len(exp_list), len(percentiles)])
+                avg_variance = []
+                sample_index = np.zeros((len(variance_across_seeds), len(percentiles)))
+
+                # Sort by Variance
+                var_sorted_indices = np.argsort(variance_across_seeds)
+                var_sorted = variance_across_seeds[var_sorted_indices]
+
+                for ip, p in enumerate(percentiles):
+                    # percentage of samples to keep for each round of the loop
+                    num_to_keep = int(len(var_sorted) * p / 100)
+                    
+                    indices = var_sorted_indices[:num_to_keep]
+
+                    if len(indices) == 0:
+                        avg_success_ratio[iexp, ip] = np.nan
+                        avg_variance.append(np.nan)
+                    else:
+                        success_ratio = np.sum(all_crps[iexp][indices] < scaled_climo_crps[indices]) / len(indices)
+                        avg_success_ratio[iexp, ip] = success_ratio
+                        sample_index[:len(indices), ip] = indices
+
+                    # print(f" percentile: {p}, avg variance: {avg_variance[-1]}")
+
+                if iexp == 0:
+                    ax4.plot(percentiles, avg_success_ratio[iexp], alpha = 0.65, linewidth = 2.5, color=color_themes[i], label = f'{exp_type}')
+                else:
+                    ax4.plot(percentiles, avg_success_ratio[iexp], alpha = 0.65, linewidth = 2.5, color=color_themes[i])
+
+            # if i in [0, 2]: 
+            #     ax4.axhline(y=mean_climo_crps, color=color_themes[i], linestyle='--', label=f'CRPS Mean Climatology for {data_type}')
+
+            plt.gca().invert_xaxis()
+            ax4.set_ylabel('Success Ratio')
+            ax4.set_xlabel('Model Variance Percentile (% Data Remaining)')
+            ax4.set_xlim([100, 1])
+            plt.tight_layout()
+            plt.legend()
+            plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/Success_Ratio_vs_Variance_percentile_{keyword}_DISCARD.png', format='png', dpi=250 )
+
+            # FIGURE 1 : Standard CRPS vs Variance Binned Plot
+            # Bin the variance values
+            n_bins = 21  # You can adjust the number of bins
+            bin_edges = np.linspace(np.min(variance_across_seeds), np.max(variance_across_seeds), n_bins + 1)
+            bin_indices = np.digitize(variance_across_seeds, bin_edges) - 1  # bins are 0-indexed
+
+            success_ratio_per_bin = np.full((len(exp_list), n_bins), np.nan)  # Initialize with NaN
+            bin_centers = np.array([(bin_edges[b] + bin_edges[b+1]) / 2 for b in range(n_bins)])
+
+            plt.figure(fig1.number) 
+
+            for exp in range(len(exp_list)):
+                for b in range(n_bins):
+                    in_bin = bin_indices == b
+                    if np.any(in_bin):
+                        success_ratio = np.sum(all_crps[exp][in_bin] < scaled_climo_crps[in_bin]) / len(in_bin) 
+                        success_ratio_per_bin[exp, b] = success_ratio
+
+
+                # Create mask to filter out empty bins (NaN values)
+                valid_mask = ~np.isnan(success_ratio_per_bin[exp])
+                valid_bin_centers = bin_centers[valid_mask]
+                valid_success_ratios = success_ratio_per_bin[exp, valid_mask]
+                
+                # print(f"bin centers shape: {valid_bin_centers.shape}")
+                # print(f"mean crps shape: {valid_mean_crps.shape}")
+                # print(f"exp: {exp}")
+                
+                if exp == 0:
+                    ax1.plot(valid_bin_centers, valid_success_ratios, alpha=0.35, linewidth=1.5, 
+                            color=color_themes[i])
+                    # Add invisible line with alpha=1 for legend only
+                    ax1.plot([], [], alpha=1.0, linewidth=2.5, 
+                            color=color_themes[i], label=f"{exp_type}")
+                    # if i in [0, 2]: 
+                    #     ax1.axhline(y=mean_climo_crps, color=color_themes[i], linestyle='--', label=f'Scaled CRPS Mean Climatology for {data_type}')
+                else:
+                    ax1.plot(valid_bin_centers, valid_success_ratios, alpha=0.35, linewidth=1.5, 
+                            color=color_themes[i])
+
+            plt.figure(fig1.number)
+            ax1.set_ylabel('Success Ratio')
+            ax1.set_xlabel('Variance')
+            ax1.set_xlim([0, 0.08])
+            # ax1.set_ylim([0.35, 1.2])
+            plt.title(f'Success Ratio (scaled) vs Variance Plot')
+            plt.legend()
+            plt.tight_layout()
+            plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/scaled_success_ratio_vs_variance_{keyword}.png', format = 'png', dpi = 250)
 
 
 def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentage', confidence = 20, keyword = None):
@@ -1940,6 +2694,9 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
                 selected_target_dates_exact = pd.to_datetime([
                 f"{dt.year:04d}-{dt.month:02d}-{dt.day:02d}T{dt.hour:02d}:{dt.minute:02d}:{dt.second:02d}" 
                 for dt in selected_target_dates.values])
+                selected_input_dates_exact = pd.to_datetime([
+                f"{dt.year:04d}-{dt.month:02d}-{dt.day:02d}T{dt.hour:02d}:{dt.minute:02d}:{dt.second:02d}" 
+                for dt in (selected_target_dates - pd.Timedelta(days=config['databuilder']['lagtime'])).values])
             else: 
                 selected_target_dates_exact = selected_target_dates
 
@@ -1985,8 +2742,11 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
 
             # selected_mjo_phase = phase_timestamps.sel(time=selected_target_dates)
             selected_mjo_phase = phase_timestamps.sel(time=selected_target_dates_exact)
-
             selected_samples["mjo_phase"] = selected_mjo_phase
+
+            input_mjo_phase = phase_timestamps.sel(time=selected_input_dates_exact)
+            selected_samples["input_mjo_phase"] = input_mjo_phase
+
             data_from_all_seeds1[str(exp_name)] = selected_samples
 
         # print(f"all selected indices: {all_selected_indices}, len: {len(all_selected_indices)}")
@@ -2011,6 +2771,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         all_enso_phases1 = []
         all_mjo_phases1 = []
         all_inputmaps1 = []
+        all_input_mjo_phases1 = []
 
         for iexp, exp_name in enumerate(exp_list):
             all_target1_dates.extend(data_from_all_seeds1[exp_name]["target_date1"])
@@ -2020,6 +2781,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
             all_input1.extend(data_from_all_seeds1[exp_name]["input_date1"].values)
             all_enso_phases1.extend(data_from_all_seeds1[exp_name]["enso_phase"])
             all_mjo_phases1.extend(data_from_all_seeds1[exp_name]["mjo_phase"]["phase"].values.tolist())
+            all_input_mjo_phases1.extend(data_from_all_seeds1[exp_name]["input_mjo_phase"]["phase"].values.tolist())
             
         for ood_model in models: 
             print(f"  Processing opposing model: {ood_model}")
@@ -2125,8 +2887,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         elif "E3SM" in data_type:
             mjo_ref_frequencies_all_data = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/MJO_Data/mjo_frequencies_E3SM_1850_2014.pkl')
 
-
-        # (10) MJO phase distribution - CHECK EACH SEED SEPARATELY
+        ### MJO phase distribution VALIDATION DAY - CHECK EACH SEED SEPARATELY
 
         # get baseline MJO frequencies: 
         print(f"mjo_ref_frequencies_all_data: {mjo_ref_frequencies_all_data}")
@@ -2182,7 +2943,61 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mjo_phase_distribution_by_seed_{exp_type}_{confidence}.png', 
                     format='png', dpi=250, bbox_inches='tight')
 
+         ### MJO phase distribution INITIALIZATION DAY - CHECK EACH SEED SEPARATELY
 
+        # get baseline MJO frequencies: 
+        print(f"mjo_ref_frequencies_all_data: {mjo_ref_frequencies_all_data}")
+
+        # Create a figure with subplots for each random seed
+        n_seeds = len(exp_list)
+        fig, axes = plt.subplots(2, (n_seeds + 1) // 2, figsize=(15, 8))
+        axes = axes.flatten()
+
+        phases = np.arange(0, 9)
+        phase_labels = [str(i) for i in phases]
+        bar_width = 0.8
+
+        # Plot for each seed
+        for idx, exp_name in enumerate(exp_list):
+            ax = axes[idx]
+            
+            # Get MJO phases for this seed
+            seed_input_mjo_phases = data_from_all_seeds1[exp_name]["input_mjo_phase"].phase.values
+            
+            # Count each phase
+            counts = np.bincount(seed_input_mjo_phases, minlength=9)
+            total = counts.sum()
+            densities = counts / total
+            
+            # Bar plot for density
+            bars = ax.bar(phases, densities, width=bar_width, color="#564b94", alpha=0.7, 
+                        edgecolor='black', label='Selected Samples' if idx == 0 else None)
+            
+            # Reference lines for each phase
+            for i, freq in enumerate(mjo_ref_frequencies_all_data):
+                ax.hlines(y=freq, xmin=i - bar_width/2, xmax=i + bar_width/2, 
+                        color="#3C3B3B", linewidth=2, linestyle='-', 
+                        label='Reference' if (idx == 0 and i == 0) else None)
+            
+            ax.set_ylim([0, max(densities.max(), np.max(mjo_ref_frequencies_all_data)) * 1.15])
+            ax.set_xticks(phases)
+            ax.set_xticklabels(phase_labels, fontsize=8)
+            ax.set_ylabel('Density', fontsize=8)
+            ax.set_title(f'{exp_name}\n(n={total})', fontsize=9)
+            ax.grid(True, alpha=0.3)
+            
+            if idx == 0:
+                ax.legend(fontsize=7)
+
+        # Hide extra subplots if odd number of seeds
+        for idx in range(n_seeds, len(axes)):
+            axes[idx].set_visible(False)
+
+        plt.suptitle(f'MJO Phase Distribution by Random Seed on Initialization Day | {exp_type} | {confidence}% Confidence', 
+                    fontsize=12, y=1.00)
+        plt.tight_layout()
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mjo_phase_distribution_by_seed_{exp_type}_{confidence}_INIT_day.png', 
+                    format='png', dpi=250, bbox_inches='tight')
 
 
         # (3) ENSO phase distribution from selected_target_dates1
@@ -2236,7 +3051,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/shash_curves_{exp_type}_{confidence}.png', format='png', dpi=250)
         plt.show()
 
-        # Plot 2: MJO Phase Distribution
+        # Plot 2: MJO Phase Distribution - VERIFICATION DAY
         all_mjo_phases = []
         for exp_name in exp_list:
             all_mjo_phases.extend(data_from_all_seeds1[exp_name]["mjo_phase"]["phase"].values.tolist())
@@ -2275,6 +3090,47 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         plt.tight_layout()
         plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mjo_phase_distribution_{exp_type}_{confidence}.png', format='png', dpi=250)
         plt.show()
+
+        # Plot 2: MJO Phase Distribution - INITIALIZATION DAY
+        all_input_mjo_phases = []
+        for exp_name in exp_list:
+            all_input_mjo_phases.extend(data_from_all_seeds1[exp_name]["input_mjo_phase"]["phase"].values.tolist())
+        all_input_mjo_phases = np.array(all_input_mjo_phases)
+        counts = np.bincount(all_input_mjo_phases, minlength=9)
+        total = counts.sum()
+        densities = counts / total
+
+        phases = np.arange(0, 9)
+        phase_labels = [str(i) for i in phases]
+
+        fig, ax = plt.subplots(figsize=(8, 6))
+        bar_width = 0.8
+
+        # Bar plot for density
+        bars = ax.bar(phases, densities, width=bar_width, color="#534b94", alpha=0.7, edgecolor='black', label='Selected Samples')
+
+        # Reference lines for each phase
+        for i, freq in enumerate(mjo_ref_frequencies_all_data):
+            # Draw a horizontal line across the width of the bar for phase i
+            ax.hlines(y=freq, xmin=i - bar_width/2, xmax=i + bar_width/2, color="#3C3B3B", linewidth=2, linestyle='-', label='Reference' if i==0 else None)
+
+        ax.set_xticks(phases)
+        ax.set_xticklabels(phase_labels)
+        ax.set_ylim([0, max(densities.max(), np.max(mjo_ref_frequencies_all_data)) * 1.15])
+        ax.set_xlabel('MJO Phase')
+        ax.set_ylabel('Density')
+        ax.set_title('MJO Phase Distribution (including Phase 0)')
+        handles, labels = ax.get_legend_handles_labels()
+        # Only show one legend entry for the reference lines
+        if 'Reference' in labels:
+            idx = labels.index('Reference')
+            ax.legend([bars, handles[idx]], ['Selected Samples', 'Reference'])
+        else:
+            ax.legend()
+        plt.tight_layout()
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/mjo_phase_distribution_{exp_type}_{confidence}_INIT_day.png', format='png', dpi=250)
+        plt.show()
+
 
         # PLOT 9: Histogram check of ENSO index strength
         # Plot actual values of ENSO index for ALL samples and also for selected samples as histogram of "El Nino", "La Nina"
