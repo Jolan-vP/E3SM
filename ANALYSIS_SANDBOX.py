@@ -87,29 +87,31 @@ ERA5_Z500 = ERA5_baseline['z'] / 9.81
 # keyword = "OBS-OBS_OBS-E3SM"
 
 exps = {
-    # "OBS(OBS)": ["exp173", "exp174", "exp175", "exp176", "exp177", "exp178", "exp179", "exp180", "exp181", "exp182", "exp183", "exp184"]
+    # "OBS(OBS)": ["exp173", "exp174", "exp175", "exp176", "exp177", "exp178", "exp179", "exp180", "exp181", "exp182", "exp183", "exp184"],
     # "E3SM(OBS)": ["exp189", "exp195", "exp196", "exp197", "exp198", "exp199"],
-    # "E3SM(E3SM)": ["exp185", "exp190", "exp191", "exp192", "exp193", "exp194"]
+    # "E3SM(E3SM)": ["exp185", "exp190", "exp191", "exp192", "exp193", "exp194"],
     # "OBS(E3SM)": ["exp206", "exp207", "exp208", "exp209", "exp210", "exp211", "exp212", "exp213", "exp214", "exp215", "exp216", "exp217"] 
     # "E3SM-long(OBS)": ["exp186", "exp187", "exp188", "exp203", "exp204", "exp205"], 
     # "E3SM-long(E3SM)": ["exp154", "exp157", "exp158", "exp200", "exp201", "exp202"], 
-    "E3SM(E3SM)sv": ["exp219"], 
-    "OBS(OBS)sv": ["exp218", "exp220", "exp221"]
+    # "OBS(OBS)sv":  ["exp218", "exp220", "exp221"]
+    # "E3SM(OBS)sv": ["exp222"],
+    "E3SM(E3SM)sv":["exp219"],
+    # "OBS(E3SM)sv": ["exp223", "exp224", "exp225"]
 }
 
 # DISCARD PLOTS: # ------------------------------------------------------------------------------------  
 
-# cea.combined_success_discard(exps, keyword = "OBS-OBS_OBS-E3SM_E3SM-short-OBS_E3SM-short-E3SM", iqr_scaled = False)
-# cea.combined_success_discard(exps, keyword = "OBS-OBS_OBS-E3SM_E3SM-short-OBS_E3SM-short-E3SM", iqr_scaled = True)
+# cea.combined_success_discard(exps, keyword = "all_exps_scaled_target")
+# cea.combined_success_discard(exps, iqr_scaling = False, keyword = "OBS-OBS_OBS-E3SM_E3SM-short-OBS_E3SM-short-E3SM", iqr_scaled = True)
 
-# cea.combined_CRPS_IQR_discard(exps, keyword = "OBS-OBS_OBS-E3SM_E3SM-short-OBS_E3SM-short-E3SM", iqr_scaled = False)
+# cea.combined_CRPS_IQR_discard(exps, keyword = "all_exps_scaled_target")
 # cea.combined_CRPS_IQR_discard(exps, keyword = "OBS-OBS_OBS-E3SM_E3SM-short-OBS_E3SM-short-E3SM", iqr_scaled = True)
 
 # cea.CRPS_discard_scaled_IQR(exps, keyword = "OBS_exps_scaled_CRPS")
 
 # cea.combined_success_discard_scaled_IQR(exps, keyword = "OBS_exps_scaled_CRPS")
 
-cea.variance_analysis_success_plot(exps, keyword = "all_exps")
+# cea.variance_analysis_success_plot(exps, keyword = "OOD")
 
 # cea.IQR_distributions_STEP_hist(exps, keyword = "ID_OOD_E3SM_OBS")
 # cea.IQR_distributions_STACKED_hist(exps, keyword = "ID_OOD_E3SM_OBS")
@@ -136,11 +138,11 @@ cea.variance_analysis_success_plot(exps, keyword = "all_exps")
 
 ## TELECONNECTIONS ANALYSIS # ------------------------------------------------------------------------------------
 
-# cea.teleconnection_bias_analysis(exps, confidence_level_low = 20, confidence_level_high = 5, keyword = "OBS_E3SM")
+# cea.teleconnection_bias_analysis(exps, confidence_level_low = 100, confidence_level_high = 0, keyword = "OBS-E3SM_scaled_target")
 
 # cea.anom_var_distributions(exps, keyword = "E3SM-short_OBS")
 # 
-# cea.m2m_sample_transfer(exps, selection_method = 'simple_iqr_percentage', confidence = 10, keyword = "unscaled_IQR")
+cea.m2m_sample_transfer(exps, selection_method = 'simple_iqr_percentage', confidence = 10, keyword = "scaled_target")
 
 # cea.m2m_sample_transfer(exps, selection_method = 'scaled_iqr_by_percentage', confidence = 10, keyword = "E3SM-OBS")
 
@@ -154,4 +156,4 @@ cea.variance_analysis_success_plot(exps, keyword = "all_exps")
 
 # EPISTEMIC UNCERTAINTY ANALYSIS # ------------------------------------------------------------------------------------
 
-# cea.variance_analysis(exps, keyword = "all_exps") #TODO redo with all exps
+# cea.variance_analysis(exps, keyword = "all_exps") 

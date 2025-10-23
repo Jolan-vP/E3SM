@@ -64,7 +64,7 @@ print(f"pytorch version = {torch.__version__}")
 # https://github.com/victoresque/pytorch-template/tree/master
 
 # ----CONFIG AND CLASS SETUP----------------------------------------------
-config = utils.get_config("exp221")
+config = utils.get_config("exp225")
 print(config["expname"])
 seed = config["seed_list"][0]
 
@@ -261,12 +261,12 @@ elif "exp" in config["input_data"]: # AND YOU'D LIKE TO TRIM THE INPUT DATA:
     # trimmed_testfn = config["perlmutter_inputs_dir"] + str(config["expname"]) + "_trimmed_" + "test_dat.nc"
 
 # # # # # # # --- Setup the Data for Training ---------------------------------------------
-# lagtime = config["databuilder"]["lagtime"] 
-# smoothing_length = config["databuilder"]["averaging_length"]
+lagtime = config["databuilder"]["lagtime"] 
+smoothing_length = config["databuilder"]["averaging_length"]
 
-# trainset = data_loader.CustomData(trimmed_trainfn, config, which_set = 'training')
-# valset = data_loader.CustomData(trimmed_valfn, config, which_set = 'validation')
-# testset = data_loader.CustomData(trimmed_testfn, config, which_set = 'testing')
+trainset = data_loader.CustomData(trimmed_trainfn, config, which_set = 'training')
+valset = data_loader.CustomData(trimmed_valfn, config, which_set = 'validation')
+testset = data_loader.CustomData(trimmed_testfn, config, which_set = 'testing')
 
 # train_loader = torch.utils.data.DataLoader(
 #     trainset,
@@ -397,96 +397,96 @@ elif "exp" in config["input_data"]: # AND YOU'D LIKE TO TRIM THE INPUT DATA:
 # # # ------------------------------ Model Inference -------------------------------------------------------------
 # # # -------------------------------------------------------------------------------------------------------------
 
-# if config["data_source"] == config["inference_data"] and config["input_data"] == "None":
-#     # Load the Model
-#     path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
+if config["data_source"] == config["inference_data"] and config["input_data"] == "None":
+    # Load the Model
+    path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
 
-#     load_model_dict = torch.load(path)
+    load_model_dict = torch.load(path)
 
-#     state_dict = load_model_dict["model_state_dict"]
-#     std_mean = load_model_dict["training_std_mean"]
+    state_dict = load_model_dict["model_state_dict"]
+    std_mean = load_model_dict["training_std_mean"]
 
-#     model = TorchModel(
-#         config=config["arch"],
-#         target_mean=std_mean["trainset_target_mean"],
-#         target_std=std_mean["trainset_target_std"],
-#     )
+    model = TorchModel(
+        config=config["arch"],
+        target_mean=std_mean["trainset_target_mean"],
+        target_std=std_mean["trainset_target_std"],
+    )
 
-#     model.load_state_dict(state_dict)
-#     model.eval()
+    model.load_state_dict(state_dict)
+    model.eval()
     
-#     device = utils.prepare_device(config["device"])
+    device = utils.prepare_device(config["device"])
 
-#     with torch.inference_mode():
-#         print(device)
-#         output = model.predict(dataset=testset, batch_size=128, device=device) # The output is the batched SHASH distribution parameters
+    with torch.inference_mode():
+        print(device)
+        output = model.predict(dataset=testset, batch_size=128, device=device) # The output is the batched SHASH distribution parameters
     
-#     # Save Model Outputs
-#     model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + '_network_SHASH_parameters.pkl'
-#     analysis_metrics.save_pickle(output, model_output)
-#     print(output[:20]) # look at a small sample of the output data
+    # Save Model Outputs
+    model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + '_network_SHASH_parameters.pkl'
+    analysis_metrics.save_pickle(output, model_output)
+    print(output[:20]) # look at a small sample of the output data
 
-# elif config["data_source"] == config["inference_data"] and "exp" in config["input_data"]:
-#     # Load the Model
-#     path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
+elif config["data_source"] == config["inference_data"] and "exp" in config["input_data"]:
+    # Load the Model
+    path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
 
-#     load_model_dict = torch.load(path)
+    load_model_dict = torch.load(path)
 
-#     state_dict = load_model_dict["model_state_dict"]
-#     std_mean = load_model_dict["training_std_mean"]
+    state_dict = load_model_dict["model_state_dict"]
+    std_mean = load_model_dict["training_std_mean"]
 
-#     model = TorchModel(
-#         config=config["arch"],
-#         target_mean=std_mean["trainset_target_mean"],
-#         target_std=std_mean["trainset_target_std"],
-#     )
+    model = TorchModel(
+        config=config["arch"],
+        target_mean=std_mean["trainset_target_mean"],
+        target_std=std_mean["trainset_target_std"],
+    )
 
-#     model.load_state_dict(state_dict)
-#     model.eval()
+    model.load_state_dict(state_dict)
+    model.eval()
     
-#     device = utils.prepare_device(config["device"])
+    device = utils.prepare_device(config["device"])
 
-#     with torch.inference_mode():
-#         print(device)
-#         output = model.predict(dataset=testset, batch_size=128, device=device) # The output is the batched SHASH distribution parameters
+    with torch.inference_mode():
+        print(device)
+        output = model.predict(dataset=testset, batch_size=128, device=device) # The output is the batched SHASH distribution parameters
     
-#     # Save Model Outputs
-#     model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + '_network_SHASH_parameters.pkl'
-#     analysis_metrics.save_pickle(output, model_output)
-#     print(output[:20]) # look at a small sample of the output data
+    # Save Model Outputs
+    model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(config["expname"]) + '_network_SHASH_parameters.pkl'
+    analysis_metrics.save_pickle(output, model_output)
+    print(output[:20]) # look at a small sample of the output data
 
-# elif config["data_source"] != config["inference_data"]: 
-#     print("PERFORMING INFERENCE ON OUT OF DISTRIBUTION DATA")
-#     # specify which model experiment you'd like to use to make the inference: 
-#     model_exp = config["trained_model"]
-#     ood_config = utils.get_config(str(model_exp))
-#     device = utils.prepare_device(ood_config["device"])
+elif config["data_source"] != config["inference_data"]: 
+    print("PERFORMING INFERENCE ON OUT OF DISTRIBUTION DATA")
+    # specify which model experiment you'd like to use to make the inference: 
+    model_exp = config["trained_model"]
+    ood_config = utils.get_config(str(model_exp))
+    device = utils.prepare_device(ood_config["device"])
     
-#     # Load the Model
-#     path = str(ood_config["perlmutter_model_dir"]) + str(model_exp) + '.pth'
+    # Load the Model
+    path = str(ood_config["perlmutter_model_dir"]) + str(model_exp) + '.pth'
 
-#     load_model_dict = torch.load(path)
+    load_model_dict = torch.load(path)
 
-#     state_dict = load_model_dict["model_state_dict"]
-#     std_mean = load_model_dict["training_std_mean"]
+    state_dict = load_model_dict["model_state_dict"]
+    std_mean = load_model_dict["training_std_mean"]
 
-#     model = TorchModel(
-#         config=ood_config["arch"],
-#         target_mean=std_mean["trainset_target_mean"],
-#         target_std=std_mean["trainset_target_std"],
-#     )
+    model = TorchModel(
+        config=ood_config["arch"],
+        target_mean=std_mean["trainset_target_mean"],
+        target_std=std_mean["trainset_target_std"],
+    )
   
-#     model.load_state_dict(state_dict)
-#     model.eval()
+    model.load_state_dict(state_dict)
+    model.eval()
 
-#     with torch.inference_mode():
-#         print(device)
-#         output = model.predict(dataset=testset, batch_size=128, device=device) # The output is the batched SHASH distribution parameters
+    with torch.inference_mode():
+        print(device)
+        output = model.predict(dataset=testset, batch_size=128, device=device) # The output is the batched SHASH distribution parameters
     
-#     # Save Model Outputs
-#     ood_model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(model_exp) + 'T_' + str(config["expname"]) + '_OOD_INFERENCE_network_SHASH_parameters.pkl'
-#     analysis_metrics.save_pickle(output, ood_model_output)
-#     print(output[:20]) # look at a small sample of the output data
+    # Save Model Outputs
+    ood_model_output = str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/' + str(model_exp) + 'T_' + str(config["expname"]) + '_OOD_INFERENCE_network_SHASH_parameters.pkl'
+    analysis_metrics.save_pickle(output, ood_model_output)
+    print(output[:20]) # look at a small sample of the output data
 
 # # # ------------------------------ Evaluate Network Predictions -------------------------------------------------
 # # # -------------------------------------------------------------------------------------------------------------

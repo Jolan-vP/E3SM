@@ -102,8 +102,9 @@ def combined_success_discard(experiments, keyword = None):
 
             plt.xlabel('IQR Percentile (% Data Remaining)')
             plt.ylabel('Proportion of Samples with Lower Network CRPS')
-            plt.ylim(0.5, 0.85)
-            plt.xlim(101, 4)
+            # plt.ylim(0.5, 0.85)
+            # plt.xlim(101, 4)
+            plt.axhline(y=0.5, color='grey', alpha = 0.8, linestyle='--', linewidth = 0.8)
             plt.title('Increasing Confidence Success Ratio Discard Plot')
             plt.tight_layout()
         i += 1
@@ -113,7 +114,7 @@ def combined_success_discard(experiments, keyword = None):
     for lh in leg.legendHandles: 
             lh.set_alpha(1)
 
-    plt.savefig('/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/combined_SuccessRatio_DiscardPlot_' + str(keyword) + '_Z500.png', format = 'png',  dpi = 250) 
+    plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/combined_SuccessRatio_DiscardPlot_{keyword}_Z500.png', format = 'png',  dpi = 250) 
 
 
 
@@ -161,10 +162,10 @@ def combined_CRPS_IQR_discard(experiments, keyword = None):
             crps_dict = discard_data['avg_crps']            
 
             if iexp == 0:
-                if experiment_type == "OBS(OBS)":
+                if experiment_type in ["OBS(OBS)", "OBS(OBS)sv"]:
                     obs_obs_color = "#0d0887"
                     plt.axhline(y=mean_climo_crps, color=obs_obs_color, linestyle='--', label = f'OBS Baseline Mean CRPS', linewidth = 2)
-                if experiment_type == "E3SM-short(E3SM)": #or experiment_type == "OBS(E3SM)":
+                if experiment_type in ["E3SM(E3SM)", "E3SM(E3SM)sv"]: #or experiment_type == "OBS(E3SM)":
                     e3sm_color = "#cc4778"
                     plt.axhline(y=mean_climo_crps, color=e3sm_color, linestyle='--', label = f'E3SM Baseline Mean CRPS', linewidth = 2)
                 plt.plot(percentile_dict, crps_dict, label=f'{experiment_type}', alpha = 0.4, linewidth = 2.5, color = color_themes[i])
@@ -173,8 +174,8 @@ def combined_CRPS_IQR_discard(experiments, keyword = None):
 
         plt.xlabel('IQR Percentile (% Data Remaining)')
         plt.ylabel('Average CRPS')
-        plt.ylim(0.32, 0.68)
-        plt.xlim(101, 4)
+        # plt.ylim(0.32, 0.68)
+        # plt.xlim(101, 4)
         plt.title('Increasing Confidence CRPS Discard Plot')
         plt.tight_layout()
         leg = plt.legend()
@@ -183,7 +184,7 @@ def combined_CRPS_IQR_discard(experiments, keyword = None):
 
         i += 1
 
-    plt.savefig('/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/CRPS_discard_plot_combined__' + str(keyword) + '_Z500.png', format = 'png',  dpi = 250)
+    plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/CRPS_discard_plot_combined__{keyword}_Z500.png', format = 'png',  dpi = 250)
 
 
 
@@ -447,7 +448,7 @@ def CRPS_discard_scaled_IQR(experiments, keyword = None):
             plt.legend()
             plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/CRPS_discard_scaled_IQR_Z500_{keyword}.png', format='png', dpi=250)
 
-def combined_success_discard_scaled_IQR(experiments, keyword = None):
+def combined_success_discard_scaled_IQR(experiments, iqr_scaling = True, keyword = None):
     """
     Discard plot of success ratio vs IQR percentile for variety of experiments
 
@@ -472,12 +473,12 @@ def combined_success_discard_scaled_IQR(experiments, keyword = None):
         }
     for i, (exp_type, exp_list) in enumerate(exps.items()):
 
-        if i in [0, 3]:
+        if i in [0, 1, 2, 3]:
                 print(f'Processing experiment type: {exp_type}')
 
-                if exp_type in ["E3SM(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)"]:
+                if exp_type in ["E3SM(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)", "OBS(OBS)sv", "E3SM(OBS)sv"]:
                         data_type = "OBS"
-                elif exp_type in ["E3SM(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)"]:
+                elif exp_type in ["E3SM(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)", "OBS(E3SM)sv", "E3SM(E3SM)sv"]:
                         data_type = "E3SM"
 
                 for iexp, exp_name in enumerate(exp_list):
@@ -504,51 +505,64 @@ def combined_success_discard_scaled_IQR(experiments, keyword = None):
                         climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/E3SM_processed_climo_stats_PRECT_Z500_TS_1981-2010.pkl')
                         target = (target['y'] - climatology_stats['Z500'][2]) / climatology_stats['Z500'][3]
 
-                    # Scale Climo CRPS by day of year mean: 
-                    climo_crps_xr = xr.DataArray(climo_crps, coords=[target['time']], dims=["time"])
-                    daily_climo_crps = climo_crps_xr.groupby('time.dayofyear').mean('time')
-                    scaled_climo_crps = climo_crps_xr.groupby('time.dayofyear') / daily_climo_crps
-                    scaled_climo_crps = scaled_climo_crps.sortby('time')
-                    mean_climo_crps = np.mean(scaled_climo_crps)
+                    if iqr_scaling:
+                        # Scale Climo CRPS by day of year mean: 
+                        climo_crps_xr = xr.DataArray(climo_crps, coords=[target['time']], dims=["time"])
+                        daily_climo_crps = climo_crps_xr.groupby('time.dayofyear').mean('time')
+                        scaled_climo_crps = climo_crps_xr.groupby('time.dayofyear') / daily_climo_crps
+                        scaled_climo_crps = scaled_climo_crps.sortby('time')
+                        climo_crps = scaled_climo_crps.values
+                        mean_climo_crps = np.mean(scaled_climo_crps)
 
-                    # Calculate IQR: 
-                    iqr = iqr_basic(output)
-                    iqr_xr = xr.DataArray(iqr, coords=[target['time']], dims=["time"])
-                    # scale iqr by day of year mean:
-                    daily_iqr = iqr_xr.groupby('time.dayofyear').mean('time')
-                    scaled_iqr = iqr_xr.groupby('time.dayofyear') / daily_iqr
-                    #ungroup scaled_iqr: 
-                    scaled_iqr = scaled_iqr.sortby('time')
+                        # Calculate IQR: 
+                        iqr = iqr_basic(output)
+                        iqr_xr = xr.DataArray(iqr, coords=[target['time']], dims=["time"])
+                        # scale iqr by day of year mean:
+                        daily_iqr = iqr_xr.groupby('time.dayofyear').mean('time')
+                        scaled_iqr = iqr_xr.groupby('time.dayofyear') / daily_iqr
+                        #ungroup scaled_iqr: 
+                        scaled_iqr = scaled_iqr.sortby('time')
 
-                    # Scale CRPS by day of year as well: 
-                    crps_xr = xr.DataArray(crps, coords=[target['time']], dims=["time"])
-                    # scale crps by day of year mean:
-                    daily_crps = crps_xr.groupby('time.dayofyear').mean('time')
-                    scaled_crps = crps_xr.groupby('time.dayofyear') / daily_crps
-                    scaled_crps = scaled_crps.sortby('time')
-                    crps = scaled_crps.values
+                        # Scale CRPS by day of year as well: 
+                        crps_xr = xr.DataArray(crps, coords=[target['time']], dims=["time"])
+                        # scale crps by day of year mean:
+                        daily_crps = crps_xr.groupby('time.dayofyear').mean('time')
+                        scaled_crps = crps_xr.groupby('time.dayofyear') / daily_crps
+                        scaled_crps = scaled_crps.sortby('time')
+                        crps = scaled_crps.values
+
+                        label = "Scaled"
+
+                    else: 
+                        iqr = iqr_basic(output)
+                        label = " " 
                     
                     percentiles = np.linspace(100, 0, 21)
 
                     # Sort by IQR
-                    scaled_iqr_sorted_indices = np.argsort(scaled_iqr.values)
-                    scaled_iqr_sorted = scaled_iqr.isel(time=scaled_iqr_sorted_indices)
-
+                    if iqr_scaling:
+                        iqr_sorted_indices = np.argsort(scaled_iqr.values)
+                        iqr_sorted = scaled_iqr.isel(time=iqr_sorted_indices)
+                        iqr_sorted = scaled_iqr_sorted
+                    else:
+                        iqr_sorted_indices = np.argsort(iqr)
+                        iqr_sorted = iqr[iqr_sorted_indices]
+                    
                     avg_success_ratio = np.empty([len(exp_list), len(percentiles)])
-                    avg_scaled_iqr = []
-                    sample_index = np.zeros((len(scaled_iqr), len(percentiles)))
+                    avg_iqr = []
+                    sample_index = np.zeros((len(iqr), len(percentiles)))
 
                     for ip, p in enumerate(percentiles):
                         # percentage of samples to keep for each round of the loop
-                        num_to_keep = int(len(scaled_iqr_sorted) * p / 100)
+                        num_to_keep = int(len(iqr_sorted) * p / 100)
 
-                        indices = scaled_iqr_sorted_indices[:num_to_keep]
+                        indices = iqr_sorted_indices[:num_to_keep]
 
                         if len(indices) == 0:
                             avg_success_ratio[iexp, ip] = np.nan
-                            avg_scaled_iqr.append(np.nan)
+                            avg_iqr.append(np.nan)
                         else:
-                            success_ratio = np.sum(crps[indices] < scaled_climo_crps[indices]) / len(indices)
+                            success_ratio = np.sum(crps[indices] < climo_crps[indices]) / len(indices)
                             avg_success_ratio[iexp, ip] = success_ratio
                             sample_index[:len(indices), ip] = indices      
 
@@ -560,9 +574,9 @@ def combined_success_discard_scaled_IQR(experiments, keyword = None):
                 if i in [0, 2]: 
                     ax.axhline(y=mean_climo_crps, color=color_themes[i], linestyle='--', label=f'CRPS Mean Climatology for {data_type}')
 
-
-                ax.set_xlabel('Scaled IQR Percentile (% Data Remaining)')
-                ax.set_ylabel('Proportion of Samples with Lower SCALED Network CRPS')
+                
+                ax.set_xlabel(f'{label} IQR Percentile (% Data Remaining)')
+                ax.set_ylabel(f'Proportion of Samples with Lower {label} Network CRPS')
                 ax.set_ylim(0.5, 0.70)
                 ax.set_xlim(101, 4)
                 ax.set_title('Increasing Confidence Success Ratio Discard Plot')
@@ -572,7 +586,7 @@ def combined_success_discard_scaled_IQR(experiments, keyword = None):
         for lh in leg.legendHandles: 
                 lh.set_alpha(1)
 
-        plt.savefig('/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/combined_SuccessRatio_DiscardPlot_scaled_IQR' + str(keyword) + '_Z500.png', format = 'png',  dpi = 250) 
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/combined_SuccessRatio_DiscardPlot_IQR_{keyword}_Z500.png', format = 'png',  dpi = 250) 
 
 
 
@@ -1333,13 +1347,13 @@ def teleconnection_bias_analysis(experiments, confidence_level_low = 20, confide
             crps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_CRPS_network_values.pkl')
 
             # Load testing target data
-            if exp_type in ["E3SM-short(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)"]:
+            if exp_type in ["E3SM-short(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)", "OBS(OBS)sv", "E3SM(OBS)sv"]:
                 target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
                 # Load climatology statistics
                 climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl')#
                 target = (target['y'] - climatology_stats['z'][2]) / climatology_stats['z'][3]
        
-            elif exp_type in ["E3SM-short(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)"]:
+            elif exp_type in ["E3SM-short(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)", "OBS(E3SM)sv", "E3SM(E3SM)sv"]:
                 target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp185_trimmed_test_dat.nc')
                 climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/E3SM_processed_climo_stats_PRECT_Z500_TS_1981-2010.pkl')
                 target = (target['y'] - climatology_stats['Z500'][2]) / climatology_stats['Z500'][3]
@@ -1437,7 +1451,7 @@ def teleconnection_bias_analysis(experiments, confidence_level_low = 20, confide
         plt.xlim([0.75, 2])
         plt.legend()
         plt.show()
-        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/IQR_monthly_analysis_{exp_type}_{confidence_level_low}to{confidence_level_high}.png', format = 'png', dpi = 250)
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/IQR_monthly_analysis_{exp_type}_{confidence_level_low}to{confidence_level_high}_{keyword}.png', format = 'png', dpi = 250)
 
 
         # Temporal Distribution of selected samples by month using dates_within_confidence
@@ -1487,7 +1501,7 @@ def teleconnection_bias_analysis(experiments, confidence_level_low = 20, confide
         plt.ylim([-0.3, 1.8])
         plt.legend(loc = 'upper left')
         plt.tight_layout()
-        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/monthly_analysis_{exp_type}_{confidence_level_low}to{confidence_level_high}.png', format = 'png', dpi = 250)
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/monthly_analysis_{exp_type}_{confidence_level_low}to{confidence_level_high}_{keyword}.png', format = 'png', dpi = 250)
 
             # Call ENSO phase analysis function
             # enso_phase_analysis_output = enso_phase_analysis({exp_name: [exp_name]
@@ -2464,6 +2478,54 @@ def variance_analysis_success_plot(experiments, keyword = None):
             - Create discard plot of CRPS mean (y axis) binned by variance across seeds (x axis) 
             - Overlay all experiment types on one plot for comparison
     """
+    def compute_rolling_success_ratio(variance, crps, scaled_climo_crps, window_size=100, step_size=10):
+        """
+        Compute success ratio using a rolling window based on sorted variance values.
+        
+        Parameters:
+        -----------
+        variance : array
+            Variance values across seeds
+        crps : array
+            CRPS values for the model
+        scaled_climo_crps : array
+            Scaled climatology CRPS values
+        window_size : int
+            Number of samples in each window
+        step_size : int
+            Step size for sliding the window (smaller = smoother but more computation)
+        
+        Returns:
+        --------
+        window_centers : array
+            Variance values at window centers
+        success_ratios : array
+            Success ratio for each window
+        """
+        # Sort by variance
+        sorted_indices = np.argsort(variance)
+        sorted_variance = variance[sorted_indices]
+        sorted_crps = crps[sorted_indices]
+        sorted_climo = scaled_climo_crps[sorted_indices]
+        
+        window_centers = []
+        success_ratios = []
+        
+        # Slide window across sorted data
+        for i in range(0, len(sorted_variance) - window_size + 1, step_size):
+            window_variance = sorted_variance[i:i+window_size]
+            window_crps = sorted_crps[i:i+window_size]
+            window_climo = sorted_climo[i:i+window_size]
+            
+            # Use the midpoint of the window range for x-axis positioning
+            # This spreads the points across the full variance range
+            window_centers.append((window_variance[0] + window_variance[-1]) / 2)
+            
+            # Calculate success ratio in this window
+            success_ratio = np.sum(window_crps < window_climo) / window_size
+            success_ratios.append(success_ratio)
+        
+        return np.array(window_centers), np.array(success_ratios)
 
     exps = experiments
 
@@ -2475,13 +2537,14 @@ def variance_analysis_success_plot(experiments, keyword = None):
         }
     
     fig1, ax1 = plt.subplots(figsize = (8, 6))
+    fig3, ax3 = plt.subplots(figsize = (8, 6))
     fig4, ax4 = plt.subplots(figsize = (8, 6))
 
     variance_all_model_types = []
 
     for i, (exp_type, exp_list) in enumerate(exps.items()):
 
-        if i in [0, 1, 2, 3]:
+        if i in [1, 3]:
 
             print(f'Processing experiment type: {exp_type}')
 
@@ -2589,14 +2652,16 @@ def variance_analysis_success_plot(experiments, keyword = None):
             plt.legend()
             plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/Success_Ratio_vs_Variance_percentile_{keyword}_DISCARD.png', format='png', dpi=250 )
 
-            # FIGURE 1 : Standard CRPS vs Variance Binned Plot
+            # FIGURE 1 : Scaled SUCCESS RATIO vs Variance Binned Plot
             # Bin the variance values
-            n_bins = 21  # You can adjust the number of bins
+            n_bins = 28  # You can adjust the number of bins
             bin_edges = np.linspace(np.min(variance_across_seeds), np.max(variance_across_seeds), n_bins + 1)
+            # bin_edges = np.percentile(variance_across_seeds, np.linspace(0, 100, n_bins + 1))
             bin_indices = np.digitize(variance_across_seeds, bin_edges) - 1  # bins are 0-indexed
 
             success_ratio_per_bin = np.full((len(exp_list), n_bins), np.nan)  # Initialize with NaN
             bin_centers = np.array([(bin_edges[b] + bin_edges[b+1]) / 2 for b in range(n_bins)])
+            
 
             plt.figure(fig1.number) 
 
@@ -2632,12 +2697,53 @@ def variance_analysis_success_plot(experiments, keyword = None):
             plt.figure(fig1.number)
             ax1.set_ylabel('Success Ratio')
             ax1.set_xlabel('Variance')
-            ax1.set_xlim([0, 0.08])
+            ax1.set_xlim([0, 0.075])
             # ax1.set_ylim([0.35, 1.2])
             plt.title(f'Success Ratio (scaled) vs Variance Plot')
             plt.legend()
             plt.tight_layout()
             plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/scaled_success_ratio_vs_variance_{keyword}.png', format = 'png', dpi = 250)
+
+             # FIGURE 3: SUCCESS RATIO vs Variance with ROLLING WINDOW
+            # Calculate window size as a percentage of data (adjust as needed)
+            total_samples = len(variance_across_seeds)
+            window_size = max(100, int(total_samples * 0.15))  # 5% of data or minimum 100 samples
+            step_size = max(10, window_size // 10)  # Step by 10% of window size
+            
+            print(f"  Using rolling window: size={window_size}, step={step_size}")
+
+            plt.figure(fig3.number)
+
+            for exp in range(len(exp_list)):
+                # Compute rolling success ratio
+                window_centers, success_ratios = compute_rolling_success_ratio(
+                    variance_across_seeds, 
+                    all_crps[exp], 
+                    scaled_climo_crps,
+                    window_size=window_size,
+                    step_size=step_size
+                )
+                
+                if exp == 0:
+                    ax3.plot(window_centers, success_ratios, alpha=0.4, linewidth=1.5, 
+                            color=color_themes[i])
+                    # Add invisible line with alpha=1 for legend only
+                    ax3.plot([], [], alpha=1.0, linewidth=2.5, 
+                            color=color_themes[i], label=f"{exp_type}")
+                else:
+                    ax3.plot(window_centers, success_ratios, alpha=0.4, linewidth=1.5, 
+                            color=color_themes[i])
+
+            plt.figure(fig3.number)
+            ax3.set_ylabel('Success Ratio')
+            ax3.set_xlabel('Variance')
+            # ax3.set_xlim([0, 0.08])
+            plt.title(f'Success Ratio vs Variance (Rolling Window)')
+            plt.legend()
+            plt.tight_layout()
+            plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/scaled_success_ratio_vs_variance_{keyword}_rolling.png', 
+                       format='png', dpi=250)
+
 
 
 def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentage', confidence = 20, keyword = None):
@@ -2690,7 +2796,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
             iqr = iqr_basic(output)
             
             # Load testing target data
-            if exp_type in ["E3SM(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)"]:
+            if exp_type in ["E3SM(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)", "OBS(OBS)sv", "E3SM(OBS)sv"]:
                 data_type = "OBS"
                 data_vars = ["tp", "skt", "z"]
                 target_var = config["databuilder"]["target_var"]
@@ -2705,8 +2811,15 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
                 climatology_data = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/exp152_E3SM_processed_Z500_climatology_1981-2010.nc')
                 climatology_data = (climatology_data['y'] - climatology_stats['z'][2]) / climatology_stats['z'][3]
                 target = (target['y'] - climatology_stats['z'][2]) / climatology_stats['z'][3]
+
+                if exp_type in ["E3SM(OBS)sv", "OBS(OBS)sv"]:
+                    # scale target by day of year variance: 
+                    daily_target_grouped_var = target.groupby('time.dayofyear').var('time')
+                    scaled_target = target.groupby('time.dayofyear') / daily_target_grouped_var
+                    scaled_target = scaled_target.sortby('time')
+                    target = scaled_target
         
-            elif exp_type in ["E3SM(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)"]:
+            elif exp_type in ["E3SM(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)", "E3SM(E3SM)sv", "OBS(E3SM)sv"]:
                 data_type = "E3SM"
                 data_vars = ["PRECT", "TS", "Z500"]
                 target_var = config["databuilder"]["target_var"]
@@ -2721,6 +2834,13 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
                 climatology_data = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/exp152_E3SM_processed_Z500_climatology_1981-2010.nc')
                 climatology_data = (climatology_data['y'] - climatology_stats['Z500'][2]) / climatology_stats['Z500'][3]
                 target = (target['y'] - climatology_stats['Z500'][2]) / climatology_stats['Z500'][3]
+
+                if exp_type in ["E3SM(E3SM)sv", "OBS(E3SM)sv"]:
+                    # scale target by day of year variance:
+                    daily_target_grouped_var = target.groupby('time.dayofyear').var('time')
+                    scaled_target = target.groupby('time.dayofyear') / daily_target_grouped_var
+                    scaled_target = scaled_target.sortby('time')
+                    target = scaled_target
 
             if selection_method == 'confident_by_month':
                 # select most confident prediction from each month from each random seed
@@ -2839,6 +2959,14 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
             base_exp = "E3SM(E3SM)"
             opposing_exp = "OBS(E3SM)"
             models = ["exp206", "exp207", "exp208", "exp209", "exp210", "exp211", "exp212", "exp213", "exp214", "exp215", "exp216", "exp217"]
+        elif exp_type in ["OBS(OBS)sv"]:
+            base_exp = "OBS(OBS)sv"
+            opposing_exp = "E3SM(OBS)sv"
+            models = ["exp222"]
+        elif exp_type in ["E3SM(E3SM)sv"]:
+            base_exp = "E3SM(E3SM)sv"
+            opposing_exp = "OBS(E3SM)sv"
+            models = ["exp223", "exp224", "exp225"]
 
         # For each selected sample from original model, find corresponding sample in opposing model using input date
         # Collect all target dates from 'data_from_all_seeds[exp_name]["target_date1"]'
@@ -2875,6 +3003,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
 
             ## CALCULATE IQR and Select Samples based on Confidence -------
             iqr_ood = iqr_basic(output_ood)
+            print(f"iqr_ood shape: {iqr_ood.shape}")
 
             if selection_method == 'scaled_iqr_by_percentage': # scale IQR by day of year
                 # create xarray object containing iqr and corresponding time coordinate: 
@@ -2896,6 +3025,28 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
                 target_ood = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp185_trimmed_test_dat.nc')
                 climatology_stats_ood = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/E3SM_processed_climo_stats_PRECT_Z500_TS_1981-2010.pkl')
                 target_ood = (target_ood['y'] - climatology_stats_ood['Z500'][2]) / climatology_stats_ood['Z500'][3]
+
+            elif opposing_exp in ["OBS(OBS)sv", "E3SM(OBS)sv"]:
+                target_ood = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
+                climatology_stats_ood = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl')#
+                target_ood = (target_ood['y'] - climatology_stats_ood['z'][2]) / climatology_stats_ood['z'][3]
+                # scale target by day of year variance: 
+                daily_target_grouped_var = target_ood.groupby('time.dayofyear').var('time')
+                scaled_target = target_ood.groupby('time.dayofyear') / daily_target_grouped_var
+                scaled_target = scaled_target.sortby('time')
+                target_ood = scaled_target
+                print(f"scaled target ood shape: {target_ood.shape}")
+
+            elif opposing_exp in ["E3SM(E3SM)sv", "OBS(E3SM)sv"]:
+                target_ood = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp185_trimmed_test_dat.nc')
+                climatology_stats_ood = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/E3SM_processed_climo_stats_PRECT_Z500_TS_1981-2010.pkl')
+                target_ood = (target_ood['y'] - climatology_stats_ood['Z500'][2]) / climatology_stats_ood['Z500'][3]
+                # scale target by day of year variance: 
+                daily_target_grouped_var = target_ood.groupby('time.dayofyear').var('time')
+                scaled_target = target_ood.groupby('time.dayofyear') / daily_target_grouped_var
+                scaled_target = scaled_target.sortby('time')
+                target_ood = scaled_target
+                print(f"scaled target ood shape: {target_ood.shape}")
 
             # use target_dates1 to identify results from other models for these conf samples
             selected_samples["output2"] = output_ood[all_selected_indices]
@@ -3574,7 +3725,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
             vanimo_cmap = crameri.cm.vanimo
         plt.colormaps.register(vanimo_cmap, name='vanimo')
 
-        cmap_list = ['PiYG_r', 'PiYG_r', 'PiYG_r']
+        cmap_list = ['BrBG', 'RdBu_r', 'PuOr_r']
         vmin_list = np.zeros(3)
         vmax_list = np.zeros(3)
         diff_input_maps = []
