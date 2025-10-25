@@ -396,10 +396,8 @@ def  IQR_ENSO_success_discard_plot(shash_output, network_CRPS, climatology_CRPS,
             avg_success_ratio_N.append(success_ratio_N)
         
         if p == 10: # top 10% most confident samples
-            print(f"i_LN : indices of la ninas for top 10% confidence relative to target: {i_LN}")
             save_pickle(i_LN, str(config["perlmutter_output_dir"]) + str(config["expname"]) + '/i_LN_top10percent.pkl')
 
-    print(f"success ratios: {avg_success_ratio_EN}, {avg_success_ratio_LN}, {avg_success_ratio_N}")
     plt.figure()
     plt.gca().invert_xaxis()  # high confidence = low IQR = right side of plot
     plt.plot(percentiles, avg_success_ratio_EN, color= colors[2], label = 'El Nino')
