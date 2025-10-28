@@ -64,7 +64,7 @@ print(f"pytorch version = {torch.__version__}")
 # https://github.com/victoresque/pytorch-template/tree/master
 
 # ----CONFIG AND CLASS SETUP----------------------------------------------
-config = utils.get_config("exp260")
+config = utils.get_config("exp263")
 print(config["expname"])
 seed = config["seed_list"][0]
 
@@ -284,115 +284,115 @@ val_loader = torch.utils.data.DataLoader(
 
 # # # # # # # # # ## --- Setup the Model ----------------------------------------------------
 
-# Check if model already exists: 
-if os.path.exists(str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'):
-    print("Model already exists")
-    response = input("Would you like to load the model? (yes) \n or retrain from epoch 0 (no): ")
+# # Check if model already exists: 
+# if os.path.exists(str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'):
+#     print("Model already exists")
+#     response = input("Would you like to load the model? (yes) \n or retrain from epoch 0 (no): ")
 
-    if response == "yes":
-        path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
-        load_model_dict = torch.load(path)
-        state_dict = load_model_dict["model_state_dict"]
-        std_mean = load_model_dict["training_std_mean"]
-        model = TorchModel(
-            config=config["arch"],
-            target_mean=std_mean["trainset_target_mean"],
-            target_std=std_mean["trainset_target_std"],
-        )
-        model.load_state_dict(state_dict)
+#     if response == "yes":
+#         path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
+#         load_model_dict = torch.load(path)
+#         state_dict = load_model_dict["model_state_dict"]
+#         std_mean = load_model_dict["training_std_mean"]
+#         model = TorchModel(
+#             config=config["arch"],
+#             target_mean=std_mean["trainset_target_mean"],
+#             target_std=std_mean["trainset_target_std"],
+#         )
+#         model.load_state_dict(state_dict)
 
-    elif response == "no": # Model is being run from epoch 0 for the first time: 
-        model = TorchModel(
-            config=config["arch"],
-            target_mean=trainset.target.mean(axis=0),
-            target_std=trainset.target.std(axis=0),
-        )
-        std_mean = {"trainset_target_mean": trainset.target.mean(axis=0), "trainset_target_std": trainset.target.std(axis=0)}
+#     elif response == "no": # Model is being run from epoch 0 for the first time: 
+#         model = TorchModel(
+#             config=config["arch"],
+#             target_mean=trainset.target.mean(axis=0),
+#             target_std=trainset.target.std(axis=0),
+#         )
+#         std_mean = {"trainset_target_mean": trainset.target.mean(axis=0), "trainset_target_std": trainset.target.std(axis=0)}
       
-else: 
-    model = TorchModel(
-            config=config["arch"],
-            target_mean=trainset.target.mean(axis=0),
-            target_std=trainset.target.std(axis=0),
-        )
-    std_mean = {"trainset_target_mean": trainset.target.mean(axis=0), "trainset_target_std": trainset.target.std(axis=0)}
+# else: 
+#     model = TorchModel(
+#             config=config["arch"],
+#             target_mean=trainset.target.mean(axis=0),
+#             target_std=trainset.target.std(axis=0),
+#         )
+#     std_mean = {"trainset_target_mean": trainset.target.mean(axis=0), "trainset_target_std": trainset.target.std(axis=0)}
 
-model.freeze_layers(freeze_id="None")
-optimizer = getattr(torch.optim, config["optimizer"]["type"])(
-    model.parameters(), **config["optimizer"]["args"]
-)
-criterion = getattr(module_loss, config["criterion"])()
-metric_funcs = [getattr(module_metric, met) for met in config["metrics"]]
+# model.freeze_layers(freeze_id="None")
+# optimizer = getattr(torch.optim, config["optimizer"]["type"])(
+#     model.parameters(), **config["optimizer"]["args"]
+# )
+# criterion = getattr(module_loss, config["criterion"])()
+# metric_funcs = [getattr(module_metric, met) for met in config["metrics"]]
 
-# Build the trainer
-device = utils.prepare_device(config["device"])
-trainer = Trainer(
-    model,
-    criterion,
-    metric_funcs,
-    optimizer,
-    max_epochs=config["trainer"]["max_epochs"],
-    data_loader=train_loader,
-    validation_data_loader=val_loader,
-    device=device,
-    config=config,
-)
+# # Build the trainer
+# device = utils.prepare_device(config["device"])
+# trainer = Trainer(
+#     model,
+#     criterion,
+#     metric_funcs,
+#     optimizer,
+#     max_epochs=config["trainer"]["max_epochs"],
+#     data_loader=train_loader,
+#     validation_data_loader=val_loader,
+#     device=device,
+#     config=config,
+# )
 
-# # Visualize the model
-torchinfo.summary(
-    model,
-    [   trainset.input[: config["data_loader"]["batch_size"]].shape ],
-    verbose=1,
-    col_names=("input_size", "output_size", "num_params"),
-)
+# # # Visualize the model
+# torchinfo.summary(
+#     model,
+#     [   trainset.input[: config["data_loader"]["batch_size"]].shape ],
+#     verbose=1,
+#     col_names=("input_size", "output_size", "num_params"),
+# )
 
-# TRAIN THE MODEL
-model.to(device)
-trainer.fit(std_mean)
+# # TRAIN THE MODEL
+# model.to(device)
+# trainer.fit(std_mean)
 
-# Save the Model
-path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + ".pth"
-torch.save({
-            "model_state_dict" : model.state_dict(),
-            "training_std_mean" : std_mean,
-             }, path)
+# # Save the Model
+# path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + ".pth"
+# torch.save({
+#             "model_state_dict" : model.state_dict(),
+#             "training_std_mean" : std_mean,
+#              }, path)
 
-# Load the Model
-path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
+# # Load the Model
+# path = str(config["perlmutter_model_dir"]) + str(config["expname"]) + '.pth'
 
-load_model_dict = torch.load(path)
+# load_model_dict = torch.load(path)
 
-state_dict = load_model_dict["model_state_dict"]
-std_mean = load_model_dict["training_std_mean"]
+# state_dict = load_model_dict["model_state_dict"]
+# std_mean = load_model_dict["training_std_mean"]
 
-model = TorchModel(
-    config=config["arch"],
-    target_mean=std_mean["trainset_target_mean"],
-    target_std=std_mean["trainset_target_std"],
-)
+# model = TorchModel(
+#     config=config["arch"],
+#     target_mean=std_mean["trainset_target_mean"],
+#     target_std=std_mean["trainset_target_std"],
+# )
 
-model.load_state_dict(state_dict)
-model.eval()
+# model.load_state_dict(state_dict)
+# model.eval()
 
-# Evaluate Training Metrics
-print(trainer.log.history.keys())
+# # Evaluate Training Metrics
+# print(trainer.log.history.keys())
 
-print(trainer.log.history.keys())
+# print(trainer.log.history.keys())
 
-plt.figure(figsize=(20, 4))
-for i, m in enumerate(("loss", *config["metrics"])):
-    plt.subplot(1, 4, i + 1)
-    plt.plot(trainer.log.history["epoch"], trainer.log.history[m], label=m)
-    plt.plot(
-        trainer.log.history["epoch"], trainer.log.history["val_" + m], label="val_" + m
-    )
-    plt.axvline(
-       x=trainer.early_stopper.best_epoch, linestyle="--", color="k", linewidth=0.75
-    )
-    plt.title(m)
-    plt.legend()
-plt.tight_layout()
-plt.savefig(config["perlmutter_figure_dir"] + str(config["expname"]) + "/" + str(config["expname"]) + "training_metrics.png", format = 'png', dpi = 200) 
+# plt.figure(figsize=(20, 4))
+# for i, m in enumerate(("loss", *config["metrics"])):
+#     plt.subplot(1, 4, i + 1)
+#     plt.plot(trainer.log.history["epoch"], trainer.log.history[m], label=m)
+#     plt.plot(
+#         trainer.log.history["epoch"], trainer.log.history["val_" + m], label="val_" + m
+#     )
+#     plt.axvline(
+#        x=trainer.early_stopper.best_epoch, linestyle="--", color="k", linewidth=0.75
+#     )
+#     plt.title(m)
+#     plt.legend()
+# plt.tight_layout()
+# plt.savefig(config["perlmutter_figure_dir"] + str(config["expname"]) + "/" + str(config["expname"]) + "training_metrics.png", format = 'png', dpi = 200) 
 
 # # # ------------------------------ Model Inference -------------------------------------------------------------
 # # # -------------------------------------------------------------------------------------------------------------
@@ -553,12 +553,14 @@ elif config["inference_data"] == "ERA5" or (config["inference_data"] == "None" a
 climatology_unstandardized = climatology_dict['y'] 
 climatology = (climatology_unstandardized - climatology_mean) / climatology_std # STANDARDIZE CLIMATOLOGY USING FIXED CLIMATOLOGY STATS
 
-if config["data_loader"]["scale_target_variance"]: 
+if config["data_loader"]["scale_target_variance"] == "True": 
     print("* * Scaling Climatology by DOY Variance for Analysis * *")
     daily_climo_grouped_var = climatology.groupby('time.dayofyear').var('time')
     scaled_climatology = climatology.groupby('time.dayofyear') / daily_climo_grouped_var
     scaled_climatology = scaled_climatology.sortby('time')
     climatology = scaled_climatology
+else: 
+    pass
 
 plt.figure(figsize = (10, 6))
 plt.hist(climatology_unstandardized, bins = 50, alpha = 0.5, color = 'orange')
@@ -571,12 +573,14 @@ target = test_inputs['y']
 
 target = (target - climatology_mean) / climatology_std # STANDARDIZING TARGET USING FIXED CLIMATOLOGY STATS (Just like the input variables were standardized)
 
-if config["data_loader"]["scale_target_variance"]: 
+if config["data_loader"]["scale_target_variance"] == "True": 
     print("* * Scaling Target by DOY Variance for Analysis * *")
     daily_target_grouped_var = target.groupby('time.dayofyear').var('time')
     scaled_target = target.groupby('time.dayofyear') / daily_target_grouped_var
     scaled_target = scaled_target.sortby('time')
     target = scaled_target
+else: 
+    pass
 
 print(f"Target shape: {target.shape}")
 
@@ -695,48 +699,48 @@ crps_iqr_discard_dict = {
 analysis_metrics.save_pickle(crps_iqr_discard_dict, str(config["perlmutter_output_dir"]) + str(config["expname"]) + "/" + str(config["expname"]) + "_IQR_CRPS_discard.pkl")
 
 # # # Discard plot of CRPS vs IQR Percentile for DECREASING CONFIDENCE
-sample_index_decreasingconf_anoms, deconf_perc, deconf_crps = analysis_metrics.IQRdiscard_plot(
-    output, target, CRPS_network, CRPS_climatology, target.time, config, target_type = 'anomalous', keyword = 'All Samples', analyze_months = False, most_confident= False)
+# sample_index_decreasingconf_anoms, deconf_perc, deconf_crps = analysis_metrics.IQRdiscard_plot(
+#     output, target, CRPS_network, CRPS_climatology, target.time, config, target_type = 'anomalous', keyword = 'All Samples', analyze_months = False, most_confident= False)
 
-if config["data_source"] == "E3SM":
-    if config["arch"]["type"] == "basicnn":
-        crps_SNN = CRPS_network
-        CNN_expname = "exp075" # CHOOSE
-        SNN_expname = config["expname"]
-        crps_CNN = open_data_file(str(config["perlmutter_output_dir"]) + str(CNN_expname) + '/' + CNN_expname + '_CRPS_network_values.pkl')
-        CNN_inputs = open_data_file(str(config["perlmutter_inputs_dir"]) + str(CNN_expname) + "_trimmed_" + "test_dat.nc")
-        CNN_target = CNN_inputs['y']
-        SNN_target = target
-    else:
-        crps_CNN = CRPS_network
-        SNN_expname = "exp076" # CHOOSE
-        CNN_expname = config["expname"]
-        crps_SNN = open_data_file(str(config["perlmutter_output_dir"]) + str(SNN_expname) + '/' + SNN_expname + '_CRPS_network_values.pkl')
-        SNN_inputs = open_data_file(str(config["perlmutter_inputs_dir"]) + str(SNN_expname) + "_trimmed_" + "test_dat.nc")
-        SNN_target = SNN_inputs['y']
-        CNN_target = target
+# if config["data_source"] == "E3SM":
+#     if config["arch"]["type"] == "basicnn":
+#         crps_SNN = CRPS_network
+#         CNN_expname = "exp075" # CHOOSE
+#         SNN_expname = config["expname"]
+#         crps_CNN = open_data_file(str(config["perlmutter_output_dir"]) + str(CNN_expname) + '/' + CNN_expname + '_CRPS_network_values.pkl')
+#         CNN_inputs = open_data_file(str(config["perlmutter_inputs_dir"]) + str(CNN_expname) + "_trimmed_" + "test_dat.nc")
+#         CNN_target = CNN_inputs['y']
+#         SNN_target = target
+#     else:
+#         crps_CNN = CRPS_network
+#         SNN_expname = "exp076" # CHOOSE
+#         CNN_expname = config["expname"]
+#         crps_SNN = open_data_file(str(config["perlmutter_output_dir"]) + str(SNN_expname) + '/' + SNN_expname + '_CRPS_network_values.pkl')
+#         SNN_inputs = open_data_file(str(config["perlmutter_inputs_dir"]) + str(SNN_expname) + "_trimmed_" + "test_dat.nc")
+#         SNN_target = SNN_inputs['y']
+#         CNN_target = target
 
-elif config["data_source"] == "ERA5":
-    if config["arch"]["type"] == "basicnn":
-        crps_SNN = CRPS_network
-        CNN_expname = "exp111" # CHOOSE
-        SNN_expname = config["expname"]
-        crps_CNN = open_data_file(str(config["perlmutter_output_dir"]) + str(CNN_expname) + '/' + CNN_expname + '_CRPS_network_values.pkl')
-        CNN_inputs = open_data_file(str(config["perlmutter_inputs_dir"]) + str(CNN_expname) + "_trimmed_" + "test_dat.nc")
-        CNN_target = CNN_inputs['y']
-        SNN_target = target
-    else:
-        crps_CNN = CRPS_network
-        SNN_expname = "exp088" # CHOOSE
-        CNN_expname = config["expname"]
-        crps_SNN = open_data_file(str(config["perlmutter_output_dir"]) + str(SNN_expname) + '/' + SNN_expname + '_CRPS_network_values.pkl')
-        SNN_inputs = open_data_file(str(config["perlmutter_inputs_dir"]) + str(SNN_expname) + "_trimmed_" + "test_dat.nc")
-        SNN_target = SNN_inputs['y']
-        CNN_target = target
+# elif config["data_source"] == "ERA5":
+#     if config["arch"]["type"] == "basicnn":
+#         crps_SNN = CRPS_network
+#         CNN_expname = "exp111" # CHOOSE
+#         SNN_expname = config["expname"]
+#         crps_CNN = open_data_file(str(config["perlmutter_output_dir"]) + str(CNN_expname) + '/' + CNN_expname + '_CRPS_network_values.pkl')
+#         CNN_inputs = open_data_file(str(config["perlmutter_inputs_dir"]) + str(CNN_expname) + "_trimmed_" + "test_dat.nc")
+#         CNN_target = CNN_inputs['y']
+#         SNN_target = target
+#     else:
+#         crps_CNN = CRPS_network
+#         SNN_expname = "exp088" # CHOOSE
+#         CNN_expname = config["expname"]
+#         crps_SNN = open_data_file(str(config["perlmutter_output_dir"]) + str(SNN_expname) + '/' + SNN_expname + '_CRPS_network_values.pkl')
+#         SNN_inputs = open_data_file(str(config["perlmutter_inputs_dir"]) + str(SNN_expname) + "_trimmed_" + "test_dat.nc")
+#         SNN_target = SNN_inputs['y']
+#         CNN_target = target
 
-# # Discard plot of CRPS vs Target Magnitude; CNN, Simple NN, Climo
-analysis_metrics.target_discardplot(CNN_target, CNN_expname, SNN_target, SNN_expname, crps_CNN, crps_SNN, CRPS_climatology, config, target_type = 'anomalous', keyword = 'All Samples')
-## analysis_metrics.target_discardplot(target_raw, SNN_target, crps_SNN, crps_SNN, CRPS_climatology, config, target_type = 'raw', keyword = 'All Samples')
+# # # Discard plot of CRPS vs Target Magnitude; CNN, Simple NN, Climo
+# analysis_metrics.target_discardplot(CNN_target, CNN_expname, SNN_target, SNN_expname, crps_CNN, crps_SNN, CRPS_climatology, config, target_type = 'anomalous', keyword = 'All Samples')
+# ## analysis_metrics.target_discardplot(target_raw, SNN_target, crps_SNN, crps_SNN, CRPS_climatology, config, target_type = 'raw', keyword = 'All Samples')
 
 # # SUCCESS RATIO discard plot
 percentiles, avg_success_ratio = analysis_metrics.IQR_success_discard_plot(output, CRPS_network, CRPS_climatology, config, keyword = None)
