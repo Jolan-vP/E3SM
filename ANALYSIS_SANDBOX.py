@@ -129,7 +129,7 @@ exps = {
 
 # cea.m2m_sample_transfer(exps, selection_method = 'simple_iqr_percentage', confidence = 20, keyword = "scaled_target")
 
-cea.IQR_only_analysis(exps, selection_method = 'simple_iqr_percentage', confidence = 20, keyword = "scaled_target")
+# cea.IQR_only_analysis(exps, selection_method = 'simple_iqr_percentage', confidence = 20, keyword = "scaled_target")
 
 # cea.teleconnection_bias_analysis(exps, confidence_level_low = 100, confidence_level_high = 0, keyword = "OBS-E3SM_scaled_target")
 # cea.anom_var_distributions(exps, keyword = "E3SM-short_OBS")
@@ -143,12 +143,10 @@ cea.IQR_only_analysis(exps, selection_method = 'simple_iqr_percentage', confiden
 # EPISTEMIC UNCERTAINTY ANALYSIS # ------------------------------------------------------------------------------------
 
 # SCALED TARGET
+cea.variance_OIQR_analysis(exps, scale_target = True,  scale_IQR = False, keyword = "scaled_target") 
+
 
 # cea.variance_OM_analysis(exps, scale_target = False, scale_IQR = False, keyword = "scaled_target") 
-
-# cea.variance_OIQR_analysis(exps, scale_target = False,  scale_IQR = False, keyword = "scaled_target") 
-
-
 # # NO SCALING
 # cea.variance_OM_analysis(exps, scale_target = False, scale_IQR = False, keyword = "no_scaling")
 # cea.variance_OIQR_analysis(exps, scale_target = False,  scale_IQR = False, keyword = "no_scaling")

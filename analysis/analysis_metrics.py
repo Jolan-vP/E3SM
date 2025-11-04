@@ -1829,7 +1829,12 @@ def mjo_timestamps(data_source, config):
         end_month = int(MJOda[-1, -2])
         end_day = int(MJOda[-1, -1])
         end = datetime.datetime(end_year, end_month, end_day)
-        time_array = pd.date_range(start = start, end = end, freq = 'D')
+        time_array = xr.cftime_range(
+            start=f"{start_year:04d}-{start_month:02d}-{start_day:02d}",
+            end=f"{end_year:04d}-{end_month:02d}-{end_day:02d}",
+            freq='D',
+            calendar='noleap'
+        )
 
         RMM1 = MJOda[:, 2]
         RMM2 = MJOda[:, 3]
