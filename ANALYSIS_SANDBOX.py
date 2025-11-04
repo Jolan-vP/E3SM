@@ -91,6 +91,8 @@ exps = {
     "E3SM(OBS)sv":  ["exp222", "exp246", "exp247", "exp248", "exp249", "exp250", "exp251", "exp252", "exp253", "exp254", "exp255", "exp256"],
     "E3SM(E3SM)sv": ["exp219", "exp235", "exp236", "exp237", "exp238", "exp239", "exp240", "exp241", "exp242", "exp243", "exp244", "exp245"],
     "OBS(E3SM)sv":  ["exp223", "exp224", "exp225", "exp269", "exp270", "exp271", "exp272", "exp273", "exp274", "exp275", "exp276", "exp277"]
+
+    # "E3SM-long(E3SM)sv" : ["exp278", "exp279", "exp280", "exp281", "exp282", "exp283", "exp284", "exp285", "exp286", "exp287", "exp288", "exp289"]
 }
 
 # DISCARD PLOTS: # ------------------------------------------------------------------------------------  
@@ -145,6 +147,7 @@ exps = {
 # SCALED TARGET
 cea.variance_OIQR_analysis(exps, scale_target = True,  scale_IQR = False, keyword = "scaled_target") 
 
+# cea.dual_filtering_var_IQR(exps, keyword = None)
 
 # cea.variance_OM_analysis(exps, scale_target = False, scale_IQR = False, keyword = "scaled_target") 
 # # NO SCALING

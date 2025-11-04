@@ -1922,6 +1922,7 @@ def variance_OIQR_analysis(experiments, scale_target = True, scale_IQR = False, 
 
     variance_all_model_types = []
     crps_all_model_types = []
+    IQR_all_model_types = []
 
     for i, (exp_type, exp_list) in enumerate(exps.items()):
         print(f'Processing experiment type: {exp_type}')
@@ -2012,9 +2013,15 @@ def variance_OIQR_analysis(experiments, scale_target = True, scale_IQR = False, 
 
         crps_all_model_types.append(all_crps)
 
+        IQR_all_model_types.append(all_IQR)
+
         # Calculate variance across random seeds for each sample
         variance_across_seeds = np.var(all_IQR, axis=0)
         variance_all_model_types.append(variance_across_seeds)
+
+        length = int(0.2 * variance_across_seeds.shape[0])
+        all_indices_high_var = np.zeros([length, len(color_themes)])
+        all_indices_low_var = np.zeros([length, len(color_themes)])
 
         # FIGURE: Variance Analysis of E3SM(OBS) : ---------------
         if exp_type in ["E3SM(OBS)", "E3SM(OBS)sv", "E3SM(E3SM)", "E3SM(E3SM)sv", "OBS(OBS)", "OBS(OBS)sv", "OBS(E3SM)", "OBS(E3SM)sv"]: 
@@ -2030,10 +2037,13 @@ def variance_OIQR_analysis(experiments, scale_target = True, scale_IQR = False, 
             low_variance_indices = np.argsort(variance_across_seeds)[:int(sample_size_lim)]
             print(f"number of low variance indices: {len(low_variance_indices)}")
 
+            all_indices_high_var[:, i] = high_variance_indices
+            all_indices_low_var[:, i] = low_variance_indices
+
             all_input_maps_high_var = []
             all_input_maps_non_high_var = []
             all_input_maps_low_var = []
-
+    
             # Open Target: 
             # Load testing target data
             if exp_type in ["E3SM(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)", "OBS(OBS)sv", "E3SM(OBS)sv"]:
@@ -2226,7 +2236,7 @@ def variance_OIQR_analysis(experiments, scale_target = True, scale_IQR = False, 
             ax_enso.set_xticklabels(['El Nino', 'La Nina', 'Neutral'])
             ax_enso.set_xlabel('ENSO Phase')
             ax_enso.set_ylabel('Density')
-            ax_enso.set_title(f'ENSO Phase Distribution | E3SM(OBS) High Variance (over IQR) Samples {keyword}')
+            ax_enso.set_title(f'ENSO Phase Distribution | {exp_type} High Variance (over IQR) Samples {keyword}')
 
             # Legend with only one entry for reference lines
             handles, labels = ax_enso.get_legend_handles_labels()
@@ -2236,7 +2246,7 @@ def variance_OIQR_analysis(experiments, scale_target = True, scale_IQR = False, 
             else:
                 ax_enso.legend()
             plt.tight_layout()
-            plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/enso_phase_distribution_E3SM-OBS_high_var_OIQR_{keyword}.png', format='png', dpi=250)
+            plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/enso_phase_distribution_{exp_type}_high_var_OIQR_{keyword}.png', format='png', dpi=250)
             plt.close()
 
             # ENSO Figure 2:  Difference plot between high var EN and all other EN:
@@ -2269,54 +2279,6 @@ def variance_OIQR_analysis(experiments, scale_target = True, scale_IQR = False, 
                 
                 print(f"Using {valid_mask.sum()} of {len(high_var_dates)} high variance dates")
                 
-                input_mjo_phases = phase_timestamps.sel(time=valid_high_var_dates)
-
-            if data_type == "E3SM":
-                # Both valid_high_var_dates and phase_timestamps should be cftime
-                print(f"valid_high_var_dates type: {type(valid_high_var_dates.values[0])}")
-                print(f"phase_timestamps type: {type(phase_timestamps['time'].values[0])}")
-                
-                # Convert numpy.datetime64 to cftime.DatetimeNoLeap for comparison
-                if isinstance(valid_high_var_dates.values[0], np.datetime64):
-                    # Convert numpy datetime64 to cftime DatetimeNoLeap
-                    cftime_dates = []
-                    for dt in valid_high_var_dates.values:
-                        # Convert to pandas timestamp first
-                        pd_ts = pd.Timestamp(dt)
-                        # Skip Feb 29 dates for NoLeap calendar
-                        if pd_ts.month == 2 and pd_ts.day == 29:
-                            continue
-                        # Convert to cftime DatetimeNoLeap
-                        cftime_dates.append(cftime.DatetimeNoLeap(pd_ts.year, pd_ts.month, pd_ts.day))
-                    
-                    print(f"Converted {len(cftime_dates)} dates to cftime (excluded Feb 29 dates)")
-                    
-                    # Use set for fast lookup
-                    phase_dates_set = set(phase_timestamps['time'].values)
-                    matches = [d for d in cftime_dates if d in phase_dates_set]
-                    
-                    print(f"Exact matches found: {len(matches)} out of {len(cftime_dates)}")
-                    
-                    if len(matches) > 0:
-                        # Select only matching dates
-                        input_mjo_phases = phase_timestamps.sel(time=matches)
-                    else:
-                        print(f"No matching dates found for {exp_type}")
-                        continue  # Skip this experiment type
-                else:
-                    # Original logic for cftime to cftime comparison
-                    phase_dates_set = set(phase_timestamps['time'].values)
-                    matches = [d for d in valid_high_var_dates.values if d in phase_dates_set]
-                    
-                    print(f"Exact matches found: {len(matches)} out of {len(valid_high_var_dates)}")
-                    
-                    if len(matches) > 0:
-                        input_mjo_phases = phase_timestamps.sel(time=matches)
-                    else:
-                        print(f"No matching dates found for {exp_type}")
-                        continue  # Skip this experiment type
-            else:
-                # For OBS data, direct selection
                 input_mjo_phases = phase_timestamps.sel(time=valid_high_var_dates)
             
             if "OBS" in data_type:
@@ -2662,51 +2624,6 @@ def variance_OIQR_analysis(experiments, scale_target = True, scale_IQR = False, 
             plt.tight_layout()
             plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/high_var_OIQR_composite_DIFF_maps_{exp_type}_{keyword}.png', format='png', dpi=250)
             plt.close()
-
-
-        # # FIGURE : CRPS vs Variance as DISCARD Plot: --------------------- SOMETHING IS WRONG!!! 
-        # percentiles = np.linspace(100, 0, 21)
-        # var_sorted_indices = np.argsort(variance_across_seeds)  
-
-        # plt.figure(fig4.number)
-        # for iexp, exp_name in enumerate(exp_list):
-
-        #     avg_crps = np.empty([len(exp_list), len(percentiles)])
-        #     avg_variance = []
-        #     sample_index = np.zeros((len(variance_across_seeds), len(percentiles)))
-
-        #     # Sort by Variance
-        #     var_sorted = variance_across_seeds[var_sorted_indices]
-
-        #     for ip, p in enumerate(percentiles):
-        #         # percentage of samples to keep for each round of the loop
-        #         num_to_keep = int(len(var_sorted) * p / 100)
-                
-        #         indices = var_sorted_indices[:num_to_keep]
-
-        #         if len(indices) == 0:
-        #             avg_crps[iexp, ip] = np.nan
-        #             avg_variance.append(np.nan)
-        #         else:
-        #             avg_crps[iexp, ip] = np.mean(all_crps[iexp, indices])
-        #             avg_variance.append(np.mean(variance_across_seeds[indices]))
-        #             sample_index[:len(indices), ip] = indices
-
-        #     ax4.plot(percentiles, avg_crps[iexp], alpha = 0.3, linewidth = 1.2, color=color_themes[i])
-
-        # mean_crps_line = np.mean(avg_crps, axis = 0)
-
-        # ax4.plot(percentiles, mean_crps_line, alpha = 0.6, linewidth = 2, color = color_themes[i], label = f'{exp_type}')
-
-        # if i in [0, 2]: 
-        #     ax4.axhline(y=mean_climo_crps, color=color_themes[i], linestyle='--', label=f'CRPS Mean Climatology for {data_type}')
-
-        # plt.gca().invert_xaxis()
-        # ax4.set_ylabel('Average CRPS')
-        # ax4.set_xlabel('Model Variance Percentile (% Data Remaining)')
-        # ax4.set_xlim([100, 1])
-        # plt.tight_layout()
-        # plt.legend()
    
         # FIGURE : Standard CRPS vs Variance Binned Plot -----------------
         # Bin the variance values
@@ -2762,6 +2679,52 @@ def variance_OIQR_analysis(experiments, scale_target = True, scale_IQR = False, 
     plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/CRPS_vs_Variance_OIQR_percentile_multiple_exps_DISCARD.png', format='png', dpi=250 )
     plt.close()
 
+    ## INPUT MAP CLUSTERING: HIGH + LOW Variance: 
+    # Clustered subplot maps for different features, with average IQR, and average CRPS for each cluster grouping 
+    
+    for i, (exp_type, exp_list) in enumerate(exps.items()):
+        if exp_type in ["E3SM(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)", "OBS(OBS)sv", "E3SM(OBS)sv"]:
+            config = utils.get_config(f'{exp_list[0]}')
+            target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
+            # Load climatology statistics
+            # climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl')#
+            # target = (target['y'] - climatology_stats['z'][2]) / climatology_stats['z'][3]
+
+        elif exp_type in ["E3SM(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)", "OBS(E3SM)sv", "E3SM(E3SM)sv"]:
+            config = utils.get_config(f'{exp_list[0]}')
+            target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp185_trimmed_test_dat.nc')
+            # climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/E3SM_processed_climo_stats_PRECT_Z500_TS_1981-2010.pkl')
+            # target = (target['y'] - climatology_stats['Z500'][2]) / climatology_stats['Z500'][3]
+        
+        # Standardize all input maps using same standardization process used in Data Loader (using FIXED CLIMATOLOGY stats):
+        climo_stats = open_data_file(str(config["databuilder"]["climatology_stats_path"]))
+        
+        print(f"shape of high var maps: {np.array(all_input_maps_high_var).shape}")
+        print(f"shape of low var input maps: {np.array(all_input_maps_low_var).shape}")
+
+        # PRECT, TS, Z500  
+        for i in range(len(config["databuilder"]["input_vars"])):
+            i_mean_input = climo_stats[config["databuilder"]["input_vars"][i]][0] 
+            i_std_input = climo_stats[config["databuilder"]["input_vars"][i]][1]
+            all_input_maps_high_var[..., i] = (all_input_maps_high_var[..., i] - i_mean_input) / i_std_input
+            all_input_maps_low_var[..., i] = (all_input_maps_low_var[..., i] - i_mean_input) / i_std_input
+
+           
+        input_map_clustering(all_input_maps_high_var[i], all_indices_high_var[:, i], crps_all_model_types[i], IQR_all_model_types[i], exp_type, keyword = f"High_Variance")
+
+        ## INPUT MAP CLUSTERING: Low Variance: 
+        # Clustered subplot maps for different features, with average IQR, and average CRPS for each cluster grouping 
+        input_map_clustering(all_input_maps_low_var[i], all_indices_low_var[:, i], crps_all_model_types[i], IQR_all_model_types[i], exp_type, keyword = f"Low_Variance")
+
+    # HIGH VS LOW VARIANCE INPUT DIFFERENCE MAPS: -------------------------
+    print(f" shape of all input maps high var: {np.array(all_input_maps_high_var).shape}")
+
+            # all_input_maps_high_var = []
+            # all_input_maps_non_high_var = []
+            # all_input_maps_low_var = []
+
+
+
     # VARIANCE DISTRIBUTION HISTOGRAMS: -----------------
 
     plt.figure(fig2.number)  
@@ -2811,7 +2774,6 @@ def variance_OIQR_analysis(experiments, scale_target = True, scale_IQR = False, 
 
     # PLOT: CRPS Distribution for Low Var, Medium Var, High Var Samples Across Model Types: ---------------------------------------
 
-    # PLOT: CRPS Distribution for Low Var, Medium Var, High Var Samples Across Model Types: -----------------
     num_bins = 6
     threshold = 12
 
@@ -3019,6 +2981,62 @@ def variance_OIQR_analysis(experiments, scale_target = True, scale_IQR = False, 
                 format='png', dpi=250)
 
 
+def input_map_clustering(maps, indices, CRPS, IQR, exp_type, num_clusters = None, keyword = None):
+    """
+    * Take in input maps
+    * Use clustering algorithm
+    * Plot diagram and select number of clusters with elbow method
+    * Save subplot figure with clustered input maps
+        - Legend contains: CRPS for clustered samples, IQR for clustered samples, number of samples in cluster
+    """
+
+    # Maps contain either high or low variance input maps
+    from sklearn.cluster import KMeans
+    
+    # CRPS for specific high or low var samples: 
+    crps_selected = CRPS[indices]
+
+    # IQR for specific high or low var samples: 
+    iqr_selected = IQR[indices]
+    
+    n_samples = len(indices).astype(int)
+
+    if num_clusters is None:
+        max_k = min(10, n_samples - 1)
+        inertias = []
+        K_range = range(2, max_k + 1)
+        
+        for k in K_range:
+            kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
+            kmeans.fit(maps)
+            inertias.append(kmeans.inertia_)
+        
+        # Plot elbow method
+        fig_elbow, ax_elbow = plt.subplots(figsize=(8, 5))
+        ax_elbow.plot(K_range, inertias, 'bo-', linewidth=2, markersize=8)
+        ax_elbow.set_xlabel('Number of Clusters', fontsize=12)
+        ax_elbow.set_ylabel('Inertia (Within-Cluster Sum of Squares)', fontsize=12)
+        ax_elbow.set_title(f'Elbow Method - {exp_type}', fontsize=14, fontweight='bold')
+        ax_elbow.grid(True, alpha=0.3)
+        plt.tight_layout()
+        plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/clustering_elbow_graph_{keyword}_{exp_type}.png', format = 'png', dpi = 200)
+        plt.close()
+        
+        # Ask user to select or auto-select using elbow
+        num_clusters = int(input(f"Enter number of clusters (2-{max_k}): "))
+    
+    # Perform final clustering
+    kmeans = KMeans(n_clusters=num_clusters, random_state=42, n_init=10)
+    labels = kmeans.fit_predict(maps)
+    
+    # Create visualization of clustered maps
+    fig = create_cluster_visualization(
+        maps, labels, crps_selected, iqr_selected, 
+        num_clusters, exp_type
+    )
+
+
+
 def dual_filtering_var_IQR(experiments, keyword = None):
     """
     Filter using both Variance over IQR and IQR by sample to identify: 
@@ -3033,13 +3051,106 @@ def dual_filtering_var_IQR(experiments, keyword = None):
     color_themes = {
         0: "#0d0887", 
         1: "#7e03a8", 
-        2: "#cc4778",
+        2: "#d63754",
         3: "#f89540"
     }
 
+    variance_all_model_types = []
+    crps_all_model_types = []
+    IQR_all_model_types = []
 
+    for i, (exp_type, exp_list) in enumerate(exps.items()):
+        print(f'Processing experiment type: {exp_type}')
 
+        if exp_type in ["E3SM(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)", "OBS(OBS)sv", "E3SM(OBS)sv"]:
+                data_type = "OBS"
+        elif exp_type in ["E3SM(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)", "E3SM(E3SM)sv", "OBS(E3SM)sv"]:
+                data_type = "E3SM"
+        
+        #identify lengths for accurate preallocation: 
+        try:
+            output_preall = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_list[0]}/{exp_list[0]}_network_SHASH_parameters.pkl')
+        except FileNotFoundError:
+            pattern = f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_list[0]}/exp*_{exp_list[0]}_OOD_INFERENCE_network_SHASH_parameters.pkl'
+            matching_files = glob.glob(pattern)
+            output_preall = load_pickle(matching_files[0]) if matching_files else None
 
+        all_crps = np.empty((len(exp_list), len(output_preall)))
+        all_IQR = np.empty((len(exp_list), len(output_preall)))
+
+        for iexp, exp_name in enumerate(exp_list):
+            print(f'  Processing experiment: {exp_name}')
+
+            config = utils.get_config(exp_name)
+
+            if exp_type in ["E3SM(OBS)", "E3SM(OBS)", "E3SM-long(OBS)", "OBS(OBS)", "OBS(OBS)sv", "E3SM(OBS)sv"]:
+                target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp173_trimmed_test_dat.nc')
+                # Load climatology statistics
+                # climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/ERA5_processed_climo_stats_TP_SKT_Z_1981-2010.pkl')#
+                # target = (target['y'] - climatology_stats['z'][2]) / climatology_stats['z'][3]
+    
+            elif exp_type in ["E3SM(E3SM)", "E3SM-long(E3SM)", "OBS(E3SM)", "OBS(E3SM)sv", "E3SM(E3SM)sv"]:
+                target = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/exp185_trimmed_test_dat.nc')
+                # climatology_stats = open_data_file('/pscratch/sd/p/plutzner/E3SM/bigdata/E3SM_processed_climo_stats_PRECT_Z500_TS_1981-2010.pkl')
+                # target = (target['y'] - climatology_stats['Z500'][2]) / climatology_stats['Z500'][3]
+
+            # Load the output and target data for this experiment
+            try:
+                output = load_pickle(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_network_SHASH_parameters.pkl')
+            except FileNotFoundError:
+                pattern = f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/exp*_{exp_name}_OOD_INFERENCE_network_SHASH_parameters.pkl'
+                matching_files = glob.glob(pattern)
+                output = load_pickle(matching_files[0]) if matching_files else None
+
+            climo_crps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_CRPS_climatology_values.pkl')
+            mean_climo_crps = np.mean(climo_crps)
+
+            # open crps: 
+            crps = open_data_file(f'/pscratch/sd/p/plutzner/E3SM/saved/output/{exp_name}/{exp_name}_CRPS_network_values.pkl')
+
+            # Calculate IQR
+            iqr = iqr_basic(output)
+
+            all_IQR[iexp] = iqr
+
+            all_crps[iexp] = crps
+
+        crps_all_model_types.append(all_crps)
+
+        IQR_all_model_types.append(all_IQR)
+
+        variance_across_seeds = np.var(all_IQR, axis=0)
+        variance_all_model_types.append(variance_across_seeds)
+
+    # -----------------------------------------------------
+    # (1) Plot Agreement vs Confidence with all four model types as a scatter, each with color from color_themes
+    # Y-axis is variance over IQR (agreement), X-axis is SHASH IQR for each individual sample
+    fig, axes = plt.subplots(2, 2, figsize=(10, 8), sharey=True, sharex=True)
+    axes_flat = axes.flatten()
+    # one subplot for each model_type:
+    for i, (exp_type, exp_list) in enumerate(exps.items()):
+        all_IQR = IQR_all_model_types[i]
+        variance_across_seeds = variance_all_model_types[i]
+        for k in range(len(exp_list)):
+            IQR_by_seed = all_IQR[k, :]
+            if k == 0:
+                axes_flat[i].scatter(IQR_by_seed, variance_across_seeds, alpha=0.2, s=3, color=color_themes[i], label=exp_type)
+            else: 
+                axes_flat[i].scatter(IQR_by_seed, variance_across_seeds, alpha=0.2, s=3, color=color_themes[i])
+
+        axes_flat[i].set_title(exp_type)
+        axes_flat[i].set_xlabel('Confidence (SHASH IQR)')
+        axes_flat[i].set_ylabel('Agreement \n (Variance over IQR Across Members)')
+        axes_flat[i].legend()
+        axes_flat[i].set_axisbelow(True)
+        axes_flat[i].grid(color='gray', linestyle='--', linewidth=0.5, alpha=0.7)
+
+    plt.xlabel('Confidence (SHASH IQR)')
+    plt.ylabel('Agreement (Variance over IQR Across Members)')
+    plt.legend(loc= 'upper right')
+    plt.tight_layout()
+    plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/agreement_vs_confidence_scaled_target_all_exps.png',)
+    plt.close()
 
 
 def variance_analysis_success_plot(experiments, scaling_method = None, keyword = None):
@@ -3932,7 +4043,7 @@ def m2m_sample_transfer(experiments, selection_method = 'scaled_iqr_by_percentag
         ax3.set_xticklabels(['El Nino', 'La Nina', 'Neutral'])
         ax3.set_xlabel('ENSO Phase')
         ax3.set_ylabel('Density')
-        ax3.set_title(f'ENSO Phase Distribution | {confidence}% Most Confident | {data_type} {keyword}')
+        ax3.set_title(f'ENSO Phase Distribution | {exp_type} {confidence}% Most Confident | {keyword}')
 
         # Legend with only one entry for reference lines
         handles, labels = ax3.get_legend_handles_labels()
@@ -5325,7 +5436,7 @@ def IQR_only_analysis(experiments, selection_method = 'simple_iqr_percentage', c
         ax3.set_xticklabels(['El Nino', 'La Nina', 'Neutral'])
         ax3.set_xlabel('ENSO Phase')
         ax3.set_ylabel('Density')
-        ax3.set_title(f'ENSO Phase Distribution | {confidence}% Most Confident | {data_type} {keyword}')
+        ax3.set_title(f'ENSO Phase Distribution | {exp_type} {confidence}% Most Confident | {keyword}')
 
         # Legend with only one entry for reference lines
         handles, labels = ax3.get_legend_handles_labels()

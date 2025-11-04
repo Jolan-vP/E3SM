@@ -1,8 +1,8 @@
-{"expname": "exp190",
+{"expname": "exp278",
     "device": "cpu",
-    "seed_list": [90],
+    "seed_list": [78],
 
-    "input_data": "exp185",
+    "input_data": "None",
     "data_source": "E3SM", 
     "inference_data": "E3SM",
     "trained_model" : "None",
@@ -28,7 +28,7 @@
         "network_inputs": ["PRECT", "TS", "Z500"],
         "target_var": "Z500",
         "input_years": [1685, 2014],
-        "train_years": [1940, 1995],
+        "train_years": [1685, 2014],
         "val_years": [1850, 1931],
         "test_years": [1932, 2014], 
         "climatology_years" : [1981, 2010],
@@ -54,8 +54,8 @@
     "data_loader": {
         "shuffle_target": "False",
         "perlmutter_data_dir": "/pscratch/sd/p/plutzner/E3SM/bigdata/presaved/",
-        "batch_size": 128
-        
+        "batch_size": 128,
+        "scale_target_variance": "True"
     }, 
 
     "arch": {
