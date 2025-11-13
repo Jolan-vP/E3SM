@@ -2702,6 +2702,9 @@ def variance_OIQR_analysis(experiments, scale_target = True, scale_IQR = False, 
         print(f"shape of high var maps: {np.array(all_input_maps_high_var).shape}")
         print(f"shape of low var input maps: {np.array(all_input_maps_low_var).shape}")
 
+        # shape of high var maps: (1, 3012, 180, 360, 3)
+        # shape of low var input maps: (1, 3012, 180, 360, 3)
+
         # PRECT, TS, Z500  
         for i in range(len(config["databuilder"]["input_vars"])):
             i_mean_input = climo_stats[config["databuilder"]["input_vars"][i]][0] 
@@ -3051,8 +3054,15 @@ def dual_filtering_var_IQR(experiments, keyword = None):
     color_themes = {
         0: "#0d0887", 
         1: "#7e03a8", 
-        2: "#d63754",
+        2: "#98293d",
         3: "#f89540"
+    }
+
+    color_themes_lite = {
+        0: "#9f9cfb", 
+        1: "#e9a7ff", 
+        2: "#ffabba",
+        3: "#ffd4af"
     }
 
     variance_all_model_types = []
@@ -3125,31 +3135,78 @@ def dual_filtering_var_IQR(experiments, keyword = None):
     # -----------------------------------------------------
     # (1) Plot Agreement vs Confidence with all four model types as a scatter, each with color from color_themes
     # Y-axis is variance over IQR (agreement), X-axis is SHASH IQR for each individual sample
-    fig, axes = plt.subplots(2, 2, figsize=(10, 8), sharey=True, sharex=True)
+    fig, axes = plt.subplots(2, 2, figsize=(9, 8), sharey=True, sharex=True)
     axes_flat = axes.flatten()
+
+    # bin SHASH IQR by increments of 0.2 and plot box plots of variance over IQR in each bin, where the MEDIAN is shown, not mean
+    bin_edges = np.arange(0, np.max(all_IQR)+0.15, 0.15)
+    bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+    binned_variances = []
+
+    x_ticks = np.arange(0.5, 2.75, 0.15)  # 2.8 to include 2.6
+
     # one subplot for each model_type:
     for i, (exp_type, exp_list) in enumerate(exps.items()):
-        all_IQR = IQR_all_model_types[i]
-        variance_across_seeds = variance_all_model_types[i]
+    
+        all_IQR = IQR_all_model_types[i]  # Shape: (n_seeds, n_samples)
+        variance_across_seeds = variance_all_model_types[i]  # Shape: (n_samples,)
+        
+        # Scatter plot for all seeds
         for k in range(len(exp_list)):
             IQR_by_seed = all_IQR[k, :]
-            if k == 0:
-                axes_flat[i].scatter(IQR_by_seed, variance_across_seeds, alpha=0.2, s=3, color=color_themes[i], label=exp_type)
-            else: 
-                axes_flat[i].scatter(IQR_by_seed, variance_across_seeds, alpha=0.2, s=3, color=color_themes[i])
+            axes_flat[i].scatter(IQR_by_seed, variance_across_seeds, alpha=0.7, s=3, color=color_themes_lite[i])
+
+        # BOX PLOTS OVERLAY - Use ALL IQR values, not means
+        # Flatten all IQR values and repeat variance values to match
+        all_IQR_flat = all_IQR.flatten()  # Shape: (n_seeds * n_samples,)
+        variance_repeated = np.tile(variance_across_seeds, all_IQR.shape[0])  # Shape: (n_seeds * n_samples,)
+        
+        print(f"Model {i}: {len(all_IQR_flat)} IQR values, {len(variance_repeated)} variance values")
+        
+        # Collect variance values for each IQR bin
+        box_data = []
+        box_positions = []
+        
+        for b in range(len(bin_centers)):
+            # Find ALL IQR values that fall in this bin
+            in_bin = (all_IQR_flat >= bin_edges[b]) & (all_IQR_flat < bin_edges[b+1])
+            
+            if np.sum(in_bin) > 90:  # Now using all IQR values
+                variance_in_bin = variance_repeated[in_bin]  # Corresponding variance values
+                box_data.append(variance_in_bin)
+                box_positions.append(bin_centers[b])
+                print(f"  Bin {bin_centers[b]:.1f}: {np.sum(in_bin)} samples")
+        
+        # Create box plots if we have data
+        if len(box_data) > 0:
+            bp = axes_flat[i].boxplot(box_data, positions=box_positions, 
+                                    widths=0.1, patch_artist=True, 
+                                    showmeans=False, showfliers=False,
+                                    medianprops=dict(color='red', linewidth=2),
+                                    boxprops=dict(facecolor=color_themes[i], alpha=0.7),
+                                    whiskerprops=dict(color='black', linewidth=1),
+                                    capprops=dict(color='black', linewidth=1))
 
         axes_flat[i].set_title(exp_type)
-        axes_flat[i].set_xlabel('Confidence (SHASH IQR)')
-        axes_flat[i].set_ylabel('Agreement \n (Variance over IQR Across Members)')
-        axes_flat[i].legend()
+        axes_flat[i].set_xlabel('SHASH Interquartile Range Across Predictions')
+        axes_flat[i].set_ylabel('Variance over IQR Across Members')
         axes_flat[i].set_axisbelow(True)
-        axes_flat[i].grid(color='gray', linestyle='--', linewidth=0.5, alpha=0.7)
+        
+        # Set regular x-axis ticks and labels
+        axes_flat[i].set_xticks(x_ticks)
+        axes_flat[i].set_xticklabels([f'{x:.2f}' for x in x_ticks], rotation=45, ha='right')
+        
+        # Set x-axis limits to show full range
+        axes_flat[i].set_xlim(0.7, 2.75)
+        axes_flat[i].set_ylim(-0.0025, 0.083)
+        
+        # Add grid lines at regular intervals
+        axes_flat[i].grid(True, alpha=0.7, which='major', linestyle='-', linewidth=0.5)
+        axes_flat[i].set_axisbelow(True)
 
-    plt.xlabel('Confidence (SHASH IQR)')
-    plt.ylabel('Agreement (Variance over IQR Across Members)')
-    plt.legend(loc= 'upper right')
+    plt.suptitle('Agreement vs Confidence: Scatter + Boxplots (Red line = Median)', fontsize=12)
     plt.tight_layout()
-    plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/agreement_vs_confidence_scaled_target_all_exps.png',)
+    plt.savefig(f'/pscratch/sd/p/plutzner/E3SM/saved/figures/COMBINED/agreement_vs_confidence_with_boxplots.png', format='png', dpi = 250)
     plt.close()
 
 

@@ -145,9 +145,9 @@ exps = {
 # EPISTEMIC UNCERTAINTY ANALYSIS # ------------------------------------------------------------------------------------
 
 # SCALED TARGET
-cea.variance_OIQR_analysis(exps, scale_target = True,  scale_IQR = False, keyword = "scaled_target") 
+# cea.variance_OIQR_analysis(exps, scale_target = True,  scale_IQR = False, keyword = "scaled_target") 
 
-# cea.dual_filtering_var_IQR(exps, keyword = None)
+cea.dual_filtering_var_IQR(exps, keyword = None)
 
 # cea.variance_OM_analysis(exps, scale_target = False, scale_IQR = False, keyword = "scaled_target") 
 # # NO SCALING
